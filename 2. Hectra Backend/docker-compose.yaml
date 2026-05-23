@@ -1,10 +1,12 @@
 # Docker Compose Configuration
-# version: "3.8" is now obsolete and can be removed
 
 services:
+
+  # ── MQTT Broker ─────────────────────────────────────────────────────────
   mqtt:
     image: eclipse-mosquitto
     container_name: mqtt-broker
+    restart: unless-stopped
     ports:
       - "1883:1883"
     volumes:
@@ -12,17 +14,55 @@ services:
     networks:
       - iot_network
 
+  # ── Redis Cache ──────────────────────────────────────────────────────────
   redis:
     image: redis:alpine
     container_name: redis-cache
+    restart: unless-stopped
     ports:
       - "6379:6379"
     networks:
       - iot_network
 
+  # ── PostgreSQL Database ──────────────────────────────────────────────────
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: postgres-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgre
+      POSTGRES_DB: Collar_to_Gateway
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init-historical.sql:/docker-entrypoint-initdb.d/02-init-historical.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - iot_network
+
+  # ── pgAdmin ──────────────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - iot_network
+
+  # ── Backend API ──────────────────────────────────────────────────────────
   backend:
     build: ./backend
     container_name: backend-api
+    restart: unless-stopped
     volumes:
       - ./backend:/app
     env_file:
@@ -54,9 +94,11 @@ services:
     networks:
       - iot_network
 
+  # ── MQTT Bridge ──────────────────────────────────────────────────────────
   mqtt-bridge:
     build: ./backend
     container_name: mqtt-bridge
+    restart: unless-stopped
     command: python mqtt_bridge.py
     volumes:
       - ./backend:/app
@@ -83,30 +125,15 @@ services:
     networks:
       - iot_network
 
-  db:
-    image: pgvector/pgvector:pg15
-    container_name: postgres-db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgre
-      POSTGRES_DB: Collar_to_Gateway
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./db/init-historical.sql:/docker-entrypoint-initdb.d/02-init-historical.sql
+  # ── Scanner App (Node.js) ────────────────────────────────────────────────
+  scanner-app:
+    build: ./scanner-app
+    container_name: scanner-app
+    restart: unless-stopped
+    env_file:
+      - ./scanner-app/.env
     ports:
-      - "5433:5432"
-    networks:
-      - iot_network
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    ports:
-      - "5050:80"
+      - "3030:3030"
     depends_on:
       - db
     networks:
