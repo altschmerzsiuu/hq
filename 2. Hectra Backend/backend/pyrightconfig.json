@@ -1,0 +1,14 @@
+{
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Linux",
+  "venvPath": "/Volumes/Kerberos/Pluto's Project/1. HectraHQ/2. Hardware_Hectra_IoT/2. Hectra Backend/backend",
+  "venv": ".venv",
+  "extraPaths": [
+    "/Volumes/Kerberos/Pluto's Project/1. HectraHQ/2. Hardware_Hectra_IoT/2. Hectra Backend/backend",
+    "/Volumes/Kerberos/Pluto's Project/1. HectraHQ/2. Hardware_Hectra_IoT/2. Hectra Backend/backend/.venv/lib/python3.11/site-packages"
+  ],
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false
+}

@@ -1,0 +1,121 @@
+# Docker Compose Configuration
+# version: "3.8" is now obsolete and can be removed
+
+services:
+  mqtt:
+    image: eclipse-mosquitto
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - iot_network
+
+  redis:
+    image: redis:alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    networks:
+      - iot_network
+
+  backend:
+    build: ./backend
+    container_name: backend-api
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    environment:
+      - MQTT_BROKER_URL=mqtt
+      - MQTT_BROKER_PORT=1883
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=Collar_to_Gateway
+      - DB_USER=postgres
+      - DB_PASSWORD=postgre
+      - REDIS_URL=redis://redis:6379/0
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_IDS=${TELEGRAM_CHAT_IDS}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - PYTHONUNBUFFERED=1
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2}
+      - DEVICE_API_KEY=${DEVICE_API_KEY}
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mqtt
+      - db
+      - redis
+    networks:
+      - iot_network
+
+  mqtt-bridge:
+    build: ./backend
+    container_name: mqtt-bridge
+    command: python mqtt_bridge.py
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    environment:
+      - MQTT_BROKER_URL=mqtt
+      - MQTT_BROKER_PORT=1883
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=Collar_to_Gateway
+      - DB_USER=postgres
+      - DB_PASSWORD=postgre
+      - REDIS_URL=redis://redis:6379/0
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_IDS=${TELEGRAM_CHAT_IDS}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - mqtt
+      - db
+      - redis
+    networks:
+      - iot_network
+
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgre
+      POSTGRES_DB: Collar_to_Gateway
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init-historical.sql:/docker-entrypoint-initdb.d/02-init-historical.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - iot_network
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - iot_network
+
+volumes:
+  postgres-data:
+  pgadmin-data:
+
+networks:
+  iot_network:
+    driver: bridge

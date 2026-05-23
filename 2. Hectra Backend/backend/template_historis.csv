@@ -1,0 +1,44 @@
+rfid,nama,jenis,tanggal_lahir,tanggal_birahi,jam_birahi,tanggal_ib,pemberi_ib,jumlah_ib,offset_ib_hari,tanggal_bunting,hpl,tanggal_lahir_anak,tanggal_sapih,catatan
+10818,Betina Limosin,Limousin,28/10/2019,28/10/2019,02:00,29/10/2019,Dony,1,1,28/01/2020,07/11/2020,,07/05/2021,IB pertama berhasil
+10817,Jantan Limosin,Limousin,03/11/2019,,,,,,,,,,,Jantan - tidak masuk siklus reproduksi
+10815,Simental 1,Simmental,11/04/2020,04/09/2020,09:15,04/09/2020,Dony,1,0,04/12/2020,14/09/2021,,14/03/2022,Birahi kamis pagi
+10815,Simental 1,Simmental,11/04/2020,29/10/2020,21:30,30/10/2020,Dony,2,1,30/01/2021,09/11/2021,,09/05/2022,IB besoknya berhasil +1 hari
+10813,Simental 2,Simmental,29/10/2020,19/02/2021,21:30,20/02/2021,Dony,1,1,20/05/2021,30/11/2021,,30/05/2022,Pola konsisten malam +1
+
+# ================================================================
+# PETUNJUK PENGISIAN (hapus baris komentar # ini sebelum dipakai)
+# ================================================================
+#
+# KOLOM WAJIB:
+#   rfid            : Nomor tag RFID sapi (atau nomor sapi dari papan, nanti bisa diganti RFID asli)
+#   nama            : Nama/panggilan sapi
+#   jenis           : Jenis sapi (Limousin, Simmental, Bali, FH, Brahman, dll)
+#   tanggal_lahir   : Format dd/mm/yyyy — bisa dikosongkan kalau tidak tahu
+#
+# KOLOM REPRODUKSI (satu baris = satu SIKLUS):
+#   tanggal_birahi  : Kapan sapi terdeteksi birahi (dd/mm/yyyy)
+#   jam_birahi      : Jam berapa birahi terdeteksi (format 24 jam, misal: 02:00, 14:30, 21:00)
+#   tanggal_ib      : Kapan dilakukan IB (dd/mm/yyyy)
+#   pemberi_ib      : Nama petugas inseminator
+#   jumlah_ib       : Berapa kali IB dalam siklus ini (angka: 1, 2, 3...)
+#
+# KOLOM KRITIS (ini yang jadi "offset" knowledge peternak):
+#   offset_ib_hari  : Selisih hari antara birahi dan IB yang BERHASIL
+#                     Positif = IB dilakukan X hari SETELAH tanda birahi
+#                     Negatif = IB dilakukan X hari SEBELUM tanda birahi
+#                     Kosong  = akan dihitung otomatis dari tanggal_birahi dan tanggal_ib
+#
+# KOLOM HASIL:
+#   tanggal_bunting : Kapan sapi terdeteksi bunting (dd/mm/yyyy) — kosong = IB gagal
+#   hpl             : Hari Perkiraan Lahir (kalau ada) — kosong = dihitung otomatis
+#   tanggal_lahir_anak : Kapan anak lahir aktual (dd/mm/yyyy)
+#   tanggal_sapih   : Kapan anak disapih dari induk (dd/mm/yyyy)
+#   catatan         : Catatan bebas dari peternak
+#
+# TIPS:
+#   - Satu sapi bisa punya banyak baris (satu baris per siklus)
+#   - Kalau IB gagal (tidak bunting), tetap isi tanggal_ib tapi kosongkan tanggal_bunting
+#   - Kolom yang tidak diketahui bisa dikosongkan (tulis - atau biarkan kosong)
+#   - Sapi jantan tidak perlu dimasukkan (tidak punya siklus reproduksi)
+#   - Untuk nomor sapi dari papan (misal 10818), bisa dipakai sebagai rfid sementara
+#     sebelum nanti di-mapping ke RFID tag yang sesungguhnya

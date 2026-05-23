@@ -1,0 +1,6 @@
+rfid,nama,jenis,tanggal_lahir,tanggal_birahi,jam_birahi,tanggal_ib,pemberi_ib,jumlah_ib,offset_ib_hari,tanggal_bunting,hpl,tanggal_lahir_anak,tanggal_sapih,catatan
+10818,Betina Limosin,Limousin,28/10/2019,28/10/2019,02:00,29/10/2019,Dony,1,1,28/01/2020,07/11/2020,,07/05/2021,IB pertama berhasil
+10817,Jantan Limosin,Limousin,03/11/2019,,,,,,,,,,,Jantan - tidak masuk siklus reproduksi
+10815,Simental 1,Simmental,11/04/2020,04/09/2020,09:15,04/09/2020,Dony,1,0,04/12/2020,14/09/2021,,14/03/2022,Birahi kamis pagi
+10815,Simental 1,Simmental,11/04/2020,29/10/2020,21:30,30/10/2020,Dony,2,1,30/01/2021,09/11/2021,,09/05/2022,IB besoknya berhasil +1 hari
+10813,Simental 2,Simmental,29/10/2020,19/02/2021,21:30,20/02/2021,Dony,1,1,20/05/2021,30/11/2021,,30/05/2022,Pola konsisten malam +1
