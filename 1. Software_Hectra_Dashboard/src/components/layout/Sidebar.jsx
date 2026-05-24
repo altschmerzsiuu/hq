@@ -29,10 +29,13 @@ import { useAuthStore } from '@/store/authStore';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import hectraLogo from '@/assets/logo/hectra.png'
+import hectraLightLogo from '@/assets/logo/Hectra_Light.png'
+import hectraDarkLogo from '@/assets/logo/Hectra_Dark.png'
 
 export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) {
   const { user, logout } = useAuthStore();
-  const { lang } = useSettingsStore();
+  const { lang, theme } = useSettingsStore();
   const t = translations[lang];
   const location = useLocation();
   const navigate = useNavigate();
@@ -187,7 +190,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
           {/* Logo */}
           {!logoFailed ? (
             <img
-              src="/src/assets/logo/hectra.png"
+              src={hectraLogo}
               alt="Hectra"
               style={{ width: '28px', height: '28px', objectFit: 'contain', flexShrink: 0 }}
               onError={() => setLogoFailed(true)}
@@ -206,9 +209,9 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
           {!isCollapsed && (
             !textFailed ? (
               <img
-                src="/src/assets/logo/hectra_text.png"
+                src={theme === 'light' ? hectraLightLogo : hectraDarkLogo}
                 alt="Hectra"
-                style={{ height: '20px', objectFit: 'contain' }}
+                style={{ height: '32px', objectFit: 'contain' }}
                 onError={() => setTextFailed(true)}
               />
             ) : (
