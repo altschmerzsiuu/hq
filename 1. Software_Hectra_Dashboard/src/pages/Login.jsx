@@ -4,6 +4,7 @@ import { Loader2, Eye, EyeOff, Mail, Lock, User, ArrowRight, Leaf } from 'lucide
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
 import brandLogo from '@/assets/logo/hectra.png';
+import hectraDarkLogo from '@/assets/logo/Hectra_Dark.png';
 
 /* ─── Design Tokens ───────────────────────────────────────────────────── */
 const T = {
@@ -73,22 +74,16 @@ function LeftPanel() {
 
       {/* logo + brand */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '2rem 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0', marginBottom: 8 }}>
           <div style={{
-            width: 52, height: 52,
-            borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 48, height: 48,
+            borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
             overflow: 'hidden', flexShrink: 0
           }}>
-            <img src={brandLogo} alt="Hectra Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src={brandLogo} alt="Hectra Logo" style={{ width: '150%', height: '150%', objectFit: 'contain' }} />
           </div>
 
-          <h1 style={{
-            fontSize: 36, fontWeight: 800, color: T.t1,
-            letterSpacing: '-1px', margin: 0,
-            fontFamily: FONT_DISPLAY, lineHeight: 1,
-          }}>
-            Hectra
-          </h1>
+          <img src={hectraDarkLogo} alt="Hectra" style={{ height: 64, objectFit: 'contain', marginLeft: '-0.5rem' }} />
         </div>
 
         <p style={{
@@ -116,17 +111,91 @@ function LeftPanel() {
         </div>
       </div>
 
-      {/* stats */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: '1.5rem' }}>
-        {[['247', 'Livestock'], ['98%', 'Uptime'], ['12', 'Alerts']].map(([num, lbl]) => (
-          <div key={lbl} style={{
-            flex: 1, background: T.cardBg, border: `1px solid ${T.border}`,
-            borderRadius: 12, padding: '12px',
-          }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: T.accent, marginBottom: 3, fontFamily: FONT_DISPLAY }}>{num}</div>
-            <div style={{ fontSize: 10, color: T.t3, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, fontFamily: FONT_BODY }}>{lbl}</div>
-          </div>
-        ))}
+      {/* Social Links (Custom React + Tailwind) */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        <ul className="flex justify-center items-center m-0 p-0 list-none">
+          {/* Instagram */}
+          <li className="group relative mx-2.5 list-none">
+            <a
+              href="https://www.instagram.com/hectrahq.id"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className="relative overflow-hidden flex justify-center items-center w-12 h-12 rounded-full text-[#8E8EA0] bg-[#16161F] border border-[#1D1D2B] transition-all duration-300 ease-in-out hover:text-white hover:border-transparent hover:shadow-[0_4px_20px_rgba(225,48,108,0.4)]"
+            >
+              <div className="absolute inset-0 top-auto bottom-0 w-full h-0 bg-[#E1306C] transition-all duration-300 ease-in-out group-hover:h-full z-0" />
+              <svg viewBox="0 0 24 24" className="relative z-10 w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+            </a>
+            <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 text-white px-2.5 py-1.5 rounded text-[10px] font-bold opacity-0 pointer-events-none invisible transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:bottom-[-42px] bg-[#E1306C] whitespace-nowrap shadow-md z-50 rounded-md">
+              Instagram
+            </div>
+          </li>
+
+          {/* YouTube */}
+          <li className="group relative mx-2.5 list-none">
+            <a
+              href="https://www.youtube.com/@hectrahq"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="YouTube"
+              className="relative overflow-hidden flex justify-center items-center w-12 h-12 rounded-full text-[#8E8EA0] bg-[#16161F] border border-[#1D1D2B] transition-all duration-300 ease-in-out hover:text-white hover:border-transparent hover:shadow-[0_4px_20px_rgba(255,0,0,0.4)]"
+            >
+              <div className="absolute inset-0 top-auto bottom-0 w-full h-0 bg-[#FF0000] transition-all duration-300 ease-in-out group-hover:h-full z-0" />
+              <svg viewBox="0 0 24 24" className="relative z-10 w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"></path>
+                <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"></polygon>
+              </svg>
+            </a>
+            <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 text-white px-2.5 py-1.5 rounded text-[10px] font-bold opacity-0 pointer-events-none invisible transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:bottom-[-42px] bg-[#FF0000] whitespace-nowrap shadow-md z-50 rounded-md">
+              YouTube
+            </div>
+          </li>
+
+          {/* Webpage */}
+          <li className="group relative mx-2.5 list-none">
+            <a
+              href="https://www.hectrahq.my.id"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Website"
+              className="relative overflow-hidden flex justify-center items-center w-12 h-12 rounded-full text-[#8E8EA0] bg-[#16161F] border border-[#1D1D2B] transition-all duration-300 ease-in-out hover:text-white hover:border-transparent hover:shadow-[0_4px_20px_rgba(0,212,126,0.4)]"
+            >
+              <div className="absolute inset-0 top-auto bottom-0 w-full h-0 bg-[#00D47E] transition-all duration-300 ease-in-out group-hover:h-full z-0" />
+              <svg viewBox="0 0 24 24" className="relative z-10 w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+            </a>
+            <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 text-white px-2.5 py-1.5 rounded text-[10px] font-bold opacity-0 pointer-events-none invisible transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:bottom-[-42px] bg-[#00D47E] whitespace-nowrap shadow-md z-50 rounded-md">
+              Website
+            </div>
+          </li>
+
+          {/* Telegram */}
+          <li className="group relative mx-2.5 list-none">
+            <a
+              href="https://t.me/HectraHQ_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Telegram"
+              className="relative overflow-hidden flex justify-center items-center w-12 h-12 rounded-full text-[#8E8EA0] bg-[#16161F] border border-[#1D1D2B] transition-all duration-300 ease-in-out hover:text-white hover:border-transparent hover:shadow-[0_4px_20px_rgba(0,136,204,0.4)]"
+            >
+              <div className="absolute inset-0 top-auto bottom-0 w-full h-0 bg-[#0088cc] transition-all duration-300 ease-in-out group-hover:h-full z-0" />
+              <svg viewBox="0 0 24 24" className="relative z-10 w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </a>
+            <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 text-white px-2.5 py-1.5 rounded text-[10px] font-bold opacity-0 pointer-events-none invisible transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:bottom-[-42px] bg-[#0088cc] whitespace-nowrap shadow-md z-50 rounded-md">
+              Telegram Bot
+            </div>
+          </li>
+        </ul>
       </div>
 
       {/* bottom marquee */}
@@ -226,7 +295,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [showForgotModal, setShowForgotModal] = useState(false);
   const navigate = useNavigate();
 
   const { login, isLoading, error, isAuthenticated, clearError } = useAuthStore();
@@ -236,12 +307,86 @@ export default function Login() {
     clearError();
   }, [isAuthenticated, navigate, clearError, isLogin]);
 
+  // Prefill email if Remember Me was previously checked
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('remember_email');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Load Google Identity Services SDK dynamically
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+
+    script.onload = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: '645755729462-jdjrqn0dutdiuc2c8orumv0ju7a775iu.apps.googleusercontent.com',
+          callback: handleGoogleCredentialResponse,
+        });
+      }
+    };
+
+    return () => {
+      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
+    };
+  }, []);
+
+  const handleGoogleCredentialResponse = async (response) => {
+    try {
+      toast.info('Memproses login Google...');
+      const idToken = response.credential;
+      const API_BASE = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || '/api');
+      
+      const res = await fetch(`${API_BASE}/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: idToken }),
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'Google authentication failed');
+      }
+      
+      useAuthStore.getState().setToken(data.access_token);
+      toast.success('Berhasil masuk dengan Google!');
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      toast.error(err.message || 'Gagal login dengan Google');
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    if (window.google) {
+      window.google.accounts.id.prompt();
+    } else {
+      toast.error('Google Service SDK belum terpasang.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isLogin) {
       if (!email || !password) return;
       const success = await login(email, password, rememberMe);
       if (success) {
+        if (rememberMe) {
+          localStorage.setItem('remember_email', email);
+        } else {
+          localStorage.removeItem('remember_email');
+        }
         toast.success('Selamat datang kembali!');
         navigate('/dashboard', { replace: true });
       }
@@ -260,19 +405,34 @@ export default function Login() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Pendaftaran gagal');
-        toast.success('Akun berhasil dibuat! Silakan masuk.');
-        setIsLogin(true);
-      } catch {
-        toast.success('Pendaftaran berhasil (Demo Offline)! Silakan masuk.');
-        setIsLogin(true);
+        
+        toast.success('Pendaftaran berhasil! Mengalihkan ke dashboard...');
+        
+        // Auto-login after successful registration
+        const success = await login(email, password, rememberMe);
+        if (success) {
+          if (rememberMe) {
+            localStorage.setItem('remember_email', email);
+          } else {
+            localStorage.removeItem('remember_email');
+          }
+          navigate('/dashboard', { replace: true });
+        } else {
+          setIsLogin(true);
+        }
+      } catch (err) {
+        toast.error(err.message || 'Pendaftaran gagal');
       }
     }
   };
 
-  const handleGoogleLogin = () => {
-    toast.info('Menghubungkan ke layanan Google...');
-    const API_BASE = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || '/api');
-    window.location.href = `${API_BASE}/auth/google`;
+  const handleToggleMode = () => {
+    setIsLogin(!isLogin);
+    setFullName('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    clearError();
   };
 
   const eyeBtn = (
@@ -295,6 +455,15 @@ export default function Login() {
         input:-webkit-autofill {
           -webkit-box-shadow: 0 0 0 100px ${T.cardBg} inset !important;
           -webkit-text-fill-color: ${T.t1} !important;
+        }
+        
+        input[type="password"] {
+          font-family: monospace !important;
+          letter-spacing: 0.35em !important;
+        }
+        input[type="password"]::placeholder {
+          font-family: 'DM Sans', system-ui, sans-serif !important;
+          letter-spacing: normal !important;
         }
         
         @media (max-width: 768px) {
@@ -432,9 +601,16 @@ export default function Login() {
                           {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
                         </button>
                       } />
-                    <FieldHalf label="Confirm Password" icon={Lock} type="password"
+                    <FieldHalf label="Confirm Password" icon={Lock}
+                      type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                      placeholder="Re-enter" />
+                      placeholder="Re-enter"
+                      rightEl={
+                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.t3, display: 'flex', padding: 0, flexShrink: 0 }}>
+                          {showConfirmPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                        </button>
+                      } />
                   </div>
                 </>
               ) : (
@@ -461,7 +637,7 @@ export default function Login() {
                     <span style={{ fontSize: 11, color: T.t2 }}>Remember me</span>
                   </label>
                   <button type="button"
-                    onClick={() => toast.info('Fitur reset password dalam pengembangan.')}
+                    onClick={() => setShowForgotModal(true)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: T.accent, fontWeight: 700, fontFamily: FONT_BODY }}>
                     Forgot password?
                   </button>
@@ -520,7 +696,7 @@ export default function Login() {
             {/* toggle */}
             <p style={{ textAlign: 'center', fontSize: 11, color: T.t2, marginTop: 14 }}>
               {isLogin ? 'New to Hectra? ' : 'Already have an account? '}
-              <button onClick={() => setIsLogin(!isLogin)} style={{
+              <button onClick={handleToggleMode} style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 color: T.accent, fontWeight: 700, fontSize: 11, fontFamily: FONT_BODY,
               }}>
@@ -534,6 +710,64 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 100,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20
+        }}>
+          <div style={{
+            background: T.cardBg,
+            border: `1px solid ${T.border}`,
+            borderRadius: 16,
+            padding: '2rem',
+            maxWidth: 400,
+            width: '100%',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+            animation: 'hq-fadeup 0.3s ease both'
+          }}>
+            <h3 style={{ fontSize: 18, color: T.t1, fontFamily: FONT_DISPLAY, marginBottom: 12 }}>Reset Password</h3>
+            <p style={{ fontSize: 12, color: T.t2, lineHeight: 1.6, marginBottom: 20 }}>
+              Untuk alasan keamanan, proses reset password memerlukan verifikasi kepemilikan kandang. Silakan hubungi tim administrator HectraHQ melalui email atau WhatsApp Support di bawah ini:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+              <div style={{ background: T.surfaceBg, border: `1px solid ${T.border}`, padding: '10px 14px', borderRadius: 8, fontSize: 11, color: T.t1 }}>
+                <strong style={{ color: T.accent }}>Email:</strong> admin@hectra.my.id
+              </div>
+              <div style={{ background: T.surfaceBg, border: `1px solid ${T.border}`, padding: '10px 14px', borderRadius: 8, fontSize: 11, color: T.t1 }}>
+                <strong style={{ color: T.accent }}>WhatsApp:</strong> +62 812-3456-7890
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowForgotModal(false)} 
+              style={{
+                width: '100%',
+                background: T.accent,
+                border: 'none',
+                borderRadius: 10,
+                padding: '12px 0',
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#0A0A0F',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = T.accentHover}
+              onMouseLeave={e => e.currentTarget.style.background = T.accent}
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

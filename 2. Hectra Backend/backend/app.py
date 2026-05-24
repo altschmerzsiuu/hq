@@ -282,7 +282,6 @@ async def listen_to_pg_notifications():
 
 scheduler = AsyncIOScheduler()
 
-
 @app.websocket("/api/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await ws_manager.connect(websocket)
