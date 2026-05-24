@@ -22,8 +22,9 @@ const formatDate = (dateString) => {
  * Prioritas: VITE_WS_URL → relatif dari window.location → fallback localhost
  */
 function buildWsUrl() {
-  if (import.meta.env.VITE_WS_URL) {
-    return `${import.meta.env.VITE_WS_URL}/api/ws`;
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl && !import.meta.env.DEV) {
+    return apiUrl.replace(/^http/, 'ws') + '/api/ws';
   }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host     = window.location.host;

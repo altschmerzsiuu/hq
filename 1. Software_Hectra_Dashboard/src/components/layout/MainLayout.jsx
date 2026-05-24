@@ -13,14 +13,16 @@ export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const addNotification = useNotificationStore(state => state.addNotification);
-
   useEffect(() => {
-    // Build WebSocket URL dynamically
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    // Backend runs on port 5000 in local testing
-    const wsHost = host.includes('localhost') ? 'localhost:5000' : host;
-    const wsUrl = `${protocol}//${wsHost}/api/ws`;
+    let wsUrl = '';
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (apiUrl && !import.meta.env.DEV) {
+      wsUrl = apiUrl.replace(/^http/, 'ws') + '/api/ws';
+    } else {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      wsUrl = `${protocol}//${host}/api/ws`;
+    }
 
     console.log(`📡 Connecting to Global Notification WS: ${wsUrl}`);
     let ws = new WebSocket(wsUrl);

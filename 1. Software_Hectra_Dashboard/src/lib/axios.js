@@ -2,6 +2,9 @@ import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
 
 const getBaseUrl = () => {
+  if (import.meta.env.DEV) {
+    return '/api';
+  }
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
