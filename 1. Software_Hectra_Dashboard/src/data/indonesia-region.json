@@ -1,0 +1,536 @@
+[
+  {
+    "id": "ID-AC",
+    "nama": "Aceh",
+    "cities": [
+      { "id": "ID-AC-BNA", "nama": "Banda Aceh", "postalCodes": ["23111", "23112", "23115"] },
+      { "id": "ID-AC-LSM", "nama": "Lhokseumawe", "postalCodes": ["24351", "24352"] },
+      { "id": "ID-AC-LGS", "nama": "Langsa", "postalCodes": ["24411", "24412"] },
+      { "id": "ID-AC-SBL", "nama": "Sabang", "postalCodes": ["23511", "23512"] },
+      { "id": "ID-AC-SIM", "nama": "Subulussalam", "postalCodes": ["24882", "24883"] },
+      { "id": "ID-AC-ACT", "nama": "Aceh Tengah", "postalCodes": ["24511", "24512"] },
+      { "id": "ID-AC-ABR", "nama": "Aceh Barat", "postalCodes": ["23611", "23612"] },
+      { "id": "ID-AC-ATS", "nama": "Aceh Timur", "postalCodes": ["24451", "24452"] },
+      { "id": "ID-AC-AUT", "nama": "Aceh Utara", "postalCodes": ["24311", "24312"] },
+      { "id": "ID-AC-ASL", "nama": "Aceh Selatan", "postalCodes": ["23711", "23712"] }
+    ]
+  },
+  {
+    "id": "ID-SU",
+    "nama": "Sumatera Utara",
+    "cities": [
+      { "id": "ID-SU-MDN", "nama": "Medan", "postalCodes": ["20111", "20112", "20211"] },
+      { "id": "ID-SU-BST", "nama": "Pematangsiantar", "postalCodes": ["21111", "21112"] },
+      { "id": "ID-SU-TJB", "nama": "Tanjungbalai", "postalCodes": ["21311", "21312"] },
+      { "id": "ID-SU-BSR", "nama": "Binjai", "postalCodes": ["20711", "20712"] },
+      { "id": "ID-SU-TSM", "nama": "Tebing Tinggi", "postalCodes": ["20611", "20612"] },
+      { "id": "ID-SU-PDL", "nama": "Padangsidimpuan", "postalCodes": ["22711", "22712"] },
+      { "id": "ID-SU-GNS", "nama": "Gunungsitoli", "postalCodes": ["22811", "22812"] },
+      { "id": "ID-SU-DLI", "nama": "Deli Serdang", "postalCodes": ["20511", "20512"] },
+      { "id": "ID-SU-KRO", "nama": "Karo", "postalCodes": ["22111", "22112"] },
+      { "id": "ID-SU-SMO", "nama": "Simalungun", "postalCodes": ["21151", "21152"] },
+      { "id": "ID-SU-LBT", "nama": "Labuhanbatu", "postalCodes": ["21411", "21412"] },
+      { "id": "ID-SU-TPN", "nama": "Tapanuli Utara", "postalCodes": ["22411", "22412"] }
+    ]
+  },
+  {
+    "id": "ID-SB",
+    "nama": "Sumatera Barat",
+    "cities": [
+      { "id": "ID-SB-PDG", "nama": "Padang", "postalCodes": ["25111", "25112", "25114"] },
+      { "id": "ID-SB-BKT", "nama": "Bukittinggi", "postalCodes": ["26111", "26112"] },
+      { "id": "ID-SB-PDJ", "nama": "Padang Panjang", "postalCodes": ["27111", "27112"] },
+      { "id": "ID-SB-PSB", "nama": "Pasaman Barat", "postalCodes": ["26351", "26352"] },
+      { "id": "ID-SB-SWL", "nama": "Sawhlunto", "postalCodes": ["27411", "27412"] },
+      { "id": "ID-SB-SLK", "nama": "Solok", "postalCodes": ["27311", "27312"] },
+      { "id": "ID-SB-PYK", "nama": "Payakumbuh", "postalCodes": ["26211", "26212"] },
+      { "id": "ID-SB-PSM", "nama": "Pasaman", "postalCodes": ["26311", "26312"] },
+      { "id": "ID-SB-TNA", "nama": "Tanah Datar", "postalCodes": ["27211", "27212"] },
+      { "id": "ID-SB-KPH", "nama": "Kepulauan Mentawai", "postalCodes": ["25771", "25772"] }
+    ]
+  },
+  {
+    "id": "ID-RI",
+    "nama": "Riau",
+    "cities": [
+      { "id": "ID-RI-PKB", "nama": "Pekanbaru", "postalCodes": ["28111", "28112", "28114"] },
+      { "id": "ID-RI-DUM", "nama": "Dumai", "postalCodes": ["28811", "28812"] },
+      { "id": "ID-RI-KMR", "nama": "Kampar", "postalCodes": ["28411", "28412"] },
+      { "id": "ID-RI-IHR", "nama": "Indragiri Hilir", "postalCodes": ["29211", "29212"] },
+      { "id": "ID-RI-IHU", "nama": "Indragiri Hulu", "postalCodes": ["29311", "29312"] },
+      { "id": "ID-RI-BNG", "nama": "Bengkalis", "postalCodes": ["28711", "28712"] },
+      { "id": "ID-RI-RKN", "nama": "Rokan Hulu", "postalCodes": ["28511", "28512"] },
+      { "id": "ID-RI-SIK", "nama": "Siak", "postalCodes": ["28671", "28672"] },
+      { "id": "ID-RI-MRL", "nama": "Meranti", "postalCodes": ["28751", "28752"] }
+    ]
+  },
+  {
+    "id": "ID-KR",
+    "nama": "Kepulauan Riau",
+    "cities": [
+      { "id": "ID-KR-TJP", "nama": "Tanjungpinang", "postalCodes": ["29111", "29112"] },
+      { "id": "ID-KR-BTM", "nama": "Batam", "postalCodes": ["29411", "29412", "29444"] },
+      { "id": "ID-KR-BNT", "nama": "Bintan", "postalCodes": ["29151", "29152"] },
+      { "id": "ID-KR-KRM", "nama": "Karimun", "postalCodes": ["29611", "29612"] },
+      { "id": "ID-KR-LGM", "nama": "Lingga", "postalCodes": ["29871", "29872"] },
+      { "id": "ID-KR-NAT", "nama": "Natuna", "postalCodes": ["29783", "29784"] },
+      { "id": "ID-KR-ANB", "nama": "Anambas", "postalCodes": ["29791", "29792"] }
+    ]
+  },
+  {
+    "id": "ID-JA",
+    "nama": "Jambi",
+    "cities": [
+      { "id": "ID-JA-JBI", "nama": "Kota Jambi", "postalCodes": ["36111", "36112", "36115"] },
+      { "id": "ID-JA-SBB", "nama": "Sungai Penuh", "postalCodes": ["37111", "37112"] },
+      { "id": "ID-JA-BTE", "nama": "Batanghari", "postalCodes": ["36611", "36612"] },
+      { "id": "ID-JA-MJL", "nama": "Muaro Jambi", "postalCodes": ["36311", "36312"] },
+      { "id": "ID-JA-BJB", "nama": "Bungo", "postalCodes": ["37211", "37212"] },
+      { "id": "ID-JA-TTB", "nama": "Tebo", "postalCodes": ["37511", "37512"] },
+      { "id": "ID-JA-SRL", "nama": "Sarolangun", "postalCodes": ["37411", "37412"] },
+      { "id": "ID-JA-KRG", "nama": "Kerinci", "postalCodes": ["37151", "37152"] }
+    ]
+  },
+  {
+    "id": "ID-SS",
+    "nama": "Sumatera Selatan",
+    "cities": [
+      { "id": "ID-SS-PLG", "nama": "Palembang", "postalCodes": ["30111", "30112", "30115"] },
+      { "id": "ID-SS-PRB", "nama": "Prabumulih", "postalCodes": ["31111", "31112"] },
+      { "id": "ID-SS-LHT", "nama": "Lubuklinggau", "postalCodes": ["31611", "31612"] },
+      { "id": "ID-SS-PAG", "nama": "Pagar Alam", "postalCodes": ["31511", "31512"] },
+      { "id": "ID-SS-OKI", "nama": "OKI (Ogan Komering Ilir)", "postalCodes": ["30611", "30612"] },
+      { "id": "ID-SS-OKU", "nama": "OKU (Ogan Komering Ulu)", "postalCodes": ["32111", "32112"] },
+      { "id": "ID-SS-MSI", "nama": "Musi Banyuasin", "postalCodes": ["30711", "30712"] },
+      { "id": "ID-SS-LAH", "nama": "Lahat", "postalCodes": ["31411", "31412"] },
+      { "id": "ID-SS-EML", "nama": "Empat Lawang", "postalCodes": ["31811", "31812"] }
+    ]
+  },
+  {
+    "id": "ID-BE",
+    "nama": "Bengkulu",
+    "cities": [
+      { "id": "ID-BE-BGL", "nama": "Kota Bengkulu", "postalCodes": ["38111", "38112", "38115"] },
+      { "id": "ID-BE-RLS", "nama": "Rejang Lebong", "postalCodes": ["39111", "39112"] },
+      { "id": "ID-BE-MKO", "nama": "Mukomuko", "postalCodes": ["38711", "38712"] },
+      { "id": "ID-BE-KPH", "nama": "Kepahiang", "postalCodes": ["39311", "39312"] },
+      { "id": "ID-BE-LBT", "nama": "Lebong", "postalCodes": ["39211", "39212"] },
+      { "id": "ID-BE-BNG", "nama": "Bengkulu Utara", "postalCodes": ["38611", "38612"] },
+      { "id": "ID-BE-BSL", "nama": "Bengkulu Selatan", "postalCodes": ["38511", "38512"] }
+    ]
+  },
+  {
+    "id": "ID-LA",
+    "nama": "Lampung",
+    "cities": [
+      { "id": "ID-LA-BDL", "nama": "Bandar Lampung", "postalCodes": ["35111", "35112", "35115"] },
+      { "id": "ID-LA-MTR", "nama": "Metro", "postalCodes": ["34111", "34112"] },
+      { "id": "ID-LA-LPG", "nama": "Lampung Selatan", "postalCodes": ["35511", "35512"] },
+      { "id": "ID-LA-LPT", "nama": "Lampung Tengah", "postalCodes": ["34111", "34161"] },
+      { "id": "ID-LA-LPU", "nama": "Lampung Utara", "postalCodes": ["34511", "34512"] },
+      { "id": "ID-LA-TBB", "nama": "Tanggamus", "postalCodes": ["35611", "35612"] },
+      { "id": "ID-LA-PRM", "nama": "Pringsewu", "postalCodes": ["35371", "35372"] },
+      { "id": "ID-LA-PSW", "nama": "Pesawaran", "postalCodes": ["35331", "35332"] },
+      { "id": "ID-LA-WKN", "nama": "Way Kanan", "postalCodes": ["34711", "34712"] }
+    ]
+  },
+  {
+    "id": "ID-BB",
+    "nama": "Kepulauan Bangka Belitung",
+    "cities": [
+      { "id": "ID-BB-PGP", "nama": "Pangkalpinang", "postalCodes": ["33111", "33112"] },
+      { "id": "ID-BB-BKA", "nama": "Bangka", "postalCodes": ["33211", "33212"] },
+      { "id": "ID-BB-BLT", "nama": "Belitung", "postalCodes": ["33411", "33412"] },
+      { "id": "ID-BB-BBR", "nama": "Bangka Barat", "postalCodes": ["33315", "33316"] },
+      { "id": "ID-BB-BBS", "nama": "Bangka Selatan", "postalCodes": ["33719", "33721"] },
+      { "id": "ID-BB-BBT", "nama": "Bangka Tengah", "postalCodes": ["33681", "33682"] },
+      { "id": "ID-BB-BLT2", "nama": "Belitung Timur", "postalCodes": ["33511", "33512"] }
+    ]
+  },
+  {
+    "id": "ID-JK",
+    "nama": "DKI Jakarta",
+    "cities": [
+      { "id": "ID-JK-JKP", "nama": "Jakarta Pusat", "postalCodes": ["10110", "10210", "10310"] },
+      { "id": "ID-JK-JKU", "nama": "Jakarta Utara", "postalCodes": ["14110", "14210", "14310"] },
+      { "id": "ID-JK-JKB", "nama": "Jakarta Barat", "postalCodes": ["11110", "11210", "11310"] },
+      { "id": "ID-JK-JKS", "nama": "Jakarta Selatan", "postalCodes": ["12110", "12210", "12310"] },
+      { "id": "ID-JK-JKT", "nama": "Jakarta Timur", "postalCodes": ["13110", "13210", "13310"] },
+      { "id": "ID-JK-KPS", "nama": "Kepulauan Seribu", "postalCodes": ["14510", "14511"] }
+    ]
+  },
+  {
+    "id": "ID-JB",
+    "nama": "Jawa Barat",
+    "cities": [
+      { "id": "ID-JB-BDG", "nama": "Bandung", "postalCodes": ["40111", "40112", "40115"] },
+      { "id": "ID-JB-BGR", "nama": "Bogor", "postalCodes": ["16111", "16112", "16115"] },
+      { "id": "ID-JB-BKS", "nama": "Bekasi", "postalCodes": ["17111", "17112", "17113"] },
+      { "id": "ID-JB-DPK", "nama": "Depok", "postalCodes": ["16411", "16412", "16413"] },
+      { "id": "ID-JB-CRB", "nama": "Cirebon", "postalCodes": ["45111", "45112", "45115"] },
+      { "id": "ID-JB-SKB", "nama": "Sukabumi", "postalCodes": ["43111", "43112"] },
+      { "id": "ID-JB-TKT", "nama": "Tasikmalaya", "postalCodes": ["46111", "46112"] },
+      { "id": "ID-JB-BNJ", "nama": "Banjar", "postalCodes": ["46311", "46312"] },
+      { "id": "ID-JB-KRW", "nama": "Karawang", "postalCodes": ["41311", "41312"] },
+      { "id": "ID-JB-PWT", "nama": "Purwakarta", "postalCodes": ["41111", "41112"] },
+      { "id": "ID-JB-GRT", "nama": "Garut", "postalCodes": ["44111", "44112"] },
+      { "id": "ID-JB-SMD", "nama": "Sumedang", "postalCodes": ["45311", "45312"] },
+      { "id": "ID-JB-MJK", "nama": "Majalengka", "postalCodes": ["45411", "45412"] },
+      { "id": "ID-JB-KDL", "nama": "Kuningan", "postalCodes": ["45511", "45512"] },
+      { "id": "ID-JB-IDM", "nama": "Indramayu", "postalCodes": ["45211", "45212"] }
+    ]
+  },
+  {
+    "id": "ID-BT",
+    "nama": "Banten",
+    "cities": [
+      { "id": "ID-BT-SRG", "nama": "Serang", "postalCodes": ["42111", "42112", "42115"] },
+      { "id": "ID-BT-TNG", "nama": "Tangerang", "postalCodes": ["15111", "15112", "15113"] },
+      { "id": "ID-BT-TNG2", "nama": "Tangerang Selatan", "postalCodes": ["15311", "15312", "15313"] },
+      { "id": "ID-BT-CLS", "nama": "Cilegon", "postalCodes": ["42411", "42412"] },
+      { "id": "ID-BT-LBK", "nama": "Lebak", "postalCodes": ["42311", "42312"] },
+      { "id": "ID-BT-PBR", "nama": "Pandeglang", "postalCodes": ["42211", "42212"] }
+    ]
+  },
+  {
+    "id": "ID-JT",
+    "nama": "Jawa Tengah",
+    "cities": [
+      { "id": "ID-JT-SMG", "nama": "Semarang", "postalCodes": ["50111", "50112", "50115"] },
+      { "id": "ID-JT-SKT", "nama": "Surakarta (Solo)", "postalCodes": ["57111", "57112", "57115"] },
+      { "id": "ID-JT-MLG", "nama": "Magelang", "postalCodes": ["56111", "56112"] },
+      { "id": "ID-JT-SKH", "nama": "Sukoharjo", "postalCodes": ["57511", "57512"] },
+      { "id": "ID-JT-KDL", "nama": "Kudus", "postalCodes": ["59311", "59312"] },
+      { "id": "ID-JT-JPN", "nama": "Jepara", "postalCodes": ["59411", "59412"] },
+      { "id": "ID-JT-DMK", "nama": "Demak", "postalCodes": ["59511", "59512"] },
+      { "id": "ID-JT-SLW", "nama": "Salatiga", "postalCodes": ["50711", "50712"] },
+      { "id": "ID-JT-PKL", "nama": "Pekalongan", "postalCodes": ["51111", "51112"] },
+      { "id": "ID-JT-TGL", "nama": "Tegal", "postalCodes": ["52111", "52112"] },
+      { "id": "ID-JT-BMS", "nama": "Banyumas", "postalCodes": ["53111", "53112"] },
+      { "id": "ID-JT-PWT2", "nama": "Purwokerto", "postalCodes": ["53111", "53141"] },
+      { "id": "ID-JT-WNS", "nama": "Wonogiri", "postalCodes": ["57611", "57612"] },
+      { "id": "ID-JT-KBM", "nama": "Kebumen", "postalCodes": ["54311", "54312"] },
+      { "id": "ID-JT-PRG", "nama": "Purworejo", "postalCodes": ["54111", "54112"] },
+      { "id": "ID-JT-BLR", "nama": "Blora", "postalCodes": ["58211", "58212"] }
+    ]
+  },
+  {
+    "id": "ID-YO",
+    "nama": "DI Yogyakarta",
+    "cities": [
+      { "id": "ID-YO-YGY", "nama": "Yogyakarta", "postalCodes": ["55111", "55112", "55115"] },
+      { "id": "ID-YO-SLM", "nama": "Sleman", "postalCodes": ["55511", "55512"] },
+      { "id": "ID-YO-BNT", "nama": "Bantul", "postalCodes": ["55711", "55712"] },
+      { "id": "ID-YO-GNK", "nama": "Gunungkidul", "postalCodes": ["55811", "55812"] },
+      { "id": "ID-YO-KLP", "nama": "Kulonprogo", "postalCodes": ["55611", "55612"] }
+    ]
+  },
+  {
+    "id": "ID-JI",
+    "nama": "Jawa Timur",
+    "cities": [
+      { "id": "ID-JI-SBY", "nama": "Surabaya", "postalCodes": ["60111", "60112", "60115"] },
+      { "id": "ID-JI-MLG", "nama": "Malang", "postalCodes": ["65111", "65112", "65115"] },
+      { "id": "ID-JI-MJK", "nama": "Mojokerto", "postalCodes": ["61311", "61312"] },
+      { "id": "ID-JI-KDR", "nama": "Kediri", "postalCodes": ["64111", "64112"] },
+      { "id": "ID-JI-BLT", "nama": "Blitar", "postalCodes": ["66111", "66112"] },
+      { "id": "ID-JI-MDN", "nama": "Madiun", "postalCodes": ["63111", "63112"] },
+      { "id": "ID-JI-PRM", "nama": "Probolinggo", "postalCodes": ["67211", "67212"] },
+      { "id": "ID-JI-PSR", "nama": "Pasuruan", "postalCodes": ["67111", "67112"] },
+      { "id": "ID-JI-BJN", "nama": "Bojonegoro", "postalCodes": ["62111", "62112"] },
+      { "id": "ID-JI-JBR", "nama": "Jember", "postalCodes": ["68111", "68112"] },
+      { "id": "ID-JI-BWN", "nama": "Banyuwangi", "postalCodes": ["68411", "68412"] },
+      { "id": "ID-JI-STB", "nama": "Situbondo", "postalCodes": ["68311", "68312"] },
+      { "id": "ID-JI-LMJ", "nama": "Lumajang", "postalCodes": ["67311", "67312"] },
+      { "id": "ID-JI-TBN", "nama": "Tuban", "postalCodes": ["62311", "62312"] },
+      { "id": "ID-JI-LMG", "nama": "Lamongan", "postalCodes": ["62211", "62212"] },
+      { "id": "ID-JI-GRS", "nama": "Gresik", "postalCodes": ["61111", "61112"] },
+      { "id": "ID-JI-SDR", "nama": "Sidoarjo", "postalCodes": ["61211", "61212"] },
+      { "id": "ID-JI-PNG", "nama": "Ponorogo", "postalCodes": ["63411", "63412"] }
+    ]
+  },
+  {
+    "id": "ID-BA",
+    "nama": "Bali",
+    "cities": [
+      { "id": "ID-BA-DPS", "nama": "Denpasar", "postalCodes": ["80111", "80112", "80115"] },
+      { "id": "ID-BA-BGW", "nama": "Badung", "postalCodes": ["80351", "80352"] },
+      { "id": "ID-BA-GNY", "nama": "Gianyar", "postalCodes": ["80511", "80512"] },
+      { "id": "ID-BA-KLG", "nama": "Klungkung", "postalCodes": ["80711", "80712"] },
+      { "id": "ID-BA-BLG", "nama": "Bangli", "postalCodes": ["80611", "80612"] },
+      { "id": "ID-BA-KRG", "nama": "Karangasem", "postalCodes": ["80811", "80812"] },
+      { "id": "ID-BA-BLL", "nama": "Buleleng", "postalCodes": ["81111", "81112"] },
+      { "id": "ID-BA-JBR", "nama": "Jembrana", "postalCodes": ["82211", "82212"] },
+      { "id": "ID-BA-TBN", "nama": "Tabanan", "postalCodes": ["82111", "82112"] }
+    ]
+  },
+  {
+    "id": "ID-NB",
+    "nama": "Nusa Tenggara Barat",
+    "cities": [
+      { "id": "ID-NB-MTR", "nama": "Mataram", "postalCodes": ["83111", "83112", "83115"] },
+      { "id": "ID-NB-BTM", "nama": "Bima", "postalCodes": ["84111", "84112"] },
+      { "id": "ID-NB-LBK", "nama": "Lombok Barat", "postalCodes": ["83361", "83362"] },
+      { "id": "ID-NB-LTG", "nama": "Lombok Tengah", "postalCodes": ["83511", "83512"] },
+      { "id": "ID-NB-LTM", "nama": "Lombok Timur", "postalCodes": ["83611", "83612"] },
+      { "id": "ID-NB-SBW", "nama": "Sumbawa", "postalCodes": ["84311", "84312"] },
+      { "id": "ID-NB-SBB", "nama": "Sumbawa Barat", "postalCodes": ["84355", "84356"] },
+      { "id": "ID-NB-DOM", "nama": "Dompu", "postalCodes": ["84211", "84212"] }
+    ]
+  },
+  {
+    "id": "ID-NT",
+    "nama": "Nusa Tenggara Timur",
+    "cities": [
+      { "id": "ID-NT-KPG", "nama": "Kupang", "postalCodes": ["85111", "85112", "85115"] },
+      { "id": "ID-NT-LBT", "nama": "Labuan Bajo", "postalCodes": ["86554", "86555"] },
+      { "id": "ID-NT-MUM", "nama": "Maumere", "postalCodes": ["86111", "86112"] },
+      { "id": "ID-NT-EDE", "nama": "Ende", "postalCodes": ["86311", "86312"] },
+      { "id": "ID-NT-WAI", "nama": "Waingapu", "postalCodes": ["87111", "87112"] },
+      { "id": "ID-NT-SOR", "nama": "Soe", "postalCodes": ["85511", "85512"] },
+      { "id": "ID-NT-KFM", "nama": "Kefamenanu", "postalCodes": ["85611", "85612"] },
+      { "id": "ID-NT-AGT", "nama": "Atambua", "postalCodes": ["85711", "85712"] }
+    ]
+  },
+  {
+    "id": "ID-KB",
+    "nama": "Kalimantan Barat",
+    "cities": [
+      { "id": "ID-KB-PNK", "nama": "Pontianak", "postalCodes": ["78111", "78112", "78115"] },
+      { "id": "ID-KB-SGK", "nama": "Singkawang", "postalCodes": ["79111", "79112"] },
+      { "id": "ID-KB-KTP", "nama": "Ketapang", "postalCodes": ["78811", "78812"] },
+      { "id": "ID-KB-SNT", "nama": "Sanggau", "postalCodes": ["78511", "78512"] },
+      { "id": "ID-KB-SMB", "nama": "Sambas", "postalCodes": ["79411", "79412"] },
+      { "id": "ID-KB-LDK", "nama": "Landak", "postalCodes": ["78357", "78358"] },
+      { "id": "ID-KB-SKD", "nama": "Sekadau", "postalCodes": ["79583", "79584"] },
+      { "id": "ID-KB-MLP", "nama": "Melawi", "postalCodes": ["78671", "78672"] }
+    ]
+  },
+  {
+    "id": "ID-KT",
+    "nama": "Kalimantan Tengah",
+    "cities": [
+      { "id": "ID-KT-PLK", "nama": "Palangka Raya", "postalCodes": ["74111", "74112", "74115"] },
+      { "id": "ID-KT-SMT", "nama": "Sampit", "postalCodes": ["74311", "74312"] },
+      { "id": "ID-KT-PBN", "nama": "Pangkalan Bun", "postalCodes": ["74111", "74113"] },
+      { "id": "ID-KT-KTW", "nama": "Kuala Kapuas", "postalCodes": ["73511", "73512"] },
+      { "id": "ID-KT-MTN", "nama": "Muara Teweh", "postalCodes": ["73811", "73812"] },
+      { "id": "ID-KT-TWN", "nama": "Tamiang Layang", "postalCodes": ["73611", "73612"] }
+    ]
+  },
+  {
+    "id": "ID-KS",
+    "nama": "Kalimantan Selatan",
+    "cities": [
+      { "id": "ID-KS-BJM", "nama": "Banjarmasin", "postalCodes": ["70111", "70112", "70115"] },
+      { "id": "ID-KS-BJB", "nama": "Banjarbaru", "postalCodes": ["70711", "70712"] },
+      { "id": "ID-KS-MRB", "nama": "Martapura", "postalCodes": ["70611", "70612"] },
+      { "id": "ID-KS-KTB", "nama": "Kotabaru", "postalCodes": ["72111", "72112"] },
+      { "id": "ID-KS-BTL", "nama": "Batulicin", "postalCodes": ["72171", "72172"] },
+      { "id": "ID-KS-AML", "nama": "Amuntai", "postalCodes": ["71411", "71412"] },
+      { "id": "ID-KS-KDG", "nama": "Kandangan", "postalCodes": ["71211", "71212"] },
+      { "id": "ID-KS-PLH", "nama": "Pelaihari", "postalCodes": ["70811", "70812"] }
+    ]
+  },
+  {
+    "id": "ID-KI",
+    "nama": "Kalimantan Timur",
+    "cities": [
+      { "id": "ID-KI-SMD", "nama": "Samarinda", "postalCodes": ["75111", "75112", "75115"] },
+      { "id": "ID-KI-BPN", "nama": "Balikpapan", "postalCodes": ["76111", "76112", "76115"] },
+      { "id": "ID-KI-BTG", "nama": "Bontang", "postalCodes": ["75311", "75312"] },
+      { "id": "ID-KI-KTN", "nama": "Kutai Kertanegara", "postalCodes": ["75511", "75512"] },
+      { "id": "ID-KI-BRU", "nama": "Berau", "postalCodes": ["77311", "77312"] },
+      { "id": "ID-KI-PPU", "nama": "Penajam Paser Utara", "postalCodes": ["76141", "76142"] },
+      { "id": "ID-KI-PSR", "nama": "Paser", "postalCodes": ["76211", "76212"] },
+      { "id": "ID-KI-KTB2", "nama": "Kutai Barat", "postalCodes": ["75751", "75752"] }
+    ]
+  },
+  {
+    "id": "ID-KU",
+    "nama": "Kalimantan Utara",
+    "cities": [
+      { "id": "ID-KU-TRK", "nama": "Tarakan", "postalCodes": ["77111", "77112", "77115"] },
+      { "id": "ID-KU-TNA", "nama": "Tana Tidung", "postalCodes": ["77611", "77612"] },
+      { "id": "ID-KU-BLG", "nama": "Bulungan", "postalCodes": ["77211", "77212"] },
+      { "id": "ID-KU-MNK", "nama": "Malinau", "postalCodes": ["77511", "77512"] },
+      { "id": "ID-KU-NNK", "nama": "Nunukan", "postalCodes": ["77411", "77412"] }
+    ]
+  },
+  {
+    "id": "ID-SA",
+    "nama": "Sulawesi Utara",
+    "cities": [
+      { "id": "ID-SA-MND", "nama": "Manado", "postalCodes": ["95111", "95112", "95115"] },
+      { "id": "ID-SA-BTM", "nama": "Bitung", "postalCodes": ["95511", "95512"] },
+      { "id": "ID-SA-TDO", "nama": "Tomohon", "postalCodes": ["95411", "95412"] },
+      { "id": "ID-SA-KTB", "nama": "Kotamobagu", "postalCodes": ["95711", "95712"] },
+      { "id": "ID-SA-SNW", "nama": "Sangihe", "postalCodes": ["95812", "95813"] },
+      { "id": "ID-SA-MHG", "nama": "Minahasa", "postalCodes": ["95311", "95312"] },
+      { "id": "ID-SA-MNU", "nama": "Minahasa Utara", "postalCodes": ["95371", "95372"] },
+      { "id": "ID-SA-TGT", "nama": "Talaud", "postalCodes": ["95885", "95886"] }
+    ]
+  },
+  {
+    "id": "ID-ST",
+    "nama": "Sulawesi Tengah",
+    "cities": [
+      { "id": "ID-ST-PLU", "nama": "Palu", "postalCodes": ["94111", "94112", "94115"] },
+      { "id": "ID-ST-LWK", "nama": "Luwuk", "postalCodes": ["94711", "94712"] },
+      { "id": "ID-ST-DGL", "nama": "Donggala", "postalCodes": ["94341", "94342"] },
+      { "id": "ID-ST-TOL", "nama": "Toli-Toli", "postalCodes": ["94511", "94512"] },
+      { "id": "ID-ST-POS", "nama": "Poso", "postalCodes": ["94611", "94612"] },
+      { "id": "ID-ST-MOR", "nama": "Morowali", "postalCodes": ["94971", "94972"] },
+      { "id": "ID-ST-PRM", "nama": "Parigi Moutong", "postalCodes": ["94411", "94412"] }
+    ]
+  },
+  {
+    "id": "ID-SN",
+    "nama": "Sulawesi Selatan",
+    "cities": [
+      { "id": "ID-SN-MKS", "nama": "Makassar", "postalCodes": ["90111", "90112", "90115"] },
+      { "id": "ID-SN-PRE", "nama": "Parepare", "postalCodes": ["91111", "91112"] },
+      { "id": "ID-SN-PLJ", "nama": "Palopo", "postalCodes": ["91911", "91912"] },
+      { "id": "ID-SN-BON", "nama": "Bone", "postalCodes": ["92711", "92712"] },
+      { "id": "ID-SN-GWA", "nama": "Gowa", "postalCodes": ["92111", "92112"] },
+      { "id": "ID-SN-WAJ", "nama": "Wajo", "postalCodes": ["90911", "90912"] },
+      { "id": "ID-SN-PNK", "nama": "Pangkep", "postalCodes": ["90611", "90612"] },
+      { "id": "ID-SN-BLK", "nama": "Bulukumba", "postalCodes": ["92511", "92512"] },
+      { "id": "ID-SN-MRS", "nama": "Maros", "postalCodes": ["90511", "90512"] },
+      { "id": "ID-SN-LUW", "nama": "Luwu", "postalCodes": ["91911", "91951"] },
+      { "id": "ID-SN-SDR", "nama": "Sindereng Rappang", "postalCodes": ["91611", "91612"] },
+      { "id": "ID-SN-TKL", "nama": "Takalar", "postalCodes": ["92211", "92212"] }
+    ]
+  },
+  {
+    "id": "ID-SG",
+    "nama": "Sulawesi Tenggara",
+    "cities": [
+      { "id": "ID-SG-KDR", "nama": "Kendari", "postalCodes": ["93111", "93112", "93115"] },
+      { "id": "ID-SG-BAU", "nama": "Baubau", "postalCodes": ["93711", "93712"] },
+      { "id": "ID-SG-KLK", "nama": "Kolaka", "postalCodes": ["93511", "93512"] },
+      { "id": "ID-SN-MNS", "nama": "Muna", "postalCodes": ["93611", "93612"] },
+      { "id": "ID-SG-WAK", "nama": "Wakatobi", "postalCodes": ["93791", "93792"] },
+      { "id": "ID-SG-BBA", "nama": "Bombana", "postalCodes": ["93771", "93772"] }
+    ]
+  },
+  {
+    "id": "ID-SR",
+    "nama": "Sulawesi Barat",
+    "cities": [
+      { "id": "ID-SR-MJN", "nama": "Mamuju", "postalCodes": ["91511", "91512"] },
+      { "id": "ID-SR-PTM", "nama": "Polewali Mandar", "postalCodes": ["91311", "91312"] },
+      { "id": "ID-SR-MJT", "nama": "Majene", "postalCodes": ["91411", "91412"] },
+      { "id": "ID-SR-MMT", "nama": "Mamasa", "postalCodes": ["91611", "91612"] },
+      { "id": "ID-SR-MUT", "nama": "Mamuju Utara", "postalCodes": ["91571", "91572"] }
+    ]
+  },
+  {
+    "id": "ID-GO",
+    "nama": "Gorontalo",
+    "cities": [
+      { "id": "ID-GO-GTL", "nama": "Gorontalo", "postalCodes": ["96111", "96112", "96115"] },
+      { "id": "ID-GO-MLN", "nama": "Marisa (Pohuwato)", "postalCodes": ["96411", "96412"] },
+      { "id": "ID-GO-KWG", "nama": "Kwandang (Gorontalo Utara)", "postalCodes": ["96271", "96272"] },
+      { "id": "ID-GO-TLG", "nama": "Telaga (Gorontalo Kab.)", "postalCodes": ["96181", "96182"] },
+      { "id": "ID-GO-TBN", "nama": "Tilamuta (Boalemo)", "postalCodes": ["96311", "96312"] }
+    ]
+  },
+  {
+    "id": "ID-MA",
+    "nama": "Maluku",
+    "cities": [
+      { "id": "ID-MA-AMB", "nama": "Ambon", "postalCodes": ["97111", "97112", "97115"] },
+      { "id": "ID-MA-TRN", "nama": "Tual", "postalCodes": ["97611", "97612"] },
+      { "id": "ID-MA-MLB", "nama": "Masohi (Maluku Tengah)", "postalCodes": ["97511", "97512"] },
+      { "id": "ID-MA-SER", "nama": "Seram Bagian Barat", "postalCodes": ["97581", "97582"] },
+      { "id": "ID-MA-BRU", "nama": "Buru", "postalCodes": ["97371", "97372"] },
+      { "id": "ID-MA-KST", "nama": "Kepulauan Aru", "postalCodes": ["97681", "97682"] }
+    ]
+  },
+  {
+    "id": "ID-MU",
+    "nama": "Maluku Utara",
+    "cities": [
+      { "id": "ID-MU-SFI", "nama": "Sofifi", "postalCodes": ["97791", "97792"] },
+      { "id": "ID-MU-TRN", "nama": "Ternate", "postalCodes": ["97711", "97712"] },
+      { "id": "ID-MU-TDR", "nama": "Tidore Kepulauan", "postalCodes": ["97731", "97732"] },
+      { "id": "ID-MU-MBL", "nama": "Morotai", "postalCodes": ["97771", "97772"] },
+      { "id": "ID-MU-HLM", "nama": "Halmahera Utara", "postalCodes": ["97762", "97763"] },
+      { "id": "ID-MU-HLS", "nama": "Halmahera Selatan", "postalCodes": ["97851", "97852"] }
+    ]
+  },
+  {
+    "id": "ID-IB",
+    "nama": "Papua Barat",
+    "cities": [
+      { "id": "ID-IB-MNK", "nama": "Manokwari", "postalCodes": ["98311", "98312"] },
+      { "id": "ID-IB-SRG", "nama": "Sorong", "postalCodes": ["98411", "98412"] },
+      { "id": "ID-IB-FKK", "nama": "Fakfak", "postalCodes": ["98611", "98612"] },
+      { "id": "ID-IB-KMR", "nama": "Kaimana", "postalCodes": ["98671", "98672"] },
+      { "id": "ID-IB-TMB", "nama": "Teluk Bintuni", "postalCodes": ["98551", "98552"] },
+      { "id": "ID-IB-WND", "nama": "Wondoama", "postalCodes": ["98371", "98372"] }
+    ]
+  },
+  {
+    "id": "ID-PB",
+    "nama": "Papua Barat Daya",
+    "cities": [
+      { "id": "ID-PB-SRG", "nama": "Sorong (Kota)", "postalCodes": ["98411", "98414"] },
+      { "id": "ID-PB-SKB", "nama": "Sorong Selatan", "postalCodes": ["98451", "98452"] },
+      { "id": "ID-PB-SKT", "nama": "Sorong Kab.", "postalCodes": ["98431", "98432"] },
+      { "id": "ID-PB-RJM", "nama": "Raja Ampat", "postalCodes": ["98491", "98492"] },
+      { "id": "ID-PB-TMB", "nama": "Tambraw", "postalCodes": ["98471", "98472"] },
+      { "id": "ID-PB-MAY", "nama": "Maybrat", "postalCodes": ["98461", "98462"] }
+    ]
+  },
+  {
+    "id": "ID-PA",
+    "nama": "Papua",
+    "cities": [
+      { "id": "ID-PA-JYP", "nama": "Jayapura", "postalCodes": ["99111", "99112", "99115"] },
+      { "id": "ID-PA-SEN", "nama": "Sentani", "postalCodes": ["99351", "99352"] },
+      { "id": "ID-PA-NBR", "nama": "Nabire", "postalCodes": ["98811", "98812"] },
+      { "id": "ID-PA-BKN", "nama": "Biak", "postalCodes": ["98111", "98112"] },
+      { "id": "ID-PA-MER", "nama": "Merauke", "postalCodes": ["99611", "99612"] },
+      { "id": "ID-PA-WAM", "nama": "Wamena", "postalCodes": ["99511", "99512"] },
+      { "id": "ID-PA-TIM", "nama": "Timika", "postalCodes": ["99910", "99911"] },
+      { "id": "ID-PA-SER", "nama": "Serui (Kepulauan Yapen)", "postalCodes": ["98211", "98212"] }
+    ]
+  },
+  {
+    "id": "ID-PS",
+    "nama": "Papua Selatan",
+    "cities": [
+      { "id": "ID-PS-MER", "nama": "Merauke", "postalCodes": ["99611", "99614"] },
+      { "id": "ID-PS-BGT", "nama": "Boven Digoel", "postalCodes": ["99655", "99656"] },
+      { "id": "ID-PS-MPT", "nama": "Mappi", "postalCodes": ["99671", "99672"] },
+      { "id": "ID-PS-ASM", "nama": "Asmat", "postalCodes": ["99663", "99664"] }
+    ]
+  },
+  {
+    "id": "ID-PT",
+    "nama": "Papua Tengah",
+    "cities": [
+      { "id": "ID-PT-NBR", "nama": "Nabire", "postalCodes": ["98811", "98814"] },
+      { "id": "ID-PT-TMK", "nama": "Timika (Mimika)", "postalCodes": ["99910", "99913"] },
+      { "id": "ID-PT-PNI", "nama": "Paniai", "postalCodes": ["98761", "98762"] },
+      { "id": "ID-PT-DOG", "nama": "Dogiyai", "postalCodes": ["98862", "98863"] },
+      { "id": "ID-PT-DYI", "nama": "Deiyai", "postalCodes": ["98865", "98866"] },
+      { "id": "ID-PT-INT", "nama": "Intan Jaya", "postalCodes": ["98771", "98772"] }
+    ]
+  },
+  {
+    "id": "ID-PE",
+    "nama": "Papua Pegunungan",
+    "cities": [
+      { "id": "ID-PE-WAM", "nama": "Wamena (Jayawijaya)", "postalCodes": ["99511", "99514"] },
+      { "id": "ID-PE-TOL", "nama": "Tolikara", "postalCodes": ["99551", "99552"] },
+      { "id": "ID-PE-LNY", "nama": "Lanny Jaya", "postalCodes": ["99561", "99562"] },
+      { "id": "ID-PE-MBR", "nama": "Mamberamo Tengah", "postalCodes": ["99581", "99582"] },
+      { "id": "ID-PE-YHK", "nama": "Yahukimo", "postalCodes": ["99541", "99542"] },
+      { "id": "ID-PE-PKK", "nama": "Pegunungan Bintang", "postalCodes": ["99571", "99572"] },
+      { "id": "ID-PE-NDG", "nama": "Nduga", "postalCodes": ["99531", "99532"] }
+    ]
+  }
+]

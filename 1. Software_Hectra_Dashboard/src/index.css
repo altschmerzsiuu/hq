@@ -1,0 +1,416 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+/* ============================================================
+   HECTRA — NEO BIO-TECH INTELLIGENCE UI
+   Design System v2.0 (MP-3 Final)
+   ============================================================ */
+
+/* ── DARK MODE (default :root) ──────────────────────────── */
+:root {
+  --bg-base:    #0A0A0F;
+  --bg-surface: #111118;
+  --bg-card:    #16161F;
+  --bg-hover:   #1C1C27;
+
+  --accent:        #00D47E;
+  --accent-hover:  #00B86B;
+  --accent-dim:    rgba(0,212,126,0.12);
+  --accent-border: rgba(0,212,126,0.20);
+
+  --amber:      #FFB84D;
+  --amber-dim:  rgba(255,184,77,0.12);
+
+  --red:        #FF5B5B;
+  --red-dim:    rgba(255,91,91,0.12);
+
+  --blue:       #4DA6FF;
+  --blue-dim:   rgba(77,166,255,0.12);
+
+  --text-1:     #F2F2F7;
+  --text-2:     #8E8EA0;
+  --text-3:     #3A3A4A;
+
+  --border:     #1E1E2A;
+  --border-2:   #2A2A38;
+  --bg-glass-toast: rgba(10, 10, 15, 0.35);
+  --border-glass-toast: rgba(255, 255, 255, 0.08);
+
+  /* Backwards-compat aliases for dark mode */
+  --color-primary:        var(--accent);
+  --color-primary-hover:  #00B86B;
+  --color-accent:         var(--accent);
+  --color-bg-base:        var(--bg-base);
+  --color-bg-surface:     var(--bg-surface);
+  --color-bg-muted:       var(--bg-hover);
+  --color-text-primary:   var(--text-1);
+  --color-text-secondary: var(--text-2);
+  --color-text-muted:     var(--text-3);
+  --color-text-inverse:   #0A0A0F;
+  --color-border:         var(--border);
+  --color-border-strong:  var(--border-2);
+  --color-success:        var(--accent);
+  --color-success-bg:     var(--accent-dim);
+  --color-warning:        var(--amber);
+  --color-warning-bg:     var(--amber-dim);
+  --color-danger:         var(--red);
+  --color-danger-bg:      var(--red-dim);
+  --color-info:           var(--blue);
+  --color-info-bg:        var(--blue-dim);
+  --color-forest:         var(--accent);
+  --color-forest-light:   #00FF99;
+  --color-sage:           var(--text-3);
+  --color-sage-light:     var(--border);
+  --color-gold:           var(--amber);
+  --color-gold-light:     var(--amber-dim);
+  --color-cream:          var(--bg-card);
+  --color-cream-dark:     var(--bg-surface);
+  --background:           var(--bg-base);
+  --foreground:           var(--text-1);
+
+  --shadow-card:    0 1px 4px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+  --shadow-dropdown:0 8px 32px rgba(0,0,0,0.4);
+  --shadow-modal:   0 12px 56px rgba(0,0,0,0.5);
+}
+
+/* ── LIGHT MODE ──────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-base:    #F4F8F5;
+  --bg-surface: #FFFFFF;
+  --bg-card:    #F8FBF9;
+  --bg-hover:   #EEF5F1;
+
+  --accent:        #00A862;
+  --accent-hover:  #00875A;
+  --accent-dim:    rgba(0,168,98,0.08);
+  --accent-border: rgba(0,168,98,0.25);
+
+  --amber:      #B87A0A;
+  --amber-dim:  rgba(184,122,10,0.08);
+
+  --red:        #C0392B;
+  --red-dim:    rgba(192,57,43,0.08);
+
+  --blue:       #1A6091;
+  --blue-dim:   rgba(26,96,145,0.08);
+
+  --text-1:     #0D1117;
+  --text-2:     #4A5568;
+  --text-3:     #A0ADB8;
+
+  --border:     #E2E8F0;
+  --border-2:   #CBD5E0;
+  --bg-glass-toast: rgba(255, 255, 255, 0.25);
+  --border-glass-toast: rgba(255, 255, 255, 0.45);
+
+  /* Backwards-compat aliases (for existing pages still using old tokens) */
+  --color-primary:        #00A862;
+  --color-primary-hover:  #00875A;
+  --color-accent:         #00A862;
+  --color-bg-base:        var(--bg-base);
+  --color-bg-surface:     var(--bg-surface);
+  --color-bg-muted:       var(--bg-hover);
+  --color-text-primary:   var(--text-1);
+  --color-text-secondary: var(--text-2);
+  --color-text-muted:     var(--text-3);
+  --color-text-inverse:   #ffffff;
+  --color-border:         var(--border);
+  --color-border-strong:  var(--border-2);
+  --color-success:        var(--accent);
+  --color-success-bg:     var(--accent-dim);
+  --color-warning:        var(--amber);
+  --color-warning-bg:     var(--amber-dim);
+  --color-danger:         var(--red);
+  --color-danger-bg:      var(--red-dim);
+  --color-info:           var(--blue);
+  --color-info-bg:        var(--blue-dim);
+  --color-forest:         var(--accent);
+  --color-forest-light:   #00D47E;
+  --color-sage:           var(--text-3);
+  --color-sage-light:     var(--border);
+  --color-gold:           var(--amber);
+  --color-gold-light:     var(--amber-dim);
+  --color-cream:          var(--bg-surface);
+  --color-cream-dark:     var(--bg-card);
+  --background:           var(--bg-base);
+  --foreground:           var(--text-1);
+
+  --shadow-card:    0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04);
+  --shadow-dropdown:0 4px 24px rgba(0,0,0,0.10);
+  --shadow-modal:   0 8px 48px rgba(0,0,0,0.14);
+}
+
+/* ── BASE STYLES ─────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-1);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    transition: background-color 0.4s ease, color 0.4s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+}
+
+/* ── SCROLLBAR ───────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3);
+}
+.custom-scrollbar::-webkit-scrollbar { width: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 4px; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── THEME TOGGLE — Uiverse.io jubayer-10 ────────────────── */
+.tog-label {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.tog-input { display: none; }
+.tog-track {
+  position: relative;
+  width: 56px;
+  height: 28px;
+  background: #2A2A38;
+  border-radius: 999px;
+  transition: background 0.3s;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+[data-theme="light"] .tog-track {
+  background: #e2e8f0;
+}
+.tog-thumb {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, #f97316, #facc15);
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: left 0.3s cubic-bezier(0.4,0,0.2,1), background 0.3s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.tog-input:checked ~ .tog-track .tog-thumb {
+  left: calc(56px - 3px - 22px);
+  background: linear-gradient(135deg, #8E8EA0, #3A3A4A);
+}
+.tog-sun {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  fill: #f97316;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.tog-input:checked ~ .tog-track .tog-sun { opacity: 0.3; }
+.tog-moon {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 13px;
+  height: 13px;
+  fill: #8E8EA0;
+  opacity: 0.5;
+  transition: opacity 0.3s, fill 0.3s;
+  pointer-events: none;
+}
+.tog-input:checked ~ .tog-track .tog-moon {
+  fill: #F2F2F7;
+  opacity: 0.8;
+}
+
+/* ── PULSE ANIMATION ─────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+.pulse-dot { animation: pulse-dot 2s infinite; }
+
+/* ── CONFIDENCE RING ─────────────────────────────────────── */
+@keyframes ring-draw {
+  from { stroke-dashoffset: 220; }
+  to   { stroke-dashoffset: var(--ring-offset, 0); }
+}
+.ring-circle {
+  animation: ring-draw 1.2s cubic-bezier(0.4,0,0.2,1) forwards;
+  stroke-dasharray: 220;
+}
+
+/* ── CARD HOVER ──────────────────────────────────────────── */
+.stat-card {
+  transition: border-color 0.15s, background 0.15s;
+  border-top: 2px solid transparent;
+}
+.stat-card:hover {
+  border-top-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+/* ── QUICK ACTION CIRCLES ────────────────────────────────── */
+.qa-circle {
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.qa-circle:hover {
+  border-color: rgba(0,212,126,0.4);
+  background: var(--accent-dim);
+  transform: translateY(-2px);
+}
+
+/* ── SIDEBAR NAV ACTIVE INDICATOR ────────────────────────── */
+.nav-active-bar {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 55%;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+}
+
+/* ── INTELLIGENCE CARD ACCENT BAR ────────────────────────── */
+.intel-bar-red    { background: var(--red); }
+.intel-bar-amber  { background: var(--amber); }
+.intel-bar-green  { background: var(--accent); }
+.intel-bar-blue   { background: var(--blue); }
+
+/* ── PAGE FADE TRANSITION ────────────────────────────────── */
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: page-fade-in 0.2s ease forwards;
+}
+
+/* ── GENDHIS PULL-UP HANDLE ──────────────────────────────── */
+.gendhis-handle {
+  height: 44px;
+  position: fixed;
+  bottom: 64px;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border-top: 0.5px solid var(--border);
+  z-index: 41;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* ── UTILITY: EYEBROW LABEL ──────────────────────────────── */
+.eyebrow {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* ── TOAST ANIMATIONS ────────────────────────────────────── */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── SEE ALL LINK ─────────────────────────────────────────── */
+.see-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-3);
+  cursor: pointer;
+  position: relative;
+  padding-bottom: 1px;
+  transition: color 0.2s, gap 0.2s;
+  font-family: 'Inter', sans-serif;
+  text-decoration: none;
+  background: none;
+  border: none;
+}
+.see-all-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 0; height: 1px;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+.see-all-arrow {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+}
+.see-all-link:hover { color: var(--accent); gap: 5px; }
+.see-all-link:hover::after { width: 100%; }
+.see-all-link:hover .see-all-arrow { opacity: 1; transform: translateX(0); }
+
+/* ── FILTER PANEL ─────────────────────────────────────────── */
+.filter-panel {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-select {
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border);
+  color: var(--text-1);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  cursor: pointer;
+}
