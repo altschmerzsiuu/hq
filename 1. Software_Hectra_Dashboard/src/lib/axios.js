@@ -6,8 +6,7 @@ const getBaseUrl = () => {
     return '/api';
   }
   if (import.meta.env.VITE_API_URL) {
-    const url = import.meta.env.VITE_API_URL;
-    return url.endsWith('/api') ? url : `${url}/api`;
+    return `${import.meta.env.VITE_API_URL}/api`;
   }
   return '/api';
 };
