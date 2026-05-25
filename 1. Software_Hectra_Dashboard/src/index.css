@@ -33,8 +33,9 @@
 
   --border:     #1E1E2A;
   --border-2:   #2A2A38;
-  --bg-glass-toast: rgba(10, 10, 15, 0.35);
+  --bg-glass-toast: rgba(18, 18, 28, 0.85);
   --border-glass-toast: rgba(255, 255, 255, 0.08);
+  --shadow-toast: 0 16px 40px rgba(0, 0, 0, 0.35);
 
   /* Backwards-compat aliases for dark mode */
   --color-primary:        var(--accent);
@@ -100,8 +101,9 @@
 
   --border:     #E2E8F0;
   --border-2:   #CBD5E0;
-  --bg-glass-toast: rgba(255, 255, 255, 0.25);
-  --border-glass-toast: rgba(255, 255, 255, 0.45);
+  --bg-glass-toast: rgba(255, 255, 255, 0.9);
+  --border-glass-toast: rgba(0, 0, 0, 0.08);
+  --shadow-toast: 0 16px 40px rgba(0, 0, 0, 0.06);
 
   /* Backwards-compat aliases (for existing pages still using old tokens) */
   --color-primary:        #00A862;

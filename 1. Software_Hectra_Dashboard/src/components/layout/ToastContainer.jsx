@@ -66,7 +66,7 @@ export default function ToastContainer() {
               backdropFilter: 'blur(30px) saturate(140%)',
               WebkitBackdropFilter: 'blur(30px) saturate(140%)',
               border: '1px solid var(--border-glass-toast)',
-              boxShadow: '0 12px 40px rgba(0, 0, 0, 0.08)',
+              boxShadow: 'var(--shadow-toast)',
               fontFamily: 'Inter, system-ui, sans-serif',
               pointerEvents: 'auto',
               animation: 'toast-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards',
