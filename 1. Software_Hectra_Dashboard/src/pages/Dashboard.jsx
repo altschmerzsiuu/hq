@@ -15,6 +15,7 @@ import { toast } from '@/store/toastStore';
 import SeeAllLink from '@/components/ui/SeeAllLink';
 import PairCollarModal from '@/components/shared/PairCollarModal';
 import { useTernakStore } from '@/store/useTernakStore';
+import { useAuthStore } from '@/store/authStore';
 
 // ── CONFIDENCE RING SVG ──────────────────────────────────────
 function ConfidenceRing({ value = null, label }) {
@@ -255,6 +256,7 @@ function formatRelativeTime(isoString, lang) {
 // ── MAIN COMPONENT ───────────────────────────────────────────
 export default function Dashboard() {
   const { lang } = useSettingsStore();
+  const { user } = useAuthStore();
   const t = translations[lang];
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -516,6 +518,46 @@ export default function Dashboard() {
     fetchData();
   }, [lang]);
 
+  // Get time-based greeting and status message
+  const currentHour = new Date().getHours();
+  let greetingText = '';
+
+  if (lang === 'id') {
+    if (currentHour >= 5 && currentHour < 12) greetingText = 'Selamat pagi';
+    else if (currentHour >= 12 && currentHour < 15) greetingText = 'Selamat siang';
+    else if (currentHour >= 15 && currentHour < 18) greetingText = 'Selamat sore';
+    else greetingText = 'Selamat malam';
+  } else {
+    if (currentHour >= 5 && currentHour < 12) greetingText = 'Good morning';
+    else if (currentHour >= 12 && currentHour < 18) greetingText = 'Good afternoon';
+    else greetingText = 'Good evening';
+  }
+
+  let statusMessage = '';
+  if (stats.estrus > 0) {
+    statusMessage = lang === 'id'
+      ? `Hari ini ada ${stats.estrus} sapi yang terdeteksi estrus. Segera periksa detailnya untuk inseminasi buatan.`
+      : `We detected ${stats.estrus} cows in active estrus today. Please review the details for artificial insemination.`;
+  } else if (stats.ibWindows > 0) {
+    statusMessage = lang === 'id'
+      ? `Kondisi kandang aman. Ada ${stats.ibWindows} jadwal IB aktif yang siap Anda persiapkan.`
+      : `The barn condition is stable. There are ${stats.ibWindows} active breeding windows ready for prep.`;
+  } else if (stats.avgTemp && parseFloat(stats.avgTemp) > 39.0) {
+    statusMessage = lang === 'id'
+      ? `Semua aman, tapi suhu rata-rata ternak sedikit hangat (${stats.avgTemp}°C). Pantau ventilasi kandang ya.`
+      : `All looks good, but the herd's average temperature is slightly warm (${stats.avgTemp}°C). Keep an eye on ventilation.`;
+  } else if (stats.collars > 0) {
+    statusMessage = lang === 'id'
+      ? `Sistem aktif memantau ${stats.collars} kalung sensor. Seluruh kondisi ternak terpantau stabil.`
+      : `System is actively monitoring ${stats.collars} collar sensors. The herd status is fully stable.`;
+  } else {
+    statusMessage = lang === 'id'
+      ? `Kondisi kawanan stabil, tidak ada anomali reproduksi terdeteksi.`
+      : `Herd condition is stable, no reproductive anomalies detected.`;
+  }
+
+  const userName = user?.full_name || (lang === 'id' ? 'Peternak' : 'Farmer');
+
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -563,18 +605,7 @@ export default function Dashboard() {
             fontSize: '13px', color: 'var(--text-2)', fontFamily: 'Inter, sans-serif',
             marginTop: '8px', lineHeight: 1.6,
           }}>
-            {(() => {
-              const accuracy = stats.aiConf !== null && stats.aiConf !== undefined ? `${stats.aiConf}%` : '85%';
-              if (stats.estrus > 0) {
-                return lang === 'id'
-                  ? `${stats.estrus} indikasi estrus terdeteksi hari ini. Akurasi AI ${accuracy}.`
-                  : `${stats.estrus} estrus indications detected today. AI accuracy: ${accuracy}.`;
-              } else {
-                return lang === 'id'
-                  ? `Tidak ada anomali reproduksi terdeteksi hari ini. Akurasi AI ${accuracy}.`
-                  : `No reproductive anomalies detected today. AI accuracy: ${accuracy}.`;
-              }
-            })()}
+            {`${greetingText}, ${userName}. ${statusMessage}`}
           </p>
 
           {/* Meta row */}
