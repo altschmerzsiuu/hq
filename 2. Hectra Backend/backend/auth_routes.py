@@ -252,6 +252,7 @@ async def google_auth(request_data: GoogleAuthRequest, response: Response, pool=
         
         return {
             "message": "success",
+            "access_token": access_token,
             "user": dict(user)
         }
 
