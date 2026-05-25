@@ -24,7 +24,6 @@ export default function MainLayout() {
       wsUrl = `${protocol}//${host}/api/ws`;
     }
 
-    console.log(`📡 Connecting to Global Notification WS: ${wsUrl}`);
     let ws = new WebSocket(wsUrl);
     let reconnectTimeout = null;
 
@@ -57,7 +56,6 @@ export default function MainLayout() {
       };
 
       ws.onclose = () => {
-        console.log('⚠️ Global Notification WS disconnected. Reconnecting in 5s...');
         reconnectTimeout = setTimeout(() => {
           ws = new WebSocket(wsUrl);
           connect();
