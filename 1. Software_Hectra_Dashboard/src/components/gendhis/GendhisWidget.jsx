@@ -21,7 +21,7 @@ import { toast } from '@/store/toastStore';
 import { useAuthStore } from '@/store/authStore';
 import useConfirmStore from '@/store/confirmStore';
 
-const API_BASE = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || '/api');
+const API_BASE = import.meta.env.DEV ? '/api' : `${import.meta.env.VITE_API_URL || ''}/api`;
 
 export default function GendhisWidget() {
   const ask = useConfirmStore(state => state.ask);
