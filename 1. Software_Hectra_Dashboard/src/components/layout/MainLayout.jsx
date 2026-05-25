@@ -30,13 +30,11 @@ export default function MainLayout() {
 
     const connect = () => {
       ws.onopen = () => {
-        console.log('✅ Global Notification WS connected');
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('📡 WS Message Received:', data);
 
           if (data.type === 'ESTRUS_ALERT') {
             addNotification({
