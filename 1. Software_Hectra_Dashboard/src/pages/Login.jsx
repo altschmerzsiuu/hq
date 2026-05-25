@@ -112,12 +112,12 @@ function LeftPanel() {
       </div>
 
       {/* Social Links (Custom React + Tailwind) */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-        <ul className="flex justify-center items-center m-0 p-0 list-none">
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+        <ul style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0, listStyle: 'none', gap: '1.75rem' }}>
           {/* Instagram */}
-          <li className="group relative mx-2.5 list-none">
+          <li className="group relative list-none">
             <a
-              href="https://www.instagram.com/hectrahq.id"
+              href="https://www.instagram.com/hectra.hq"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -130,15 +130,15 @@ function LeftPanel() {
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
               </svg>
             </a>
-            <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 text-white px-2.5 py-1.5 rounded text-[10px] font-bold opacity-0 pointer-events-none invisible transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:bottom-[-42px] bg-[#E1306C] whitespace-nowrap shadow-md z-50 rounded-md">
+            <div className="hq-tooltip" style={{ backgroundColor: '#E1306C' }}>
               Instagram
             </div>
           </li>
 
           {/* YouTube */}
-          <li className="group relative mx-2.5 list-none">
+          <li className="group relative list-none">
             <a
-              href="https://www.youtube.com/@hectrahq"
+              href="https://youtube.com/@aditama7008?si=wG9YobftSXPL5_d4"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="YouTube"
@@ -150,15 +150,15 @@ function LeftPanel() {
                 <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"></polygon>
               </svg>
             </a>
-            <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 text-white px-2.5 py-1.5 rounded text-[10px] font-bold opacity-0 pointer-events-none invisible transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:bottom-[-42px] bg-[#FF0000] whitespace-nowrap shadow-md z-50 rounded-md">
+            <div className="hq-tooltip" style={{ backgroundColor: '#FF0000' }}>
               YouTube
             </div>
           </li>
 
-          {/* Webpage */}
-          <li className="group relative mx-2.5 list-none">
+          {/* Website */}
+          <li className="group relative list-none">
             <a
-              href="https://www.hectrahq.my.id"
+              href="https://terra-web-dun.vercel.app"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Website"
@@ -171,15 +171,15 @@ function LeftPanel() {
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
               </svg>
             </a>
-            <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 text-white px-2.5 py-1.5 rounded text-[10px] font-bold opacity-0 pointer-events-none invisible transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:bottom-[-42px] bg-[#00D47E] whitespace-nowrap shadow-md z-50 rounded-md">
+            <div className="hq-tooltip" style={{ backgroundColor: '#00D47E' }}>
               Website
             </div>
           </li>
 
           {/* Telegram */}
-          <li className="group relative mx-2.5 list-none">
+          <li className="group relative list-none">
             <a
-              href="https://t.me/HectraHQ_bot"
+              href="https://t.me/PeternakanSapiBot"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Telegram"
@@ -191,7 +191,7 @@ function LeftPanel() {
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
             </a>
-            <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 text-white px-2.5 py-1.5 rounded text-[10px] font-bold opacity-0 pointer-events-none invisible transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:bottom-[-42px] bg-[#0088cc] whitespace-nowrap shadow-md z-50 rounded-md">
+            <div className="hq-tooltip" style={{ backgroundColor: '#0088cc' }}>
               Telegram Bot
             </div>
           </li>
@@ -451,6 +451,32 @@ export default function Login() {
         @keyframes hq-fadeup  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html, body, #root { height: 100%; }
+        
+        /* Custom Tooltip Classes for Social Icons */
+        .hq-tooltip {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          color: #ffffff;
+          padding: 8px 16px !important;
+          border-radius: 9999px !important;
+          font-size: 11px !important;
+          font-weight: 700 !important;
+          opacity: 0;
+          pointer-events: none;
+          visibility: hidden;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          white-space: nowrap;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+          z-index: 50;
+          top: -30px;
+        }
+        .group:hover .hq-tooltip {
+          opacity: 1 !important;
+          visibility: visible !important;
+          top: -46px !important;
+        }
+
         input::placeholder { color: ${T.t2}; opacity: 0.5; font-family: 'DM Sans', system-ui, sans-serif; }
         input:-webkit-autofill {
           -webkit-box-shadow: 0 0 0 100px ${T.cardBg} inset !important;
@@ -462,8 +488,8 @@ export default function Login() {
           letter-spacing: 0.35em !important;
         }
         input[type="password"]::placeholder {
-          font-family: 'DM Sans', system-ui, sans-serif !important;
-          letter-spacing: normal !important;
+          font-family: monospace !important;
+          letter-spacing: 0.35em !important;
         }
         
         @media (max-width: 768px) {
@@ -587,7 +613,7 @@ export default function Login() {
                   {/* Baris 2: Email (Full Width) */}
                   <Field label="Email Address" icon={Mail} type="email"
                     value={email} onChange={e => setEmail(e.target.value)}
-                    placeholder="wan@farm.com" />
+                    placeholder="admin@farm.com" />
 
                   {/* Baris 3: Password + Confirm Password (Side by Side) */}
                   <div className="hq-field-row" style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
@@ -604,7 +630,7 @@ export default function Login() {
                     <FieldHalf label="Confirm Password" icon={Lock}
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                      placeholder="Re-enter"
+                      placeholder="••••••••"
                       rightEl={
                         <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.t3, display: 'flex', padding: 0, flexShrink: 0 }}>
@@ -617,7 +643,7 @@ export default function Login() {
                 <>
                   <Field label="Email Address" icon={Mail} type="email"
                     value={email} onChange={e => setEmail(e.target.value)}
-                    placeholder="wan@farm.com" />
+                    placeholder="admin@farm.com" />
                   <Field label="Password" icon={Lock}
                     type={showPassword ? 'text' : 'password'}
                     value={password} onChange={e => setPassword(e.target.value)}

@@ -6,7 +6,7 @@ Handles user registration, login, Google OAuth, and JWT token management
 from fastapi import APIRouter, HTTPException, Depends, Header, Response, Request
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import httpx
 from auth_utils import (
     create_access_token, 
@@ -63,7 +63,7 @@ async def get_current_user(request: Request, authorization: Optional[str] = Head
         if x_device_key == expected_key:
             pool = await get_db_pool()
             async with pool.acquire() as conn:
-                pref = await conn.fetchrow("SELECT user_id FROM user_preferences WHERE telegram_chat_id = $1", str(x_tg_chat_id))
+                pref = await conn.fetchrow("SELECT user_id FROM user_preferences WHERE telegram_chat_id = $1", x_tg_chat_id)
                 user = None
                 if pref:
                     user_id = pref["user_id"]
@@ -147,7 +147,7 @@ async def register(user_data: UserRegister, response: Response, pool=Depends(get
         access_token = create_access_token({"sub": str(user['id']), "email": user['email'], "role": user['role'], "full_name": user['full_name']})
         refresh_token_str = create_refresh_token({"sub": str(user['id'])})
         
-        expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         await conn.execute("""
             INSERT INTO refresh_tokens (user_id, token, expires_at)
             VALUES ($1, $2, $3)
@@ -174,7 +174,7 @@ async def login(credentials: UserLogin, response: Response, pool=Depends(get_db_
         access_token = create_access_token({"sub": str(user['id']), "email": user['email'], "role": user['role'], "full_name": user['full_name']})
         refresh_token_str = create_refresh_token({"sub": str(user['id'])})
         
-        expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         await conn.execute("""
             INSERT INTO refresh_tokens (user_id, token, expires_at)
             VALUES ($1, $2, $3)
@@ -201,12 +201,15 @@ async def google_auth(request_data: GoogleAuthRequest, response: Response, pool=
         async with httpx.AsyncClient() as client:
             resp = await client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={request_data.token}")
             if resp.status_code != 200:
-                raise HTTPException(status_code=401, detail="Invalid Google token")
+                raise HTTPException(status_code=401, detail=f"Invalid Google token info response (status: {resp.status_code})")
             google_data = resp.json()
             
             import os
             expected_client_id = os.getenv("GOOGLE_CLIENT_ID")
+            
+            # Print debug logs in backend terminal to help diagnose Client ID mismatch
             if google_data.get("aud") != expected_client_id:
+                print(f"🔑 [GOOGLE OAUTH] Token Aud mismatch detected")
                 raise HTTPException(status_code=401, detail="Invalid token audience")
             
             email = google_data.get("email")
@@ -215,7 +218,11 @@ async def google_auth(request_data: GoogleAuthRequest, response: Response, pool=
             google_id = google_data.get("sub")
             if not email:
                 raise HTTPException(status_code=400, detail="Email not provided by Google")
+    except HTTPException:
+        raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=401, detail=f"Google authentication failed: {str(e)}")
     
     async with pool.acquire() as conn:
@@ -235,7 +242,7 @@ async def google_auth(request_data: GoogleAuthRequest, response: Response, pool=
         access_token = create_access_token({"sub": str(user['id']), "email": user['email'], "role": user['role'], "full_name": user['full_name']})
         refresh_token_str = create_refresh_token({"sub": str(user['id'])})
         
-        expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         await conn.execute("""
             INSERT INTO refresh_tokens (user_id, token, expires_at)
             VALUES ($1, $2, $3)

@@ -44,11 +44,11 @@ export default function GendhistPullUpSheet() {
       {/* Main Container */}
       <div 
         className={cn(
-          "fixed md:hidden bg-white transition-all duration-300 ease-in-out flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[var(--color-border)]",
+          "fixed md:hidden bg-[var(--bg-surface)] transition-all duration-300 ease-in-out flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[var(--color-border)] overflow-hidden",
           sheetState === 'closed' ? "bottom-[100px] right-6 w-auto h-[48px] rounded-full px-4" :
           sheetState === 'peek' ? "bottom-[100px] right-6 left-6 h-[220px] rounded-3xl" :
           sheetState === 'open' ? "bottom-[100px] right-6 left-6 h-[70vh] rounded-3xl" :
-          "inset-0" // fullscreen
+          "inset-0 rounded-none" // fullscreen
         )}
         style={{ zIndex: sheetState === 'fullscreen' ? 9999 : sheetState === 'open' ? 200 : 30 }}
       >
@@ -86,7 +86,7 @@ export default function GendhistPullUpSheet() {
           <div className="px-4 py-2 animate-in fade-in slide-in-from-bottom-4 flex-1">
             <div className="flex justify-between items-center mb-4">
               <p className="text-xs font-bold text-[var(--color-text-primary)] uppercase tracking-wider">Saran Pertanyaan</p>
-              <button onClick={closeSheet} className="p-1 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200">
+              <button onClick={closeSheet} className="p-1 bg-[var(--bg-hover)] rounded-full text-[var(--text-2)] hover:bg-[var(--bg-card)] transition-colors">
                 <X size={14} />
               </button>
             </div>
@@ -108,7 +108,7 @@ export default function GendhistPullUpSheet() {
         {(sheetState === 'open' || sheetState === 'fullscreen') && (
           <div className="flex flex-col h-full animate-in fade-in">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-bg-surface)] shrink-0 rounded-t-3xl">
+            <div className="px-4 py-3 border-b border-[var(--color-border)] flex justify-between items-center bg-[var(--color-bg-surface)] shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-[var(--color-primary)] rounded-full flex items-center justify-center">
                   <Bot size={18} className="text-[var(--color-accent)]" />
@@ -120,16 +120,16 @@ export default function GendhistPullUpSheet() {
               </div>
               <div className="flex gap-2">
                 {sheetState === 'open' && (
-                  <button onClick={() => setSheetState('fullscreen')} className="p-2 text-gray-400 hover:text-[var(--color-primary)] transition-colors">
+                  <button onClick={() => setSheetState('fullscreen')} className="p-2 text-[var(--text-2)] hover:text-[var(--color-primary)] transition-colors">
                     <Maximize2 size={18} />
                   </button>
                 )}
                 {sheetState === 'fullscreen' && (
-                  <button onClick={() => setSheetState('open')} className="p-2 text-gray-400 hover:text-[var(--color-primary)] transition-colors">
+                  <button onClick={() => setSheetState('open')} className="p-2 text-[var(--text-2)] hover:text-[var(--color-primary)] transition-colors">
                     <ChevronRight size={18} className="rotate-90" />
                   </button>
                 )}
-                <button onClick={closeSheet} className="p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors">
+                <button onClick={closeSheet} className="p-2 text-[var(--text-2)] hover:bg-red-500/10 hover:text-red-400 rounded-full transition-colors">
                   <X size={18} />
                 </button>
               </div>
@@ -151,7 +151,7 @@ export default function GendhistPullUpSheet() {
             </div>
 
             {/* Input Area */}
-            <div className="p-3 border-t border-[var(--color-border)] bg-white shrink-0">
+            <div className="p-3 border-t border-[var(--color-border)] bg-[var(--bg-surface)] shrink-0">
               <div className="flex items-end gap-2 bg-[var(--color-bg-surface)] border border-[var(--color-border)] rounded-2xl p-1 shadow-sm focus-within:border-[var(--color-primary)] focus-within:ring-1 focus-within:ring-[var(--color-primary)] transition-all">
                 <textarea 
                   rows={1}

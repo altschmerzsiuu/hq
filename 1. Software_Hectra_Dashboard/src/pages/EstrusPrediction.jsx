@@ -19,22 +19,24 @@ import {
 import { cn } from '@/lib/utils';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
+import useSettingsStore from '@/store/settingsStore';
+import translations from '@/lib/i18n';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function classifyPrediction(pred) {
+function classifyPrediction(pred, t) {
   const conf  = pred.confidence_final ?? 0;
   const inWin = pred.in_window_now;
   const days  = pred.days_until;
 
   if (inWin && conf >= 0.75) {
-    return { type: 'estrus', label: '🔴 Estrus Sekarang',   color: 'red'   };
+    return { type: 'estrus', label: t.prediction_filter_estrus,   color: 'red'   };
   } else if (inWin || (days >= 0 && days <= 3 && conf >= 0.6)) {
-    return { type: 'pre-estrus', label: '🟡 Mendekati Estrus', color: 'amber' };
+    return { type: 'pre-estrus', label: t.prediction_filter_approaching, color: 'amber' };
   } else if (conf < 0.4 && !inWin) {
-    return { type: 'normal', label: '🟢 Normal',               color: 'green' };
+    return { type: 'normal', label: t.prediction_filter_normal,               color: 'green' };
   }
-  return { type: 'upcoming', label: '🔵 Terjadwal',            color: 'blue'  };
+  return { type: 'upcoming', label: `🔵 ${t.status_scheduled}`,            color: 'blue'  };
 }
 
 function colorSchemeFor(type) {
@@ -47,25 +49,25 @@ function colorSchemeFor(type) {
   return map[type] || map.upcoming;
 }
 
-function fmtDate(dateStr) {
+function fmtDate(dateStr, lang) {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(dateStr).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function fmtDays(days) {
+function fmtDays(days, t) {
   if (days === null || days === undefined) return '—';
-  if (days < 0) return `${Math.abs(days)} hari lalu`;
-  if (days === 0) return 'Hari ini!';
-  if (days === 1) return 'Besok';
-  return `${days} hari lagi`;
+  if (days < 0) return `${Math.abs(days)} ${t.prediction_card_days_ago}`;
+  if (days === 0) return t.prediction_card_today;
+  if (days === 1) return t.prediction_card_tomorrow;
+  return `${days} ${t.prediction_card_days_left}`;
 }
 
-function methodBadge(metode) {
+function methodBadge(metode, t) {
   const map = {
-    calendar_only:      { label: 'Kalender',          icon: CalendarClock, color: 'var(--blue)'  },
-    'calendar+sensor':  { label: 'Kalender + Sensor', icon: Layers,        color: 'var(--amber)' },
-    'calendar+ml':      { label: 'Kalender + ML',     icon: TrendingUp,    color: 'var(--accent)'},
-    full_hybrid:        { label: 'Full Hybrid AI',    icon: FlaskConical,  color: 'var(--red)'   },
+    calendar_only:      { label: t.prediction_method_calendar,          icon: CalendarClock, color: 'var(--blue)'  },
+    'calendar+sensor':  { label: t.prediction_method_sensor, icon: Layers,        color: 'var(--amber)' },
+    'calendar+ml':      { label: t.prediction_method_ml,     icon: TrendingUp,    color: 'var(--accent)'},
+    full_hybrid:        { label: t.prediction_method_hybrid,    icon: FlaskConical,  color: 'var(--red)'   },
   };
   return map[metode] || { label: metode || 'AI', icon: BrainCircuit, color: 'var(--text-3)' };
 }
@@ -73,6 +75,8 @@ function methodBadge(metode) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function EstrusPrediction() {
+  const { lang } = useSettingsStore();
+  const t = translations[lang];
   const location = useLocation();
   const [loading,      setLoading]      = useState(true);
   const [isPredicting, setIsPredicting] = useState(false);
@@ -88,11 +92,11 @@ export default function EstrusPrediction() {
       setPredictions(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Gagal fetch prediksi:', err);
-      toast.error('Gagal memuat data prediksi estrus.');
+      toast.error(lang === 'id' ? 'Gagal memuat data prediksi estrus.' : 'Failed to load estrus prediction data.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [lang]);
 
   useEffect(() => { fetchPredictions(); }, [fetchPredictions]);
 
@@ -103,13 +107,17 @@ export default function EstrusPrediction() {
       const res = await axiosInstance.post('/estrus-predictions/run');
       const { processed, errors } = res.data || {};
       if (errors > 0) {
-        toast.error(`Selesai: ${processed} berhasil, ${errors} gagal.`);
+        toast.error(lang === 'id' 
+          ? `Selesai: ${processed} berhasil, ${errors} gagal.` 
+          : `Completed: ${processed} succeeded, ${errors} failed.`);
       } else {
-        toast.success(`✅ Prediksi selesai! ${processed} sapi dianalisis.`);
+        toast.success(lang === 'id' 
+          ? `✅ Prediksi selesai! ${processed} sapi dianalisis.` 
+          : `✅ Prediction completed! ${processed} cows analyzed.`);
       }
       await fetchPredictions(false);
     } catch (err) {
-      toast.error('Gagal menjalankan prediksi: ' + (err.response?.data?.detail || err.message));
+      toast.error((lang === 'id' ? 'Gagal menjalankan prediksi: ' : 'Failed to run prediction: ') + (err.response?.data?.detail || err.message));
     } finally {
       setIsPredicting(false);
     }
@@ -124,14 +132,14 @@ export default function EstrusPrediction() {
 
   // ─ Filter & search ────────────────────────────────────────────────────────
   const filtered = predictions.filter(p => {
-    const cl  = classifyPrediction(p);
+    const cl  = classifyPrediction(p, t);
     const matchStatus = statusFilter === 'all' || cl.type === statusFilter;
     const matchSearch = !search || (p.cow_name || p.cow_id || '').toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchSearch;
   });
 
   // ─ Stats cards ────────────────────────────────────────────────────────────
-  const countByType = (type) => predictions.filter(p => classifyPrediction(p).type === type).length;
+  const countByType = (type) => predictions.filter(p => classifyPrediction(p, t).type === type).length;
   const inWindowNow = predictions.filter(p => p.in_window_now).length;
 
   if (loading) {
@@ -156,10 +164,10 @@ export default function EstrusPrediction() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-display font-bold text-[var(--text-1)]">
-            Prediksi Estrus AI
+            {t.prediction_title}
           </h1>
           <p className="text-[var(--text-2)] mt-1 text-sm">
-            Deteksi birahi 3-Layer: Kalender → Sensor SVM → XGBoost Historis.
+            {t.prediction_sub}
           </p>
         </div>
         <button
@@ -174,17 +182,17 @@ export default function EstrusPrediction() {
           }}
         >
           <RefreshCw className="w-4 h-4" />
-          Refresh
+          {t.btn_refresh}
         </button>
       </div>
 
       {/* ── STAT SUMMARY CARDS ────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Sapi',     value: predictions.length, color: 'var(--text-1)',   icon: Target },
-          { label: 'Estrus Sekarang',value: countByType('estrus'),       color: 'var(--red)',   icon: AlertCircle  },
-          { label: 'Mendekati',      value: countByType('pre-estrus'),   color: 'var(--amber)', icon: Clock        },
-          { label: 'Dalam Window',   value: inWindowNow,                 color: 'var(--blue)',  icon: CalendarClock },
+          { label: t.prediction_total_cows,     value: predictions.length, color: 'var(--text-1)',   icon: Target },
+          { label: t.prediction_estrus_now,value: countByType('estrus'),       color: 'var(--red)',   icon: AlertCircle  },
+          { label: t.prediction_approaching,      value: countByType('pre-estrus'),   color: 'var(--amber)', icon: Clock        },
+          { label: t.prediction_in_window,   value: inWindowNow,                 color: 'var(--blue)',  icon: CalendarClock },
         ].map(({ label, value, color, icon: Icon }) => (
           <div
             key={label}
@@ -212,17 +220,17 @@ export default function EstrusPrediction() {
                 <BrainCircuit className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-[var(--text-1)] font-display">Jalankan Prediksi</h2>
-                <p className="text-xs text-[var(--text-2)]">Semua sapi • 3-Layer AI</p>
+                <h2 className="text-base font-bold text-[var(--text-1)] font-display">{t.prediction_run_title}</h2>
+                <p className="text-xs text-[var(--text-2)]">{t.prediction_run_sub}</p>
               </div>
             </div>
 
             {/* Layers Explainer */}
             <div className="space-y-2.5 mb-6">
               {[
-                { icon: CalendarClock, color: 'var(--blue)',   title: 'Layer 1: Kalender',  desc: 'Siklus 21 hari + riwayat birahi' },
-                { icon: Layers,        color: 'var(--amber)',  title: 'Layer 2: Sensor SVM', desc: 'Gerak akselerometer + suhu tubuh' },
-                { icon: TrendingUp,    color: 'var(--accent)', title: 'Layer 3: XGBoost',   desc: 'Pola historis reproduksi' },
+                { icon: CalendarClock, color: 'var(--blue)',   title: t.prediction_layer1_title,  desc: t.prediction_layer1_desc },
+                { icon: Layers,        color: 'var(--amber)',  title: t.prediction_layer2_title, desc: t.prediction_layer2_desc },
+                { icon: TrendingUp,    color: 'var(--accent)', title: t.prediction_layer3_title,   desc: t.prediction_layer3_desc },
               ].map(({ icon: Icon, color, title, desc }) => (
                 <div key={title} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 12px', background: 'var(--bg-card)', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
                   <Icon style={{ width: 16, height: 16, color, marginTop: 2, flexShrink: 0 }} />
@@ -250,9 +258,9 @@ export default function EstrusPrediction() {
               }}
             >
               {isPredicting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Menganalisis...</>
+                <><Loader2 className="w-4 h-4 animate-spin" /> {t.prediction_run_analyzing}</>
               ) : (
-                <><Wand2 className="w-4 h-4" /> Jalankan Prediksi AI</>
+                <><Wand2 className="w-4 h-4" /> {t.prediction_run_btn}</>
               )}
             </button>
 
@@ -260,7 +268,7 @@ export default function EstrusPrediction() {
             <div style={{ marginTop: '16px', background: 'var(--blue-dim)', border: '0.5px solid var(--blue)', borderRadius: '10px', padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
               <AlertCircle style={{ width: 15, height: 15, color: 'var(--blue)', flexShrink: 0, marginTop: 1 }} />
               <p style={{ fontSize: '12px', color: 'var(--blue)', lineHeight: 1.5 }}>
-                <strong>Otomatis:</strong> Model berjalan otomatis setiap 4 jam. Tekan tombol hanya jika ada perubahan mendadak.
+                <strong>{t.prediction_note_auto}</strong> {t.prediction_note_desc}
               </p>
             </div>
           </div>
@@ -271,14 +279,19 @@ export default function EstrusPrediction() {
 
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-            <h2 className="text-xl font-bold text-[var(--text-1)] font-display">Hasil Prediksi</h2>
+            <div>
+              <h2 className="text-xl font-bold text-[var(--text-1)] font-display">{t.prediction_results_title}</h2>
+              <p style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>
+                {t.prediction_showing_count.replace('{count}', filtered.length).replace('{total}', predictions.length)}
+              </p>
+            </div>
             <div className="flex items-center gap-2 flex-wrap">
               {/* Status filter pills */}
               {[
-                { value: 'all',         label: 'Semua'   },
-                { value: 'estrus',      label: '🔴 Estrus' },
-                { value: 'pre-estrus',  label: '🟡 Dekat'  },
-                { value: 'normal',      label: '🟢 Normal' },
+                { value: 'all',         label: t.prediction_filter_all   },
+                { value: 'estrus',      label: t.prediction_filter_estrus },
+                { value: 'pre-estrus',  label: t.prediction_filter_approaching  },
+                { value: 'normal',      label: t.prediction_filter_normal },
               ].map(opt => (
                 <button
                   key={opt.value}
@@ -301,7 +314,7 @@ export default function EstrusPrediction() {
                 <Search style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'var(--text-3)' }} />
                 <input
                   type="text"
-                  placeholder="Cari sapi..."
+                  placeholder={t.prediction_search_placeholder}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   style={{
@@ -320,30 +333,22 @@ export default function EstrusPrediction() {
             <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '16px', padding: '48px 24px', textAlign: 'center' }}>
               <BrainCircuit style={{ width: 40, height: 40, color: 'var(--text-3)', margin: '0 auto 12px' }} />
               <p style={{ color: 'var(--text-2)', fontWeight: 600 }}>
-                {predictions.length === 0 ? 'Belum ada data prediksi' : 'Tidak ada yang cocok filter'}
+                {predictions.length === 0 ? t.prediction_empty_title : t.prediction_empty_filter}
               </p>
-              <p style={{ color: 'var(--text-3)', fontSize: '13px', marginTop: 6 }}>
-                {predictions.length === 0
-                  ? 'Klik "Jalankan Prediksi AI" untuk mulai analisis.'
-                  : 'Coba ubah filter atau kata kunci pencarian.'}
+              <p style={{ color: 'var(--text-3)', fontSize: '12px', marginTop: '4px' }}>
+                {predictions.length === 0 ? t.prediction_empty_sub : t.prediction_empty_filter_sub}
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filtered.map((pred) => (
-                <PredictionCard 
-                  key={pred.id} 
-                  pred={pred} 
+            <div className="space-y-4">
+              {filtered.map(p => (
+                <PredictionCard
+                  key={p.id}
+                  pred={p}
                   onFeedbackSubmitted={() => fetchPredictions(false)}
                 />
               ))}
             </div>
-          )}
-
-          {filtered.length > 0 && (
-            <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-3)', paddingTop: '8px' }}>
-              Menampilkan {filtered.length} dari {predictions.length} sapi
-            </p>
           )}
         </div>
       </div>
@@ -351,12 +356,12 @@ export default function EstrusPrediction() {
   );
 }
 
-// ── Prediction Card ───────────────────────────────────────────────────────────
-
 function PredictionCard({ pred, onFeedbackSubmitted }) {
-  const classification = classifyPrediction(pred);
+  const { lang } = useSettingsStore();
+  const t = translations[lang];
+  const classification = classifyPrediction(pred, t);
   const cs  = colorSchemeFor(classification.type);
-  const mb  = methodBadge(pred.metode);
+  const mb  = methodBadge(pred.metode, t);
   const MbIcon = mb.icon;
   const conf = Math.round((pred.confidence_final ?? 0) * 100);
   const [submitting, setSubmitting] = useState(false);
@@ -365,13 +370,13 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
     setSubmitting(true);
     try {
       await axiosInstance.post(`/estrus-predictions/${pred.id}/feedback`, { verified: isCorrect });
-      toast.success('Feedback berhasil disimpan!');
+      toast.success(lang === 'id' ? 'Feedback berhasil disimpan!' : 'Feedback successfully saved!');
       if (onFeedbackSubmitted) {
         onFeedbackSubmitted();
       }
     } catch (err) {
       console.error('Gagal menyimpan feedback:', err);
-      toast.error('Gagal mengirim feedback: ' + (err.response?.data?.detail || err.message));
+      toast.error((lang === 'id' ? 'Gagal mengirim feedback: ' : 'Failed to send feedback: ') + (err.response?.data?.detail || err.message));
     } finally {
       setSubmitting(false);
     }
@@ -408,18 +413,18 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
             </span>
             {pred.in_window_now && (
               <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: 'var(--red)', padding: '2px 8px', borderRadius: '20px' }}>
-                WINDOW AKTIF!
+                {t.prediction_card_active_window}
               </span>
             )}
           </div>
           <p style={{ fontSize: '12px', color: 'var(--text-2)', marginTop: '3px' }}>
-            {pred.breed || 'Sapi'} • {classification.label}
+            {pred.breed || (lang === 'id' ? 'Sapi' : 'Cattle')} • {classification.label}
           </p>
         </div>
 
         {/* Confidence Ring */}
         <div style={{ textAlign: 'center', flexShrink: 0 }}>
-          <p style={{ fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '4px' }}>Conf.</p>
+          <p style={{ fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '4px' }}>{t.prediction_card_conf_label}</p>
           <div style={{ position: 'relative', width: 52, height: 52 }}>
             <svg viewBox="0 0 36 36" style={{ width: 52, height: 52, transform: 'rotate(-90deg)' }}>
               <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--border)" strokeWidth="2.5" />
@@ -440,10 +445,10 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
       {/* Row 2: Date info */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingLeft: '8px' }}>
         {[
-          { label: 'Prediksi',   value: fmtDate(pred.prediksi_tanggal) },
-          { label: 'Window',     value: `${fmtDate(pred.window_awal)} – ${fmtDate(pred.window_akhir)}` },
-          { label: 'Optimal IB', value: fmtDate(pred.prediksi_ib_optimal) },
-          { label: 'Countdown',  value: fmtDays(pred.days_until), highlight: true },
+          { label: t.prediction_card_pred_label,   value: fmtDate(pred.prediksi_tanggal, lang) },
+          { label: t.prediction_card_window_label,     value: `${fmtDate(pred.window_awal, lang)} – ${fmtDate(pred.window_akhir, lang)}` },
+          { label: t.prediction_card_optimal_ib, value: fmtDate(pred.prediksi_ib_optimal, lang) },
+          { label: t.prediction_card_countdown,  value: fmtDays(pred.days_until, t), highlight: true },
         ].map(({ label, value, highlight }) => (
           <div key={label} style={{ padding: '6px 10px', background: 'var(--bg-card)', borderRadius: '8px', border: '0.5px solid var(--border)' }}>
             <p style={{ fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
@@ -486,7 +491,7 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
         {pred.verified === null || pred.verified === undefined ? (
           <>
             <span style={{ fontSize: '12px', color: 'var(--text-2)', fontWeight: 500 }}>
-              Apakah prediksi ini akurat?
+              {t.prediction_feedback_question}
             </span>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
@@ -500,7 +505,7 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
                   fontFamily: 'Inter, sans-serif'
                 }}
               >
-                Benar ✅
+                {t.prediction_feedback_correct}
               </button>
               <button
                 onClick={() => handleFeedback(false)}
@@ -513,7 +518,7 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
                   fontFamily: 'Inter, sans-serif'
                 }}
               >
-                Salah ❌
+                {t.prediction_feedback_incorrect}
               </button>
             </div>
           </>
@@ -534,7 +539,7 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
                   border: '0.5px solid rgba(16, 185, 129, 0.2)'
                 }}
               >
-                Prediksi Benar ✅
+                {t.prediction_feedback_correct_badge}
               </span>
             ) : (
               <span 
@@ -551,11 +556,11 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
                   border: '0.5px solid rgba(239, 68, 68, 0.2)'
                 }}
               >
-                Prediksi Salah ❌
+                {t.prediction_feedback_incorrect_badge}
               </span>
             )}
             <span style={{ fontSize: '11px', color: 'var(--text-3)' }}>
-              (Feedback Terkirim)
+              {t.prediction_feedback_sent}
             </span>
           </div>
         )}

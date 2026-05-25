@@ -12,41 +12,40 @@ import {
 } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 import { cn } from '@/lib/utils';
+import useSettingsStore from '@/store/settingsStore';
+import translations from '@/lib/i18n';
 
 const EVENT_CONFIG = {
   estrus: {
     color: 'border-red-200 dark:border-red-900/40 bg-red-50/70 dark:bg-red-950/20 text-red-600 dark:text-red-400',
     iconColor: 'bg-red-500 text-white',
-    icon: Activity,
-    label: 'Estrus Detected'
+    icon: Activity
   },
   insemination: {
     color: 'border-green-200 dark:border-green-900/40 bg-green-50/70 dark:bg-green-950/20 text-green-700 dark:text-green-400',
     iconColor: 'bg-green-500 text-white',
-    icon: CheckCircle,
-    label: 'Insemination'
+    icon: CheckCircle
   },
   pregnancy: {
     color: 'border-purple-200 dark:border-purple-900/40 bg-purple-50/70 dark:bg-purple-950/20 text-purple-700 dark:text-purple-400',
     iconColor: 'bg-purple-500 text-white',
-    icon: Heart,
-    label: 'Pregnancy Check'
+    icon: Heart
   },
   anomaly: {
     color: 'border-amber-200 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400',
     iconColor: 'bg-amber-500 text-white',
-    icon: AlertTriangle,
-    label: 'Anomaly Warning'
+    icon: AlertTriangle
   },
   system: {
     color: 'border-blue-200 dark:border-blue-900/40 bg-blue-50/70 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400',
     iconColor: 'bg-blue-500 text-white',
-    icon: Info,
-    label: 'System Notification'
+    icon: Info
   }
 };
 
 export default function ActivityTimeline() {
+  const { lang } = useSettingsStore();
+  const t = translations[lang];
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
@@ -109,11 +108,11 @@ export default function ActivityTimeline() {
 
       let dateLabel = '';
       if (eventDate.getTime() === today.getTime()) {
-        dateLabel = 'Hari Ini (Today)';
+        dateLabel = t.timeline_today || (lang === 'id' ? 'Hari Ini' : 'Today');
       } else if (eventDate.getTime() === yesterday.getTime()) {
-        dateLabel = 'Kemarin (Yesterday)';
+        dateLabel = t.timeline_yesterday || (lang === 'id' ? 'Kemarin' : 'Yesterday');
       } else {
-        dateLabel = new Date(event.timestamp).toLocaleDateString('id-ID', {
+        dateLabel = new Date(event.timestamp).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {
           day: 'numeric',
           month: 'long',
           year: 'numeric'
@@ -133,11 +132,11 @@ export default function ActivityTimeline() {
   const groupedEvents = groupEventsByDate(filteredEvents);
 
   const filters = [
-    { id: 'all', label: 'Semua Kategori' },
-    { id: 'estrus', label: 'Deteksi Estrus' },
-    { id: 'insemination', label: 'Inseminasi (IB)' },
-    { id: 'pregnancy', label: 'Kebuntingan' },
-    { id: 'anomaly', label: 'Anomali Perilaku' }
+    { id: 'all', label: t.timeline_filter_all },
+    { id: 'estrus', label: t.timeline_filter_estrus },
+    { id: 'insemination', label: t.timeline_filter_insemination },
+    { id: 'pregnancy', label: t.timeline_filter_pregnancy },
+    { id: 'anomaly', label: t.timeline_filter_anomaly }
   ];
 
   return (
@@ -145,8 +144,8 @@ export default function ActivityTimeline() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)]">Timeline Aktivitas Peternakan</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">Lacak semua aktivitas harian, peringatan estrus, tindakan kawin, dan kejadian anomali secara real-time.</p>
+          <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)]">{t.timeline_title}</h1>
+          <p className="text-[var(--color-text-secondary)] mt-1">{t.timeline_sub}</p>
         </div>
         <button 
           onClick={fetchEvents}
@@ -154,7 +153,7 @@ export default function ActivityTimeline() {
           className="shadow-sm self-start sm:self-auto"
         >
           <RefreshCw className="w-4 h-4" />
-          Refresh
+          {t.btn_refresh}
         </button>
       </div>
 
@@ -167,7 +166,7 @@ export default function ActivityTimeline() {
           </div>
           <input
             type="text"
-            placeholder="Cari aktivitas atau nama sapi..."
+            placeholder={t.timeline_search_placeholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ width: '100%', padding: '10px 12px 10px 38px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'var(--bg-card)', color: 'var(--text-1)', outline: 'none', fontSize: '14px', fontFamily: 'Inter, sans-serif' }}
@@ -198,15 +197,15 @@ export default function ActivityTimeline() {
         {loading ? (
           <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '16px' }} className="py-20 text-center flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-8 h-8 text-[var(--color-forest)] animate-spin" />
-            <p className="text-sm text-[var(--color-text-secondary)] italic">Sinkronisasi timeline aktivitas...</p>
+            <p className="text-sm text-[var(--color-text-secondary)] italic">{t.timeline_loading}</p>
           </div>
         ) : filteredEvents.length === 0 ? (
           <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '16px', boxShadow: 'var(--shadow-card)' }} className="py-16 text-center">
             <div style={{ background: 'var(--bg-hover)' }} className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <Clock className="w-8 h-8 text-slate-400" />
             </div>
-            <p className="text-slate-500 dark:text-slate-400 font-semibold">Tidak ada aktivitas ditemukan</p>
-            <p className="text-xs text-slate-400 mt-1">Coba sesuaikan filter Anda atau cari kata kunci lain.</p>
+            <p className="text-slate-500 dark:text-slate-400 font-semibold">{t.timeline_empty}</p>
+            <p className="text-xs text-slate-400 mt-1">{t.timeline_empty_sub}</p>
           </div>
         ) : (
           <div className="relative pl-6 border-l border-[var(--color-sage-light)]/30 space-y-8 ml-4">
@@ -224,9 +223,10 @@ export default function ActivityTimeline() {
                   {dailyEvents.map((event) => {
                     const config = EVENT_CONFIG[event.type] || EVENT_CONFIG['system'];
                     const EventIcon = config.icon;
-                    const eventTime = new Date(event.timestamp).toLocaleTimeString('id-ID', {
+                    const eventTime = new Date(event.timestamp).toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', {
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
+                      hour12: lang !== 'id'
                     });
 
                     return (

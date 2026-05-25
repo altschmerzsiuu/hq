@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel
 from typing import Optional, List
@@ -824,8 +825,9 @@ async def downsample_sensor_data():
         print(f"❌ [DOWNSAMPLE ERROR] {e}")
 
 
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
     global main_loop
     main_loop = asyncio.get_running_loop()
     print(" FastAPI Startup - Event loop captured")
@@ -866,9 +868,9 @@ async def startup_event():
     # Start Telegram Bot
     asyncio.create_task(start_telegram_bot())
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup resources"""
+    yield
+
+    # Shutdown logic
     print(" Shutting down FastAPI IoT Backend...")
     await close_db_pool()
     if mqtt_client:
@@ -876,6 +878,8 @@ async def shutdown_event():
         
     # Stop Telegram Bot
     await stop_telegram_bot()
+
+app.router.lifespan_context = lifespan
 
 # ==========================
 # PYDANTIC MODELS

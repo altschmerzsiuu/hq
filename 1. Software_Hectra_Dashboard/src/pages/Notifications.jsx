@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNotificationStore } from '@/store/notificationStore';
+import useSettingsStore from '@/store/settingsStore';
+import translations from '@/lib/i18n';
+import { toast } from '@/store/toastStore';
 
 const ICON_MAP = {
   critical: AlertTriangle,
@@ -19,12 +22,14 @@ const ICON_MAP = {
 };
 
 export default function Notifications() {
+  const { lang } = useSettingsStore();
+  const t = translations[lang];
   const { notifications, unreadCount, markAllAsRead, markAsRead, fetchNotifications } = useNotificationStore();
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     fetchNotifications();
-  }, [fetchNotifications]);
+  }, [fetchNotifications, lang]);
 
   const filteredNotifs = notifications.filter(n => {
     if (filter === 'unread') return !n.read;
@@ -32,36 +37,41 @@ export default function Notifications() {
     return true;
   });
 
+  const handleMarkAllAsRead = () => {
+    markAllAsRead();
+    toast.success(t.notif_toast_read_all);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl mx-auto">
         <div>
           <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)] flex items-center gap-3">
-            Pusat Notifikasi
+            {t.notif_page_title}
             {unreadCount > 0 && (
               <span className="bg-[var(--color-danger)] text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center justify-center">
                 {unreadCount}
               </span>
             )}
           </h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">Kelola pemberitahuan sistem dan peringatan sensor.</p>
+          <p className="text-[var(--color-text-secondary)] mt-1">{t.notif_page_sub}</p>
         </div>
         
         <button 
-          onClick={markAllAsRead}
+          onClick={handleMarkAllAsRead}
           disabled={unreadCount === 0}
           className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-sm font-medium text-[var(--text-2)] hover:text-[var(--accent)] transition-colors disabled:opacity-50 shadow-sm"
         >
-          <Check className="w-4 h-4" /> Tandai Semua Dibaca
+          <Check className="w-4 h-4" /> {t.notif_mark_all_read}
         </button>
       
       <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', boxShadow: 'var(--shadow-card)', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
         
         {/* TABS */}
         <div className="flex items-center border-b border-[var(--color-sage-light)]/30 overflow-x-auto">
-          <TabButton active={filter === 'all'} onClick={() => setFilter('all')}>Semua</TabButton>
-          <TabButton active={filter === 'unread'} onClick={() => setFilter('unread')}>Belum Dibaca</TabButton>
+          <TabButton active={filter === 'all'} onClick={() => setFilter('all')}>{t.notif_tab_all}</TabButton>
+          <TabButton active={filter === 'unread'} onClick={() => setFilter('unread')}>{t.notif_tab_unread}</TabButton>
           <TabButton active={filter === 'critical'} onClick={() => setFilter('critical')}>
-            <span className="flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5 text-[var(--color-danger)]" /> Kritis</span>
+            <span className="flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5 text-[var(--color-danger)]" /> {t.notif_tab_critical}</span>
           </TabButton>
         </div>
 
@@ -70,7 +80,7 @@ export default function Notifications() {
           {filteredNotifs.length === 0 ? (
             <div className="p-8 text-center text-[var(--color-text-muted)]">
               <Bell className="w-8 h-8 mx-auto mb-3 opacity-20" />
-              <p>Tidak ada notifikasi di kategori ini.</p>
+              <p>{t.notif_empty}</p>
             </div>
           ) : (
             filteredNotifs.map((n) => {

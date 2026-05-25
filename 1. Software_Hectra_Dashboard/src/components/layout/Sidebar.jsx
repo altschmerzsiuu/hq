@@ -88,7 +88,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
           isOpen: dataMgmtOpen,
           toggle: () => setDataMgmtOpen(!dataMgmtOpen),
           subItems: [
-            { name: 'Manajemen Ternak', path: '/ternak', icon: Beef },
+            { name: t.nav_livestock, path: '/ternak', icon: Beef },
             { name: t.nav_repro_records, path: '/reproduction', icon: Heart },
             { name: t.nav_live_signals, path: '/sensor-data', icon: Cpu },
           ]
@@ -100,7 +100,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
       items: [
         { name: t.nav_estrus_intel, path: '/estrus-prediction', icon: Zap },
         { name: t.nav_herd_analytics, path: '/behavior-analytics', icon: PieChart },
-        { name: 'Activity Timeline', path: '/activity-timeline', icon: Clock },
+        { name: t.nav_activity_timeline, path: '/activity-timeline', icon: Clock },
         { name: t.nav_recommendations, path: '/recommendations', icon: Lightbulb },
       ]
     },
@@ -426,7 +426,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
               </div>
               <div style={{ padding: '6px' }}>
                 {[
-                  { icon: User, label: 'Pengaturan', action: () => { navigate('/settings'); setProfileMenuOpen(false); } },
+                  { icon: User, label: t.nav_settings, action: () => { navigate('/settings'); setProfileMenuOpen(false); } },
                 ].map(({ icon: I, label, action }) => (
                   <button
                     key={label}
@@ -457,7 +457,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
                   className="hover:bg-[var(--red-dim)]"
                 >
                   <LogOut size={14} />
-                  Keluar
+                  {t.btn_logout}
                 </button>
               </div>
             </div>

@@ -24,46 +24,50 @@ import {
 import { cn } from '@/lib/utils';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
+import useSettingsStore from '@/store/settingsStore';
+import translations from '@/lib/i18n';
 
-function formatLastSync(lastSyncStr) {
-  if (!lastSyncStr) return 'Tidak Pernah';
+function formatLastSync(lastSyncStr, t) {
+  if (!lastSyncStr) return t.sensor_sync_never;
   const lastSync = new Date(lastSyncStr);
   const diffMs = new Date() - lastSync;
   const diffMin = Math.max(0, Math.floor(diffMs / 60000));
   
-  if (diffMin < 1) return 'Baru saja';
-  if (diffMin < 60) return `${diffMin} menit lalu`;
+  if (diffMin < 1) return t.sensor_sync_just_now;
+  if (diffMin < 60) return `${diffMin} ${t.sensor_sync_min_ago}`;
   const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours} jam lalu`;
+  if (diffHours < 24) return `${diffHours} ${t.sensor_sync_hr_ago}`;
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} hari lalu`;
+  return `${diffDays} ${t.sensor_sync_days_ago}`;
 }
 
-function getSignalStrength(lastSyncStr) {
-  if (!lastSyncStr) return 'Lemah';
+function getSignalStrength(lastSyncStr, t) {
+  if (!lastSyncStr) return t.sensor_signal_weak;
   const lastSync = new Date(lastSyncStr);
   const diffMs = new Date() - lastSync;
   const diffMin = Math.max(0, Math.floor(diffMs / 60000));
   
-  if (diffMin < 5) return 'Kuat';
-  if (diffMin < 30) return 'Sedang';
-  return 'Lemah';
+  if (diffMin < 5) return t.sensor_signal_strong;
+  if (diffMin < 30) return t.sensor_signal_medium;
+  return t.sensor_signal_weak;
 }
 
-function formatActivity(state) {
-  if (!state) return 'Normal';
+function formatActivity(state, t) {
+  if (!state) return t.sensor_act_normal;
   const map = {
-    RESTING: 'Istirahat',
-    EATING: 'Makan',
-    RUMINATING: 'Memamah Biak',
-    ESTRUS: 'Estrus / Aktif',
-    SICK: 'Sakit',
-    UNKNOWN: 'Normal'
+    RESTING: t.sensor_act_resting,
+    EATING: t.sensor_act_eating,
+    RUMINATING: t.sensor_act_ruminating,
+    ESTRUS: t.sensor_act_estrus,
+    SICK: t.sensor_act_sick,
+    UNKNOWN: t.sensor_act_normal
   };
   return map[state.toUpperCase()] || state;
 }
 
 export default function SensorData() {
+  const { lang } = useSettingsStore();
+  const t = translations[lang];
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState('');
@@ -95,10 +99,9 @@ export default function SensorData() {
             rfid: cow.rfid || cow.cow_id,
             cowName: cow.nama || 'Sapi',
             temp: cow.temp,
-            activity: formatActivity(cow.activity_state),
+            activityState: cow.activity_state,
             battery: cow.battery,
-            signal: getSignalStrength(cow.last_sync),
-            lastSync: formatLastSync(cow.last_sync),
+            lastSyncRaw: cow.last_sync,
             status: status
           };
         });
@@ -108,7 +111,7 @@ export default function SensorData() {
       // Process telemetry data for chart (chronological order)
       const sortedTelemetry = [...(telemetryRes.data || [])].reverse();
       const formattedChart = sortedTelemetry.map(d => {
-        const timeStr = d.batch_ts ? new Date(d.batch_ts).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '—';
+        const timeStr = d.batch_ts ? new Date(d.batch_ts).toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
         return {
           time: timeStr,
           temp: d.temperature !== null ? parseFloat(d.temperature.toFixed(1)) : null,
@@ -119,11 +122,11 @@ export default function SensorData() {
       setChartData(formattedChart);
 
       if (!showMainLoader) {
-        toast.success('Data sensor berhasil disinkronkan.');
+        toast.success(t.sensor_sync_success);
       }
     } catch (err) {
       console.error('Gagal memuat data sensor:', err);
-      toast.error('Gagal mengambil data sensor terbaru.');
+      toast.error(t.sensor_sync_failed);
     } finally {
       setLoading(false);
       setSyncing(false);
@@ -158,8 +161,8 @@ export default function SensorData() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)]">Data Sensor</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">Pantau suhu, aktivitas, dan status baterai IoT Collar.</p>
+          <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)]">{t.sensor_title}</h1>
+          <p className="text-[var(--color-text-secondary)] mt-1">{t.sensor_sub}</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -168,7 +171,7 @@ export default function SensorData() {
             className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border border-[var(--border)] rounded-lg text-sm font-medium text-[var(--text-2)] hover:text-[var(--accent)] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RefreshCw className={cn("w-4 h-4", syncing && "animate-spin text-[var(--accent)]")} />
-            {syncing ? 'Sinkronisasi...' : 'Sinkronisasi'}
+            {syncing ? t.sensor_syncing : t.btn_refresh}
           </button>
         </div>
       </div>
@@ -176,15 +179,15 @@ export default function SensorData() {
       {/* CHART AREA */}
       <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', boxShadow: 'var(--shadow-card)', padding: '24px', border: '0.5px solid var(--border)' }}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] font-display">Grafik Real-time (Rata-rata Kandang)</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] font-display">{t.sensor_chart_title}</h2>
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-[var(--color-warning)]"></span>
-              <span className="text-[var(--color-text-secondary)]">Suhu (°C)</span>
+              <span className="text-[var(--color-text-secondary)]">{t.sensor_chart_temp}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-[var(--color-forest)]"></span>
-              <span className="text-[var(--color-text-secondary)]">Aktivitas</span>
+              <span className="text-[var(--color-text-secondary)]">{t.sensor_chart_activity}</span>
             </div>
           </div>
         </div>
@@ -192,7 +195,7 @@ export default function SensorData() {
           {chartData.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center">
               <Activity className="w-10 h-10 text-[var(--color-text-muted)] mb-2" />
-              <p className="text-sm font-medium text-[var(--color-text-secondary)]">Belum ada rekaman telemetry untuk grafik</p>
+              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{lang === 'id' ? 'Belum ada rekaman telemetry untuk grafik' : 'No telemetry records for chart yet'}</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -229,7 +232,7 @@ export default function SensorData() {
             </div>
             <input
               type="text"
-              placeholder="Cari ID Collar, Nama, atau RFID..."
+              placeholder={t.sensor_search_placeholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="block w-full pl-10 pr-3 py-2 border border-[var(--border)] rounded-lg leading-5 bg-[var(--bg-card)] text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] text-sm transition-colors"
@@ -246,104 +249,109 @@ export default function SensorData() {
         <div className="hidden md:block overflow-x-auto">
           {filteredTableData.length === 0 ? (
             <div className="text-center p-8 text-[var(--color-text-secondary)]">
-              Tidak ada collar aktif yang ditemukan.
+              {t.sensor_empty}
             </div>
           ) : (
             <table className="min-w-full divide-y divide-[var(--color-sage-light)]/30">
               <thead style={{ background: 'var(--bg-card)' }}>
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-                    Sapi / Collar
+                    {t.sensor_table_cow_collar}
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-                    Suhu
+                    {t.sensor_table_temp}
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-                    Aktivitas
+                    {t.sensor_table_activity}
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-                    Baterai & Sinyal
+                    {t.sensor_table_battery_signal}
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-                    Terakhir Sync
+                    {t.sensor_table_last_sync}
                   </th>
                   <th scope="col" className="relative px-6 py-3">
-                    <span className="sr-only">Aksi</span>
+                    <span className="sr-only">{lang === 'id' ? 'Aksi' : 'Action'}</span>
                   </th>
                 </tr>
               </thead>
               <tbody style={{ background: 'var(--bg-surface)' }} className="divide-y divide-[var(--border)]">
-                {filteredTableData.map((row) => (
-                  <tr key={row.id} className="hover:bg-[var(--color-cream)]/30 transition-colors group">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className={cn(
-                          "flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center border",
-                          row.status === 'warning' ? 'bg-[var(--amber-dim)] border-[var(--amber)] text-[var(--amber)]' :
-                          row.status === 'critical' ? 'bg-[var(--red-dim)] border-[var(--red)] text-[var(--red)]' :
-                          'bg-[var(--accent-dim)] border-[var(--accent-border)] text-[var(--accent)]'
-                        )}>
-                          <Activity className="h-5 w-5" />
+                {filteredTableData.map((row) => {
+                  const activityLabel = formatActivity(row.activityState, t);
+                  const signalLabel = getSignalStrength(row.lastSyncRaw, t);
+                  const lastSyncLabel = formatLastSync(row.lastSyncRaw, t);
+                  return (
+                    <tr key={row.id} className="hover:bg-[var(--color-cream)]/30 transition-colors group">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className={cn(
+                            "flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center border",
+                            row.status === 'warning' ? 'bg-[var(--amber-dim)] border-[var(--amber)] text-[var(--amber)]' :
+                            row.status === 'critical' ? 'bg-[var(--red-dim)] border-[var(--red)] text-[var(--red)]' :
+                            'bg-[var(--accent-dim)] border-[var(--accent-border)] text-[var(--accent)]'
+                          )}>
+                            <Activity className="h-5 w-5" />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-semibold text-[var(--color-text-primary)]">{row.cowName}</div>
+                            <div className="text-xs text-[var(--color-text-secondary)] font-medium">Collar: {row.id}</div>
+                          </div>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-semibold text-[var(--color-text-primary)]">{row.cowName}</div>
-                          <div className="text-xs text-[var(--color-text-secondary)] font-medium">Collar: {row.id}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <Thermometer className={cn(
-                          "w-4 h-4", 
-                          row.temp !== null && row.temp >= 39.0 ? "text-[var(--color-danger)]" : "text-[var(--color-text-muted)]"
-                        )} />
-                        <span className={cn(
-                          "text-sm font-medium",
-                          row.temp !== null && row.temp >= 39.0 ? "text-[var(--color-danger)] font-bold" : "text-[var(--color-text-secondary)]"
-                        )}>
-                          {row.temp !== null ? `${row.temp}°C` : '—'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={cn(
-                        "px-2.5 py-0.5 inline-flex text-xs leading-5 font-medium rounded-full border",
-                        row.activity === 'Estrus / Aktif' || row.activity === 'Tinggi' ? "bg-amber-50 text-amber-700 border-amber-200" :
-                        row.activity === 'Sakit' ? "bg-red-50 text-red-700 border-red-200" :
-                        row.activity === 'Istirahat' ? "bg-slate-50 text-slate-600 border-slate-200" :
-                        "bg-green-50 text-green-700 border-green-200"
-                      )}>
-                        {row.activity}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-4">
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
-                          <Battery className={cn(
-                            "w-4 h-4",
-                            row.battery !== null && row.battery <= 20 ? "text-[var(--color-danger)]" : "text-[var(--color-text-muted)]"
+                          <Thermometer className={cn(
+                            "w-4 h-4", 
+                            row.temp !== null && row.temp >= 39.0 ? "text-[var(--color-danger)]" : "text-[var(--color-text-muted)]"
                           )} />
                           <span className={cn(
-                            "text-sm",
-                            row.battery !== null && row.battery <= 20 ? "text-[var(--color-danger)] font-medium" : "text-[var(--color-text-secondary)]"
-                          )}>{row.battery !== null ? `${row.battery}%` : '—'}</span>
+                            "text-sm font-medium",
+                            row.temp !== null && row.temp >= 39.0 ? "text-[var(--color-danger)] font-bold" : "text-[var(--color-text-secondary)]"
+                          )}>
+                            {row.temp !== null ? `${row.temp}°C` : '—'}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
-                          <Wifi className="w-4 h-4 text-[var(--color-text-muted)]" />
-                          <span className="text-sm">{row.signal}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={cn(
+                          "px-2.5 py-0.5 inline-flex text-xs leading-5 font-medium rounded-full border",
+                          row.activityState === 'ESTRUS' ? "bg-amber-50 text-amber-700 border-amber-200" :
+                          row.activityState === 'SICK' ? "bg-red-50 text-red-700 border-red-200" :
+                          row.activityState === 'RESTING' ? "bg-slate-50 text-slate-600 border-slate-200" :
+                          "bg-green-50 text-green-700 border-green-200"
+                        )}>
+                          {activityLabel}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5">
+                            <Battery className={cn(
+                              "w-4 h-4",
+                              row.battery !== null && row.battery <= 20 ? "text-[var(--color-danger)]" : "text-[var(--color-text-muted)]"
+                            )} />
+                            <span className={cn(
+                              "text-sm",
+                              row.battery !== null && row.battery <= 20 ? "text-[var(--color-danger)] font-medium" : "text-[var(--color-text-secondary)]"
+                            )}>{row.battery !== null ? `${row.battery}%` : '—'}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[var(--color-text-secondary)]">
+                            <Wifi className="w-4 h-4 text-[var(--color-text-muted)]" />
+                            <span className="text-sm">{signalLabel}</span>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-secondary)]">
-                      {row.lastSync}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-[var(--color-text-muted)] hover:text-[var(--color-forest)] transition-colors p-1 rounded-md hover:bg-[var(--color-sage-light)]/20 opacity-0 group-hover:opacity-100 focus:opacity-100">
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-secondary)]">
+                        {lastSyncLabel}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button className="text-[var(--color-text-muted)] hover:text-[var(--color-forest)] transition-colors p-1 rounded-md hover:bg-[var(--color-sage-light)]/20 opacity-0 group-hover:opacity-100 focus:opacity-100">
+                          <MoreVertical className="w-5 h-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -353,66 +361,71 @@ export default function SensorData() {
         <div className="block md:hidden space-y-3 p-4">
           {filteredTableData.length === 0 ? (
             <div className="text-center py-4 text-[var(--color-text-secondary)]">
-              Tidak ada collar aktif yang ditemukan.
+              {t.sensor_empty}
             </div>
           ) : (
-            filteredTableData.map((row) => (
-              <div key={row.id} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className={cn(
-                      "h-8 w-8 rounded-full flex items-center justify-center border",
-                      row.status === 'warning' ? 'bg-[var(--amber-dim)] border-[var(--amber)] text-[var(--amber)]' :
-                      row.status === 'critical' ? 'bg-[var(--red-dim)] border-[var(--red)] text-[var(--red)]' :
-                      'bg-[var(--accent-dim)] border-[var(--accent-border)] text-[var(--accent)]'
+            filteredTableData.map((row) => {
+              const activityLabel = formatActivity(row.activityState, t);
+              const signalLabel = getSignalStrength(row.lastSyncRaw, t);
+              const lastSyncLabel = formatLastSync(row.lastSyncRaw, t);
+              return (
+                <div key={row.id} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className={cn(
+                        "h-8 w-8 rounded-full flex items-center justify-center border",
+                        row.status === 'warning' ? 'bg-[var(--amber-dim)] border-[var(--amber)] text-[var(--amber)]' :
+                        row.status === 'critical' ? 'bg-[var(--red-dim)] border-[var(--red)] text-[var(--red)]' :
+                        'bg-[var(--accent-dim)] border-[var(--accent-border)] text-[var(--accent)]'
+                      )}>
+                        <Activity className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm" style={{ color: 'var(--text-1)' }}>{row.cowName}</p>
+                        <p className="text-[11px]" style={{ color: 'var(--text-3)' }}>Collar: {row.id}</p>
+                      </div>
+                    </div>
+                    <span className={cn(
+                      "text-[10px] px-2 py-0.5 rounded-full font-bold border",
+                      row.activityState === 'ESTRUS' ? "bg-amber-50 text-amber-700 border-amber-200" :
+                      row.activityState === 'SICK' ? "bg-red-50 text-red-700 border-red-200" :
+                      row.activityState === 'RESTING' ? "bg-slate-50 text-slate-600 border-slate-200" :
+                      "bg-green-50 text-green-700 border-green-200"
                     )}>
-                      <Activity className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm" style={{ color: 'var(--text-1)' }}>{row.cowName}</p>
-                      <p className="text-[11px]" style={{ color: 'var(--text-3)' }}>Collar: {row.id}</p>
-                    </div>
-                  </div>
-                  <span className={cn(
-                    "text-[10px] px-2 py-0.5 rounded-full font-bold border",
-                    row.activity === 'Estrus / Aktif' || row.activity === 'Tinggi' ? "bg-amber-50 text-amber-700 border-amber-200" :
-                    row.activity === 'Sakit' ? "bg-red-50 text-red-700 border-red-200" :
-                    row.activity === 'Istirahat' ? "bg-slate-50 text-slate-600 border-slate-200" :
-                    "bg-green-50 text-green-700 border-green-200"
-                  )}>
-                    {row.activity}
-                  </span>
-                </div>
-                <div className="space-y-1.5 text-xs" style={{ color: 'var(--text-2)' }}>
-                  <div className="flex justify-between">
-                    <span>Suhu</span>
-                    <span className={cn(
-                      "font-bold",
-                      row.temp !== null && row.temp >= 39.0 ? "text-[var(--color-danger)]" : ""
-                    )} style={{ color: row.temp !== null && row.temp >= 39.0 ? undefined : 'var(--text-1)' }}>
-                      {row.temp !== null ? `${row.temp}°C` : '—'}
+                      {activityLabel}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Baterai</span>
-                    <span className={cn(
-                      "font-bold",
-                      row.battery !== null && row.battery <= 20 ? "text-[var(--color-danger)]" : ""
-                    )} style={{ color: row.battery !== null && row.battery <= 20 ? undefined : 'var(--text-1)' }}>
-                      {row.battery !== null ? `${row.battery}%` : '—'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Sinyal</span>
-                    <span style={{ color: 'var(--text-1)' }} className="font-semibold">{row.signal}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Terakhir Sync</span>
-                    <span style={{ color: 'var(--text-3)' }}>{row.lastSync}</span>
+                  <div className="space-y-1.5 text-xs" style={{ color: 'var(--text-2)' }}>
+                    <div className="flex justify-between">
+                      <span>{t.sensor_table_temp}</span>
+                      <span className={cn(
+                        "font-bold",
+                        row.temp !== null && row.temp >= 39.0 ? "text-[var(--color-danger)]" : ""
+                      )} style={{ color: row.temp !== null && row.temp >= 39.0 ? undefined : 'var(--text-1)' }}>
+                        {row.temp !== null ? `${row.temp}°C` : '—'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{lang === 'id' ? 'Baterai' : 'Battery'}</span>
+                      <span className={cn(
+                        "font-bold",
+                        row.battery !== null && row.battery <= 20 ? "text-[var(--color-danger)]" : ""
+                      )} style={{ color: row.battery !== null && row.battery <= 20 ? undefined : 'var(--text-1)' }}>
+                        {row.battery !== null ? `${row.battery}%` : '—'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{lang === 'id' ? 'Sinyal' : 'Signal'}</span>
+                      <span style={{ color: 'var(--text-1)' }} className="font-semibold">{signalLabel}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t.sensor_table_last_sync}</span>
+                      <span style={{ color: 'var(--text-3)' }}>{lastSyncLabel}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
         
@@ -421,7 +434,7 @@ export default function SensorData() {
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-[var(--color-text-secondary)]">
-                Menampilkan <span className="font-medium">1</span> sampai <span className="font-medium">{filteredTableData.length}</span> dari <span className="font-medium">{filteredTableData.length}</span> hasil
+                {t.sensor_pag_showing} <span className="font-medium">1</span> {t.sensor_pag_to} <span className="font-medium">{filteredTableData.length}</span> {t.sensor_pag_of} <span className="font-medium">{filteredTableData.length}</span> {t.sensor_pag_results}
               </p>
             </div>
             <div>

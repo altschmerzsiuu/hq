@@ -21,8 +21,12 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
 import axiosInstance from '@/lib/axios';
 import regionData from '@/data/indonesia-region.json';
+import useSettingsStore from '@/store/settingsStore';
+import translations from '@/lib/i18n';
 
 export default function Settings() {
+  const { lang, setLang } = useSettingsStore();
+  const t = translations[lang];
   const user = useAuthStore(state => state.user);
 
   const [activeTab, setActiveTab] = useState('profile');
@@ -31,7 +35,6 @@ export default function Settings() {
   // Tab 1: Profile
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [language, setLanguage] = useState('id');
   const [createdAt, setCreatedAt] = useState('--');
   const [lastLogin, setLastLogin] = useState('--');
 
@@ -82,7 +85,6 @@ export default function Settings() {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
-  const geocodeDebounceRef = useRef(null);
 
   // ─── Derived helpers ─────────────────────────────────────────────────────────
 
@@ -232,7 +234,7 @@ export default function Settings() {
   const handleSearchOnMap = async () => {
     const query = buildAddressString();
     if (!query || query === 'Indonesia') {
-      toast.error('Isi detail alamat terlebih dahulu.');
+      toast.error(lang === 'id' ? 'Isi detail alamat terlebih dahulu.' : 'Please fill in address details first.');
       return;
     }
     setGeoSearching(true);
@@ -245,12 +247,12 @@ export default function Settings() {
         const { lat, lon } = data[0];
         setLatitude(parseFloat(parseFloat(lat).toFixed(6)));
         setLongitude(parseFloat(parseFloat(lon).toFixed(6)));
-        toast.success('Lokasi ditemukan & pin dipindahkan!');
+        toast.success(lang === 'id' ? 'Lokasi ditemukan & pin dipindahkan!' : 'Location found and pin moved!');
       } else {
-        toast.error('Lokasi tidak ditemukan. Coba perjelas alamat.');
+        toast.error(lang === 'id' ? 'Lokasi tidak ditemukan. Coba perjelas alamat.' : 'Location not found. Try clarifying address.');
       }
     } catch {
-      toast.error('Gagal mencari lokasi. Cek koneksi internet.');
+      toast.error(lang === 'id' ? 'Gagal mencari lokasi. Cek koneksi internet.' : 'Failed to search location. Check internet connection.');
     } finally {
       setGeoSearching(false);
     }
@@ -259,7 +261,7 @@ export default function Settings() {
   // ─── Load profile on mount ────────────────────────────────────────────────────
   useEffect(() => {
     loadProfileAndSettings();
-  }, []);
+  }, [lang]);
 
   const loadProfileAndSettings = async () => {
     setLoading(true);
@@ -273,8 +275,8 @@ export default function Settings() {
         const u = data.user || {};
         setFullName(u.full_name || '');
         setEmail(u.email || '');
-        setCreatedAt(u.created_at ? new Date(u.created_at).toLocaleDateString('id-ID', { dateStyle: 'long' }) : '--');
-        setLastLogin(u.last_login_at ? new Date(u.last_login_at).toLocaleString('id-ID') : '--');
+        setCreatedAt(u.created_at ? new Date(u.created_at).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { dateStyle: 'long' }) : '--');
+        setLastLogin(u.last_login_at ? new Date(u.last_login_at).toLocaleString(lang === 'id' ? 'id-ID' : 'en-US') : '--');
 
         const f = data.farm || {};
         setFarmName(f.farm_name || '');
@@ -290,16 +292,14 @@ export default function Settings() {
         if (f.city_id) setSelectedCity(f.city_id);
         if (f.postal_code) setSelectedPostal(f.postal_code);
 
-        const p = data.preferences || {};
-        setLanguage(p.language || 'id');
         profileLoaded = true;
       }
     } catch (err) {
       console.warn('Profile fetch failed, loading offline defaults', err);
       setFullName(user?.full_name || 'Iwan Prianto');
       setEmail(user?.email || 'wan@farm.com');
-      setCreatedAt(new Date().toLocaleDateString('id-ID', { dateStyle: 'long' }));
-      setLastLogin(new Date().toLocaleString('id-ID'));
+      setCreatedAt(new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { dateStyle: 'long' }));
+      setLastLogin(new Date().toLocaleString(lang === 'id' ? 'id-ID' : 'en-US'));
       setFarmName('Peternakan DeAraf');
       setStreetAddress('Jalan Ahmad Yani');
       setTotalCapacity(150);
@@ -387,10 +387,10 @@ export default function Settings() {
           farm_location: buildAddressString(),
         }),
       ]);
-      toast.success('Profil & Detail Peternakan berhasil diperbarui!');
+      toast.success(lang === 'id' ? 'Profil & Detail Peternakan berhasil diperbarui!' : 'Profile & Farm Details successfully updated!');
       loadProfileAndSettings();
     } catch {
-      toast.error('Gagal memperbarui profil atau detail peternakan.');
+      toast.error(lang === 'id' ? 'Gagal memperbarui profil atau detail peternakan.' : 'Failed to update profile or farm details.');
     } finally {
       setLoading(false);
     }
@@ -403,9 +403,9 @@ export default function Settings() {
     try {
       await axiosInstance.put('/user/telegram-settings', { telegram_chat_id: telegramChatId });
       setTgSavedBadge(true);
-      toast.success('Chat ID Telegram berhasil disimpan!');
+      toast.success(lang === 'id' ? 'Chat ID Telegram berhasil disimpan!' : 'Telegram Chat ID saved successfully!');
     } catch {
-      toast.error('Gagal menyimpan Chat ID.');
+      toast.error(lang === 'id' ? 'Gagal menyimpan Chat ID.' : 'Failed to save Chat ID.');
     } finally {
       setLoading(false);
     }
@@ -415,9 +415,9 @@ export default function Settings() {
     setLoading(true);
     try {
       await axiosInstance.post('/user/telegram-test');
-      toast.success('Pesan test terkirim! Periksa Telegram kamu.');
+      toast.success(lang === 'id' ? 'Pesan test terkirim! Periksa Telegram kamu.' : 'Test message sent! Check your Telegram.');
     } catch {
-      toast.error('Gagal mengirim test alert.');
+      toast.error(lang === 'id' ? 'Gagal mengirim test alert.' : 'Failed to send test alert.');
     } finally {
       setLoading(false);
     }
@@ -434,20 +434,20 @@ export default function Settings() {
     if (type === 'daily') setNotifDaily(checked);
     try {
       await axiosInstance.put('/user/notification-preferences', updated);
-      toast.success('Preferensi notifikasi diperbarui!');
+      toast.success(lang === 'id' ? 'Preferensi notifikasi diperbarui!' : 'Notification preferences updated!');
     } catch {
-      toast.error('Gagal menyimpan preferensi.');
+      toast.error(lang === 'id' ? 'Gagal menyimpan preferensi.' : 'Failed to save notification preferences.');
     }
   };
 
   const handleSaveSecurity = async (e) => {
     e.preventDefault();
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error('Mohon isi semua kolom password.');
+      toast.error(lang === 'id' ? 'Mohon isi semua kolom password.' : 'Please fill all password fields.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error('Konfirmasi password baru tidak cocok.');
+      toast.error(lang === 'id' ? 'Konfirmasi password baru tidak cocok.' : 'New password confirmation does not match.');
       return;
     }
     setLoading(true);
@@ -456,10 +456,10 @@ export default function Settings() {
         current_password: currentPassword,
         new_password: newPassword,
       });
-      toast.success('Password berhasil diubah!');
+      toast.success(lang === 'id' ? 'Password berhasil diubah!' : 'Password changed successfully!');
       setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Gagal mengubah password.');
+      toast.error(err.response?.data?.detail || (lang === 'id' ? 'Gagal mengubah password.' : 'Failed to change password.'));
     } finally {
       setLoading(false);
     }
@@ -473,11 +473,11 @@ export default function Settings() {
       await axiosInstance.post('/admin/users/invite', {
         email: inviteEmail, full_name: inviteName, role: inviteRole,
       });
-      toast.success(`Undangan dikirim ke ${inviteEmail}!`);
+      toast.success(lang === 'id' ? `Undangan dikirim ke ${inviteEmail}!` : `Invitation sent to ${inviteEmail}!`);
       setInviteName(''); setInviteEmail('');
       loadTeamMembers();
     } catch {
-      toast.error('Gagal mengundang anggota tim.');
+      toast.error(lang === 'id' ? 'Gagal mengundang anggota tim.' : 'Failed to invite team member.');
     } finally {
       setTeamLoading(false);
     }
@@ -487,10 +487,10 @@ export default function Settings() {
     setTeamLoading(true);
     try {
       await axiosInstance.put(`/admin/users/${memberId}/role`, { role: newRole });
-      toast.success('Role berhasil diperbarui!');
+      toast.success(lang === 'id' ? 'Role berhasil diperbarui!' : 'Role updated successfully!');
       loadTeamMembers();
     } catch {
-      toast.error('Gagal memperbarui role.');
+      toast.error(lang === 'id' ? 'Gagal memperbarui role.' : 'Failed to update role.');
       setTeamLoading(false);
     }
   };
@@ -509,18 +509,18 @@ export default function Settings() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-display font-bold text-[var(--text-1)]">Profile & Settings</h1>
-        <p className="text-[var(--text-2)] mt-1 text-sm">Kelola detail profil akun, parameter peternakan, dan integrasi alert bot Telegram.</p>
+        <h1 className="text-2xl md:text-3xl font-display font-bold text-[var(--text-1)]">{t.settings_title}</h1>
+        <p className="text-[var(--text-2)] mt-1 text-sm">{t.settings_sub}</p>
       </div>
 
       {/* Tab Bar */}
       <div className="flex border-b border-[var(--border)] overflow-x-auto pb-0.5 gap-1 scrollbar-none">
         {[
-          { id: 'profile', icon: User, label: 'General' },
-          { id: 'telegram', icon: Send, label: 'Telegram & Alert' },
-          { id: 'security', icon: Key, label: 'Security' },
+          { id: 'profile', icon: User, label: t.settings_tab_general },
+          { id: 'telegram', icon: Send, label: t.settings_tab_telegram },
+          { id: 'security', icon: Key, label: t.settings_tab_security },
           ...((['owner', 'admin'].includes(user?.role))
-            ? [{ id: 'team', icon: Users, label: 'Team Management' }]
+            ? [{ id: 'team', icon: Users, label: t.settings_tab_team }]
             : []),
         ].map(({ id, icon: Icon, label }) => (
           <button
@@ -572,7 +572,7 @@ export default function Settings() {
                   {fullName ? fullName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : '--'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm md:text-base font-bold text-[var(--text-1)] truncate">{fullName || 'Operator'}</p>
+                  <p className="text-sm md:text-base font-bold text-[var(--text-1)] truncate">{fullName || (lang === 'id' ? 'Operator' : 'Operator')}</p>
                   <p className="text-xs text-[var(--text-2)] truncate">{email || 'admin@farm.com'}</p>
                 </div>
               </div>
@@ -580,15 +580,15 @@ export default function Settings() {
               {/* ── Section: Personal Information ── */}
               <section className="space-y-4">
                 <h3 className="text-xs font-black uppercase tracking-wider text-[var(--accent)] border-b border-[var(--border)] pb-1.5 flex items-center gap-1.5">
-                  <User className="w-4 h-4" /> Personal Information
+                  <User className="w-4 h-4" /> {t.settings_personal_info}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Full Name</label>
-                    <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className={inputClass} placeholder="Nama Lengkap Anda" />
+                    <label className={labelClass}>{t.settings_full_name}</label>
+                    <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className={inputClass} placeholder={lang === 'id' ? 'Nama Lengkap Anda' : 'Your Full Name'} />
                   </div>
                   <div>
-                    <label className={labelClass}>Email Address</label>
+                    <label className={labelClass}>{t.settings_email}</label>
                     <input type="email" value={email} onChange={e => setEmail(e.target.value)} className={inputClass} placeholder="nama@email.com" />
                   </div>
                 </div>
@@ -597,25 +597,25 @@ export default function Settings() {
               {/* ── Section: Farm Details ── */}
               <section className="space-y-5">
                 <h3 className="text-xs font-black uppercase tracking-wider text-[var(--accent)] border-b border-[var(--border)] pb-1.5 flex items-center gap-1.5">
-                  <Globe className="w-4 h-4" /> Farm Details
+                  <Globe className="w-4 h-4" /> {t.settings_farm_details}
                 </h3>
 
                 {/* Farm name + type + capacity — 3-col on desktop */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="sm:col-span-2 lg:col-span-1">
-                    <label className={labelClass}>Nama Peternakan</label>
-                    <input type="text" value={farmName} onChange={e => setFarmName(e.target.value)} placeholder="Peternakan Jaya Abadi" className={inputClass} />
+                    <label className={labelClass}>{t.settings_farm_name}</label>
+                    <input type="text" value={farmName} onChange={e => setFarmName(e.target.value)} placeholder={lang === 'id' ? 'Peternakan Jaya Abadi' : 'Jaya Abadi Farm'} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>Tipe Peternakan</label>
+                    <label className={labelClass}>{t.settings_farm_type}</label>
                     <select value={farmType} onChange={e => setFarmType(e.target.value)} className={inputClass}>
-                      <option value="dairy">Sapi Perah (Dairy Farm)</option>
-                      <option value="beef">Sapi Potong (Beef Farm)</option>
-                      <option value="breeding">Pembibitan (Breeding Center)</option>
+                      <option value="dairy">{t.settings_type_dairy}</option>
+                      <option value="beef">{t.settings_type_beef}</option>
+                      <option value="breeding">{t.settings_type_breeding}</option>
                     </select>
                   </div>
                   <div>
-                    <label className={labelClass}>Kapasitas Kandang</label>
+                    <label className={labelClass}>{t.settings_farm_capacity}</label>
                     <input type="number" value={totalCapacity} onChange={e => setTotalCapacity(e.target.value)} placeholder="150" className={inputClass} />
                   </div>
                 </div>
@@ -623,11 +623,11 @@ export default function Settings() {
                 {/* Capacity bar */}
                 <div className="p-4 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] flex items-center justify-between gap-4 shadow-sm">
                   <div>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Jumlah Sapi Terdaftar</p>
-                    <p className="text-2xl font-black text-[var(--accent)] mt-0.5">{currentCattleCount} <span className="text-sm font-semibold text-[var(--text-2)]">sapi</span></p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{t.settings_total_registered}</p>
+                    <p className="text-2xl font-black text-[var(--accent)] mt-0.5">{currentCattleCount} <span className="text-sm font-semibold text-[var(--text-2)]">{lang === 'id' ? 'sapi' : 'cows'}</span></p>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Kapasitas Terpakai</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t.settings_capacity_used}</span>
                     <span className="text-sm font-bold text-[var(--text-1)] block mt-0.5">
                       {totalCapacity ? Math.round((currentCattleCount / totalCapacity) * 100) : 0}%
                     </span>
@@ -637,31 +637,31 @@ export default function Settings() {
                 {/* ── Address block ── */}
                 <div className="space-y-3 p-4 md:p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-base)]">
                   <p className="text-xs font-black uppercase tracking-wider text-[var(--text-2)] flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5" /> Lokasi Peternakan
+                    <MapPin className="w-3.5 h-3.5" /> {t.settings_farm_location}
                   </p>
 
                   {/* Row 1: Province + City/Kab (2-col) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className={labelClass}>Provinsi</label>
+                      <label className={labelClass}>{t.settings_province}</label>
                       <select
                         value={selectedProv}
                         onChange={e => { setSelectedProv(e.target.value); setSelectedCity(''); setSelectedPostal(''); }}
                         className={inputClass}
                       >
-                        <option value="">Pilih Provinsi...</option>
+                        <option value="">{lang === 'id' ? 'Pilih Provinsi...' : 'Select Province...'}</option>
                         {regionData.map(p => <option key={p.id} value={p.id}>{p.nama}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className={labelClass}>Kota / Kabupaten</label>
+                      <label className={labelClass}>{t.settings_city}</label>
                       <select
                         value={selectedCity}
                         onChange={e => { setSelectedCity(e.target.value); setSelectedPostal(''); }}
                         disabled={!selectedProv}
                         className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
-                        <option value="">Pilih Kota/Kab...</option>
+                        <option value="">{lang === 'id' ? 'Pilih Kota/Kab...' : 'Select City/Regency...'}</option>
                         {currentProv?.cities.map(c => <option key={c.id} value={c.id}>{c.nama}</option>)}
                       </select>
                     </div>
@@ -670,17 +670,17 @@ export default function Settings() {
                   {/* Row 2: Street address + Postal code (3:1 ratio) */}
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                     <div className="sm:col-span-3">
-                      <label className={labelClass}>Alamat Jalan / Detail</label>
+                      <label className={labelClass}>{t.settings_street_address}</label>
                       <input
                         type="text"
                         value={streetAddress}
                         onChange={e => setStreetAddress(e.target.value)}
-                        placeholder="Jalan, RT/RW, Dusun, Kelurahan, Kecamatan..."
+                        placeholder={lang === 'id' ? 'Jalan, RT/RW, Dusun, Kelurahan, Kecamatan...' : 'Street, RT/RW, Sub-district, District...'}
                         className={inputClass}
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>Kode Pos</label>
+                      <label className={labelClass}>{t.settings_postal_code}</label>
                       <select
                         value={selectedPostal}
                         onChange={e => setSelectedPostal(e.target.value)}
@@ -701,15 +701,15 @@ export default function Settings() {
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] hover:bg-[var(--bg-hover)] hover:text-[var(--accent)] hover:border-[var(--accent)] text-xs font-bold text-[var(--text-2)] rounded-xl transition-all shadow-sm disabled:opacity-50"
                   >
                     {geoSearching
-                      ? <><Loader2 size={14} className="animate-spin" /> Mencari di peta...</>
-                      : <><Search size={14} /> Cari & Pindahkan Pin di Peta</>
+                      ? <><Loader2 size={14} className="animate-spin" /> {t.settings_searching_map}</>
+                      : <><Search size={14} /> {t.settings_search_map}</>
                     }
                   </button>
 
                   {/* Coordinates — compact 2-col */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={labelClass}>Latitude</label>
+                      <label className={labelClass}>{t.settings_latitude}</label>
                       <div className="relative">
                         <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--accent)]" />
                         <input
@@ -721,7 +721,7 @@ export default function Settings() {
                       </div>
                     </div>
                     <div>
-                      <label className={labelClass}>Longitude</label>
+                      <label className={labelClass}>{t.settings_longitude}</label>
                       <div className="relative">
                         <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-3)]" />
                         <input
@@ -741,7 +741,7 @@ export default function Settings() {
                     style={{ height: '260px', width: '100%', zIndex: 1 }}
                   />
                   <p className="text-[10px] text-[var(--text-3)] text-center">
-                    Klik di peta atau seret pin untuk mengatur lokasi exact peternakan.
+                    {t.settings_map_help}
                   </p>
                 </div>
               </section>
@@ -749,11 +749,11 @@ export default function Settings() {
               {/* Account meta */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[var(--border)]">
                 <div>
-                  <p className="text-[10px] text-[var(--text-3)] font-black uppercase tracking-wider">Account Created</p>
+                  <p className="text-[10px] text-[var(--text-3)] font-black uppercase tracking-wider">{t.settings_created_at}</p>
                   <p className="text-xs font-bold text-[var(--text-1)] mt-1">{createdAt}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-[var(--text-3)] font-black uppercase tracking-wider">Last Login</p>
+                  <p className="text-[10px] text-[var(--text-3)] font-black uppercase tracking-wider">{t.settings_last_login}</p>
                   <p className="text-xs font-bold text-[var(--text-1)] mt-1">{lastLogin}</p>
                 </div>
               </div>
@@ -761,7 +761,7 @@ export default function Settings() {
               {/* Save button */}
               <div className="flex justify-end pt-2">
                 <button type="submit" className="flex items-center gap-2 px-5 py-3 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95">
-                  <Save className="w-4 h-4" /> Save Changes
+                  <Save className="w-4 h-4" /> {t.settings_save_changes}
                 </button>
               </div>
             </form>
@@ -773,20 +773,26 @@ export default function Settings() {
           {activeTab === 'telegram' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div>
-                <h2 className="text-lg font-bold text-[var(--text-1)] font-display border-b border-[var(--border)] pb-2 mb-2">Telegram & Notifications</h2>
-                <p className="text-xs text-[var(--text-2)]">Konfigurasikan integrasi bot Telegram untuk pemberitahuan estrus otomatis.</p>
+                <h2 className="text-lg font-bold text-[var(--text-1)] font-display border-b border-[var(--border)] pb-2 mb-2">{t.settings_telegram_title}</h2>
+                <p className="text-xs text-[var(--text-2)]">{t.settings_telegram_desc}</p>
               </div>
 
-              <div className={`p-4 rounded-xl border text-xs font-bold flex items-center gap-3 ${tgSavedBadge
-                  ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
-                  : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300'
-                }`}>
+              <div
+                style={{
+                  backgroundColor: tgSavedBadge ? 'var(--accent-dim)' : 'var(--amber-dim)',
+                  borderColor: tgSavedBadge ? 'var(--accent-border)' : 'rgba(184, 122, 10, 0.3)',
+                  color: tgSavedBadge ? 'var(--accent)' : 'var(--amber)',
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                }}
+                className="p-4 rounded-xl text-xs font-bold flex items-center gap-3"
+              >
                 {tgSavedBadge ? (
                   <Check className="w-5 h-5 flex-shrink-0" />
                 ) : (
                   <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                 )}
-                <span>{tgSavedBadge ? 'Bot Telegram Terhubung Aktif!' : 'Lengkapi Chat ID di bawah untuk mengaktifkan bot.'}</span>
+                <span>{tgSavedBadge ? t.settings_telegram_connected : t.settings_telegram_disconnected}</span>
               </div>
 
               <form onSubmit={handleSaveTelegramId} className="space-y-5">
@@ -794,21 +800,21 @@ export default function Settings() {
                   <div className="flex items-center justify-between mb-1.5">
                     <label className={labelClass}>
                       Telegram Chat ID
-                      {tgSavedBadge && <span className="ml-2 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-[9px] font-bold rounded-full">Tersimpan</span>}
+                      {tgSavedBadge && <span className="ml-2 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-[9px] font-bold rounded-full">{t.settings_telegram_saved}</span>}
                     </label>
                     <button type="button" onClick={() => setShowGuide(!showGuide)} className="text-xs text-[var(--accent)] hover:underline font-bold">
-                      {showGuide ? 'Sembunyikan' : 'Lihat Panduan'}
+                      {showGuide ? t.settings_telegram_hide : t.settings_telegram_show}
                     </button>
                   </div>
 
                   {showGuide && (
                     <div className="mb-4 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs text-slate-600 dark:text-slate-300 space-y-2.5 animate-in slide-in-from-top-2 duration-300 shadow-sm">
-                      <p className="font-bold text-slate-700 dark:text-slate-200">Langkah mendapatkan Chat ID:</p>
+                      <p className="font-bold text-slate-700 dark:text-slate-200">{t.settings_telegram_guide_title}</p>
                       <ol className="list-decimal pl-4 space-y-1.5 font-semibold">
-                        <li>Buka Telegram, cari <a href="https://t.me/chatIDrobot" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-bold hover:underline">@chatIDrobot</a>.</li>
-                        <li>Kirim perintah <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-[10px]">/start</code>.</li>
-                        <li>Salin deretan angka (Chat ID) dan tempel di bawah.</li>
-                        <li className="text-[10px] text-slate-400 italic">Panduan menutup otomatis dalam 30 detik.</li>
+                        <li>{lang === 'id' ? 'Buka Telegram, cari' : 'Open Telegram, search for'} <a href="https://t.me/chatIDrobot" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-bold hover:underline">@chatIDrobot</a>.</li>
+                        <li>{lang === 'id' ? 'Kirim perintah' : 'Send command'} <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-[10px]">/start</code>.</li>
+                        <li>{t.settings_telegram_guide_step3}</li>
+                        <li className="text-[10px] text-slate-400 italic">{t.settings_telegram_guide_footer}</li>
                       </ol>
                     </div>
                   )}
@@ -818,7 +824,7 @@ export default function Settings() {
                       type={showChatId ? 'text' : 'password'}
                       value={telegramChatId}
                       onChange={e => { setTelegramChatId(e.target.value); setTgSavedBadge(false); }}
-                      placeholder="Contoh: 128472910"
+                      placeholder={lang === 'id' ? 'Contoh: 128472910' : 'Example: 128472910'}
                       className={`${inputClass} pr-12 font-mono`}
                     />
                     <button type="button" onClick={() => setShowChatId(!showChatId)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
@@ -829,37 +835,55 @@ export default function Settings() {
 
                 <div className="flex gap-3">
                   <button type="button" onClick={handleTestTelegram} disabled={!tgSavedBadge} className="flex items-center gap-2 px-4 py-3 border border-[var(--border)] rounded-xl text-xs font-bold text-[var(--text-1)] bg-[var(--bg-base)] hover:bg-[var(--bg-hover)] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm">
-                    Test Koneksi
+                    {t.settings_telegram_test}
                   </button>
                   <button type="submit" disabled={!telegramChatId} className="flex items-center gap-2 px-5 py-3 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl text-xs font-bold shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                    Simpan Chat ID
+                    {t.settings_telegram_save_btn}
                   </button>
                 </div>
               </form>
 
               {/* Notification Preferences */}
               <div className="pt-6 border-t border-[var(--border)] space-y-4">
-                <h3 className="text-sm font-bold text-[var(--text-1)] font-display">Notification Preferences</h3>
+                <h3 className="text-sm font-bold text-[var(--text-1)] font-display">{t.settings_notif_pref}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    { key: 'estrus', label: 'Estrus Alerts', badge: 'Telegram & Email', badgeColor: 'emerald', checked: notifEstrus },
-                    { key: 'anomaly', label: 'Anomaly Alerts', badge: 'Telegram Only', badgeColor: 'amber', checked: notifAnomaly },
-                    { key: 'daily', label: 'Daily Summary', badge: 'Telegram & Email', badgeColor: 'blue', checked: notifDaily },
-                    { key: 'breeding', label: 'Breeding Reminders', badge: 'Calendar & Email', badgeColor: 'purple', checked: notifBreeding },
-                  ].map(({ key, label, badge, badgeColor, checked }) => (
-                    <div key={key} className="flex items-center justify-between p-3.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] shadow-sm">
-                      <div>
-                        <span className="text-xs font-bold text-[var(--text-1)] block">{label}</span>
-                        <span className={`text-[9px] font-semibold mt-1 inline-block px-2 py-0.5 rounded-full bg-${badgeColor}-50 dark:bg-${badgeColor}-950/20 text-${badgeColor}-600 dark:text-${badgeColor}-400`}>
-                          {badge}
-                        </span>
+                    { key: 'estrus', label: lang === 'id' ? 'Peringatan Estrus' : 'Estrus Alerts', badge: lang === 'id' ? 'Telegram & Email' : 'Telegram & Email', badgeColor: 'emerald', checked: notifEstrus },
+                    { key: 'anomaly', label: lang === 'id' ? 'Peringatan Anomali' : 'Anomaly Alerts', badge: lang === 'id' ? 'Telegram Saja' : 'Telegram Only', badgeColor: 'amber', checked: notifAnomaly },
+                    { key: 'daily', label: lang === 'id' ? 'Ringkasan Harian' : 'Daily Summary', badge: lang === 'id' ? 'Telegram & Email' : 'Telegram & Email', badgeColor: 'blue', checked: notifDaily },
+                    { key: 'breeding', label: lang === 'id' ? 'Pengingat Perkawinan' : 'Breeding Reminders', badge: lang === 'id' ? 'Kalender & Email' : 'Calendar & Email', badgeColor: 'purple', checked: notifBreeding },
+                  ].map(({ key, label, badge, badgeColor, checked }) => {
+                    const badgeStyles = {
+                      emerald: { bg: 'var(--accent-dim)', text: 'var(--accent)', border: 'var(--accent-border)' },
+                      amber: { bg: 'var(--amber-dim)', text: 'var(--amber)', border: 'rgba(184, 122, 10, 0.2)' },
+                      blue: { bg: 'var(--blue-dim)', text: 'var(--blue)', border: 'rgba(26, 96, 145, 0.2)' },
+                      purple: { bg: 'rgba(168, 85, 247, 0.08)', text: 'rgb(168, 85, 247)', border: 'rgba(168, 85, 247, 0.2)' },
+                    }[badgeColor] || { bg: 'var(--accent-dim)', text: 'var(--accent)', border: 'var(--accent-border)' };
+
+                    return (
+                      <div key={key} className="flex items-center justify-between p-3.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] shadow-sm">
+                        <div>
+                          <span className="text-xs font-bold text-[var(--text-1)] block">{label}</span>
+                          <span
+                            style={{
+                              backgroundColor: badgeStyles.bg,
+                              color: badgeStyles.text,
+                              borderColor: badgeStyles.border,
+                              borderWidth: '1px',
+                              borderStyle: 'solid',
+                            }}
+                            className="text-[9px] font-bold mt-1.5 inline-block px-2.5 py-0.5 rounded-full"
+                          >
+                            {badge}
+                          </span>
+                        </div>
+                        <Toggle
+                          checked={checked}
+                          onChange={e => key === 'breeding' ? setNotifBreeding(e.target.checked) : handleTogglePreference(key, e.target.checked)}
+                        />
                       </div>
-                      <Toggle
-                        checked={checked}
-                        onChange={e => key === 'breeding' ? setNotifBreeding(e.target.checked) : handleTogglePreference(key, e.target.checked)}
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -871,34 +895,34 @@ export default function Settings() {
           {activeTab === 'security' && (
             <form onSubmit={handleSaveSecurity} className="space-y-6 animate-in fade-in duration-300">
               <div className="flex items-center gap-2 border-b border-[var(--border)] pb-2 mb-4">
-                <h2 className="text-lg font-bold text-[var(--text-1)] font-display">Security</h2>
+                <h2 className="text-lg font-bold text-[var(--text-1)] font-display">{t.settings_security_title}</h2>
                 <div className="relative group">
                   <div className="w-5 h-5 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-slate-400 hover:text-[var(--accent)] hover:border-[var(--accent)] cursor-help transition-all">i</div>
                   <div className="absolute left-0 top-7 w-72 p-3.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-2)] text-[11px] font-semibold rounded-xl shadow-xl opacity-0 scale-95 origin-top-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50">
                     <div className="absolute top-0 left-2 -translate-y-1 w-2.5 h-2.5 bg-[var(--bg-surface)] border-t border-l border-[var(--border)] rotate-45" />
                     <p className="relative leading-relaxed">
-                      <strong className="text-[var(--accent)]">Catatan:</strong> Ubah password hanya tersedia untuk akun Email/Password. Akun Google OAuth tidak dapat mengubah password di sini.
+                      <strong className="text-[var(--accent)]">{lang === 'id' ? 'Catatan:' : 'Note:'}</strong> {t.settings_security_info}
                     </p>
                   </div>
                 </div>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className={labelClass}>Current Password</label>
-                  <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="Masukkan password saat ini" className={inputClass} />
+                  <label className={labelClass}>{t.settings_current_pass}</label>
+                  <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder={lang === 'id' ? 'Masukkan password saat ini' : 'Enter current password'} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>New Password</label>
-                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Minimal 8 karakter" className={inputClass} />
+                  <label className={labelClass}>{t.settings_new_pass}</label>
+                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={lang === 'id' ? 'Minimal 8 karakter' : 'Minimum 8 characters'} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Confirm New Password</label>
-                  <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Ketik ulang password baru" className={inputClass} />
+                  <label className={labelClass}>{t.settings_confirm_pass}</label>
+                  <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={lang === 'id' ? 'Ketik ulang password baru' : 'Retype new password'} className={inputClass} />
                 </div>
               </div>
               <div className="pt-4 flex justify-end">
                 <button type="submit" className="flex items-center gap-2 px-5 py-3 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95">
-                  <Save className="w-4 h-4" /> Change Password
+                  <Save className="w-4 h-4" /> {t.settings_change_pass_btn}
                 </button>
               </div>
             </form>
@@ -910,24 +934,24 @@ export default function Settings() {
           {activeTab === 'team' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div>
-                <h2 className="text-lg font-bold text-[var(--text-1)] font-display border-b border-[var(--border)] pb-2 mb-2">Team Management</h2>
-                <p className="text-xs text-[var(--text-2)]">Kelola tim pengelola peternakan, atur role, dan kirim undangan anggota baru.</p>
+                <h2 className="text-lg font-bold text-[var(--text-1)] font-display border-b border-[var(--border)] pb-2 mb-2">{t.settings_team_title}</h2>
+                <p className="text-xs text-[var(--text-2)]">{t.settings_team_desc}</p>
               </div>
 
               <form onSubmit={handleInviteTeam} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4 shadow-sm">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-1)] flex items-center gap-1.5">
-                  <UserPlus className="w-4 h-4 text-[var(--accent)]" /> Undang Anggota Baru
+                  <UserPlus className="w-4 h-4 text-[var(--accent)]" /> {t.settings_invite_title}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <input type="text" value={inviteName} onChange={e => setInviteName(e.target.value)} placeholder="Nama Lengkap" required className={inputClass} />
-                  <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="Alamat Email" required className={inputClass} />
+                  <input type="text" value={inviteName} onChange={e => setInviteName(e.target.value)} placeholder={lang === 'id' ? 'Nama Lengkap' : 'Full Name'} required className={inputClass} />
+                  <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder={lang === 'id' ? 'Alamat Email' : 'Email Address'} required className={inputClass} />
                   <div className="flex gap-2">
                     <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className={inputClass}>
-                      <option value="worker">Worker / Operator</option>
+                      <option value="worker">{t.settings_role_worker} / Operator</option>
                       <option value="admin">Administrator</option>
                     </select>
                     <button type="submit" disabled={teamLoading} className="px-4 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center shrink-0">
-                      Kirim
+                      {t.settings_invite_send}
                     </button>
                   </div>
                 </div>
@@ -940,22 +964,22 @@ export default function Settings() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-[var(--border)] bg-slate-50 dark:bg-slate-900/60 text-[9px] font-black uppercase text-[var(--text-3)] tracking-wider">
-                        <th className="px-4 py-3">Nama Anggota</th>
-                        <th className="px-4 py-3">Email</th>
-                        <th className="px-4 py-3 text-right">Role</th>
+                        <th className="px-4 py-3">{t.settings_table_name}</th>
+                        <th className="px-4 py-3">{t.settings_table_email}</th>
+                        <th className="px-4 py-3 text-right">{t.settings_table_role}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)] text-xs font-semibold text-[var(--text-2)]">
                       {teamMembers.map(m => (
                         <tr key={m.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                          <td className="px-4 py-3.5 font-bold text-[var(--text-1)]">{m.full_name || 'Tanpa Nama'}</td>
+                          <td className="px-4 py-3.5 font-bold text-[var(--text-1)]">{m.full_name || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}</td>
                           <td className="px-4 py-3.5 font-mono text-[var(--text-3)]">{m.email}</td>
                           <td className="px-4 py-3.5 text-right">
                             {m.role === 'owner'
-                              ? <span className="px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full font-bold text-[9px]">Owner</span>
+                              ? <span className="px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full font-bold text-[9px]">{t.settings_role_owner}</span>
                               : <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs text-right cursor-pointer">
-                                <option value="worker">Worker</option>
-                                <option value="admin">Admin</option>
+                                <option value="worker">{t.settings_role_worker}</option>
+                                <option value="admin">{t.settings_role_admin}</option>
                               </select>
                             }
                           </td>

@@ -22,7 +22,7 @@ export default function MobileBottomNav() {
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: Wifi,  label: t.nav_live_signals || 'Sensor',  path: '/sensor-data' },
     { isScan: true },
-    { icon: Beef, label: 'Ternak',    path: '/ternak' },
+    { icon: Beef, label: t.nav_livestock_short || 'Cattle',    path: '/ternak' },
     { icon: Bell, label: t.nav_alerts || 'Notif', path: '/notifications' },
   ];
 

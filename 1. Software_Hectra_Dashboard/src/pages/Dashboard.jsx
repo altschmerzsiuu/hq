@@ -658,7 +658,7 @@ export default function Dashboard() {
             fetchSapiList();
             setIsReproModalOpen(true);
           }} />
-          <QAButton icon={Cpu}      label="Pair Collar" onClick={() => setIsPairModalOpen(true)} />
+          <QAButton icon={Cpu}      label={t.qa_pair_collar} onClick={() => setIsPairModalOpen(true)} />
           <QAButton icon={Zap}      label={t.qa_run_prediction} onClick={() => navigate('/estrus-prediction', { state: { runPredict: true } })} />
           <QAButton icon={FileText} label={t.qa_export} onClick={handleExportPDF} />
         </div>
@@ -766,7 +766,7 @@ export default function Dashboard() {
           <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">
-                {lang === 'id' ? 'Catat Reproduksi Baru' : 'Record New Reproduction'}
+                {t.repro_record_new}
               </h2>
               <button onClick={() => setIsReproModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]">
                 <X size={20} />
@@ -776,7 +776,7 @@ export default function Dashboard() {
             <form className="space-y-4" onSubmit={onTambahReproduksi}>
               <div>
                 <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
-                  {lang === 'id' ? 'Pilih Sapi *' : 'Select Cow *'}
+                  {t.repro_select_cow}
                 </label>
                 <select 
                   style={{ width: '100%', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'var(--bg-surface)', color: 'var(--text-1)', outline: 'none', fontFamily: 'Inter, sans-serif' }}
@@ -784,7 +784,7 @@ export default function Dashboard() {
                   value={reproForm.rfid}
                   onChange={e => setReproForm({...reproForm, rfid: e.target.value})}
                 >
-                  <option value="">-- {lang === 'id' ? 'Pilih Sapi' : 'Choose Cow'} --</option>
+                  <option value="">-- {t.repro_choose_cow} --</option>
                   {sapiList.map(s => (
                     <option key={s.id} value={s.id}>{s.nama} ({s.id})</option>
                   ))}
@@ -793,7 +793,7 @@ export default function Dashboard() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">Tanggal IB *</label>
+                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_ib_date}</label>
                   <input 
                     type="date" 
                     style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
@@ -804,16 +804,16 @@ export default function Dashboard() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">Jumlah IB (Ke-) *</label>
+                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_ib_count}</label>
                   <input type="number" min="1" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.jumlah_ib} onChange={e => setReproForm({...reproForm, jumlah_ib: e.target.value})}/>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">Pemberi IB *</label>
+                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_inseminator}</label>
                 <input 
                   type="text" 
-                  placeholder="Nama Inseminator" 
+                  placeholder={t.repro_inseminator_placeholder} 
                   style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
                   className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" 
                   value={reproForm.pemberi_ib}
@@ -823,38 +823,38 @@ export default function Dashboard() {
 
               <div className="p-4 bg-[var(--color-bg-surface)] border border-[var(--color-border)] rounded-2xl space-y-4">
                 <h4 className="text-sm font-bold text-[var(--color-primary)] flex items-center gap-2">
-                  <Calendar size={16}/> Kalkulator Otomatis
+                  <Calendar size={16}/> {t.repro_auto_calculator}
                 </h4>
                 <div>
-                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">Tanggal Birahi</label>
+                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_estrus_date}</label>
                   <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.birahi} onChange={handleBirahiChange}/>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">Prediksi Bunting</label>
+                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_pregnancy_pred}</label>
                     <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm" value={reproForm.bunting} onChange={e => setReproForm({...reproForm, bunting: e.target.value})} />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">Estimasi HPL</label>
+                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_estimated_hpl}</label>
                     <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--color-primary)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm font-bold" value={reproForm.hpl} onChange={e => setReproForm({...reproForm, hpl: e.target.value})} />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">Tanggal Sapih (Opsional)</label>
+                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_weaning_date}</label>
                 <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.sapih} onChange={e => setReproForm({...reproForm, sapih: e.target.value})} />
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">Catatan</label>
-                <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder="Tambahkan catatan khusus..." value={reproForm.catatan} onChange={e => setReproForm({...reproForm, catatan: e.target.value})} />
+                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_notes}</label>
+                <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({...reproForm, catatan: e.target.value})} />
               </div>
 
               <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ padding: '10px 24px', border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>Batal</button>
+                <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ padding: '10px 24px', border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>{t.btn_cancel}</button>
                 <button type="submit" className="flex-1 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg" disabled={reproLoading}>
-                  {reproLoading ? "Menyimpan..." : "Simpan Riwayat"}
+                  {reproLoading ? t.repro_saving : t.repro_save}
                 </button>
               </div>
             </form>

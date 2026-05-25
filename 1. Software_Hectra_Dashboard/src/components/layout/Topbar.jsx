@@ -100,21 +100,31 @@ export default function Topbar({ onMenuClick }) {
       {/* Right: Lang + Theme + Bell */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
 
-        {/* Language Dropdown */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <Globe size={13} style={{ color: 'var(--text-3)' }} />
+        {/* Language Dropdown (Enlarged with real flags & larger click area) */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <Globe size={14} style={{ color: 'var(--text-2)', position: 'absolute', left: '10px', pointerEvents: 'none', zIndex: 1 }} />
           <select
             value={lang}
             onChange={(e) => setLang(e.target.value)}
             style={{
-              fontSize: '11px', fontWeight: 600, fontFamily: 'Inter, sans-serif',
-              color: 'var(--text-2)', background: 'transparent', border: 'none',
-              cursor: 'pointer', outline: 'none', paddingRight: '2px',
+              fontSize: '12px',
+              fontWeight: 700,
+              fontFamily: 'Inter, sans-serif',
+              color: 'var(--text-1)',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              outline: 'none',
+              padding: '6px 12px 6px 30px',
               appearance: 'none',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+              transition: 'border-color 0.15s, background-color 0.15s',
             }}
+            className="hover:border-[var(--accent)] hover:bg-[var(--bg-hover)]"
           >
-            <option value="id">ID</option>
-            <option value="en">EN</option>
+            <option value="id" style={{ background: 'var(--bg-surface)', color: 'var(--text-1)' }}>🇮🇩 ID</option>
+            <option value="en" style={{ background: 'var(--bg-surface)', color: 'var(--text-1)' }}>🇬🇧 EN</option>
           </select>
         </div>
 
