@@ -345,7 +345,7 @@ export default function Login() {
     try {
       toast.info('Memproses login Google...');
       const idToken = response.credential;
-      const API_BASE = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || '/api');
+      const API_BASE = import.meta.env.DEV ? '/api' : `${import.meta.env.VITE_API_URL || ''}/api`;
       
       const res = await fetch(`${API_BASE}/auth/google`, {
         method: 'POST',
@@ -397,7 +397,7 @@ export default function Login() {
         return;
       }
       try {
-        const API_BASE = import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_URL || '/api');
+        const API_BASE = import.meta.env.DEV ? '/api' : `${import.meta.env.VITE_API_URL || ''}/api`;
         const res = await fetch(`${API_BASE}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
