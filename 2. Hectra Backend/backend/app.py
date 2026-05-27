@@ -1997,12 +1997,76 @@ async def add_observation(req: ObservationRequest):
             if not hewan_exists:
                 raise HTTPException(status_code=404, detail=f"Sapi dengan ID {req.cow_id} tidak ditemukan.")
             
+            # 1. Insert into observation_logs
             await conn.execute("""
                 INSERT INTO observation_logs (cow_id, activity_type, notes)
                 VALUES ($1, $2, $3)
             """, req.cow_id.upper(), req.activity_type.upper(), req.notes)
+
+            # 2. Simulate sensor data
+            cow_info = await conn.fetchrow("SELECT nama, collar_id, kandang_id FROM hewan WHERE UPPER(id) = UPPER($1)", req.cow_id)
+            cow_name = cow_info['nama'] if cow_info else 'Sapi'
+            collar_id = cow_info['collar_id'] if cow_info and cow_info['collar_id'] else f"MOCK_{req.cow_id.upper()}"
+            kandang_id = cow_info['kandang_id'] if cow_info and cow_info['kandang_id'] else "KANDANG_A"
+
+            # Ensure the mock collar exists in collar_registry to prevent foreign key violation
+            await conn.execute("""
+                INSERT INTO collar_registry (collar_id, cow_id, device_secret_hash, device_secret, status, kandang_id)
+                VALUES ($1, $2, $3, $4, 'ACTIVE', $5)
+                ON CONFLICT (collar_id) DO UPDATE SET cow_id = EXCLUDED.cow_id
+            """, collar_id, req.cow_id.upper(), "mock_hash", "mock_secret", kandang_id)
+
+            # Link the collar to the cow if it wasn't linked already
+            if cow_info and not cow_info['collar_id']:
+                await conn.execute("UPDATE hewan SET collar_id = $1 WHERE UPPER(id) = UPPER($2)", collar_id, req.cow_id)
+
+            # Determine features based on activity type
+            activity = req.activity_type.upper()
+            mean_z, rms_z, max_z = 0.0, 0.0, 0.0
+            temp = 38.5
+            estrus_detected = 0
             
-        return {"status": "success", "message": "Observation logged successfully!"}
+            if activity == 'RESTING':
+                mean_z, rms_z, max_z = 0.1, 0.2, 0.4
+                temp = 38.2
+            elif activity == 'EATING':
+                mean_z, rms_z, max_z = -1.2, 1.5, 2.5
+                temp = 38.6
+            elif activity == 'RUMINATING':
+                mean_z, rms_z, max_z = -0.5, 0.8, 1.2
+                temp = 38.4
+            elif activity == 'ESTRUS':
+                mean_z, rms_z, max_z = 2.5, 3.0, 5.5
+                temp = 39.5
+                estrus_detected = 1
+
+            now_wita = datetime.now(WITA).replace(tzinfo=None)
+
+            # Insert into sensor_data
+            await conn.execute("""
+                INSERT INTO sensor_data (
+                    kandang_id, collar_id, mean_z, rms_z, max_z, 
+                    activity_state, estrus_detected, temperature, 
+                    battery_voltage, battery_percent, batch_ts, created_at
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 4.1, 95, $9, $9)
+            """, kandang_id, collar_id, mean_z, rms_z, max_z, activity, estrus_detected, temp, now_wita)
+
+            # 3. Handle ESTRUS specific logic (alerts & predictions)
+            if activity == 'ESTRUS':
+                # Insert into ai_predictions
+                await conn.execute("""
+                    INSERT INTO ai_predictions (
+                        cow_id, collar_id, prediction_type, confidence_score, 
+                        prediction_result, prediction_ts, model_version
+                    )
+                    VALUES ($1, $2, 'ESTRUS', 95.0, 'HIGH', $3, 'manual_observation')
+                """, req.cow_id.upper(), collar_id, now_wita)
+
+                # Trigger the estrus alert
+                await handle_estrus_alert(collar_id, kandang_id, temp)
+
+        return {"status": "success", "message": "Observation logged and simulated successfully!"}
     except HTTPException:
         raise
     except Exception as e:

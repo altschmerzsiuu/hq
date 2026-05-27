@@ -48,7 +48,7 @@ export default function ResearchLab() {
       const data = res.data || [];
       setCows(data);
       if (data.length > 0) {
-        setSelectedCow(data[0].id);
+        setSelectedCow(data[0].cow_id || data[0].id);
       }
     } catch (err) {
       console.error('Gagal mengambil data sapi:', err);
@@ -186,11 +186,14 @@ export default function ResearchLab() {
                   onChange={(e) => setSelectedCow(e.target.value)}
                   className="w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl px-5 py-4 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer"
                 >
-                  {cows.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.id} - {c.nama || 'Sapi Tanpa Nama'} ({c.jenis})
-                    </option>
-                  ))}
+                  {cows.map((c) => {
+                    const cowKey = c.cow_id || c.id;
+                    return (
+                      <option key={cowKey} value={cowKey}>
+                        {cowKey} - {c.nama || 'Sapi Tanpa Nama'} ({c.jenis})
+                      </option>
+                    );
+                  })}
                 </select>
               )}
             </div>
