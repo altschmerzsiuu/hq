@@ -2003,11 +2003,20 @@ async def add_observation(req: ObservationRequest):
                 VALUES ($1, $2, $3)
             """, req.cow_id.upper(), req.activity_type.upper(), req.notes)
 
-            # 2. Simulate sensor data
-            cow_info = await conn.fetchrow("SELECT nama, collar_id, kandang_id FROM hewan WHERE UPPER(id) = UPPER($1)", req.cow_id)
-            cow_name = cow_info['nama'] if cow_info else 'Sapi'
-            collar_id = cow_info['collar_id'] if cow_info and cow_info['collar_id'] else f"MOCK_{req.cow_id.upper()}"
-            kandang_id = cow_info['kandang_id'] if cow_info and cow_info['kandang_id'] else "KANDANG_A"
+            # Get cow name
+            cow_row = await conn.fetchrow("SELECT nama FROM hewan WHERE UPPER(id) = UPPER($1)", req.cow_id)
+            cow_name = cow_row['nama'] if cow_row else 'Sapi'
+
+            # Get collar info from collar_registry
+            collar_info = await conn.fetchrow("""
+                SELECT collar_id, kandang_id 
+                FROM collar_registry 
+                WHERE UPPER(cow_id) = UPPER($1) 
+                LIMIT 1
+            """, req.cow_id)
+
+            collar_id = collar_info['collar_id'] if collar_info and collar_info['collar_id'] else f"MOCK_{req.cow_id.upper()}"
+            kandang_id = collar_info['kandang_id'] if collar_info and collar_info['kandang_id'] else "KANDANG_A"
 
             # Ensure the mock collar exists in collar_registry to prevent foreign key violation
             await conn.execute("""
@@ -2015,10 +2024,6 @@ async def add_observation(req: ObservationRequest):
                 VALUES ($1, $2, $3, $4, 'ACTIVE', $5)
                 ON CONFLICT (collar_id) DO UPDATE SET cow_id = EXCLUDED.cow_id
             """, collar_id, req.cow_id.upper(), "mock_hash", "mock_secret", kandang_id)
-
-            # Link the collar to the cow if it wasn't linked already
-            if cow_info and not cow_info['collar_id']:
-                await conn.execute("UPDATE hewan SET collar_id = $1 WHERE UPPER(id) = UPPER($2)", collar_id, req.cow_id)
 
             # Determine features based on activity type
             activity = req.activity_type.upper()
