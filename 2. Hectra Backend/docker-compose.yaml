@@ -47,8 +47,8 @@ services:
     container_name: pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: hectra@admin.hectra.id
+      PGADMIN_DEFAULT_PASSWORD: H3ctr@Adm1n#2026
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     ports:
