@@ -831,23 +831,26 @@ async def lifespan(app: FastAPI):
     global main_loop
     main_loop = asyncio.get_running_loop()
     print(" FastAPI Startup - Event loop captured")
-    pool = await get_db_pool()
-    print("🛠️ Ensuring collar_registry has device_secret column...")
-    async with pool.acquire() as conn:
-        await conn.execute("ALTER TABLE collar_registry ADD COLUMN IF NOT EXISTS device_secret VARCHAR(100);")
-        await conn.execute("ALTER TABLE reproduksi_ternak ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
-        await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
-        # Ensure observation_logs table exists
-        await conn.execute("""
-            CREATE TABLE IF NOT EXISTS observation_logs (
-                id SERIAL PRIMARY KEY,
-                cow_id VARCHAR(50) NOT NULL REFERENCES hewan(id) ON DELETE CASCADE,
-                activity_type VARCHAR(50) NOT NULL,
-                notes TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-    await _ensure_hourly_table()
+    try:
+        pool = await get_db_pool()
+        print("🛠️ Ensuring database tables and columns are up to date...")
+        async with pool.acquire() as conn:
+            await conn.execute("ALTER TABLE collar_registry ADD COLUMN IF NOT EXISTS device_secret VARCHAR(100);")
+            await conn.execute("ALTER TABLE reproduksi_ternak ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+            await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+            # Ensure observation_logs table exists
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS observation_logs (
+                    id SERIAL PRIMARY KEY,
+                    cow_id VARCHAR(50) NOT NULL REFERENCES hewan(id) ON DELETE CASCADE,
+                    activity_type VARCHAR(50) NOT NULL,
+                    notes TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+        await _ensure_hourly_table()
+    except Exception as db_err:
+        print(f"❌ [DB INIT ERROR] Failed to run database startup checks/migrations: {db_err}")
 
     scheduler = AsyncIOScheduler(timezone="Asia/Makassar")
     scheduler.add_job(
