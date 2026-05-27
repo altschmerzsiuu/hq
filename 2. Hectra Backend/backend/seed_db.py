@@ -32,6 +32,17 @@ def init_db():
         cur.execute("ALTER TABLE reproduksi_ternak ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
         cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
         
+        # Ensure observation_logs table exists
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS observation_logs (
+                id SERIAL PRIMARY KEY,
+                cow_id VARCHAR(50) NOT NULL REFERENCES hewan(id) ON DELETE CASCADE,
+                activity_type VARCHAR(50) NOT NULL,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        
         # Drop and recreate sensor_data to ensure latest schema (since it's empty)
         cur.execute("DROP TABLE IF EXISTS sensor_data;")
         cur.execute("""

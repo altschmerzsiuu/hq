@@ -114,9 +114,12 @@ export default function ResearchLab() {
       toast.error('Silakan pilih sapi terlebih dahulu!');
       return;
     }
+    const cowObj = cows.find(c => (c.cow_id || c.id) === selectedCow);
+    const targetId = cowObj?.collar_id || selectedCow;
+    
     setOtaLoading(true);
     try {
-      await axiosInstance.post(`/maintenance/${selectedCow}`, {
+      await axiosInstance.post(`/maintenance/${targetId}`, {
         command: 'START_OTA',
         duration: 180
       });
@@ -140,13 +143,13 @@ export default function ResearchLab() {
   const getActivityMeta = (type) => {
     switch (type.toUpperCase()) {
       case 'EATING':
-        return { label: 'Makan', icon: <Wheat className="w-4 h-4" />, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' };
+        return { label: 'Makan / Merumput', icon: <Wheat className="w-4 h-4" />, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' };
       case 'RUMINATING':
-        return { label: 'Mamah Biak', icon: <Beef className="w-4 h-4" />, color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' };
+        return { label: 'Mamah Biak (Ruminasi)', icon: <Beef className="w-4 h-4" />, color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' };
       case 'RESTING':
-        return { label: 'Istirahat', icon: <Moon className="w-4 h-4" />, color: 'text-slate-400 bg-slate-500/10 border-slate-500/30' };
+        return { label: 'Istirahat / Tidur', icon: <Moon className="w-4 h-4" />, color: 'text-slate-400 bg-slate-500/10 border-slate-500/30' };
       case 'ESTRUS':
-        return { label: 'Birahi!', icon: <Flame className="w-4 h-4" />, color: 'text-rose-400 bg-rose-500/10 border-rose-500/30' };
+        return { label: 'Birahi Aktif (Estrus)', icon: <Flame className="w-4 h-4" />, color: 'text-rose-400 bg-rose-500/10 border-rose-500/30' };
       default:
         return { label: type, icon: <Beaker className="w-4 h-4" />, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30' };
     }
@@ -184,12 +187,12 @@ export default function ResearchLab() {
                 <select
                   value={selectedCow}
                   onChange={(e) => setSelectedCow(e.target.value)}
-                  className="w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl px-5 py-4 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer"
+                  className="w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl px-5 py-4 text-[var(--color-text-primary)] focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer"
                 >
                   {cows.map((c) => {
                     const cowKey = c.cow_id || c.id;
                     return (
-                      <option key={cowKey} value={cowKey}>
+                      <option key={cowKey} value={cowKey} className="bg-[var(--bg-surface)] text-[var(--color-text-primary)]">
                         {cowKey} - {c.nama || 'Sapi Tanpa Nama'} ({c.jenis})
                       </option>
                     );
@@ -203,10 +206,10 @@ export default function ResearchLab() {
               <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-3)] mb-3">Jenis Aktivitas Teramati</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
-                  { id: 'EATING', label: 'Makan', icon: <Wheat className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform" />, activeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500' },
-                  { id: 'RUMINATING', label: 'Mamah Biak', icon: <Beef className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform" />, activeColor: 'bg-blue-500/20 text-blue-400 border-blue-500' },
-                  { id: 'RESTING', label: 'Istirahat', icon: <Moon className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform" />, activeColor: 'bg-slate-500/20 text-slate-400 border-slate-500' },
-                  { id: 'ESTRUS', label: 'Birahi!', icon: <Flame className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform" />, activeColor: 'bg-rose-500/20 text-rose-400 border-rose-500' }
+                  { id: 'EATING', label: 'Makan / Merumput', icon: <Wheat className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform" />, activeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500' },
+                  { id: 'RUMINATING', label: 'Mamah Biak (Ruminasi)', icon: <Beef className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform" />, activeColor: 'bg-blue-500/20 text-blue-400 border-blue-500' },
+                  { id: 'RESTING', label: 'Istirahat / Tidur', icon: <Moon className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform" />, activeColor: 'bg-slate-500/20 text-slate-400 border-slate-500' },
+                  { id: 'ESTRUS', label: 'Birahi Aktif (Estrus)', icon: <Flame className="w-8 h-8 mb-1 group-hover:scale-110 transition-transform" />, activeColor: 'bg-rose-500/20 text-rose-400 border-rose-500' }
                 ].map((act) => {
                   const isActive = activityType === act.id;
                   return (
@@ -276,7 +279,7 @@ export default function ResearchLab() {
                           <span>{meta.label}</span>
                         </div>
                         <div>
-                          <p className="font-semibold text-white text-sm">
+                          <p className="font-semibold text-[var(--color-text-primary)] text-sm">
                             {obs.cow_name || obs.cow_id}
                             <span className="text-[var(--text-3)] text-xs ml-2 font-mono">({obs.cow_id})</span>
                           </p>

@@ -837,6 +837,16 @@ async def lifespan(app: FastAPI):
         await conn.execute("ALTER TABLE collar_registry ADD COLUMN IF NOT EXISTS device_secret VARCHAR(100);")
         await conn.execute("ALTER TABLE reproduksi_ternak ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
         await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+        # Ensure observation_logs table exists
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS observation_logs (
+                id SERIAL PRIMARY KEY,
+                cow_id VARCHAR(50) NOT NULL REFERENCES hewan(id) ON DELETE CASCADE,
+                activity_type VARCHAR(50) NOT NULL,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
     await _ensure_hourly_table()
 
     scheduler = AsyncIOScheduler(timezone="Asia/Makassar")
@@ -1945,8 +1955,26 @@ async def get_timeline_events(current_user: dict = Depends(get_current_user)):
 @app.post("/api/maintenance/{collar_id}")
 async def trigger_maintenance(collar_id: str, req: MaintenanceRequest):
     """Publish a maintenance command to a specific collar"""
+    pool = await get_db_pool()
+    resolved_collar_id = collar_id
     try:
-        topic = f"kandang/command/{collar_id}"
+        async with pool.acquire() as conn:
+            # Check if input collar_id matches an actual collar in the registry
+            exists = await conn.fetchval(
+                "SELECT EXISTS(SELECT 1 FROM collar_registry WHERE UPPER(collar_id) = UPPER($1))",
+                collar_id
+            )
+            if not exists:
+                # If not, check if it matches a cow_id in collar_registry
+                cow_collar = await conn.fetchval(
+                    "SELECT collar_id FROM collar_registry WHERE UPPER(cow_id) = UPPER($1) LIMIT 1",
+                    collar_id
+                )
+                if cow_collar:
+                    resolved_collar_id = cow_collar
+                    print(f" [CMD] Resolved input cow_id '{collar_id}' to collar_id '{resolved_collar_id}'")
+            
+        topic = f"kandang/command/{resolved_collar_id}"
         payload = json.dumps({
             "command": req.command,
             "duration": req.duration,
@@ -1960,8 +1988,8 @@ async def trigger_maintenance(collar_id: str, req: MaintenanceRequest):
         info = mqtt_client.publish(topic, payload, qos=1, retain=True)
         info.wait_for_publish() # Ensure it's sent to broker
         
-        print(f" [CMD] Sent {req.command} to {collar_id}")
-        return {"status": "success", "message": f"Command {req.command} sent to {collar_id}"}
+        print(f" [CMD] Sent {req.command} to {resolved_collar_id} (input: {collar_id})")
+        return {"status": "success", "message": f"Command {req.command} sent to {resolved_collar_id}"}
     except Exception as e:
         print(f" [CMD ERROR] {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
