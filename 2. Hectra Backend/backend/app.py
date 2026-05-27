@@ -2083,9 +2083,9 @@ async def add_observation(req: ObservationRequest):
                 INSERT INTO sensor_data (
                     kandang_id, collar_id, mean_z, rms_z, max_z, 
                     activity_state, estrus_detected, temperature, 
-                    battery_voltage, battery_percent, batch_ts, created_at
+                    battery_voltage, battery_percent, batch_ts
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 4.1, 95, $9, $9)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 4.1, 95, $9)
             """, kandang_id, collar_id, mean_z, rms_z, max_z, activity, estrus_detected, temp, now_wita)
 
             # 3. Handle ESTRUS specific logic (alerts & predictions)
