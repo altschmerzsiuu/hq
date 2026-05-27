@@ -48,7 +48,7 @@ def hitung_bunting_hpl(birahi: date):
     hpl = bunting + relativedelta(months=9) + timedelta(days=10)
     return bunting, hpl
 
-def hitung_usia(bulan_tahun_lahir) -> dict:
+def hitung_usia(bulan_tahun_lahir) -> Optional[dict]:
     if not bulan_tahun_lahir: return None
     
     # Ensure it is a date object (could be string or datetime from DB)
