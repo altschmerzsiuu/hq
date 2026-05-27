@@ -8,7 +8,7 @@ services:
     container_name: mqtt-broker
     restart: unless-stopped
     ports:
-      - "1883:1883"
+      - "1883:1883"  # Terbuka untuk ESP32 collar devices dari luar
     volumes:
       - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
     networks:
@@ -20,7 +20,7 @@ services:
     container_name: redis-cache
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"  # Internal only — tidak boleh terbuka ke internet
     networks:
       - iot_network
 
@@ -37,7 +37,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./db/init-historical.sql:/docker-entrypoint-initdb.d/02-init-historical.sql
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"  # Internal only — database tidak boleh terbuka ke internet
     networks:
       - iot_network
 
@@ -52,7 +52,7 @@ services:
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"  # Internal only — akses via SSH tunnel: ssh -L 5050:localhost:5050 root@api.hectra.my.id
     depends_on:
       - db
     networks:
@@ -86,7 +86,7 @@ services:
       - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2}
       - DEVICE_API_KEY=${DEVICE_API_KEY}
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"  # Internal only — diakses via Nginx proxy
     depends_on:
       - mqtt
       - db
@@ -133,7 +133,7 @@ services:
     env_file:
       - ./scanner-app/.env
     ports:
-      - "3030:3030"
+      - "127.0.0.1:3030:3030"  # Internal only — scanner app tidak perlu akses publik
     depends_on:
       - db
     networks:
