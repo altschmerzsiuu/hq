@@ -8,9 +8,12 @@ services:
     container_name: mqtt-broker
     restart: unless-stopped
     ports:
-      - "1883:1883"  # Terbuka untuk ESP32 collar devices dari luar
+      - "1883:1883"   # Plain MQTT — untuk collar lama & internal
+      - "8883:8883"   # MQTTS (TLS) — untuk collar baru dengan enkripsi
     volumes:
       - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mqtt/fullchain.pem:/mosquitto/config/fullchain.pem:ro
+      - ./mqtt/privkey.pem:/mosquitto/config/privkey.pem:ro
     networks:
       - iot_network
 
