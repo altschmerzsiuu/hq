@@ -103,12 +103,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
         { name: t.nav_activity_timeline, path: '/activity-timeline', icon: Clock },
         { name: t.nav_recommendations, path: '/recommendations', icon: Lightbulb },
       ]
-    },
-    {
-      label: 'SYSTEM',
-      items: [
-        { name: t.nav_alerts, path: '/notifications', icon: Bell },
-      ]
     }
   ];
 

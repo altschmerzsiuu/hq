@@ -219,7 +219,15 @@ def layer1_calendar(siklus: dict, baseline: dict, today: Optional[date] = None) 
             "metode_detail":       "no_history",
         }
 
-    prediksi_tgl = last_birahi + timedelta(days=rata_siklus)
+    # Project predicted date into the future cycle relative to today
+    cycle_days = rata_siklus if rata_siklus else 21.0
+    days_since = (today - last_birahi).days
+    if days_since >= 0:
+        cycles_needed = int(days_since // cycle_days) + 1
+        prediksi_tgl = last_birahi + timedelta(days=cycles_needed * cycle_days)
+    else:
+        prediksi_tgl = last_birahi + timedelta(days=cycle_days)
+
     prediksi_ib  = prediksi_tgl + timedelta(days=offset_ib)
     window_awal  = prediksi_tgl - timedelta(days=std_siklus * 1.5)
     window_akhir = prediksi_tgl + timedelta(days=std_siklus * 1.5)
@@ -429,6 +437,23 @@ async def predict_estrus(
         WHERE si.rfid = $1 AND si.owner_id = $2
     """, rfid, owner_id)
 
+    # Fallback to direct reproduksi_ternak query if no siklus exists or last_birahi_date is missing
+    if not siklus or not siklus.get("last_birahi_date"):
+        last_event_date = await conn.fetchval("""
+            SELECT COALESCE(birahi, tanggal_ib) 
+            FROM reproduksi_ternak 
+            WHERE rfid = $1 
+            ORDER BY COALESCE(birahi, tanggal_ib) DESC LIMIT 1
+        """, rfid)
+        if last_event_date:
+            siklus = {
+                "last_birahi_date": last_event_date,
+                "rata_siklus_hari": 21.0,
+                "std_siklus_hari": 2.5,
+                "offset_ib_optimal": 0.0,
+                "jumlah_siklus_valid": 0
+            }
+
     hewan = await conn.fetchrow("SELECT jenis FROM hewan WHERE id = $1", rfid)
     jenis = hewan["jenis"] if hewan else None
 
@@ -578,10 +603,10 @@ async def update_siklus_setelah_event(
     Dipanggil dari routers/scanner.py setelah INSERT ke reproduksi_ternak.
     """
     riwayat = await conn.fetch("""
-        SELECT birahi, tanggal_ib, bunting
+        SELECT COALESCE(birahi, tanggal_ib) as birahi, tanggal_ib, bunting
         FROM reproduksi_ternak
-        WHERE rfid = $1 AND birahi IS NOT NULL
-        ORDER BY birahi ASC
+        WHERE rfid = $1 AND (birahi IS NOT NULL OR tanggal_ib IS NOT NULL)
+        ORDER BY COALESCE(birahi, tanggal_ib) ASC
     """, rfid)
 
     if not riwayat:
