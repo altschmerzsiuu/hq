@@ -1800,20 +1800,13 @@ async def get_behavior_analytics(cow_id: str = "all", current_user: dict = Depen
                     elif max_idx == 2: aktif_val += diff
                     else: lainnya_val += diff
 
-            if total_pie == 0:
-                pie_data = [
-                    { "name": "Makan / Memamah Biak", "value": 42, "color": "#2D4A3E" },
-                    { "name": "Istirahat / Tidur", "value": 45, "color": "#7A9E8E" },
-                    { "name": "Aktif / Estrus", "value": 8, "color": "#C9963A" },
-                    { "name": "Aktivitas Lainnya", "value": 5, "color": "#A8C5B8" }
-                ]
-            else:
-                pie_data = [
-                    { "name": "Makan / Memamah Biak", "value": makan_val, "color": "#2D4A3E" },
-                    { "name": "Istirahat / Tidur", "value": istirahat_val, "color": "#7A9E8E" },
-                    { "name": "Aktif / Estrus", "value": aktif_val, "color": "#C9963A" },
-                    { "name": "Aktivitas Lainnya", "value": lainnya_val, "color": "#A8C5B8" }
-                ]
+            # Always return real data. Frontend shows empty state when all zeros.
+            pie_data = [
+                { "name": "Makan / Memamah Biak", "value": makan_val, "color": "#2D4A3E" },
+                { "name": "Istirahat / Tidur", "value": istirahat_val, "color": "#7A9E8E" },
+                { "name": "Aktif / Estrus", "value": aktif_val, "color": "#C9963A" },
+                { "name": "Aktivitas Lainnya", "value": lainnya_val, "color": "#A8C5B8" }
+            ]
 
             # E. Weekly comparison data (last 7 days)
             weekly_rows = await conn.fetch(f"""
@@ -1875,22 +1868,7 @@ async def get_behavior_analytics(cow_id: str = "all", current_user: dict = Depen
                     "istirahat": istirahat_pct
                 })
 
-            if not weekly_data:
-                import random
-                random.seed(owner_id + 200)
-                for i in range(6, -1, -1):
-                    d = now - timedelta(days=i)
-                    dy = d.strftime('%a')
-                    m = random.randint(40, 46)
-                    ist = random.randint(42, 48)
-                    ak = 100 - (m + ist)
-                    
-                    weekly_data.append({
-                        "day": day_map.get(dy, dy),
-                        "aktif": ak,
-                        "makan": m,
-                        "istirahat": ist
-                    })
+            # No fallback — empty list lets frontend show proper empty state
 
             return {
                 "daily_activity": {
