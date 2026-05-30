@@ -216,10 +216,10 @@ function ConfigStatusBadge({ status }) {
 function ConfigRow({ label, hint, value, onChange, min, max, onSend, status }) {
   const isBusy = status === 'sending' || status === 'delivered';
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-900/40 border border-[var(--border)] rounded-2xl hover:border-slate-800 transition-all">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-50 dark:bg-slate-900/40 border border-[var(--border)] rounded-2xl hover:border-slate-300 dark:hover:border-slate-800 transition-all">
       <div className="min-w-0 flex-1">
-        <label className="block text-xs font-bold text-[var(--text-1)] uppercase tracking-wider">{label}</label>
-        <span className="text-[10px] text-[var(--text-3)] block mt-1">{hint}</span>
+        <label className="block text-xs font-bold text-[var(--color-text-primary)] uppercase tracking-wider">{label}</label>
+        <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-1">{hint}</span>
         {status !== 'idle' && (
           <div className="mt-1.5">
             <ConfigStatusBadge status={status} />
@@ -235,7 +235,7 @@ function ConfigRow({ label, hint, value, onChange, min, max, onSend, status }) {
         />
         <button
           onClick={onSend} disabled={isBusy}
-          className="px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5 shadow-sm"
+          className="px-4 py-2 bg-amber-650 dark:bg-amber-600 hover:bg-amber-550 dark:hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5 shadow-sm"
         >
           {isBusy ? <Loader className="w-3.5 h-3.5 animate-spin" /> : null}
           Kirim
@@ -490,97 +490,124 @@ export default function ResearchLab() {
         <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
           <span className="w-1.5 h-5 rounded-full bg-emerald-500" />
           <h2 className="text-lg font-bold font-display text-[var(--color-text-primary)]">Log Monitor Perangkat</h2>
-          <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 ml-2 uppercase">Real-Time Terminal</span>
+          <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded border border-emerald-250/20 ml-2 uppercase">Real-Time Terminal</span>
         </div>
 
         <div className="bg-[var(--bg-surface)] rounded-3xl overflow-hidden shadow-card border border-indigo-500/20 w-full">
           {/* Enhanced Terminal Header */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-6 py-4 border-b border-[var(--border)] bg-slate-950/40">
-            {/* Left side controls */}
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2.5">
-                <Terminal className="w-4 h-4 text-indigo-400" />
-                <span className="font-bold text-xs text-[var(--color-text-primary)] font-display uppercase tracking-wider">Device Logs</span>
+          <div className="px-6 py-4 border-b border-[var(--border)] bg-slate-50 dark:bg-slate-950/40 space-y-4">
+            {/* Top Row: Title & Action Buttons */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-indigo-550 dark:text-indigo-400" />
+                <span className="font-bold text-sm text-[var(--color-text-primary)] font-display uppercase tracking-wider">Device Logs</span>
                 {wsStatus === 'connected' ? (
-                  <span className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                  <span className="flex items-center gap-1.5 text-[10px] text-emerald-605 dark:text-emerald-400 font-mono font-bold bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse inline-block" />
                     LIVE
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono font-bold bg-slate-800/60 px-2 py-0.5 rounded-full border border-slate-700/50">
+                  <span className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-400 font-mono font-bold bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700/50">
                     <WifiOff className="w-3 h-3" />
                     {wsStatus.toUpperCase()}
                   </span>
                 )}
               </div>
 
-              <div className="h-4 w-px bg-slate-855 hidden sm:block" />
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAutoScroll(p => !p)}
+                  className={`text-[10px] font-bold px-3 py-1.5 rounded-xl border transition-all ${
+                    autoScroll
+                      ? 'bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30'
+                      : 'bg-slate-100 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  Auto Scroll
+                </button>
+                <button
+                  type="button"
+                  onClick={clearLogs}
+                  className="text-[10px] font-bold px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-250 transition-all"
+                >
+                  Clear Logs
+                </button>
+                {wsStatus !== 'connected' && isMonitoring && (
+                  <button
+                    type="button"
+                    onClick={reconnect}
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-all"
+                  >
+                    Reconnect
+                  </button>
+                )}
+              </div>
+            </div>
 
-              {/* Toggle Switch ON/OFF for Monitoring */}
-              <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-1.5">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Monitor Stream</span>
+            {/* Divider for rows */}
+            <div className="h-px bg-slate-200 dark:bg-slate-800 w-full" />
+
+            {/* Bottom Row: Filter Controls */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Monitor Stream Toggle */}
+              <div className="flex items-center gap-2 bg-slate-105 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5">
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Monitor Stream</span>
                 <button
                   type="button"
                   onClick={() => setIsMonitoring(!isMonitoring)}
-                  className={`relative w-9 h-5 rounded-full transition-colors duration-200 focus:outline-none ${isMonitoring ? 'bg-emerald-500' : 'bg-slate-750'}`}
+                  className={`relative w-9 h-5 rounded-full transition-colors duration-200 focus:outline-none ${isMonitoring ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${isMonitoring ? 'translate-x-4' : 'translate-x-0'}`} />
                 </button>
               </div>
 
               {/* Collar Selector Dropdown */}
-              <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Device:</span>
+              <div className="flex items-center gap-2 bg-slate-105 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1">
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Device:</span>
                 <div className="relative flex items-center">
                   <select
                     value={logCollarId}
                     onChange={(e) => setLogCollarId(e.target.value)}
-                    className="bg-transparent border-none text-[11px] text-slate-200 font-bold focus:outline-none cursor-pointer pr-5 py-0.5 appearance-none"
+                    className="bg-transparent border-none text-[11px] text-slate-700 dark:text-slate-200 font-bold focus:outline-none cursor-pointer pr-5 py-0.5 appearance-none"
                   >
-                    <option value="ALL" className="bg-slate-900 text-slate-200">Semua Device (ALL)</option>
+                    <option value="ALL" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Semua Device (ALL)</option>
                     {Array.from(new Set(cows.map(c => c.collar_id).filter(Boolean))).map(collarId => {
                       const cow = cows.find(c => c.collar_id === collarId);
                       return (
-                        <option key={collarId} value={collarId} className="bg-slate-900 text-slate-200">
+                        <option key={collarId} value={collarId} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                           {collarId} ({cow?.nama || cow?.cow_id || 'Sapi'})
                         </option>
                       );
                     })}
                   </select>
-                  <ChevronDown className="w-3 h-3 text-slate-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDown className="w-3 h-3 text-slate-450 dark:text-slate-500 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
-            </div>
 
-            {/* Right side controls */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}
-                  className="appearance-none bg-slate-900/60 border border-slate-800 text-[10px] text-slate-300 rounded-xl px-3 py-1.5 pr-7 outline-none cursor-pointer focus:border-indigo-500 transition-colors">
-                  {['ALL','CRITICAL','ERROR','WARN','INFO'].map(l => <option key={l} value={l} className="bg-slate-900 text-slate-300">{l}</option>)}
-                </select>
-                <ChevronDown className="w-3 h-3 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              {/* Level Filter Dropdown */}
+              <div className="flex items-center gap-2 bg-slate-105 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1">
+                <span className="text-[10px] font-bold text-slate-650 dark:text-slate-400 uppercase tracking-wider">Level:</span>
+                <div className="relative flex items-center">
+                  <select
+                    value={filterLevel}
+                    onChange={(e) => setFilterLevel(e.target.value)}
+                    className="bg-transparent border-none text-[11px] text-slate-700 dark:text-slate-200 font-bold focus:outline-none cursor-pointer pr-5 py-0.5 appearance-none"
+                  >
+                    {['ALL','CRITICAL','ERROR','WARN','INFO'].map(l => (
+                      <option key={l} value={l} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">{l}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3 h-3 text-slate-450 dark:text-slate-500 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
-              <button onClick={() => setAutoScroll(p => !p)}
-                className={`text-[10px] font-bold px-3 py-1.5 rounded-xl border transition-all ${autoScroll ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' : 'bg-slate-900/60 text-slate-400 border-slate-800'}`}>
-                Auto Scroll
-              </button>
-              <button onClick={clearLogs}
-                className="text-[10px] font-bold px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-slate-200 transition-all">
-                Clear Logs
-              </button>
-              {wsStatus !== 'connected' && isMonitoring && (
-                <button onClick={reconnect}
-                  className="text-[10px] font-bold px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all">
-                  Reconnect
-                </button>
-              )}
             </div>
           </div>
 
           {/* Terminal Console (Expanded height for premium IDE feel) */}
           <div ref={logRef}
-            className="h-96 overflow-y-auto font-mono text-[10px] bg-slate-950/80 p-4 space-y-1 custom-scrollbar border-t border-[var(--border)]"
+            className="h-96 overflow-y-auto font-mono text-[10px] bg-slate-950 p-4 space-y-1 custom-scrollbar border-t border-[var(--border)]"
             onScroll={(e) => { const el = e.currentTarget; setAutoScroll(el.scrollHeight - el.scrollTop - el.clientHeight < 40); }}>
             {filteredLogs.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-600 gap-2">
@@ -593,7 +620,7 @@ export default function ResearchLab() {
               const s = getLogStyle(log.level);
               return (
                 <div key={log._id} className="flex items-baseline gap-2.5 hover:bg-slate-800/20 rounded px-1.5 py-0.5 transition-colors">
-                  <span className="text-slate-600 shrink-0 w-16 font-semibold tabular-nums">{formatTs(log.timestamp)}</span>
+                  <span className="text-slate-550 shrink-0 w-16 font-semibold tabular-nums">{formatTs(log.timestamp)}</span>
                   <span className={`shrink-0 px-1.5 py-0.5 rounded border text-[9px] font-bold w-16 text-center ${s.badge}`}>{(log.level || 'INFO').toUpperCase()}</span>
                   <span className="text-indigo-400 shrink-0 w-24 truncate font-semibold">{log.collar_id || '-'}</span>
                   <span className={`${s.text} break-all leading-relaxed`}>{log.message}</span>
@@ -602,9 +629,9 @@ export default function ResearchLab() {
             })}
           </div>
 
-          <div className="flex justify-between px-6 py-2 border-t border-[var(--border)] bg-slate-950/20">
-            <span className="text-[9px] text-slate-500 font-mono font-bold">{filteredLogs.length} entries</span>
-            <span className="text-[9px] text-slate-500 font-mono font-bold">{wsStatus === 'connected' ? '● LIVE STREAMING' : '○ OFFLINE'}</span>
+          <div className="flex justify-between px-6 py-2 border-t border-[var(--border)] bg-slate-100 dark:bg-slate-950/20">
+            <span className="text-[9px] text-slate-650 dark:text-slate-505 font-mono font-bold">{filteredLogs.length} entries</span>
+            <span className="text-[9px] text-slate-650 dark:text-slate-550 font-mono font-bold">{wsStatus === 'connected' ? '● LIVE STREAMING' : '○ OFFLINE'}</span>
           </div>
         </div>
       </section>
@@ -614,24 +641,24 @@ export default function ResearchLab() {
         <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
           <span className="w-1.5 h-5 rounded-full bg-amber-500" />
           <h2 className="text-lg font-bold font-display text-[var(--color-text-primary)]">Konfigurasi Jarak Jauh</h2>
-          <span className="text-[10px] font-bold bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 ml-2 uppercase">MQTT Config</span>
+          <span className="text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 ml-2 uppercase">MQTT Config</span>
         </div>
 
         <div className="bg-[var(--bg-surface)] rounded-3xl p-6 md:p-8 shadow-card border border-amber-500/20 space-y-6 w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Sliders className="w-6 h-6 text-amber-400" />
+              <Sliders className="w-6 h-6 text-amber-500 dark:text-amber-400" />
               <div>
-                <h3 className="text-lg font-bold text-amber-400 font-display">Remote Configuration Parameters</h3>
-                <p className="text-xs text-[var(--text-3)]">Kirim nilai parameter operasional firmware tanpa flash ulang</p>
+                <h3 className="text-lg font-bold text-[var(--color-text-primary)] font-display">Remote Configuration Parameters</h3>
+                <p className="text-xs text-slate-550 dark:text-slate-400">Kirim nilai parameter operasional firmware tanpa flash ulang</p>
               </div>
             </div>
           </div>
           
-          <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 text-xs text-amber-300/80 leading-relaxed max-w-3xl">
+          <div className="p-4 bg-amber-50 dark:bg-amber-500/5 rounded-2xl border border-amber-100 dark:border-amber-500/10 text-xs text-amber-800 dark:text-amber-300/80 leading-relaxed max-w-3xl">
             Konfigurasi dikirimkan melalui broker MQTT sebagai pesan bertipe <span className="font-semibold underline">retained</span>. 
             Perangkat collar akan mengambil dan menerapkan konfigurasi ini segera saat terbangun dari siklus deep sleep berikutnya. 
-            Target perangkat aktif: <span className="font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">{resolvedCollarId}</span>
+            Target perangkat aktif: <span className="font-mono font-bold text-amber-800 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/10 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-500/20">{resolvedCollarId}</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -641,24 +668,24 @@ export default function ResearchLab() {
             <ConfigRow label="Max offline"    hint="5–100 siklus"   value={maxOfflineCycles} onChange={setMaxOfflineCycles} min={5}  max={100} status={statuses.max_offline_cycles} onSend={() => updateConfig(resolvedCollarId, 'max_offline_cycles', maxOfflineCycles)} />
             
             {/* Device active toggle */}
-            <div className="md:col-span-2 flex items-center justify-between p-5 bg-slate-900/40 border border-[var(--border)] rounded-2xl hover:border-slate-800 transition-all">
+            <div className="md:col-span-2 flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-900/40 border border-[var(--border)] rounded-2xl hover:border-slate-300 dark:hover:border-slate-800 transition-all">
               <div>
                 <p className="text-sm font-semibold text-[var(--color-text-primary)]">Collar Active Status</p>
                 <div className="min-h-[16px] mt-1">
                   {statuses.device_active !== 'idle'
                     ? <ConfigStatusBadge status={statuses.device_active} />
-                    : <p className="text-xs text-[var(--text-3)]">Gunakan sakelar ini untuk mengaktifkan atau menonaktifkan aktivitas perangkat dari jarak jauh</p>}
+                    : <p className="text-xs text-slate-500 dark:text-slate-400">Gunakan sakelar ini untuk mengaktifkan atau menonaktifkan aktivitas perangkat dari jarak jauh</p>}
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`text-xs font-bold font-mono tracking-wider ${deviceActive ? 'text-emerald-400' : 'text-slate-500'}`}>
+                <span className={`text-xs font-bold font-mono tracking-wider ${deviceActive ? 'text-emerald-500' : 'text-slate-550 dark:text-slate-400'}`}>
                   {deviceActive ? 'ACTIVE' : 'INACTIVE'}
                 </span>
                 <button
                   type="button"
                   onClick={() => { const next = !deviceActive; setDeviceActive(next); updateConfig(resolvedCollarId, 'device_active', next); }}
                   disabled={statuses.device_active === 'sending' || statuses.device_active === 'delivered'}
-                  className={`relative w-12 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 ${deviceActive ? 'bg-emerald-500' : 'bg-slate-600'}`}>
+                  className={`relative w-12 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 ${deviceActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}>
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${deviceActive ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
               </div>
@@ -672,24 +699,24 @@ export default function ResearchLab() {
         <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
           <span className="w-1.5 h-5 rounded-full bg-blue-500" />
           <h2 className="text-lg font-bold font-display text-[var(--color-text-primary)]">Pemeliharaan & OTA Update</h2>
-          <span className="text-[10px] font-bold bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 ml-2 uppercase">Firmware Flash</span>
+          <span className="text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20 ml-2 uppercase">Firmware Flash</span>
         </div>
 
         <div className="bg-[var(--bg-surface)] rounded-3xl p-6 md:p-8 shadow-card border border-blue-500/20 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center gap-3">
-                <Settings className="w-6 h-6 text-blue-400" />
+                <Settings className="w-6 h-6 text-blue-505 dark:text-blue-400" />
                 <div>
-                  <h3 className="text-lg font-bold text-blue-400 font-display">Over-the-Air (OTA) Standby Mode</h3>
-                  <p className="text-xs text-[var(--text-3)]">Kirim sinyal bangun terus menerus ke collar sapi terpilih</p>
+                  <h3 className="text-lg font-bold text-[var(--color-text-primary)] font-display">Over-the-Air (OTA) Standby Mode</h3>
+                  <p className="text-xs text-slate-550 dark:text-slate-400">Kirim sinyal bangun terus menerus ke collar sapi terpilih</p>
                 </div>
               </div>
               <p className="text-xs text-[var(--text-2)] leading-relaxed">
-                Tombol di samping mengirimkan perintah khusus ke broker MQTT untuk memaksa collar sapi yang dipilih (<span className="font-mono text-blue-300 font-semibold">{resolvedCollarId}</span>) tetap menyala terus-menerus selama <span className="font-semibold text-white">3 menit (180 detik)</span>.
+                Tombol di samping mengirimkan perintah khusus ke broker MQTT untuk memaksa collar sapi yang dipilih (<span className="font-mono text-blue-700 dark:text-blue-300 font-semibold">{resolvedCollarId}</span>) tetap menyala terus-menerus selama <span className="font-semibold text-white">3 menit (180 detik)</span>.
                 Gunakan mode ini sebelum melakukan upload firmware secara nirkabel via Arduino IDE atau ESPOTA Tool agar perangkat tidak masuk ke mode deep sleep di tengah proses unggahan.
               </p>
-              <div className="p-3 bg-blue-500/5 rounded-xl border border-blue-500/10 text-[11px] text-blue-300/80 leading-relaxed italic">
+              <div className="p-3 bg-blue-50 dark:bg-blue-500/5 rounded-xl border border-blue-100 dark:border-blue-500/10 text-[11px] text-blue-700 dark:text-blue-300/80 leading-relaxed italic">
                 * PENTING: Pastikan laptop Anda berada di jaringan Wi-Fi lokal yang sama dengan access point kandang agar port jaringan collar terdeteksi di Arduino IDE.
               </div>
             </div>
