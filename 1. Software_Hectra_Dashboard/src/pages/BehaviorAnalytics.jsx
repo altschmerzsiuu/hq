@@ -12,8 +12,7 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import { Brain, Activity, Droplets, Moon, Lightbulb, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Activity, Info, Loader2 } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
 import useSettingsStore from '@/store/settingsStore';
@@ -60,12 +59,18 @@ export default function BehaviorAnalytics() {
     fetchBehavior();
   }, [selectedCow, lang]);
 
+  // Translate raw activity state names from backend to clear UI labels
   const translateActivity = (name) => {
-    if (!name) return '';
+    if (!name) return t.behavior_legend_other;
     const key = name.toLowerCase();
-    if (key.includes('aktif') || key.includes('estrus') || key.includes('active')) return t.behavior_legend_active;
-    if (key.includes('makan') || key.includes('ruminating') || key.includes('eating')) return t.behavior_legend_eating;
+    // Active / high movement / estrus (collar uses ESTRUS state for high activity)
+    if (key.includes('aktif') || key.includes('estrus') || key.includes('active') || key === 'active') return t.behavior_legend_active;
+    // Eating & ruminating
+    if (key.includes('makan') || key.includes('ruminating') || key.includes('eating') || key.includes('ruminasi')) return t.behavior_legend_eating;
+    // Resting / sleeping
     if (key.includes('istirahat') || key.includes('resting') || key.includes('sleeping') || key.includes('tidur')) return t.behavior_legend_resting;
+    // Unknown / other / unclassified
+    if (key.includes('lainnya') || key.includes('unknown') || key.includes('other') || key.includes('sick') || key.includes('sakit')) return t.behavior_legend_other;
     return name;
   };
 
@@ -79,13 +84,13 @@ export default function BehaviorAnalytics() {
       'Jum': lang === 'id' ? 'Jum' : 'Fri',
       'Sab': lang === 'id' ? 'Sab' : 'Sat',
       'Min': lang === 'id' ? 'Min' : 'Sun',
-      'Monday': lang === 'id' ? 'Senin' : 'Monday',
-      'Tuesday': lang === 'id' ? 'Selasa' : 'Tuesday',
-      'Wednesday': lang === 'id' ? 'Rabu' : 'Wednesday',
-      'Thursday': lang === 'id' ? 'Kamis' : 'Thursday',
-      'Friday': lang === 'id' ? 'Jumat' : 'Friday',
-      'Saturday': lang === 'id' ? 'Sabtu' : 'Saturday',
-      'Sunday': lang === 'id' ? 'Minggu' : 'Sunday',
+      'Monday': lang === 'id' ? 'Sen' : 'Mon',
+      'Tuesday': lang === 'id' ? 'Sel' : 'Tue',
+      'Wednesday': lang === 'id' ? 'Rab' : 'Wed',
+      'Thursday': lang === 'id' ? 'Kam' : 'Thu',
+      'Friday': lang === 'id' ? 'Jum' : 'Fri',
+      'Saturday': lang === 'id' ? 'Sab' : 'Sat',
+      'Sunday': lang === 'id' ? 'Min' : 'Sun',
     };
     return map[day] || day;
   };
@@ -100,41 +105,70 @@ export default function BehaviorAnalytics() {
     day: formatDayTick(item.day)
   }));
 
+  // Custom tooltip for pie chart
+  const PieTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const entry = payload[0];
+    return (
+      <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '10px 14px', boxShadow: 'var(--shadow-dropdown)' }}>
+        <p style={{ fontWeight: 700, fontSize: '13px', color: entry.payload.color }}>{entry.name}</p>
+        <p style={{ fontSize: '12px', color: 'var(--text-2)', marginTop: '2px' }}>{entry.value}% {lang === 'id' ? 'dari total hari ini' : 'of today\'s data'}</p>
+      </div>
+    );
+  };
+
+  // Custom tooltip for bar chart
+  const BarTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '10px 14px', boxShadow: 'var(--shadow-dropdown)' }}>
+        <p style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-1)', marginBottom: '6px' }}>{label}</p>
+        {payload.map(p => (
+          <div key={p.dataKey} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-2)', marginTop: '2px' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.fill, flexShrink: 0, display: 'inline-block' }} />
+            <span>{p.name}</span>
+            <span style={{ fontWeight: 700, color: 'var(--text-1)', marginLeft: 'auto' }}>{p.value}%</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (loading && cows.length === 0) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-[var(--color-sage-light)]/20 rounded w-1/4 mb-8"></div>
+        <div className="h-8 bg-[var(--bg-hover)] rounded w-1/4 mb-8"></div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-[400px] bg-[var(--color-sage-light)]/20 rounded-2xl"></div>
-          <div className="h-[400px] bg-[var(--color-sage-light)]/20 rounded-2xl"></div>
+          <div className="h-[400px] bg-[var(--bg-hover)] rounded-2xl"></div>
+          <div className="h-[400px] bg-[var(--bg-hover)] rounded-2xl"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500">
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)]">{t.behavior_title}</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">{t.behavior_sub}</p>
+          <h1 className="text-3xl font-display font-bold text-[var(--text-1)]">{t.behavior_title}</h1>
+          <p className="text-[var(--text-2)] mt-1 text-sm">{t.behavior_sub}</p>
         </div>
         <div className="flex items-center gap-2">
           {loading && <Loader2 className="w-4 h-4 animate-spin text-[var(--color-gold)]" />}
-          <select 
+          <select
             value={selectedCow}
             onChange={(e) => setSelectedCow(e.target.value)}
-            style={{ 
-              padding: '8px 16px', 
-              border: '0.5px solid var(--border)', 
-              borderRadius: '8px', 
-              background: 'var(--bg-card)', 
-              color: 'var(--text-1)', 
-              outline: 'none', 
-              fontSize: '14px', 
-              fontFamily: 'Inter, sans-serif' 
+            style={{
+              padding: '8px 16px',
+              border: '0.5px solid var(--border)',
+              borderRadius: '8px',
+              background: 'var(--bg-card)',
+              color: 'var(--text-1)',
+              outline: 'none',
+              fontSize: '14px',
+              fontFamily: 'Inter, sans-serif'
             }}
           >
             <option value="all" style={{ background: 'var(--bg-card)', color: 'var(--text-1)' }}>
@@ -149,17 +183,26 @@ export default function BehaviorAnalytics() {
         </div>
       </div>
 
+      {/* INFO NOTE — sensor classification context */}
+      <div style={{ background: 'var(--blue-dim, rgba(59,130,246,0.08))', border: '0.5px solid var(--blue, #3b82f6)', borderRadius: '10px', padding: '10px 14px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+        <Info style={{ width: 15, height: 15, color: 'var(--blue, #3b82f6)', flexShrink: 0, marginTop: 1 }} />
+        <p style={{ fontSize: '12px', color: 'var(--blue, #3b82f6)', lineHeight: 1.6 }}>
+          {t.behavior_note}
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* PIE CHART (1/3 width on large screens) */}
+        {/* PIE CHART */}
         <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '16px', boxShadow: 'var(--shadow-card)', padding: '24px' }} className="lg:col-span-4">
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-4">{t.behavior_pie_title}</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-1)] font-display mb-4">{t.behavior_pie_title}</h2>
 
-          <div className="h-[250px]">
+          <div className="h-[220px]">
             {localizedPieData.length === 0 || localizedPieData.every(item => item.value === 0) ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                <Activity className="w-8 h-8 text-[var(--color-text-muted)] mb-2" />
-                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t.behavior_pie_empty}</p>
+                <Activity className="w-8 h-8 text-[var(--text-3)] mb-2" />
+                <p className="text-sm font-medium text-[var(--text-2)]">{t.behavior_pie_empty}</p>
+                <p className="text-xs text-[var(--text-3)] mt-1">{lang === 'id' ? 'Pasangkan collar sensor pada sapi untuk melihat data.' : 'Pair a sensor collar to see activity data.'}</p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -168,9 +211,9 @@ export default function BehaviorAnalytics() {
                     data={localizedPieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={5}
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={3}
                     dataKey="value"
                     stroke="none"
                   >
@@ -178,65 +221,59 @@ export default function BehaviorAnalytics() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{ 
-                      borderRadius: '12px', 
-                      border: '0.5px solid var(--border)', 
-                      background: 'var(--bg-card)', 
-                      boxShadow: 'var(--shadow-dropdown)' 
-                    }}
-                    labelStyle={{ color: 'var(--color-text-primary)' }}
-                    itemStyle={{ fontWeight: 'bold' }}
-                  />
+                  <Tooltip content={<PieTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
             )}
           </div>
 
-          <div className="space-y-3 mt-4">
+          {/* Legend */}
+          <div className="space-y-2.5 mt-4">
             {localizedPieData.map(item => (
               <div key={item.name} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                  <span className="text-[var(--color-text-secondary)]">{item.name}</span>
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
+                  <span style={{ fontSize: '12px', color: 'var(--text-2)' }}>{item.name}</span>
                 </div>
-                <span className="font-bold text-[var(--color-text-primary)]">{item.value}%</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: item.value > 0 ? 'var(--text-1)' : 'var(--text-3)' }}>
+                  {item.value}%
+                </span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* BAR CHART (2/3 width) */}
+        {/* BAR CHART */}
         <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '16px', boxShadow: 'var(--shadow-card)', padding: '24px' }} className="lg:col-span-8 flex flex-col">
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-6">{t.behavior_bar_title}</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-semibold text-[var(--text-1)] font-display">{t.behavior_bar_title}</h2>
+            <span style={{ fontSize: '11px', color: 'var(--text-3)', background: 'var(--bg-card)', padding: '3px 8px', borderRadius: '6px', border: '0.5px solid var(--border)' }}>
+              {lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}
+            </span>
+          </div>
 
           <div className="flex-1 min-h-[300px]">
             {localizedWeeklyData.length === 0 || localizedWeeklyData.every(item => item.aktif === 0 && item.makan === 0 && item.istirahat === 0) ? (
               <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-4">
-                <Activity className="w-8 h-8 text-[var(--color-text-muted)] mb-2" />
-                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t.behavior_bar_empty}</p>
+                <Activity className="w-8 h-8 text-[var(--text-3)] mb-2" />
+                <p className="text-sm font-medium text-[var(--text-2)]">{t.behavior_bar_empty}</p>
+                <p className="text-xs text-[var(--text-3)] mt-1">{lang === 'id' ? 'Data aktivitas akan muncul setelah collar aktif mengirim data selama beberapa hari.' : 'Activity data will appear after active collars send data for a few days.'}</p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={localizedWeeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-sage-light)" opacity={0.3} />
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{ 
-                      borderRadius: '12px', 
-                      border: '0.5px solid var(--border)', 
-                      background: 'var(--bg-card)', 
-                      boxShadow: 'var(--shadow-dropdown)' 
-                    }}
-                    labelStyle={{ color: 'var(--color-text-primary)' }}
-                    cursor={{ fill: 'var(--color-sage-light)', opacity: 0.1 }}
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-3)', fontSize: 12 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-3)', fontSize: 12 }} tickFormatter={v => `${v}%`} />
+                  <Tooltip content={<BarTooltip />} cursor={{ fill: 'var(--bg-hover)', opacity: 0.5 }} />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ paddingTop: '20px', fontSize: '12px', color: 'var(--text-2)' }}
                   />
-                  <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }} />
-
-                  <Bar dataKey="aktif" name={t.behavior_legend_active} stackId="a" fill="var(--color-gold)" radius={[0, 0, 4, 4]} />
-                  <Bar dataKey="makan" name={t.behavior_legend_eating} stackId="a" fill="var(--color-forest)" />
-                  <Bar dataKey="istirahat" name={t.behavior_legend_resting} stackId="a" fill="var(--color-sage)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="aktif"    name={t.behavior_legend_active}  stackId="a" fill="var(--color-gold, #C9963A)" radius={[0, 0, 4, 4]} />
+                  <Bar dataKey="makan"    name={t.behavior_legend_eating}  stackId="a" fill="var(--color-forest, #2D4A3E)" />
+                  <Bar dataKey="istirahat" name={t.behavior_legend_resting} stackId="a" fill="var(--color-sage, #7A9E8E)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

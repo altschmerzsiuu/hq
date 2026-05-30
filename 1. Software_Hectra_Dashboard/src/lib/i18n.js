@@ -303,9 +303,11 @@ const translations = {
     behavior_pie_empty: 'No sensor data today',
     behavior_bar_title: 'Weekly Behavior Comparison',
     behavior_bar_empty: 'No weekly sensor data yet',
-    behavior_legend_active: 'Active / Estrus',
-    behavior_legend_eating: 'Eating / Ruminating',
-    behavior_legend_resting: 'Resting / Sleeping',
+    behavior_legend_active:  'High Activity',
+    behavior_legend_eating:  'Eating & Ruminating',
+    behavior_legend_resting: 'Resting',
+    behavior_legend_other:   'Unclassified',
+    behavior_note: 'High Activity: collar sensor detected intense movement. This may correlate with estrus but is not definitive. Unclassified means the collar sent data without a clear activity state.',
 
     // Activity Timeline
     timeline_title: 'Farm Activity Timeline',
@@ -742,9 +744,11 @@ const translations = {
     behavior_pie_empty: 'Tidak ada data sensor hari ini',
     behavior_bar_title: 'Komparasi Perilaku Mingguan',
     behavior_bar_empty: 'Belum ada data sensor mingguan',
-    behavior_legend_active: 'Aktif / Estrus',
-    behavior_legend_eating: 'Makan / Memamah Biak',
-    behavior_legend_resting: 'Istirahat / Tidur',
+    behavior_legend_active:  'Gerakan Aktif',
+    behavior_legend_eating:  'Makan & Ruminasi',
+    behavior_legend_resting: 'Istirahat',
+    behavior_legend_other:   'Tidak Terklasifikasi',
+    behavior_note: 'Gerakan Aktif: sensor collar mendeteksi intensitas gerakan tinggi. Dapat berkorelasi dengan estrus namun tidak bersifat definitif. Tidak Terklasifikasi berarti collar mengirim data tanpa status aktivitas yang jelas.',
 
     // Activity Timeline
     timeline_title: 'Timeline Aktivitas Peternakan',
