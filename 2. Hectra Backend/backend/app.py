@@ -253,7 +253,13 @@ async def get_db_pool() -> asyncpg.Pool:
     """Get or create database connection pool"""
     global db_pool
     if db_pool is None:
-        db_pool = await asyncpg.create_pool(**DB_CONFIG, min_size=2, max_size=10)
+        db_pool = await asyncpg.create_pool(
+            **DB_CONFIG, 
+            min_size=2, 
+            max_size=10, 
+            command_timeout=60, 
+            timeout=10
+        )
         app.state.db_pool = db_pool  # Standard FastAPI state attachment
     assert db_pool is not None
     return db_pool
@@ -309,7 +315,7 @@ ws_manager = ConnectionManager()
 async def listen_to_pg_notifications():
     """Background task to listen to Postgres NOTIFY and broadcast to WebSockets"""
     try:
-        conn = await asyncpg.connect(**DB_CONFIG)
+        conn = await asyncpg.connect(**DB_CONFIG, timeout=10, command_timeout=60)
         
         async def notification_handler(connection, pid, channel, payload):
             try:
