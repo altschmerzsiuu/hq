@@ -442,7 +442,7 @@ export default function ManajemenTernak() {
               <option value="Brahman">{t.breed_brahman}</option>
               <option value="Limosin">{t.breed_limousin}</option>
               <option value="Angus">{t.breed_angus}</option>
-              <option value="FriesHolstein">{t.breed_friesholstein}</option>
+              <option value="Friesian Holstein">{t.breed_friesholstein}</option>
             </select>
             <button onClick={() => setFilters({ kesehatan: 'all', jenis: 'all' })} style={{ fontSize: '12px', color: 'var(--text-3)', cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'Inter, sans-serif' }}>{t.btn_reset}</button>
           </div>
@@ -593,7 +593,7 @@ export default function ManajemenTernak() {
                     <option value="Limosin">{t.breed_limousin}</option>
                     <option value="Bali">{t.breed_bali}</option>
                     <option value="Angus">{t.breed_angus}</option>
-                    <option value="FriesHolstein">{t.breed_friesholstein}</option>
+                    <option value="Friesian Holstein">{t.breed_friesholstein}</option>
                   </select>
                 </div>
                 <div>
@@ -681,7 +681,7 @@ export default function ManajemenTernak() {
                     <option value="Limosin">{t.breed_limousin}</option>
                     <option value="Bali">{t.breed_bali}</option>
                     <option value="Angus">{t.breed_angus}</option>
-                    <option value="FriesHolstein">{t.breed_friesholstein}</option>
+                    <option value="Friesian Holstein">{t.breed_friesholstein}</option>
                   </select>
                 </div>
                 <div>
