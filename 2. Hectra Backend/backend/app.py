@@ -1604,7 +1604,8 @@ async def get_behavior_analytics(cow_id: str = "all", current_user: dict = Depen
             # Base query to link sensor_data to cattle owned by user
             base_join = """
                 FROM sensor_data sd
-                JOIN hewan h ON sd.collar_id = h.collar_id
+                JOIN collar_registry cr ON sd.collar_id = cr.collar_id
+                JOIN hewan h ON cr.cow_id = h.id
                 WHERE h.owner_id = $1
             """
             params: List[str | int] = [owner_id]
@@ -1703,14 +1704,16 @@ async def get_behavior_analytics(cow_id: str = "all", current_user: dict = Depen
                             AVG(sd.max_z) as avg_today,
                             AVG(sd.temperature) as avg_temp_today
                         FROM sensor_data sd
-                        JOIN hewan h ON sd.collar_id = h.collar_id
+                        JOIN collar_registry cr ON sd.collar_id = cr.collar_id
+                        JOIN hewan h ON cr.cow_id = h.id
                 WHERE h.owner_id = $1 AND sd.created_at >= $2
                 GROUP BY h.id, h.nama
             ),
             baseline_agg AS (
                 SELECT h.id, AVG(sd.max_z) as avg_baseline
                 FROM sensor_data sd
-                JOIN hewan h ON sd.collar_id = h.collar_id
+                JOIN collar_registry cr ON sd.collar_id = cr.collar_id
+                JOIN hewan h ON cr.cow_id = h.id
                 WHERE h.owner_id = $1
                 AND sd.created_at >= $3
                 AND sd.created_at < $2
