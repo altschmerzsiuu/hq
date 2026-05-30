@@ -921,17 +921,17 @@ export default function ManajemenTernak() {
                             <div className="flex items-center gap-1.5">
                               {isPregnant && (
                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--color-success-bg)] text-[var(--color-success)]">
-                                  🐮 {t.livestock_repro_pregnant}
+                                  {t.livestock_repro_pregnant}
                                 </span>
                               )}
                               {isFailed && (
                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--color-danger-bg)] text-[var(--color-danger)]">
-                                  ❌ {t.livestock_repro_failed}
+                                  {t.livestock_repro_failed}
                                 </span>
                               )}
                               {isPending && (
                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--color-warning-bg)] text-[var(--color-warning)]">
-                                  ⏳ {t.livestock_repro_pending}
+                                  {t.livestock_repro_pending}
                                 </span>
                               )}
                               {/* Tombol edit & hapus inline */}
@@ -1076,7 +1076,7 @@ export default function ManajemenTernak() {
                                     disabled={isConfirming}
                                     className="w-full text-[10px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors py-1"
                                   >
-                                    {isConfirming ? (lang === 'id' ? '⏳ Memproses...' : '⏳ Processing...') : `↩ ${t.livestock_repro_change_to} ${isPregnant ? t.livestock_repro_failed : t.livestock_repro_pregnant}`}
+                                    {isConfirming ? (lang === 'id' ? 'Memproses...' : 'Processing...') : `↩ ${t.livestock_repro_change_to} ${isPregnant ? t.livestock_repro_failed : t.livestock_repro_pregnant}`}
                                   </button>
                                 </div>
                               )}

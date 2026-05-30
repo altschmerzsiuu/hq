@@ -36,7 +36,7 @@ function classifyPrediction(pred, t) {
   } else if (conf < 0.4 && !inWin) {
     return { type: 'normal', label: t.prediction_filter_normal,               color: 'green' };
   }
-  return { type: 'upcoming', label: `🔵 ${t.status_scheduled}`,            color: 'blue'  };
+  return { type: 'upcoming', label: t.status_scheduled, color: 'blue'  };
 }
 
 function colorSchemeFor(type) {
@@ -112,8 +112,8 @@ export default function EstrusPrediction() {
           : `Completed: ${processed} succeeded, ${errors} failed.`);
       } else {
         toast.success(lang === 'id' 
-          ? `✅ Prediksi selesai! ${processed} sapi dianalisis.` 
-          : `✅ Prediction completed! ${processed} cows analyzed.`);
+          ? `Prediksi selesai! ${processed} sapi dianalisis.` 
+          : `Prediction completed! ${processed} cows analyzed.`);
       }
       await fetchPredictions(false);
     } catch (err) {
@@ -288,15 +288,16 @@ export default function EstrusPrediction() {
             <div className="flex items-center gap-2 flex-wrap">
               {/* Status filter pills */}
               {[
-                { value: 'all',         label: t.prediction_filter_all   },
-                { value: 'estrus',      label: t.prediction_filter_estrus },
-                { value: 'pre-estrus',  label: t.prediction_filter_approaching  },
-                { value: 'normal',      label: t.prediction_filter_normal },
+                { value: 'all',         label: t.prediction_filter_all },
+                { value: 'estrus',      label: t.prediction_filter_estrus,       dot: 'var(--red)'   },
+                { value: 'pre-estrus',  label: t.prediction_filter_approaching,  dot: 'var(--amber)' },
+                { value: 'normal',      label: t.prediction_filter_normal,       dot: 'var(--accent)'},
               ].map(opt => (
                 <button
                   key={opt.value}
                   onClick={() => setStatusFilter(opt.value)}
                   style={{
+                    display: 'flex', alignItems: 'center', gap: '5px',
                     padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
                     fontFamily: 'Inter, sans-serif', cursor: 'pointer',
                     border: `0.5px solid ${statusFilter === opt.value ? 'var(--accent)' : 'var(--border)'}`,
@@ -305,6 +306,9 @@ export default function EstrusPrediction() {
                     transition: 'all 0.15s',
                   }}
                 >
+                  {opt.dot && (
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: opt.dot, flexShrink: 0, display: 'inline-block' }} />
+                  )}
                   {opt.label}
                 </button>
               ))}
