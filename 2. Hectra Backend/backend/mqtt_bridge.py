@@ -444,7 +444,16 @@ if __name__ == "__main__":
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
     client.on_message = on_message
-    
+
+    # MQTT Authentication — required since allow_anonymous=false
+    mqtt_user = os.getenv('MQTT_BRIDGE_USER', 'hectra-bridge')
+    mqtt_pass = os.getenv('MQTT_BRIDGE_PASS', '')
+    if mqtt_user and mqtt_pass:
+        client.username_pw_set(mqtt_user, mqtt_pass)
+        print(f"🔐 MQTT Auth: connecting as '{mqtt_user}'")
+    else:
+        print("⚠️  MQTT_BRIDGE_USER/PASS not set — connecting without auth")
+
     print(f"🔄 Starting MQTT Bridge on topic: {MQTT_TOPIC}")
     client.connect(MQTT_BROKER_URL, MQTT_BROKER_PORT, 60)
     

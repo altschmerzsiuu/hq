@@ -14,6 +14,7 @@ services:
       - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./mqtt/fullchain.pem:/mosquitto/config/fullchain.pem:ro
       - ./mqtt/privkey.pem:/mosquitto/config/privkey.pem:ro
+      - ./mqtt/passwd:/mosquitto/config/passwd:ro
     networks:
       - iot_network
 
@@ -22,8 +23,9 @@ services:
     image: redis:alpine
     container_name: redis-cache
     restart: unless-stopped
+    command: redis-server --requirepass R3d!s@H3ctr4#26
     ports:
-      - "127.0.0.1:6379:6379"  # Internal only — tidak boleh terbuka ke internet
+      - "127.0.0.1:6379:6379"  # Internal only
     networks:
       - iot_network
 
@@ -78,7 +80,7 @@ services:
       - DB_NAME=Collar_to_Gateway
       - DB_USER=postgres
       - DB_PASSWORD=postgre
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://:R3d!s@H3ctr4#26@redis:6379/0
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_IDS=${TELEGRAM_CHAT_IDS}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
@@ -115,7 +117,7 @@ services:
       - DB_NAME=Collar_to_Gateway
       - DB_USER=postgres
       - DB_PASSWORD=postgre
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://:R3d!s@H3ctr4#26@redis:6379/0
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_IDS=${TELEGRAM_CHAT_IDS}
       - GEMINI_API_KEY=${GEMINI_API_KEY}

@@ -47,7 +47,7 @@ async def start_telegram_bot():
 
         await bot_application.initialize()
         await bot_application.start()
-        await bot_application.updater.start_polling()
+        await bot_application.updater.start_polling(drop_pending_updates=True)
         print("✅ [TELEGRAM] Telegram Bot started successfully via FastAPI.")
 
     except Exception as e:

@@ -50,6 +50,52 @@ from telegram_bot.bot import start_telegram_bot, stop_telegram_bot
 # Load environment variables
 load_dotenv()
 
+# ── Startup Environment Validation ────────────────────────────────────────────
+def _validate_env():
+    """
+    Crash loud at startup jika env var kritis tidak di-set atau masih default.
+    Lebih baik gagal di startup daripada silent fail di runtime.
+    """
+    errors = []
+
+    # Wajib ada dan tidak boleh kosong
+    required = {
+        "DB_HOST":    os.getenv("DB_HOST"),
+        "DB_NAME":    os.getenv("DB_NAME"),
+        "DB_USER":    os.getenv("DB_USER"),
+        "DB_PASSWORD": os.getenv("DB_PASSWORD"),
+        "REDIS_URL":  os.getenv("REDIS_URL"),
+    }
+    for key, val in required.items():
+        if not val:
+            errors.append(f"  ❌ {key} tidak di-set (wajib ada)")
+
+    # Warn kalau masih pakai default yang tidak aman
+    dangerous_defaults = {
+        "DEVICE_API_KEY": ("kunci-rahasia-peternakan-123", "ganti dengan key yang kuat"),
+    }
+    warnings = []
+    for key, (bad_val, hint) in dangerous_defaults.items():
+        current = os.getenv(key, "")
+        if current == bad_val or not current:
+            warnings.append(f"  ⚠️  {key} masih default/kosong — {hint}")
+
+    if warnings:
+        for w in warnings:
+            logger.warning(f"[STARTUP CONFIG] {w}")
+
+    if errors:
+        logger.critical("=" * 60)
+        logger.critical("[STARTUP] FATAL: Env var kritis tidak di-set!")
+        for e in errors:
+            logger.critical(e)
+        logger.critical("=" * 60)
+        raise SystemExit(1)
+
+    logger.info("[STARTUP] ✅ Environment validation passed")
+
+_validate_env()
+
 # Load ML Models
 try:
     svm_model = joblib.load("models/svm_estrus_sensor.joblib")
@@ -99,20 +145,19 @@ def get_effective_owner_id(user: dict) -> int:
     print(f"📡 [DATA ISOLATION] User Email: {user.get('email')} | ID: {user.get('id')} | Parent: {user.get('parent_id')} | Effective Owner: {eff_id}")
     return int(eff_id) if eff_id is not None else 0
 
-# CORS Configuration - Permissive for Dev/Local Device Testing
-ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "*"
-]
-
+# CORS Configuration — only allow known frontend origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174"], 
-    allow_origin_regex="https?://.*",  # Allows any local network IP / port with credentials enabled
-    allow_credentials=True, 
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "https://hectra.my.id",        # Production frontend — update if domain changes
+        "https://www.hectra.my.id",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
 )
 
 # Include routers
@@ -893,6 +938,69 @@ async def lifespan(app: FastAPI):
     await stop_telegram_bot()
 
 app.router.lifespan_context = lifespan
+
+# ── Health Check Endpoint ──────────────────────────────────────────────────────
+
+@app.get("/api/health", tags=["System"])
+async def health_check():
+    """
+    System health — cek koneksi ke DB, Redis, dan MQTT (proxy via sensor_data).
+    Returns HTTP 200 jika semua ok, 503 jika ada service yang down.
+    """
+    import redis as redis_lib
+
+    report = {
+        "status": "ok",
+        "timestamp": datetime.now(WITA).isoformat(),
+        "version": "2.0.0",
+        "services": {}
+    }
+    all_ok = True
+
+    # ── Database ──────────────────────────────────────────────────────
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            await conn.fetchval("SELECT 1")
+        report["services"]["db"] = {"status": "ok"}
+    except Exception as e:
+        report["services"]["db"] = {"status": "error"}
+        logger.error(f"[HEALTH] DB check failed: {e}")
+        all_ok = False
+
+    # ── Redis ─────────────────────────────────────────────────────────
+    try:
+        redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
+        r = redis_lib.StrictRedis.from_url(
+            redis_url, decode_responses=True, socket_connect_timeout=2
+        )
+        r.ping()
+        report["services"]["redis"] = {"status": "ok"}
+    except Exception as e:
+        report["services"]["redis"] = {"status": "error"}
+        logger.error(f"[HEALTH] Redis check failed: {e}")
+        all_ok = False
+
+    # ── MQTT (proxy: cek data sensor 24 jam terakhir) ─────────────────
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            recent = await conn.fetchval(
+                "SELECT COUNT(*) FROM sensor_data WHERE created_at > NOW() - INTERVAL '24 hours'"
+            )
+        report["services"]["mqtt"] = {
+            "status": "ok",
+            "recent_messages_24h": int(recent)
+        }
+    except Exception:
+        report["services"]["mqtt"] = {"status": "unknown"}
+
+    report["status"] = "ok" if all_ok else "degraded"
+    return JSONResponse(
+        content=report,
+        status_code=200 if all_ok else 503
+    )
+
 
 # ==========================
 # PYDANTIC MODELS
