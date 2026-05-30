@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import GendhisWidget from '../gendhis/GendhisWidget';
@@ -10,6 +10,8 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { toast } from '@/store/toastStore';
 
 export default function MainLayout() {
+  const location = useLocation();
+  const isResearchLab = location.pathname.includes('/research-lab');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const addNotification = useNotificationStore(state => state.addNotification);
@@ -114,18 +116,20 @@ export default function MainLayout() {
           </div>
 
           {/* Mobile bottom spacer */}
-          <div className="md:hidden" style={{ height: '140px' }} />
+          {!isResearchLab && <div className="md:hidden" style={{ height: '140px' }} />}
         </main>
 
         {/* Mobile Gendhis + Nav */}
-        <GendhistPullUpSheet />
-        <MobileBottomNav />
+        {!isResearchLab && <GendhistPullUpSheet />}
+        {!isResearchLab && <MobileBottomNav />}
       </div>
 
       {/* Desktop Gendhis Floating Widget */}
-      <div className="hidden md:block">
-        <GendhisWidget />
-      </div>
+      {!isResearchLab && (
+        <div className="hidden md:block">
+          <GendhisWidget />
+        </div>
+      )}
 
       {/* Dynamic Toast System */}
       <ToastContainer />

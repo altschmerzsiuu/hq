@@ -204,25 +204,30 @@ function ConfigStatusBadge({ status }) {
 function ConfigRow({ label, hint, value, onChange, min, max, onSend, status }) {
   const isBusy = status === 'sending' || status === 'delivered';
   return (
-    <div className="space-y-1.5">
-      <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-3)]">{label}</label>
-      <div className="flex gap-2">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-900/40 border border-[var(--border)] rounded-2xl hover:border-slate-800 transition-all">
+      <div className="min-w-0 flex-1">
+        <label className="block text-xs font-bold text-[var(--text-1)] uppercase tracking-wider">{label}</label>
+        <span className="text-[10px] text-[var(--text-3)] block mt-1">{hint}</span>
+        {status !== 'idle' && (
+          <div className="mt-1.5">
+            <ConfigStatusBadge status={status} />
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2 shrink-0 sm:self-center self-stretch">
         <input
           type="number" min={min} max={max} value={value}
           onChange={(e) => onChange(Number(e.target.value))}
           disabled={isBusy}
-          className="flex-1 min-w-0 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-amber-500 tabular-nums disabled:opacity-50"
+          className="w-20 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-2.5 py-2 text-center text-sm font-semibold text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 tabular-nums disabled:opacity-50"
         />
         <button
           onClick={onSend} disabled={isBusy}
-          className="px-4 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+          className="px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5 shadow-sm"
         >
-          {isBusy ? <Loader className="w-3 h-3 animate-spin" /> : null}
+          {isBusy ? <Loader className="w-3.5 h-3.5 animate-spin" /> : null}
           Kirim
         </button>
-      </div>
-      <div className="min-h-[16px]">
-        {status !== 'idle' ? <ConfigStatusBadge status={status} /> : <p className="text-[10px] text-[var(--text-3)]">{hint}</p>}
       </div>
     </div>
   );
@@ -243,6 +248,7 @@ export default function ResearchLab() {
   const [loadingObs, setLoadingObs] = useState(true);
   const [showOtaOverlay, setShowOtaOverlay] = useState(false);
   const [countdown, setCountdown] = useState(180);
+  const [isObsMinimized, setIsObsMinimized] = useState(false);
 
   const selectedCowObj = cows.find((c) => (c.cow_id || c.id) === selectedCow);
   const resolvedCollarId = selectedCowObj?.collar_id || selectedCow || 'ALL';
@@ -407,38 +413,51 @@ export default function ResearchLab() {
 
           {/* Recent observations */}
           <div className="bg-[var(--bg-surface)] rounded-3xl p-6 md:p-8 shadow-card border border-[var(--border)] space-y-6">
-            <h2 className="text-xl font-bold font-display text-[var(--color-text-primary)] flex items-center gap-2">
-              <Clock className="w-5 h-5 text-indigo-400" /> Log Observasi Terbaru
-            </h2>
-            {loadingObs ? (
-              <div className="space-y-4 animate-pulse">{[1,2,3].map(i => <div key={i} className="h-16 bg-[var(--border)]/30 rounded-2xl" />)}</div>
-            ) : observations.length === 0 ? (
-              <p className="text-center py-6 text-sm text-[var(--text-3)]">Belum ada observasi yang dicatat.</p>
-            ) : (
-              <div className="space-y-4">
-                {observations.map((obs) => {
-                  const meta = getActivityMeta(obs.activity_type);
-                  return (
-                    <div key={obs.id} className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className={`px-3 py-2 rounded-xl border font-bold text-xs flex items-center gap-1.5 shrink-0 ${meta.color}`}>
-                          {meta.icon}<span>{meta.label}</span>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold font-display text-[var(--color-text-primary)] flex items-center gap-2">
+                <Clock className="w-5 h-5 text-indigo-400" /> Log Observasi Terbaru
+              </h2>
+              <button
+                type="button"
+                onClick={() => setIsObsMinimized(!isObsMinimized)}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl border border-[var(--border)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] transition-all flex items-center gap-1.5"
+              >
+                {isObsMinimized ? 'Tampilkan' : 'Sembunyikan'}
+              </button>
+            </div>
+            {!isObsMinimized && (
+              <>
+                {loadingObs ? (
+                  <div className="space-y-4 animate-pulse">{[1,2,3].map(i => <div key={i} className="h-16 bg-[var(--border)]/30 rounded-2xl" />)}</div>
+                ) : observations.length === 0 ? (
+                  <p className="text-center py-6 text-sm text-[var(--text-3)]">Belum ada observasi yang dicatat.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {observations.map((obs) => {
+                      const meta = getActivityMeta(obs.activity_type);
+                      return (
+                        <div key={obs.id} className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className={`px-3 py-2 rounded-xl border font-bold text-xs flex items-center gap-1.5 shrink-0 ${meta.color}`}>
+                              {meta.icon}<span>{meta.label}</span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-[var(--color-text-primary)] text-sm">
+                                {obs.cow_name || obs.cow_id}
+                                <span className="text-[var(--text-3)] text-xs ml-2 font-mono">({obs.cow_id})</span>
+                              </p>
+                              {obs.notes && <p className="text-xs text-[var(--text-2)] mt-1">{obs.notes}</p>}
+                            </div>
+                          </div>
+                          <div className="text-[11px] text-[var(--text-3)] sm:text-right">
+                            {new Date(obs.created_at).toLocaleString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-[var(--color-text-primary)] text-sm">
-                            {obs.cow_name || obs.cow_id}
-                            <span className="text-[var(--text-3)] text-xs ml-2 font-mono">({obs.cow_id})</span>
-                          </p>
-                          {obs.notes && <p className="text-xs text-[var(--text-2)] mt-1">{obs.notes}</p>}
-                        </div>
-                      </div>
-                      <div className="text-[11px] text-[var(--text-3)] sm:text-right">
-                        {new Date(obs.created_at).toLocaleString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -540,7 +559,7 @@ export default function ResearchLab() {
             <div className="p-3 bg-amber-500/5 rounded-2xl border border-amber-500/10 text-[11px] text-amber-300/70 leading-relaxed">
               Config dikirim via MQTT retained. Aktif saat collar bangun dari deep sleep.
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
               <ConfigRow label="Sleep interval" hint="5–60 menit"     value={sleepMinutes}     onChange={setSleepMinutes}     min={5}  max={60}  status={statuses.sleep_minutes}      onSend={() => updateConfig(resolvedCollarId, 'sleep_minutes', sleepMinutes)} />
               <ConfigRow label="Batch count"    hint="1–20 batch"     value={batchCount}       onChange={setBatchCount}       min={1}  max={20}  status={statuses.batch_count}        onSend={() => updateConfig(resolvedCollarId, 'batch_count', batchCount)} />
               <ConfigRow label="Window size"    hint="5–50 sampel"    value={windowSize}       onChange={setWindowSize}       min={5}  max={50}  status={statuses.window_size}        onSend={() => updateConfig(resolvedCollarId, 'window_size', windowSize)} />
