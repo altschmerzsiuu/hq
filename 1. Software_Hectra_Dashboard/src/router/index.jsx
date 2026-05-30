@@ -18,6 +18,7 @@ const GendhisEye = lazy(() => import('@/pages/GendhisEye'));
 const IotManager = lazy(() => import('@/pages/IotManager'));
 const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 const ResearchLab = lazy(() => import('@/pages/ResearchLab'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Loading spinner component
 const PageLoader = () => (
@@ -111,5 +112,9 @@ export const router = createBrowserRouter([
         element: withSuspense(ResearchLab),
       },
     ],
+  },
+  {
+    path: '*',
+    element: withSuspense(NotFound),
   },
 ]);
