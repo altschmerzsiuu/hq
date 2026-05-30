@@ -29,9 +29,9 @@ import { useAuthStore } from '@/store/authStore';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import hectraLogo from '@/assets/logo/hectra.png'
-import hectraLightLogo from '@/assets/logo/Hectra_Light.png'
-import hectraDarkLogo from '@/assets/logo/Hectra_Dark.png'
+import hectraLogo from '@/assets/logo/hectra.webp'
+import hectraLightLogo from '@/assets/logo/Hectra_Light.webp'
+import hectraDarkLogo from '@/assets/logo/Hectra_Dark.webp'
 
 export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) {
   const { user, logout } = useAuthStore();

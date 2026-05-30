@@ -24,6 +24,50 @@ import regionData from '@/data/indonesia-region.json';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 
+const loadLeafletAssets = () => {
+  return new Promise((resolve, reject) => {
+    if (window.L) {
+      resolve(window.L);
+      return;
+    }
+
+    let link = document.querySelector('link[href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+
+    let script = document.querySelector('script[src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"]');
+    if (!script) {
+      script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.async = true;
+      script.onload = () => {
+        if (window.L) {
+          resolve(window.L);
+        } else {
+          reject(new Error('Leaflet global object L not found'));
+        }
+      };
+      script.onerror = (err) => reject(err);
+      document.body.appendChild(script);
+    } else {
+      const check = setInterval(() => {
+        if (window.L) {
+          clearInterval(check);
+          resolve(window.L);
+        }
+      }, 50);
+      setTimeout(() => {
+        clearInterval(check);
+        if (!window.L) reject(new Error('Timeout loading Leaflet'));
+      }, 10000);
+    }
+  });
+};
+
 export default function Settings() {
   const { lang, setLang } = useSettingsStore();
   const t = translations[lang];
@@ -122,50 +166,54 @@ export default function Settings() {
       return;
     }
 
-    // Wait for DOM + Leaflet
-    let attempts = 0;
-    const tryInit = () => {
-      attempts++;
-      if (!mapContainerRef.current || !window.L) {
-        if (attempts < 30) setTimeout(tryInit, 100);
-        return;
+    let isMounted = true;
+
+    const initMap = async () => {
+      try {
+        await loadLeafletAssets();
+        if (!isMounted || !mapContainerRef.current) return;
+        if (mapRef.current) return; // already inited
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const tileUrl = isDark
+          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+          : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+        const map = window.L.map(mapContainerRef.current).setView([latitude, longitude], 13);
+        window.L.tileLayer(tileUrl, { attribution: '© OpenStreetMap contributors' }).addTo(map);
+
+        const marker = window.L.marker([latitude, longitude], { draggable: true }).addTo(map);
+
+        // ✅ Drag end → reverse geocode → fill street field
+        marker.on('dragend', async () => {
+          const pos = marker.getLatLng();
+          setLatitude(parseFloat(pos.lat.toFixed(6)));
+          setLongitude(parseFloat(pos.lng.toFixed(6)));
+          await reverseGeocode(pos.lat, pos.lng);
+        });
+
+        // ✅ Map click → move marker + reverse geocode
+        map.on('click', async (e) => {
+          const pos = e.latlng;
+          marker.setLatLng(pos);
+          setLatitude(parseFloat(pos.lat.toFixed(6)));
+          setLongitude(parseFloat(pos.lng.toFixed(6)));
+          await reverseGeocode(pos.lat, pos.lng);
+        });
+
+        mapRef.current = map;
+        markerRef.current = marker;
+      } catch (err) {
+        console.error('Failed to initialize Leaflet Map:', err);
       }
-      if (mapRef.current) return; // already inited
-
-      const isDark = document.documentElement.classList.contains('dark');
-      const tileUrl = isDark
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-
-      const map = window.L.map(mapContainerRef.current).setView([latitude, longitude], 13);
-      window.L.tileLayer(tileUrl, { attribution: '© OpenStreetMap contributors' }).addTo(map);
-
-      const marker = window.L.marker([latitude, longitude], { draggable: true }).addTo(map);
-
-      // ✅ Drag end → reverse geocode → fill street field
-      marker.on('dragend', async () => {
-        const pos = marker.getLatLng();
-        setLatitude(parseFloat(pos.lat.toFixed(6)));
-        setLongitude(parseFloat(pos.lng.toFixed(6)));
-        await reverseGeocode(pos.lat, pos.lng);
-      });
-
-      // ✅ Map click → move marker + reverse geocode
-      map.on('click', async (e) => {
-        const pos = e.latlng;
-        marker.setLatLng(pos);
-        setLatitude(parseFloat(pos.lat.toFixed(6)));
-        setLongitude(parseFloat(pos.lng.toFixed(6)));
-        await reverseGeocode(pos.lat, pos.lng);
-      });
-
-      mapRef.current = map;
-      markerRef.current = marker;
     };
 
     // Small delay so the tab panel is visible before Leaflet measures the container
-    const t = setTimeout(tryInit, 80);
-    return () => clearTimeout(t);
+    const t = setTimeout(initMap, 80);
+    return () => {
+      isMounted = false;
+      clearTimeout(t);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 

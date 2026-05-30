@@ -1,27 +1,42 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 
-import Login from '@/pages/Login';
-import Dashboard from '@/pages/Dashboard';
-import SensorData from '@/pages/SensorData';
-import EstrusPrediction from '@/pages/EstrusPrediction';
-import Recommendations from '@/pages/Recommendations';
-import BehaviorAnalytics from '@/pages/BehaviorAnalytics';
-import Notifications from '@/pages/Notifications';
-import Settings from '@/pages/Settings';
-import ManajemenTernak from '@/pages/ManajemenTernak';
-import Reproduction from '@/pages/Reproduction';
-import ActivityTimeline from '@/pages/ActivityTimeline';
-import GendhisEye from '@/pages/GendhisEye';
-import IotManager from '@/pages/IotManager';
-import ComingSoon from '@/pages/ComingSoon';
-import ResearchLab from '@/pages/ResearchLab';
+const Login = lazy(() => import('@/pages/Login'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const SensorData = lazy(() => import('@/pages/SensorData'));
+const EstrusPrediction = lazy(() => import('@/pages/EstrusPrediction'));
+const Recommendations = lazy(() => import('@/pages/Recommendations'));
+const BehaviorAnalytics = lazy(() => import('@/pages/BehaviorAnalytics'));
+const Notifications = lazy(() => import('@/pages/Notifications'));
+const Settings = lazy(() => import('@/pages/Settings'));
+const ManajemenTernak = lazy(() => import('@/pages/ManajemenTernak'));
+const Reproduction = lazy(() => import('@/pages/Reproduction'));
+const ActivityTimeline = lazy(() => import('@/pages/ActivityTimeline'));
+const GendhisEye = lazy(() => import('@/pages/GendhisEye'));
+const IotManager = lazy(() => import('@/pages/IotManager'));
+const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
+const ResearchLab = lazy(() => import('@/pages/ResearchLab'));
+
+// Loading spinner component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
+
+// Wrapper to simplify suspense usage
+const withSuspense = (Component) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+);
 
 export const router = createBrowserRouter([
   {
     path: '/login',
-    element: <Login />,
+    element: withSuspense(Login),
   },
   {
     path: '/',
@@ -37,39 +52,39 @@ export const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-        element: <Dashboard />,
+        element: withSuspense(Dashboard),
       },
       {
         path: 'sensor-data',
-        element: <SensorData />,
+        element: withSuspense(SensorData),
       },
       {
         path: 'estrus-prediction',
-        element: <EstrusPrediction />,
+        element: withSuspense(EstrusPrediction),
       },
       {
         path: 'recommendations',
-        element: <Recommendations />,
+        element: withSuspense(Recommendations),
       },
       {
         path: 'behavior-analytics',
-        element: <BehaviorAnalytics />,
+        element: withSuspense(BehaviorAnalytics),
       },
       {
         path: 'notifications',
-        element: <Notifications />,
+        element: withSuspense(Notifications),
       },
       {
         path: 'settings',
-        element: <Settings />,
+        element: withSuspense(Settings),
       },
       {
         path: 'ternak',
-        element: <ManajemenTernak />,
+        element: withSuspense(ManajemenTernak),
       },
       {
         path: 'reproduction',
-        element: <Reproduction />,
+        element: withSuspense(Reproduction),
       },
       {
         path: 'kandang',
@@ -77,23 +92,23 @@ export const router = createBrowserRouter([
       },
       {
         path: 'pakan',
-        element: <ComingSoon />,
+        element: withSuspense(ComingSoon),
       },
       {
         path: 'activity-timeline',
-        element: <ActivityTimeline />,
+        element: withSuspense(ActivityTimeline),
       },
       {
         path: 'gendhis-eye',
-        element: <GendhisEye />,
+        element: withSuspense(GendhisEye),
       },
       {
         path: 'iot-manager',
-        element: <IotManager />,
+        element: withSuspense(IotManager),
       },
       {
         path: 'research-lab',
-        element: <ResearchLab />,
+        element: withSuspense(ResearchLab),
       },
     ],
   },

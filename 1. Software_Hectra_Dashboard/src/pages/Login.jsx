@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff, Mail, Lock, User, ArrowRight, Leaf } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
-import brandLogo from '@/assets/logo/hectra.png';
-import hectraDarkLogo from '@/assets/logo/Hectra_Dark.png';
+import brandLogo from '@/assets/logo/hectra.webp';
+import hectraDarkLogo from '@/assets/logo/Hectra_Dark.webp';
 
 /* ─── Design Tokens ───────────────────────────────────────────────────── */
 const T = {
