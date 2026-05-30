@@ -77,6 +77,10 @@ export default function ManajemenTernak() {
   const [scanTarget, setScanTarget] = useState('tambah'); // 'tambah' or 'edit'
   const [reproSortOrder, setReproSortOrder] = useState('desc'); // 'desc' or 'asc'
 
+  // History states — must be declared BEFORE sortedReproHistory useMemo to avoid TDZ
+  const [reproHistory, setReproHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const sortedReproHistory = useMemo(() => {
     return [...reproHistory].sort((a, b) => {
       const dateA = new Date(a.tanggal_ib || a.service_date || 0);
@@ -124,9 +128,6 @@ export default function ManajemenTernak() {
   const [pairSelectedSapi, setPairSelectedSapi] = useState(null);
   const [pairSelectedCollar, setPairSelectedCollar] = useState(null);
 
-  // History states
-  const [reproHistory, setReproHistory] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const reloadReproHistory = (sapiId) => {
     setLoadingHistory(true);
