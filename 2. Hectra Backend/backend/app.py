@@ -2594,15 +2594,34 @@ async def run_estrus_predictions(
             cow_name = cow["nama"]
             try:
                 result = await predict_estrus(conn, rfid, owner_id)
+                is_estrus_now = result.get("is_estrus_now", False)
+                prediksi_tgl  = result.get("prediksi_tanggal")
+                confidence    = result.get("confidence_final", 0.0)
+                metode        = result.get("metode", "calendar_only")
+                # Derive a human-readable status string
+                if is_estrus_now:
+                    status_str = "estrus_now"
+                elif prediksi_tgl:
+                    days_until = (prediksi_tgl - date.today()).days
+                    if days_until <= 3:
+                        status_str = "birahi_segera"
+                    elif days_until <= 7:
+                        status_str = "perhatian"
+                    else:
+                        status_str = "aman"
+                else:
+                    status_str = "no_prediction"
                 results.append({
                     "rfid":             rfid,
                     "cow_name":         cow_name,
-                    "status":           result.get("status"),
-                    "confidence_final": result.get("confidence_final"),
-                    "prediksi_tanggal": str(result.get("prediksi_tanggal", "")),
-                    "metode":           result.get("metode"),
+                    "status":           status_str,
+                    "confidence_final": confidence,
+                    "prediksi_tanggal": str(prediksi_tgl) if prediksi_tgl else "",
+                    "metode":           metode,
+                    "is_estrus_now":    is_estrus_now,
+                    "should_notify":    result.get("should_notify", False),
                 })
-                print(f"[ESTRUS PREDICT] ✅ {cow_name} ({rfid}): {result.get('status')} conf={result.get('confidence_final', 0):.3f}")
+                print(f"[ESTRUS PREDICT] ✅ {cow_name} ({rfid}): {status_str} | conf={confidence:.3f} | tgl={prediksi_tgl} | metode={metode}")
             except Exception as e:
                 import traceback
                 errors.append({"rfid": rfid, "cow_name": cow_name, "error": str(e)})
