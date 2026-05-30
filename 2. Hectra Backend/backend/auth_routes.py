@@ -44,6 +44,18 @@ class LoginResponse(BaseModel):
     user: dict
     access_token: Optional[str] = None
 
+class PINSetRequest(BaseModel):
+    pin: str
+
+class PINLoginRequest(BaseModel):
+    user_id: str
+    device_uuid: str
+    pin: str
+
+class DeviceRegisterRequest(BaseModel):
+    device_uuid: str
+    device_label: Optional[str] = None
+
 # Dependency to get DB pool
 async def get_db_pool_dependency():
     from app import get_db_pool
@@ -155,10 +167,14 @@ async def register(user_data: UserRegister, response: Response, pool=Depends(get
         
         set_auth_cookies(response, access_token, refresh_token_str)
         
+        user_dict = dict(user)
+        user_dict["has_pin"] = False
+        user_dict.pop("password_hash", None)
+
         return {
             "message": "success",
             "access_token": access_token,
-            "user": dict(user)
+            "user": user_dict
         }
 
 @router.post("/login", response_model=LoginResponse)
@@ -182,6 +198,11 @@ async def login(credentials: UserLogin, response: Response, pool=Depends(get_db_
         
         set_auth_cookies(response, access_token, refresh_token_str)
         
+        has_pin = False
+        pin_record = await conn.fetchrow("SELECT 1 FROM user_pins WHERE user_id = $1", user['id'])
+        if pin_record:
+            has_pin = True
+
         return {
             "message": "success",
             "access_token": access_token,
@@ -190,7 +211,8 @@ async def login(credentials: UserLogin, response: Response, pool=Depends(get_db_
                 "email": user['email'],
                 "full_name": user['full_name'],
                 "role": user['role'],
-                "profile_picture_url": user['profile_picture_url']
+                "profile_picture_url": user['profile_picture_url'],
+                "has_pin": has_pin
             }
         }
 
@@ -250,10 +272,20 @@ async def google_auth(request_data: GoogleAuthRequest, response: Response, pool=
         
         set_auth_cookies(response, access_token, refresh_token_str)
         
+        has_pin = False
+        pin_record = await conn.fetchrow("SELECT 1 FROM user_pins WHERE user_id = $1", user['id'])
+        if pin_record:
+            has_pin = True
+
+        user_dict = dict(user)
+        user_dict["has_pin"] = has_pin
+        user_dict.pop("password_hash", None)
+        user_dict.pop("last_login_at", None)
+
         return {
             "message": "success",
             "access_token": access_token,
-            "user": dict(user)
+            "user": user_dict
         }
 
 @router.post("/refresh")
@@ -325,3 +357,49 @@ async def logout(request_data: LogoutRequest, request: Request, response: Respon
 async def get_me(current_user: dict = Depends(get_current_user)):
     """Get current user information"""
     return current_user
+
+@router.post("/pin/set")
+async def set_pin(
+    request_data: PINSetRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Set or update user PIN"""
+    from pin_service import PINService
+    user_id = int(current_user["id"])
+    await PINService.set_pin(user_id, request_data.pin)
+    return {"message": "PIN berhasil diatur"}
+
+@router.post("/pin/login", response_model=LoginResponse)
+async def login_pin(
+    request_data: PINLoginRequest,
+    response: Response
+):
+    """Authenticate device using PIN and Device UUID"""
+    from pin_service import PINService
+    try:
+        user_id = int(request_data.user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID pengguna tidak valid.")
+        
+    res = await PINService.verify_pin(
+        user_id=user_id,
+        device_uuid=request_data.device_uuid,
+        pin=request_data.pin,
+        response=response
+    )
+    return res
+
+@router.post("/pin/register-device")
+async def register_device(
+    request_data: DeviceRegisterRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Register a new trusted device for the authenticated user"""
+    from pin_service import PINService
+    user_id = int(current_user["id"])
+    await PINService.register_device(
+        user_id=user_id,
+        device_uuid=request_data.device_uuid,
+        device_label=request_data.device_label
+    )
+    return {"message": "Perangkat terdaftar"}

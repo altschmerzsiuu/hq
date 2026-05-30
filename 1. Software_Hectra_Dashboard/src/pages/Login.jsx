@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Eye, EyeOff, Mail, Lock, User, ArrowRight, Leaf } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
 import brandLogo from '@/assets/logo/hectra.webp';
@@ -299,12 +299,69 @@ export default function Login() {
   const [showForgotModal, setShowForgotModal] = useState(false);
   const navigate = useNavigate();
 
+  // PIN & Device states
+  const [isPinLogin, setIsPinLogin] = useState(false);
+  const [pinDigits, setPinDigits] = useState(Array(6).fill(''));
+  const [pinError, setPinError] = useState('');
+  const [shake, setShake] = useState(false);
+  const [lockedTimeRemaining, setLockedTimeRemaining] = useState(0);
+
+  // PIN Setup Modal states
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [setupPinDigits, setSetupPinDigits] = useState(Array(6).fill(''));
+  const [confirmPinDigits, setConfirmPinDigits] = useState(Array(6).fill(''));
+  const [setupError, setSetupError] = useState('');
+  const [tempUserId, setTempUserId] = useState(null);
+  const [tempUserName, setTempUserName] = useState(null);
+
+  // Focus tracking states
+  const [focusedPinIdx, setFocusedPinIdx] = useState(-1);
+  const [focusedSetupIdx, setFocusedSetupIdx] = useState(-1);
+  const [focusedConfirmIdx, setFocusedConfirmIdx] = useState(-1);
+
+  // Input references
+  const pinRefs = useRef([]);
+  const setupPinRefs = useRef([]);
+  const confirmPinRefs = useRef([]);
+
   const { login, isLoading, error, isAuthenticated, clearError } = useAuthStore();
 
+  // Startup: Detect existing UUID and previous user session to activate PIN login
   useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true });
+    const devUuid = localStorage.getItem('hectra_device_uuid');
+    const userId = localStorage.getItem('hectra_user_id');
+    if (devUuid && userId) {
+      setIsPinLogin(true);
+      setTimeout(() => {
+        pinRefs.current[0]?.focus();
+      }, 150);
+    }
+  }, []);
+
+  // Automatically submit PIN login once all 6 digits are keyed in
+  useEffect(() => {
+    const pinStr = pinDigits.join('');
+    if (pinStr.length === 6 && isPinLogin) {
+      handlePinSubmit(pinStr);
+    }
+  }, [pinDigits, isPinLogin]);
+
+  // Locked countdown handler
+  useEffect(() => {
+    if (lockedTimeRemaining <= 0) return;
+    const interval = setInterval(() => {
+      setLockedTimeRemaining(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockedTimeRemaining]);
+
+  useEffect(() => {
+    // Prevent redirect to dashboard if setup modal is open
+    if (isAuthenticated && !showPinSetup) {
+      navigate('/dashboard', { replace: true });
+    }
     clearError();
-  }, [isAuthenticated, navigate, clearError, isLogin]);
+  }, [isAuthenticated, navigate, clearError, isLogin, showPinSetup]);
 
   // Prefill email
   useEffect(() => {
@@ -358,9 +415,24 @@ export default function Login() {
         throw new Error(data.detail || 'Google authentication failed');
       }
       
-      useAuthStore.getState().setToken(data.access_token);
-      toast.success('Berhasil masuk dengan Google!');
-      navigate('/dashboard', { replace: true });
+      // Auto register device
+      const { registerDevice } = useAuthStore.getState();
+      await registerDevice();
+
+      const userObj = data.user;
+      
+      if (!userObj.has_pin) {
+        setTempUserId(userObj.id);
+        setTempUserName(userObj.full_name);
+        setShowPinSetup(true);
+        useAuthStore.getState().setToken(data.access_token, data.user);
+      } else {
+        localStorage.setItem('hectra_user_id', userObj.id);
+        localStorage.setItem('hectra_user_name', userObj.full_name);
+        useAuthStore.getState().setToken(data.access_token, data.user);
+        toast.success('Berhasil masuk dengan Google!');
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err) {
       toast.error(err.message || 'Gagal login dengan Google');
     }
@@ -378,11 +450,24 @@ export default function Login() {
     e.preventDefault();
     if (isLogin) {
       if (!email || !password) return;
-      const success = await login(email, password);
-      if (success) {
+      const userObj = await login(email, password);
+      if (userObj) {
         localStorage.setItem('remember_email', email);
-        toast.success('Selamat datang kembali!');
-        navigate('/dashboard', { replace: true });
+        
+        // Auto register device
+        const { registerDevice } = useAuthStore.getState();
+        await registerDevice();
+
+        if (!userObj.has_pin) {
+          setTempUserId(userObj.id);
+          setTempUserName(userObj.full_name);
+          setShowPinSetup(true);
+        } else {
+          localStorage.setItem('hectra_user_id', userObj.id);
+          localStorage.setItem('hectra_user_name', userObj.full_name);
+          toast.success('Selamat datang kembali!');
+          navigate('/dashboard', { replace: true });
+        }
       }
     } else {
       if (!fullName || !email || !password || !confirmPassword) return;
@@ -403,10 +488,23 @@ export default function Login() {
         toast.success('Pendaftaran berhasil! Mengalihkan ke dashboard...');
         
         // Auto-login after successful registration
-        const success = await login(email, password);
-        if (success) {
+        const userObj = await login(email, password);
+        if (userObj) {
           localStorage.setItem('remember_email', email);
-          navigate('/dashboard', { replace: true });
+          
+          // Auto register device
+          const { registerDevice } = useAuthStore.getState();
+          await registerDevice();
+
+          if (!userObj.has_pin) {
+            setTempUserId(userObj.id);
+            setTempUserName(userObj.full_name);
+            setShowPinSetup(true);
+          } else {
+            localStorage.setItem('hectra_user_id', userObj.id);
+            localStorage.setItem('hectra_user_name', userObj.full_name);
+            navigate('/dashboard', { replace: true });
+          }
         } else {
           setIsLogin(true);
         }
@@ -414,6 +512,148 @@ export default function Login() {
         toast.error(err.message || 'Pendaftaran gagal');
       }
     }
+  };
+
+  // PIN Login Form Handlers
+  const extractMinutes = (msg) => {
+    const match = msg.match(/(\d+)\s*menit/);
+    return match ? parseInt(match[1], 10) : 10;
+  };
+
+  const formatTimeRemaining = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const handlePinDigitChange = (index, value, digitsArray, setDigitsArray, refs) => {
+    if (value && !/^\d$/.test(value)) return;
+    const newDigits = [...digitsArray];
+    newDigits[index] = value;
+    setDigitsArray(newDigits);
+
+    // Auto-focus next input
+    if (value !== '' && index < 5) {
+      refs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePinKeyDown = (index, e, digitsArray, setDigitsArray, refs) => {
+    if (e.key === 'Backspace') {
+      if (digitsArray[index] === '' && index > 0) {
+        const newDigits = [...digitsArray];
+        newDigits[index - 1] = '';
+        setDigitsArray(newDigits);
+        refs.current[index - 1]?.focus();
+      } else {
+        const newDigits = [...digitsArray];
+        newDigits[index] = '';
+        setDigitsArray(newDigits);
+      }
+    }
+  };
+
+  const handlePinPaste = (e, setDigitsArray, refs) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text');
+    if (!/^\d{6}$/.test(pastedData)) return;
+
+    const newDigits = pastedData.split('');
+    setDigitsArray(newDigits);
+    refs.current[5]?.focus();
+  };
+
+  const handlePinSubmit = async (pinStr) => {
+    const userId = localStorage.getItem('hectra_user_id');
+    if (!userId) return;
+    try {
+      setPinError('');
+      const { loginWithPIN } = useAuthStore.getState();
+      const userObj = await loginWithPIN(userId, pinStr);
+      if (userObj) {
+        toast.success('Berhasil masuk!');
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (err) {
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+
+      const errMsg = err.response?.data?.detail || err.message || "PIN salah";
+
+      if (err.response?.status === 423 || errMsg.includes('dikunci')) {
+        const minutes = extractMinutes(errMsg);
+        setLockedTimeRemaining(minutes * 60);
+        setPinError(errMsg);
+      } else if (err.response?.status === 403) {
+        toast.error('Perangkat ini belum terdaftar. Silakan masuk menggunakan Email / Google terlebih dahulu.');
+        handleNotYou();
+      } else {
+        setPinError(errMsg);
+      }
+      setPinDigits(Array(6).fill(''));
+      pinRefs.current[0]?.focus();
+    }
+  };
+
+  // PIN Setup Handlers
+  const handleSetupPinSubmit = async () => {
+    const pinStr = setupPinDigits.join('');
+    const confirmPinStr = confirmPinDigits.join('');
+    
+    if (pinStr.length !== 6 || confirmPinStr.length !== 6) {
+      setSetupError('PIN harus berupa 6 digit angka.');
+      return;
+    }
+    
+    if (pinStr !== confirmPinStr) {
+      setSetupError('Konfirmasi PIN tidak cocok.');
+      setSetupPinDigits(Array(6).fill(''));
+      setConfirmPinDigits(Array(6).fill(''));
+      setupPinRefs.current[0]?.focus();
+      return;
+    }
+    
+    try {
+      setSetupError('');
+      const { setupPIN } = useAuthStore.getState();
+      await setupPIN(pinStr);
+      
+      if (tempUserId) {
+        localStorage.setItem('hectra_user_id', tempUserId);
+      }
+      if (tempUserName) {
+        localStorage.setItem('hectra_user_name', tempUserName);
+      }
+      
+      toast.success('PIN berhasil diatur!');
+      setShowPinSetup(false);
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      setSetupError(err.message || 'Gagal mengatur PIN');
+    }
+  };
+
+  const handleSkipPinSetup = () => {
+    setShowPinSetup(false);
+    toast.info('PIN Setup dilewati.');
+    navigate('/dashboard', { replace: true });
+  };
+
+  const handleNotYou = () => {
+    localStorage.removeItem('hectra_user_id');
+    localStorage.removeItem('hectra_user_name');
+    setIsPinLogin(false);
+    setPinDigits(Array(6).fill(''));
+    setPinError('');
+  };
+
+  const handleForgotPin = () => {
+    localStorage.removeItem('hectra_user_id');
+    localStorage.removeItem('hectra_user_name');
+    setIsPinLogin(false);
+    setPinDigits(Array(6).fill(''));
+    setPinError('');
+    toast.success('Silakan login ulang untuk atur PIN baru');
   };
 
   const handleToggleMode = () => {
@@ -439,6 +679,7 @@ export default function Login() {
         @keyframes hq-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
         @keyframes hq-pulse   { 0%,100%{opacity:1} 50%{opacity:0.35} }
         @keyframes hq-fadeup  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes hq-shake   { 0%,100%{transform:translateX(0)} 10%,30%,50%,70%,90%{transform:translateX(-6px)} 20%,40%,60%,80%{transform:translateX(6px)} }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html, body, #root { height: 100%; }
         
@@ -568,152 +809,244 @@ export default function Login() {
               </div>
             </div>
 
-            {/* heading */}
-            <h2 style={{
-              fontSize: 22, fontWeight: 800, color: T.t1,
-              letterSpacing: '-0.5px', marginBottom: 4,
-              fontFamily: FONT_DISPLAY,
-            }}>
-              {isLogin ? "Hey, you're back." : 'First time here?'}
-            </h2>
-            <p style={{ fontSize: 12, color: T.t2, marginBottom: '1.25rem', lineHeight: 1.55 }}>
-              {isLogin
-                ? "Your farm's been waiting. Let's check in."
-                : 'Set up takes less than 2 minutes, promise.'}
-            </p>
+            {isPinLogin ? (
+              <>
+                {/* ─── PIN LOGIN SCREEN ─── */}
+                <h2 style={{
+                  fontSize: 22, fontWeight: 800, color: T.t1,
+                  letterSpacing: '-0.5px', marginBottom: 4,
+                  fontFamily: FONT_DISPLAY,
+                }}>
+                  Selamat datang kembali.
+                </h2>
+                <p style={{ fontSize: 12, color: T.t2, marginBottom: '1.25rem', lineHeight: 1.55 }}>
+                  Halo <strong>{localStorage.getItem('hectra_user_name') || 'Operator Hectra'}</strong>, masukkan 6 digit PIN Anda untuk masuk.
+                </p>
 
-            {/* error banner */}
-            {error && (
-              <div style={{
-                background: '#2b0d0d', border: `1px solid ${T.danger}40`,
-                color: T.danger, padding: '8px 12px', borderRadius: 8,
-                fontSize: 12, marginBottom: 12, fontWeight: 600,
-              }}>{error}</div>
-            )}
+                {/* error banner */}
+                {pinError && (
+                  <div style={{
+                    background: '#2b0d0d', border: `1px solid ${T.danger}40`,
+                    color: T.danger, padding: '8px 12px', borderRadius: 8,
+                    fontSize: 12, marginBottom: 12, fontWeight: 600,
+                  }}>{pinError}</div>
+                )}
 
-            {/* form */}
-            <form onSubmit={handleSubmit}>
-              {!isLogin ? (
-                <>
-                  {/* Baris 1: Full Name (Full Width) */}
-                  <Field label="Full Name" icon={User}
-                    value={fullName} onChange={e => setFullName(e.target.value)}
-                    placeholder="Your name" />
+                {/* 6 Digit PIN inputs */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: '10px',
+                  margin: '24px 0',
+                  animation: shake ? 'hq-shake 0.5s ease' : 'none'
+                }}>
+                  {pinDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={el => pinRefs.current[idx] = el}
+                      type="password"
+                      pattern="\d*"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      disabled={lockedTimeRemaining > 0}
+                      onFocus={() => setFocusedPinIdx(idx)}
+                      onBlur={() => setFocusedPinIdx(-1)}
+                      onChange={e => handlePinDigitChange(idx, e.target.value, pinDigits, setPinDigits, pinRefs)}
+                      onKeyDown={e => handlePinKeyDown(idx, e, pinDigits, setPinDigits, pinRefs)}
+                      onPaste={e => handlePinPaste(e, setPinDigits, pinRefs)}
+                      style={{
+                        width: '100%',
+                        maxWidth: '52px',
+                        height: '52px',
+                        borderRadius: '12px',
+                        border: `1px solid ${focusedPinIdx === idx ? T.accent : T.border}`,
+                        background: T.cardBg,
+                        color: T.t1,
+                        fontSize: '20px',
+                        fontWeight: '800',
+                        textAlign: 'center',
+                        outline: 'none',
+                        transition: 'border-color 0.2s, box-shadow 0.2s',
+                        boxShadow: focusedPinIdx === idx ? `0 0 0 3px ${T.accent}1A` : 'none',
+                      }}
+                    />
+                  ))}
+                </div>
 
-                  {/* Baris 2: Email (Full Width) */}
-                  <Field label="Email Address" icon={Mail} type="email"
-                    value={email} onChange={e => setEmail(e.target.value)}
-                    placeholder="admin@farm.com" />
+                {lockedTimeRemaining > 0 && (
+                  <p style={{ fontSize: 11, color: T.danger, textAlign: 'center', fontWeight: 600, marginBottom: 14 }}>
+                    PIN dikunci. Coba lagi dalam {formatTimeRemaining(lockedTimeRemaining)}
+                  </p>
+                )}
 
-                  {/* Baris 3: Password + Confirm Password (Side by Side) */}
-                  <div className="hq-field-row" style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                    <FieldHalf label="Password" icon={Lock}
-                      type={showPassword ? 'text' : 'password'}
-                      value={password} onChange={e => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      rightEl={
-                        <button type="button" onClick={() => setShowPassword(!showPassword)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.t3, display: 'flex', padding: 0, flexShrink: 0 }}>
-                          {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
-                        </button>
-                      } />
-                    <FieldHalf label="Confirm Password" icon={Lock}
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      rightEl={
-                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.t3, display: 'flex', padding: 0, flexShrink: 0 }}>
-                          {showConfirmPassword ? <EyeOff size={13} /> : <Eye size={13} />}
-                        </button>
-                      } />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Field label="Email Address" icon={Mail} type="email"
-                    value={email} onChange={e => setEmail(e.target.value)}
-                    placeholder="admin@farm.com" />
-                  <Field label="Password" icon={Lock}
-                    type={showPassword ? 'text' : 'password'}
-                    value={password} onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••" rightEl={eyeBtn} />
-                </>
-              )}
-
-              {isLogin && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 24 }}>
                   <button type="button"
-                    onClick={() => setShowForgotModal(true)}
+                    onClick={handleForgotPin}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: T.accent, fontWeight: 700, fontFamily: FONT_BODY }}>
-                    Forgot password?
+                    Lupa PIN?
+                  </button>
+                  <button type="button"
+                    onClick={handleNotYou}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: T.t2, fontWeight: 600, fontFamily: FONT_BODY }}>
+                    Bukan kamu?
                   </button>
                 </div>
-              )}
 
-              {/* Bulky Submit Button */}
-              <button type="submit" disabled={isLoading}
-                style={{
-                  width: '100%', background: T.accent, border: 'none', borderRadius: 10,
-                  padding: '14px 0', fontSize: 13, fontWeight: 800, color: '#0A0A0F',
-                  cursor: isLoading ? 'not-allowed' : 'pointer', letterSpacing: '0.04em',
-                  opacity: isLoading ? 0.7 : 1,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                  transition: 'background 0.2s', marginBottom: 12,
-                  fontFamily: FONT_BODY,
-                }}
-                onMouseEnter={e => { if (!isLoading) e.currentTarget.style.background = T.accentHover; }}
-                onMouseLeave={e => { e.currentTarget.style.background = T.accent; }}
-              >
-                {isLoading
-                  ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Processing...</>
-                  : <>{isLogin ? 'Sign In' : 'Create Account'} <ArrowRight size={14} /></>}
-              </button>
-            </form>
+                <p style={{ textAlign: 'center', fontSize: 9, color: T.t3, marginTop: 14, letterSpacing: '0.04em' }}>
+                  © 2026 Hectra. All rights reserved.
+                </p>
+              </>
+            ) : (
+              <>
+                {/* ─── STANDARD EMAIL / GOOGLE LOGIN ─── */}
+                <h2 style={{
+                  fontSize: 22, fontWeight: 800, color: T.t1,
+                  letterSpacing: '-0.5px', marginBottom: 4,
+                  fontFamily: FONT_DISPLAY,
+                }}>
+                  {isLogin ? "Hey, you're back." : 'First time here?'}
+                </h2>
+                <p style={{ fontSize: 12, color: T.t2, marginBottom: '1.25rem', lineHeight: 1.55 }}>
+                  {isLogin
+                    ? "Your farm's been waiting. Let's check in."
+                    : 'Set up takes less than 2 minutes, promise.'}
+                </p>
 
-            {/* OR divider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <div style={{ flex: 1, height: 1, background: T.border }} />
-              <span style={{ fontSize: 9, color: T.t3, fontWeight: 700, letterSpacing: '0.1em' }}>OR</span>
-              <div style={{ flex: 1, height: 1, background: T.border }} />
-            </div>
+                {/* error banner */}
+                {error && (
+                  <div style={{
+                    background: '#2b0d0d', border: `1px solid ${T.danger}40`,
+                    color: T.danger, padding: '8px 12px', borderRadius: 8,
+                    fontSize: 12, marginBottom: 12, fontWeight: 600,
+                  }}>{error}</div>
+                )}
 
-            {/* Bulky Google Button */}
-            <button type="button" onClick={handleGoogleLogin}
-              style={{
-                width: '100%', background: T.cardBg,
-                border: `1px solid ${T.border}`, borderRadius: 10,
-                padding: '13px 0', fontSize: 12, fontWeight: 700,
-                color: T.t2, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                transition: 'all 0.2s', fontFamily: FONT_BODY,
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = T.hover; e.currentTarget.style.borderColor = T.t3; }}
-              onMouseLeave={e => { e.currentTarget.style.background = T.cardBg; e.currentTarget.style.borderColor = T.border; }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-              </svg>
-              {isLogin ? 'Continue with Google' : 'Sign up with Google'}
-            </button>
+                {/* form */}
+                <form onSubmit={handleSubmit}>
+                  {!isLogin ? (
+                    <>
+                      {/* Baris 1: Full Name (Full Width) */}
+                      <Field label="Full Name" icon={User}
+                        value={fullName} onChange={e => setFullName(e.target.value)}
+                        placeholder="Your name" />
 
-            {/* toggle */}
-            <p style={{ textAlign: 'center', fontSize: 11, color: T.t2, marginTop: 14 }}>
-              {isLogin ? 'New to Hectra? ' : 'Already have an account? '}
-              <button onClick={handleToggleMode} style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: T.accent, fontWeight: 700, fontSize: 11, fontFamily: FONT_BODY,
-              }}>
-                {isLogin ? 'Create an account' : 'Sign in'}
-              </button>
-            </p>
+                      {/* Baris 2: Email (Full Width) */}
+                      <Field label="Email Address" icon={Mail} type="email"
+                        value={email} onChange={e => setEmail(e.target.value)}
+                        placeholder="admin@farm.com" />
 
-            <p style={{ textAlign: 'center', fontSize: 9, color: T.t3, marginTop: 14, letterSpacing: '0.04em' }}>
-              © 2026 Hectra. All rights reserved.
-            </p>
+                      {/* Baris 3: Password + Confirm Password (Side by Side) */}
+                      <div className="hq-field-row" style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                        <FieldHalf label="Password" icon={Lock}
+                          type={showPassword ? 'text' : 'password'}
+                          value={password} onChange={e => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          rightEl={
+                            <button type="button" onClick={() => setShowPassword(!showPassword)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.t3, display: 'flex', padding: 0, flexShrink: 0 }}>
+                              {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                            </button>
+                          } />
+                        <FieldHalf label="Confirm Password" icon={Lock}
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          rightEl={
+                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.t3, display: 'flex', padding: 0, flexShrink: 0 }}>
+                              {showConfirmPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                            </button>
+                          } />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Field label="Email Address" icon={Mail} type="email"
+                        value={email} onChange={e => setEmail(e.target.value)}
+                        placeholder="admin@farm.com" />
+                      <Field label="Password" icon={Lock}
+                        type={showPassword ? 'text' : 'password'}
+                        value={password} onChange={e => setPassword(e.target.value)}
+                        placeholder="••••••••" rightEl={eyeBtn} />
+                    </>
+                  )}
+
+                  {isLogin && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 14 }}>
+                      <button type="button"
+                        onClick={() => setShowForgotModal(true)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: T.accent, fontWeight: 700, fontFamily: FONT_BODY }}>
+                        Forgot password?
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Bulky Submit Button */}
+                  <button type="submit" disabled={isLoading}
+                    style={{
+                      width: '100%', background: T.accent, border: 'none', borderRadius: 10,
+                      padding: '14px 0', fontSize: 13, fontWeight: 800, color: '#0A0A0F',
+                      cursor: isLoading ? 'not-allowed' : 'pointer', letterSpacing: '0.04em',
+                      opacity: isLoading ? 0.7 : 1,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                      transition: 'background 0.2s', marginBottom: 12,
+                      fontFamily: FONT_BODY,
+                    }}
+                    onMouseEnter={e => { if (!isLoading) e.currentTarget.style.background = T.accentHover; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = T.accent; }}
+                  >
+                    {isLoading
+                      ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Processing...</>
+                      : <>{isLogin ? 'Sign In' : 'Create Account'} <ArrowRight size={14} /></>}
+                  </button>
+                </form>
+
+                {/* OR divider */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ flex: 1, height: 1, background: T.border }} />
+                  <span style={{ fontSize: 9, color: T.t3, fontWeight: 700, letterSpacing: '0.1em' }}>OR</span>
+                  <div style={{ flex: 1, height: 1, background: T.border }} />
+                </div>
+
+                {/* Bulky Google Button */}
+                <button type="button" onClick={handleGoogleLogin}
+                  style={{
+                    width: '100%', background: T.cardBg,
+                    border: `1px solid ${T.border}`, borderRadius: 10,
+                    padding: '13px 0', fontSize: 12, fontWeight: 700,
+                    color: T.t2, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    transition: 'all 0.2s', fontFamily: FONT_BODY,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = T.hover; e.currentTarget.style.borderColor = T.t3; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = T.cardBg; e.currentTarget.style.borderColor = T.border; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                  </svg>
+                  {isLogin ? 'Continue with Google' : 'Sign up with Google'}
+                </button>
+
+                {/* toggle */}
+                <p style={{ textAlign: 'center', fontSize: 11, color: T.t2, marginTop: 14 }}>
+                  {isLogin ? 'New to Hectra? ' : 'Already have an account? '}
+                  <button onClick={handleToggleMode} style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: T.accent, fontWeight: 700, fontSize: 11, fontFamily: FONT_BODY,
+                  }}>
+                    {isLogin ? 'Create an account' : 'Sign in'}
+                  </button>
+                </p>
+
+                <p style={{ textAlign: 'center', fontSize: 9, color: T.t3, marginTop: 14, letterSpacing: '0.04em' }}>
+                  © 2026 Hectra. All rights reserved.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -772,6 +1105,165 @@ export default function Login() {
             >
               Tutup
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── PIN SETUP MODAL ─── */}
+      {showPinSetup && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 100,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20
+        }}>
+          <div style={{
+            background: T.cardBg,
+            border: `1px solid ${T.border}`,
+            borderRadius: 16,
+            padding: '2rem',
+            maxWidth: 420,
+            width: '100%',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+            animation: 'hq-fadeup 0.3s ease both'
+          }}>
+            <h3 style={{ fontSize: 18, color: T.t1, fontFamily: FONT_DISPLAY, marginBottom: 8, fontWeight: 800 }}>
+              Buat PIN untuk login lebih cepat
+            </h3>
+            <p style={{ fontSize: 12, color: T.t2, lineHeight: 1.6, marginBottom: 20 }}>
+              Atur PIN 6 digit untuk memudahkan login di perangkat ini tanpa memasukkan email dan password lagi.
+            </p>
+
+            {setupError && (
+              <div style={{
+                background: '#2b0d0d', border: `1px solid ${T.danger}40`,
+                color: T.danger, padding: '8px 12px', borderRadius: 8,
+                fontSize: 12, marginBottom: 16, fontWeight: 600,
+              }}>{setupError}</div>
+            )}
+
+            {/* PIN inputs */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 10, fontWeight: 700, color: T.t3, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                PIN Baru
+              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                {setupPinDigits.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    ref={el => setupPinRefs.current[idx] = el}
+                    type="password"
+                    pattern="\d*"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onFocus={() => setFocusedSetupIdx(idx)}
+                    onBlur={() => setFocusedSetupIdx(-1)}
+                    onChange={e => handlePinDigitChange(idx, e.target.value, setupPinDigits, setSetupPinDigits, setupPinRefs)}
+                    onKeyDown={e => handlePinKeyDown(idx, e, setupPinDigits, setSetupPinDigits, setupPinRefs)}
+                    style={{
+                      width: '100%',
+                      maxWidth: '48px',
+                      height: '48px',
+                      borderRadius: '10px',
+                      border: `1px solid ${focusedSetupIdx === idx ? T.accent : T.border}`,
+                      background: T.surfaceBg,
+                      color: T.t1,
+                      fontSize: '18px',
+                      fontWeight: '800',
+                      textAlign: 'center',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Confirm PIN inputs */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: 10, fontWeight: 700, color: T.t3, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                Konfirmasi PIN Baru
+              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                {confirmPinDigits.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    ref={el => confirmPinRefs.current[idx] = el}
+                    type="password"
+                    pattern="\d*"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onFocus={() => setFocusedConfirmIdx(idx)}
+                    onBlur={() => setFocusedConfirmIdx(-1)}
+                    onChange={e => handlePinDigitChange(idx, e.target.value, confirmPinDigits, setConfirmPinDigits, confirmPinRefs)}
+                    onKeyDown={e => handlePinKeyDown(idx, e, confirmPinDigits, setConfirmPinDigits, confirmPinRefs)}
+                    style={{
+                      width: '100%',
+                      maxWidth: '48px',
+                      height: '48px',
+                      borderRadius: '10px',
+                      border: `1px solid ${focusedConfirmIdx === idx ? T.accent : T.border}`,
+                      background: T.surfaceBg,
+                      color: T.t1,
+                      fontSize: '18px',
+                      fontWeight: '800',
+                      textAlign: 'center',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button 
+                onClick={handleSetupPinSubmit} 
+                style={{
+                  width: '100%',
+                  background: T.accent,
+                  border: 'none',
+                  borderRadius: 10,
+                  padding: '13px 0',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: '#0A0A0F',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = T.accentHover}
+                onMouseLeave={e => e.currentTarget.style.background = T.accent}
+              >
+                Simpan PIN
+              </button>
+              <button 
+                onClick={handleSkipPinSetup} 
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: `1px solid ${T.border}`,
+                  borderRadius: 10,
+                  padding: '12px 0',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: T.t2,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = T.hover; e.currentTarget.style.color = T.t1; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.t2; }}
+              >
+                Lewati untuk sekarang
+              </button>
+            </div>
           </div>
         </div>
       )}
