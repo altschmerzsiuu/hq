@@ -240,7 +240,7 @@ async def general_exception_handler(request, exc):
 db_pool: Optional[asyncpg.Pool] = None
 
 # MQTT Client
-mqtt_client = None
+mqtt_client: Optional[mqtt.Client] = None
 
 class ScannerRequest(BaseModel):
     uid: str
@@ -417,7 +417,7 @@ def handle_debug_message(msg_payload: str, topic: str):
         }
 
     # Normalize field names (firmware kirim: ts, collar, fw, chip, lvl, msg)
-    collar_id = data.get("collar", "unknown")
+    collar_id = str(data.get("collar", "unknown"))
     log_entry = {
         "timestamp": data.get("ts"),
         "collar_id": collar_id,
@@ -550,8 +550,9 @@ async def update_device_config(
         raise HTTPException(status_code=400, detail="Config key tidak diizinkan")
 
     # ── Type coercion & validation ──
+    from typing import cast, Type, Any
     try:
-        expected_type = rule["type"]
+        expected_type = cast(Type[Any], rule["type"])
         if expected_type == bool:
             if isinstance(req.value, str):
                 coerced = req.value.lower() in ("true", "1", "yes")
@@ -560,15 +561,22 @@ async def update_device_config(
         else:
             coerced = expected_type(req.value)
     except (ValueError, TypeError):
+        expected_type_name = getattr(rule["type"], "__name__", str(rule["type"]))
         raise HTTPException(
             status_code=422,
-            detail=f"Value untuk '{req.key}' harus bertipe {rule['type'].__name__}"
+            detail=f"Value untuk '{req.key}' harus bertipe {expected_type_name}"
         )
 
-    if "min" in rule and coerced < rule["min"]:
-        raise HTTPException(status_code=422, detail=f"'{req.key}' minimal {rule['min']}")
-    if "max" in rule and coerced > rule["max"]:
-        raise HTTPException(status_code=422, detail=f"'{req.key}' maksimal {rule['max']}")
+    if "min" in rule:
+        min_val = rule["min"]
+        if isinstance(min_val, int) and isinstance(coerced, int):
+            if coerced < min_val:
+                raise HTTPException(status_code=422, detail=f"'{req.key}' minimal {min_val}")
+    if "max" in rule:
+        max_val = rule["max"]
+        if isinstance(max_val, int) and isinstance(coerced, int):
+            if coerced > max_val:
+                raise HTTPException(status_code=422, detail=f"'{req.key}' maksimal {max_val}")
 
     # ── Build payload JSON ──
     if req.key == "device_active":
@@ -588,6 +596,8 @@ async def update_device_config(
         })
 
     # ── Publish ke MQTT ──
+    if mqtt_client is None:
+        raise HTTPException(status_code=503, detail="MQTT client is not initialized")
     topic = f"kandang/config/{req.collar_id}"
     result = mqtt_client.publish(topic, config_payload, qos=1, retain=True)
 
