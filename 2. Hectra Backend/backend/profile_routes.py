@@ -4,7 +4,7 @@ Handles user profile, farm settings, preferences, and Telegram configuration
 """
 
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 
@@ -12,28 +12,28 @@ router = APIRouter(prefix="/api/profile", tags=["Profile"])
 
 # Pydantic Models
 class ProfileUpdate(BaseModel):
-    full_name: Optional[str] = None
+    full_name: Optional[str] = Field(None, min_length=2, max_length=50)
     email: Optional[EmailStr] = None
 
 class PasswordChange(BaseModel):
     current_password: str
-    new_password: str
+    new_password: str = Field(..., min_length=8, max_length=50)
 
 class FarmSettings(BaseModel):
-    farm_name: Optional[str] = None
-    farm_location: Optional[str] = None
-    farm_contact: Optional[str] = None
-    total_cattle_capacity: Optional[int] = None
+    farm_name: Optional[str] = Field(None, min_length=3, max_length=100)
+    farm_location: Optional[str] = Field(None, max_length=150)
+    farm_contact: Optional[str] = Field(None, max_length=20, pattern="^\+?[0-9]*$")
+    total_cattle_capacity: Optional[int] = Field(None, ge=1)
     province_id: Optional[str] = None
     city_id: Optional[str] = None
-    postal_code: Optional[str] = None
-    street_address: Optional[str] = None
+    postal_code: Optional[str] = Field(None, max_length=10)
+    street_address: Optional[str] = Field(None, max_length=200)
     regency_id: Optional[int] = None
     district_id: Optional[int] = None
     village_id: Optional[int] = None
-    farm_type: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    farm_type: Optional[str] = Field(None, max_length=50)
+    latitude: Optional[float] = Field(None, ge=-90, le=90)
+    longitude: Optional[float] = Field(None, ge=-180, le=180)
 
 class UserPreferences(BaseModel):
     telegram_bot_token: Optional[str] = None

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 import asyncpg
 import paho.mqtt.client as mqtt
@@ -1013,22 +1013,22 @@ async def health_check():
 # ==========================
 
 class DeviceVerify(BaseModel):
-    collar_id: str
-    device_secret: str
+    collar_id: str = Field(..., min_length=2, max_length=50)
+    device_secret: str = Field(..., min_length=10)
 
 class MaintenanceRequest(BaseModel):
-    command: str = "START_OTA"
-    duration: int = 180
+    command: str = Field("START_OTA", max_length=20)
+    duration: int = Field(180, ge=10, le=3600)
 
 class HewanCreate(BaseModel):
-    id: str
-    nama: str
+    id: str = Field(..., min_length=3, max_length=20, pattern="^[a-zA-Z0-9_-]+$")
+    nama: str = Field(..., min_length=2, max_length=50)
     tanggal_lahir: Optional[str] = None
-    jenis: str
-    breed_id: Optional[str] = None
-    status_kesehatan: Optional[str] = "Sehat"
-    berat_badan: Optional[float] = None
-    kandang_id: Optional[str] = None
+    jenis: str = Field(..., max_length=50)
+    breed_id: Optional[str] = Field(None, max_length=50)
+    status_kesehatan: Optional[str] = Field("Sehat", max_length=20)
+    berat_badan: Optional[float] = Field(None, gt=0, lt=2000)
+    kandang_id: Optional[str] = Field(None, max_length=50)
 
 class AlertTest(BaseModel):
     message: str

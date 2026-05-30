@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Request, Header
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
@@ -77,11 +77,11 @@ def hitung_usia(bulan_tahun_lahir) -> Optional[dict]:
 
 # === Pydantic Models ===========================
 class ProfilCreate(BaseModel):
-    id: str  # RFID
-    nama: str
-    jenis: str
+    id: str = Field(..., min_length=3, max_length=20, pattern="^[a-zA-Z0-9_-]+$")
+    nama: str = Field(..., min_length=2, max_length=50)
+    jenis: str = Field(..., max_length=50)
     bulan_tahun_lahir: date
-    status_kesehatan: str
+    status_kesehatan: str = Field(..., max_length=20)
 
 class ReproduksiCreate(BaseModel):
     rfid: str
@@ -95,28 +95,28 @@ class ReproduksiCreate(BaseModel):
     catatan: Optional[str] = None
 
 class EditHewanRequest(BaseModel):
-    new_rfid: Optional[str] = None
-    nama: Optional[str] = None
-    jenis: Optional[str] = None
+    new_rfid: Optional[str] = Field(None, min_length=3, max_length=20, pattern="^[a-zA-Z0-9_-]+$")
+    nama: Optional[str] = Field(None, min_length=2, max_length=50)
+    jenis: Optional[str] = Field(None, max_length=50)
     bulan_tahun_lahir: Optional[date] = None
-    kesehatan: Optional[str] = None
+    kesehatan: Optional[str] = Field(None, max_length=20)
     # Repro fields
     tanggal_ib: Optional[date] = None
-    pemberi_ib: Optional[str] = None
-    jumlah_ib: Optional[int] = None
+    pemberi_ib: Optional[str] = Field(None, max_length=50)
+    jumlah_ib: Optional[int] = Field(None, ge=1)
     birahi: Optional[date] = None
     bunting: Optional[date] = None
     hpl: Optional[date] = None
     sapih: Optional[date] = None
-    catatan: Optional[str] = None
+    catatan: Optional[str] = Field(None, max_length=500)
 
 class ScanRFIDRequest(BaseModel):
-    uid: str
-    source: Optional[str] = "esp32-scanner"
+    uid: str = Field(..., min_length=3, max_length=50)
+    source: Optional[str] = Field("esp32-scanner", max_length=50)
 
 class PairCollarRequest(BaseModel):
-    rfid: str
-    collar_id: str
+    rfid: str = Field(..., min_length=3, max_length=20)
+    collar_id: str = Field(..., min_length=2, max_length=50)
 
 # === Endpoints: Profil Hewan ===================
 

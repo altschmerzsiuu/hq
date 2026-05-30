@@ -4,7 +4,7 @@ Handles user registration, login, Google OAuth, and JWT token management
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Header, Response, Request
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 import httpx
@@ -23,12 +23,12 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 # Pydantic Models
 class UserRegister(BaseModel):
     email: EmailStr
-    password: str
-    full_name: str
+    password: str = Field(..., min_length=8, max_length=50)
+    full_name: str = Field(..., min_length=2, max_length=50)
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=8, max_length=50)
 
 class GoogleAuthRequest(BaseModel):
     token: str
