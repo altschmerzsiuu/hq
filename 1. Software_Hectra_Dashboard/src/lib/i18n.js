@@ -105,7 +105,7 @@ const translations = {
     breed_limousin:      'Limousin',
     breed_bali:          'Bali',
     breed_angus:         'Angus',
-    breed_friesholstein: 'FriesHolstein',
+    breed_friesholstein: 'Friesian Holstein',
 
     // Reproduction Dialog & Page
     repro_record_new: 'Record New Reproduction',
@@ -547,7 +547,7 @@ const translations = {
     breed_limousin:      'Limosin',
     breed_bali:          'Bali',
     breed_angus:         'Angus',
-    breed_friesholstein: 'FriesHolstein',
+    breed_friesholstein: 'Friesian Holstein',
 
     // Reproduction Dialog & Page
     repro_record_new: 'Catat Reproduksi Baru',
