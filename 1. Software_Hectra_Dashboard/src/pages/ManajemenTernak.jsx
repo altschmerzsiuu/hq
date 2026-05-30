@@ -91,10 +91,10 @@ export default function ManajemenTernak() {
 
   // Form states
   const [tambahForm, setTambahForm] = useState({
-    nama: '', rfid: '', jenis: 'Simental', lahir: '', kesehatan: 'Sehat'
+    nama: '', rfid: '', jenis: 'Simmental', lahir: '', kesehatan: 'Sehat'
   });
   const [editForm, setEditForm] = useState({
-    nama: '', jenis: 'Simental', lahir: '', kesehatan: 'Sehat'
+    nama: '', jenis: 'Simmental', lahir: '', kesehatan: 'Sehat'
   });
   const [reproForm, setReproForm] = useState({
     tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
@@ -437,10 +437,12 @@ export default function ManajemenTernak() {
             </select>
             <select className="filter-select" value={filters.jenis} onChange={e => setFilters(f => ({ ...f, jenis: e.target.value }))}>
               <option value="all">{t.status_all_types}</option>
-              <option value="Simental">{t.breed_simental}</option>
+              <option value="Simmental">{t.breed_simmental}</option>
               <option value="Bali">{t.breed_bali}</option>
               <option value="Brahman">{t.breed_brahman}</option>
               <option value="Limosin">{t.breed_limousin}</option>
+              <option value="Angus">{t.breed_angus}</option>
+              <option value="FriesHolstein">{t.breed_friesholstein}</option>
             </select>
             <button onClick={() => setFilters({ kesehatan: 'all', jenis: 'all' })} style={{ fontSize: '12px', color: 'var(--text-3)', cursor: 'pointer', background: 'none', border: 'none', fontFamily: 'Inter, sans-serif' }}>{t.btn_reset}</button>
           </div>
@@ -586,11 +588,12 @@ export default function ManajemenTernak() {
                 <div>
                   <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_breed}</label>
                   <select style={{ width: '100%', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'var(--bg-surface)', color: 'var(--text-1)', outline: 'none', fontFamily: 'Inter, sans-serif' }} value={tambahForm.jenis} onChange={e => setTambahForm({...tambahForm, jenis: e.target.value})}>
-                    <option value="Simental">{t.breed_simental}</option>
+                    <option value="Simmental">{t.breed_simmental}</option>
                     <option value="Brahman">{t.breed_brahman}</option>
                     <option value="Limosin">{t.breed_limousin}</option>
                     <option value="Bali">{t.breed_bali}</option>
-                    <option value="PO">{t.breed_po}</option>
+                    <option value="Angus">{t.breed_angus}</option>
+                    <option value="FriesHolstein">{t.breed_friesholstein}</option>
                   </select>
                 </div>
                 <div>
@@ -673,11 +676,12 @@ export default function ManajemenTernak() {
                 <div>
                   <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_breed}</label>
                   <select style={{ width: '100%', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'var(--bg-surface)', color: 'var(--text-1)', outline: 'none', fontFamily: 'Inter, sans-serif' }} value={editForm.jenis} onChange={e => setEditForm({...editForm, jenis: e.target.value})}>
-                    <option value="Simental">{t.breed_simental}</option>
+                    <option value="Simmental">{t.breed_simmental}</option>
                     <option value="Brahman">{t.breed_brahman}</option>
                     <option value="Limosin">{t.breed_limousin}</option>
                     <option value="Bali">{t.breed_bali}</option>
-                    <option value="PO">{t.breed_po}</option>
+                    <option value="Angus">{t.breed_angus}</option>
+                    <option value="FriesHolstein">{t.breed_friesholstein}</option>
                   </select>
                 </div>
                 <div>
@@ -772,7 +776,7 @@ export default function ManajemenTernak() {
                         setEditForm({
                           rfid: selectedSapi.id || '',
                           nama: selectedSapi.nama || '',
-                          jenis: selectedSapi.jenis || 'Simental',
+                          jenis: selectedSapi.jenis || 'Simmental',
                           lahir: formattedLahir,
                           kesehatan: selectedSapi.status_kesehatan || 'Sehat'
                         });

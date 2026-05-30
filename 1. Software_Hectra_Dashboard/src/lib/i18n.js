@@ -100,11 +100,12 @@ const translations = {
     btn_close:       'Close',
 
     // Breeds
-    breed_simental:  'Simental',
-    breed_brahman:   'Brahman',
-    breed_limousin:  'Limousin',
-    breed_bali:      'Bali',
-    breed_po:        'PO',
+    breed_simmental:    'Simmental',
+    breed_brahman:       'Brahman',
+    breed_limousin:      'Limousin',
+    breed_bali:          'Bali',
+    breed_angus:         'Angus',
+    breed_friesholstein: 'FriesHolstein',
 
     // Reproduction Dialog & Page
     repro_record_new: 'Record New Reproduction',
@@ -541,11 +542,12 @@ const translations = {
     btn_close:       'Tutup',
 
     // Breeds
-    breed_simental:  'Simental',
-    breed_brahman:   'Brahman',
-    breed_limousin:  'Limosin',
-    breed_bali:      'Bali',
-    breed_po:        'PO',
+    breed_simmental:    'Simmental',
+    breed_brahman:       'Brahman',
+    breed_limousin:      'Limosin',
+    breed_bali:          'Bali',
+    breed_angus:         'Angus',
+    breed_friesholstein: 'FriesHolstein',
 
     // Reproduction Dialog & Page
     repro_record_new: 'Catat Reproduksi Baru',
