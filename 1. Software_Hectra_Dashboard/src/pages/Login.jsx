@@ -296,7 +296,6 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [showForgotModal, setShowForgotModal] = useState(false);
   const navigate = useNavigate();
 
@@ -307,12 +306,11 @@ export default function Login() {
     clearError();
   }, [isAuthenticated, navigate, clearError, isLogin]);
 
-  // Prefill email if Remember Me was previously checked
+  // Prefill email
   useEffect(() => {
     const savedEmail = localStorage.getItem('remember_email');
     if (savedEmail) {
       setEmail(savedEmail);
-      setRememberMe(true);
     }
   }, []);
 
@@ -380,13 +378,9 @@ export default function Login() {
     e.preventDefault();
     if (isLogin) {
       if (!email || !password) return;
-      const success = await login(email, password, rememberMe);
+      const success = await login(email, password);
       if (success) {
-        if (rememberMe) {
-          localStorage.setItem('remember_email', email);
-        } else {
-          localStorage.removeItem('remember_email');
-        }
+        localStorage.setItem('remember_email', email);
         toast.success('Selamat datang kembali!');
         navigate('/dashboard', { replace: true });
       }
@@ -409,13 +403,9 @@ export default function Login() {
         toast.success('Pendaftaran berhasil! Mengalihkan ke dashboard...');
         
         // Auto-login after successful registration
-        const success = await login(email, password, rememberMe);
+        const success = await login(email, password);
         if (success) {
-          if (rememberMe) {
-            localStorage.setItem('remember_email', email);
-          } else {
-            localStorage.removeItem('remember_email');
-          }
+          localStorage.setItem('remember_email', email);
           navigate('/dashboard', { replace: true });
         } else {
           setIsLogin(true);
@@ -652,16 +642,7 @@ export default function Login() {
               )}
 
               {isLogin && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={rememberMe} 
-                      onChange={(e) => setRememberMe(e.target.checked)} 
-                      style={{ accentColor: T.accent, width: 13, height: 13 }} 
-                    />
-                    <span style={{ fontSize: 11, color: T.t2 }}>Remember me</span>
-                  </label>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 14 }}>
                   <button type="button"
                     onClick={() => setShowForgotModal(true)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: T.accent, fontWeight: 700, fontFamily: FONT_BODY }}>

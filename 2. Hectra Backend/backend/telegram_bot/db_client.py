@@ -120,6 +120,8 @@ async def get_riwayat_reproduksi(rfid: str, limit: int = 3, chat_id: Optional[st
                 return []
             resp.raise_for_status()
             data = resp.json()
+            if isinstance(data, dict) and "data" in data:
+                return data["data"]
             return data if isinstance(data, list) else []
     except Exception as e:
         print(f"❌ [DB] get_riwayat_reproduksi error: {e}")

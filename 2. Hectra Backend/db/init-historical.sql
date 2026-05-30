@@ -26,8 +26,7 @@ CREATE TABLE IF NOT EXISTS reproduksi_ternak (
     birahi DATE,
     catatan TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(rfid)                          -- Only one active record per animal
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Table: riwayat_reproduksi (Historical reproduction data - last 3 records)

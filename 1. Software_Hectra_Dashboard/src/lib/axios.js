@@ -20,7 +20,7 @@ const axiosInstance = axios.create({
 // ─── Request Interceptor ───────────────────────────────────────────
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token')
+    const token = localStorage.getItem('access_token')
     if (token && token !== 'undefined' && token !== 'null') {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -102,7 +102,6 @@ axiosInstance.interceptors.response.use(
         // Refresh gagal — logout user
         processQueue(refreshError, null)
         localStorage.removeItem('access_token')
-        sessionStorage.removeItem('access_token')
         useAuthStore.getState().logout()
         window.location.href = '/login'
         return Promise.reject(refreshError)

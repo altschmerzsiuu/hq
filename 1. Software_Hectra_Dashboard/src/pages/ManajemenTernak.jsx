@@ -74,6 +74,16 @@ export default function ManajemenTernak() {
   const [editReproForm, setEditReproForm] = useState({});
   const [savingRepro, setSavingRepro] = useState(false);
   const [confirmingPregnancy, setConfirmingPregnancy] = useState(null); // record_id being confirmed
+  const [scanTarget, setScanTarget] = useState('tambah'); // 'tambah' or 'edit'
+  const [reproSortOrder, setReproSortOrder] = useState('desc'); // 'desc' or 'asc'
+
+  const sortedReproHistory = useMemo(() => {
+    return [...reproHistory].sort((a, b) => {
+      const dateA = new Date(a.tanggal_ib || a.service_date || 0);
+      const dateB = new Date(b.tanggal_ib || b.service_date || 0);
+      return reproSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+  }, [reproHistory, reproSortOrder]);
 
   // Form states
   const [tambahForm, setTambahForm] = useState({
@@ -152,22 +162,46 @@ export default function ManajemenTernak() {
     });
   }, [searchQuery, sapiList, filters]);
 
-  const handleBirahiChange = (e) => {
+  const handleTanggalIbChange = (e) => {
     const val = e.target.value;
     setReproForm(prev => {
-      let b = prev.bunting;
-      let h = prev.hpl;
+      let birahi = '';
+      let bunting = '';
+      let hpl = '';
+      let sapih = '';
+      
       if (val) {
-        const bDate = new Date(val);
-        bDate.setMonth(bDate.getMonth() + 3);
-        b = bDate.toISOString().split('T')[0];
+        const baseDate = new Date(val);
         
-        const hDate = new Date(val);
-        hDate.setMonth(hDate.getMonth() + 9);
-        hDate.setDate(hDate.getDate() + 10);
-        h = hDate.toISOString().split('T')[0];
+        // Next estrus (Birahi) = IB + 21 days
+        const birahiDate = new Date(baseDate);
+        birahiDate.setDate(birahiDate.getDate() + 21);
+        birahi = birahiDate.toISOString().split('T')[0];
+        
+        // Pregnancy check (Bunting) = IB + 60 days
+        const buntingDate = new Date(baseDate);
+        buntingDate.setDate(buntingDate.getDate() + 60);
+        bunting = buntingDate.toISOString().split('T')[0];
+        
+        // Expected Calving (HPL) = IB + 283 days
+        const hplDate = new Date(baseDate);
+        hplDate.setDate(hplDate.getDate() + 283);
+        hpl = hplDate.toISOString().split('T')[0];
+        
+        // Weaning (Sapih) = HPL + 205 days
+        const sapihDate = new Date(hplDate);
+        sapihDate.setDate(sapihDate.getDate() + 205);
+        sapih = sapihDate.toISOString().split('T')[0];
       }
-      return { ...prev, birahi: val, bunting: b, hpl: h };
+      
+      return { 
+        ...prev, 
+        tanggal_ib: val, 
+        birahi, 
+        bunting, 
+        hpl, 
+        sapih 
+      };
     });
   };
 
@@ -201,6 +235,7 @@ export default function ManajemenTernak() {
     e.preventDefault();
     if (!selectedSapi) return;
     const res = await editSapi(selectedSapi.id, {
+      new_rfid: editForm.rfid,
       nama: editForm.nama,
       jenis: editForm.jenis,
       bulan_tahun_lahir: editForm.lahir,
@@ -209,6 +244,7 @@ export default function ManajemenTernak() {
     if (res.success) {
       setSelectedSapi({
         ...selectedSapi,
+        id: editForm.rfid,
         nama: editForm.nama,
         jenis: editForm.jenis,
         bulan_tahun_lahir: editForm.lahir,
@@ -268,6 +304,7 @@ export default function ManajemenTernak() {
         service_date: editReproForm.tanggal_ib,
         technician: editReproForm.pemberi_ib,
         notes: editReproForm.catatan,
+        jumlah_ib: parseInt(editReproForm.jumlah_ib) || 1,
         is_pregnant: item.results === true ? 'true' : item.results === false ? 'false' : 'pending',
       };
       await axiosInstance.put(`/reproduction/${item.id}`, payload);
@@ -278,6 +315,28 @@ export default function ManajemenTernak() {
       toast.error(err?.response?.data?.detail || t.repro_toast_update_failed);
     } finally {
       setSavingRepro(false);
+    }
+  };
+
+  const deleteReproRecord = async (item) => {
+    const confirmed = await ask({
+      title: lang === 'id' ? "Hapus Catatan Reproduksi" : "Delete Reproduction Record",
+      message: lang === 'id'
+        ? "Apakah Anda yakin ingin menghapus data reproduksi ini? Tindakan ini tidak dapat dibatalkan."
+        : "Are you sure you want to delete this reproduction record? This action cannot be undone.",
+      confirmText: lang === 'id' ? 'Hapus' : 'Delete',
+      cancelText: t.btn_cancel,
+      isDanger: true
+    });
+    if (!confirmed) return;
+
+    try {
+      await axiosInstance.delete(`/reproduction/${item.id}`);
+      toast.success(lang === 'id' ? "Data reproduksi berhasil dihapus." : "Reproduction record deleted successfully.");
+      reloadReproHistory(selectedSapi.id);
+      fetchSapiList();
+    } catch (err) {
+      toast.error(lang === 'id' ? "Gagal menghapus data reproduksi." : "Failed to delete reproduction record.");
     }
   };
 
@@ -584,8 +643,28 @@ export default function ManajemenTernak() {
                   <input type="text" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none" placeholder={t.livestock_add_name_placeholder} value={editForm.nama} onChange={e => setEditForm({...editForm, nama: e.target.value})} required />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_edit_rfid_disabled}</label>
-                  <input type="text" style={{ background: 'var(--bg-card)', color: 'var(--text-3)', border: '0.5px solid var(--border)' }} className="w-full px-4 py-2.5 rounded-xl outline-none opacity-60 cursor-not-allowed" value={selectedSapi?.id || ''} disabled />
+                  <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_rfid}</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} 
+                      className="w-full px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none" 
+                      placeholder={t.livestock_add_rfid_placeholder}
+                      value={editForm.rfid || ''} 
+                      onChange={e => setEditForm({...editForm, rfid: e.target.value})} 
+                      required
+                    />
+                    <button 
+                      type="button" 
+                      className="px-4 py-2.5 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] font-bold shadow-sm flex items-center shrink-0" 
+                      onClick={() => {
+                        setScanTarget('edit');
+                        setScanOpen(true);
+                      }}
+                    >
+                      {t.qa_scan_rfid || 'Scan'}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -650,15 +729,15 @@ export default function ManajemenTernak() {
       {/* ────────────────────────────────────────────────────────────── */}
       {selectedSapi && (
         <div className="fixed inset-0 z-[900] flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setSelectedSapi(null)}>
-          <div style={{ background: 'var(--bg-surface)', borderLeft: '0.5px solid var(--border)' }} className="w-full max-w-md h-full shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300 flex flex-col" onClick={e => e.stopPropagation()}>
-            <div style={{ background: 'var(--bg-surface)', borderBottom: '0.5px solid var(--border)' }} className="sticky top-0 backdrop-blur z-10 px-6 py-4 flex justify-between items-center">
+          <div style={{ background: 'var(--bg-surface)', borderLeft: '0.5px solid var(--border)' }} className="w-full max-w-md h-full shadow-2xl overflow-hidden animate-in slide-in-from-right duration-300 flex flex-col" onClick={e => e.stopPropagation()}>
+            <div style={{ background: 'var(--bg-surface)', borderBottom: '0.5px solid var(--border)' }} className="px-6 py-4 flex justify-between items-center">
               <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">{t.livestock_detail_title}</h2>
               <button onClick={() => setSelectedSapi(null)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)] text-[var(--color-text-secondary)]">
                 <X size={20} />
               </button>
             </div>
 
-            <div className="p-6 space-y-6 flex-1">
+            <div className="p-6 space-y-6 flex-1 overflow-y-auto">
               {/* Profil Card */}
               <div className="bg-[var(--color-bg-surface)] p-5 rounded-2xl border border-[var(--color-border)] relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
@@ -690,6 +769,7 @@ export default function ManajemenTernak() {
                           }
                         }
                         setEditForm({
+                          rfid: selectedSapi.id || '',
                           nama: selectedSapi.nama || '',
                           jenis: selectedSapi.jenis || 'Simental',
                           lahir: formattedLahir,
@@ -780,26 +860,36 @@ export default function ManajemenTernak() {
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-heading font-bold text-lg text-[var(--color-text-primary)]">{t.livestock_repro_title}</h3>
-                  <button 
-                    onClick={() => setIsReproModalOpen(true)}
-                    className="text-sm font-bold text-[var(--color-primary)] bg-[var(--color-bg-surface)] px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-[var(--color-accent)] hover:text-white transition-colors"
-                  >
-                    <Plus size={16} /> {t.btn_add}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setReproSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                      className="text-xs font-semibold text-[var(--color-text-secondary)] bg-[var(--color-bg-surface)] px-2.5 py-1.5 rounded-lg border border-[var(--color-border)] flex items-center gap-1 hover:bg-[var(--color-bg-muted)] transition-colors shadow-sm"
+                      title={lang === 'id' ? "Urutkan Tanggal" : "Sort Date"}
+                    >
+                      <ClipboardList size={14} className="text-[var(--color-primary)]" />
+                      <span>{reproSortOrder === 'desc' ? (lang === 'id' ? 'Terbaru' : 'Newest') : (lang === 'id' ? 'Terlama' : 'Oldest')}</span>
+                    </button>
+                    <button 
+                      onClick={() => setIsReproModalOpen(true)}
+                      className="text-xs font-bold text-white bg-[var(--color-primary)] px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-[var(--color-primary-hover)] transition-colors"
+                    >
+                      <Plus size={14} /> <span>{t.btn_add}</span>
+                    </button>
+                  </div>
                 </div>
                 
-                <div style={{ background: 'var(--bg-card)' }} className="border border-[var(--color-border)] rounded-2xl divide-y divide-[var(--color-border)] overflow-hidden">
+                <div className="space-y-4">
                   {loadingHistory ? (
-                    <div className="p-8 text-center text-gray-400 text-xs italic flex items-center justify-center gap-2">
+                    <div style={{ background: 'var(--bg-card)' }} className="p-8 text-center text-gray-400 text-xs italic flex items-center justify-center gap-2 border border-[var(--color-border)] rounded-2xl">
                       <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary)]" />
                       {t.livestock_repro_loading}
                     </div>
-                  ) : reproHistory.length === 0 ? (
-                    <div className="p-8 text-center text-gray-400 text-xs italic">
+                  ) : sortedReproHistory.length === 0 ? (
+                    <div style={{ background: 'var(--bg-card)' }} className="p-8 text-center text-gray-400 text-xs italic border border-[var(--color-border)] rounded-2xl">
                       {t.livestock_repro_empty}
                     </div>
                   ) : (
-                    reproHistory.map((item, idx) => {
+                    sortedReproHistory.map((item, idx) => {
                       const isPregnant = item.results === true || item.results === 'true' || item.is_pregnant === true;
                       const isFailed = item.results === false || item.results === 'failed' || item.is_pregnant === false;
                       const isPending = !isPregnant && !isFailed;
@@ -809,7 +899,16 @@ export default function ManajemenTernak() {
                       const hplDate = item.hpl || (item.tanggal_ib ? new Date(new Date(item.tanggal_ib).getTime() + 283 * 24 * 60 * 60 * 1000) : null);
                       
                       return (
-                        <div key={item.id || idx} className="p-4 space-y-3">
+                        <div 
+                          key={item.id || idx} 
+                          style={{ 
+                            background: 'var(--bg-card)', 
+                            border: '0.5px solid var(--border)', 
+                            borderRadius: '16px', 
+                            boxShadow: 'var(--shadow-card)' 
+                          }} 
+                          className="p-4 space-y-3 transition-all hover:shadow-md"
+                        >
                           {/* Header baris */}
                           <div className="flex justify-between items-start">
                             <div>
@@ -834,15 +933,24 @@ export default function ManajemenTernak() {
                                   ⏳ {t.livestock_repro_pending}
                                 </span>
                               )}
-                              {/* Tombol edit inline */}
+                              {/* Tombol edit & hapus inline */}
                               {!isEditingThis && (
-                                <button
-                                  onClick={() => startEditRepro(item)}
-                                  className="p-1 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-surface)] transition-colors"
-                                  title={t.repro_edit_record}
-                                >
-                                  <Pencil size={13} />
-                                </button>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => startEditRepro(item)}
+                                    className="p-1 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-surface)] transition-colors"
+                                    title={t.repro_edit_record}
+                                  >
+                                    <Pencil size={13} />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteReproRecord(item)}
+                                    className="p-1 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                                    title={lang === 'id' ? "Hapus Catatan" : "Delete Record"}
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -1007,7 +1115,7 @@ export default function ManajemenTernak() {
                     className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" 
                     required
                     value={reproForm.tanggal_ib}
-                    onChange={e => setReproForm({...reproForm, tanggal_ib: e.target.value})}
+                    onChange={handleTanggalIbChange}
                   />
                 </div>
                 <div>
@@ -1034,30 +1142,31 @@ export default function ManajemenTernak() {
                 />
               </div>
 
-              <div className="p-4 bg-[var(--color-bg-surface)] border border-[var(--color-border)] rounded-2xl space-y-4">
-                <h4 className="text-sm font-bold text-[var(--color-primary)] flex items-center gap-2">
-                  <Calendar size={16}/> {t.repro_auto_calculator}
-                </h4>
-                <div>
-                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_estrus_date}</label>
-                  <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.birahi} onChange={handleBirahiChange}/>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_pregnancy_pred}</label>
-                    <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm" value={reproForm.bunting} onChange={e => setReproForm({...reproForm, bunting: e.target.value})} />
+              {reproForm.tanggal_ib && (
+                <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)' }} className="p-4 rounded-2xl space-y-3 shadow-inner">
+                  <h4 className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1.5 uppercase tracking-wider">
+                    <Calendar size={14}/> Estimasi Jadwal (Auto)
+                  </h4>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+                    <div>
+                      <p className="text-[var(--color-text-muted)] font-medium">Deteksi Birahi Kembali</p>
+                      <p className="font-semibold text-[var(--color-text-secondary)] mt-0.5">{formatTgl(reproForm.birahi, lang)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[var(--color-text-muted)] font-medium">Pemeriksaan Kebuntingan</p>
+                      <p className="font-semibold text-[var(--color-text-secondary)] mt-0.5">{formatTgl(reproForm.bunting, lang)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[var(--color-text-muted)] font-medium">Perkiraan Melahirkan (HPL)</p>
+                      <p className="font-bold text-[var(--color-primary)] mt-0.5">{formatTgl(reproForm.hpl, lang)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[var(--color-text-muted)] font-medium">Estimasi Lepas Sapih</p>
+                      <p className="font-semibold text-[var(--color-text-secondary)] mt-0.5">{formatTgl(reproForm.sapih, lang)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_estimated_hpl}</label>
-                    <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm font-bold" value={reproForm.hpl} onChange={e => setReproForm({...reproForm, hpl: e.target.value})} />
-                  </div>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_weaning_date}</label>
-                <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.sapih} onChange={e => setReproForm({...reproForm, sapih: e.target.value})} />
-              </div>
+              )}
               
               <div>
                 <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_notes}</label>
@@ -1079,9 +1188,14 @@ export default function ManajemenTernak() {
       isOpen={scanOpen}
       onClose={() => setScanOpen(false)}
       onResult={(data) => {
-        setTambahForm(f => ({ ...f, rfid: data.id || data.rfid || '' }));
+        const scannedRfid = data.id || data.rfid || '';
+        if (scanTarget === 'edit') {
+          setEditForm(f => ({ ...f, rfid: scannedRfid }));
+        } else {
+          setTambahForm(f => ({ ...f, rfid: scannedRfid }));
+        }
         setScanOpen(false);
-        toast.success((lang === 'id' ? 'RFID ditemukan: ' : 'RFID found: ') + (data.nama || data.name));
+        toast.success((lang === 'id' ? 'RFID ditemukan: ' : 'RFID found: ') + scannedRfid);
       }}
     />
     </>

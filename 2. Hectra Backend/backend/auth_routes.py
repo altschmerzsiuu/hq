@@ -282,18 +282,25 @@ async def refresh_access_token(request_data: RefreshTokenRequest, request: Reque
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
         
+        # 1. Generate new tokens
         access_token = create_access_token({"sub": str(user['id']), "email": user['email'], "role": user['role'], "full_name": user['full_name']})
+        new_refresh_token_str = create_refresh_token({"sub": str(user['id'])})
         
-        # Set new access token cookie
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            samesite="lax",
-            secure=False,
-            path="/",
-        )
+        # 2. Invalidate/Delete the old used refresh token
+        await conn.execute("DELETE FROM refresh_tokens WHERE token = $1", refresh_token)
+        
+        # 3. Save the new refresh token
+        expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        await conn.execute("""
+            INSERT INTO refresh_tokens (user_id, token, expires_at)
+            VALUES ($1, $2, $3)
+        """, user['id'], new_refresh_token_str, expires_at)
+        
+        # 4. Clean up any other expired refresh tokens in the database
+        await conn.execute("DELETE FROM refresh_tokens WHERE expires_at <= NOW()")
+        
+        # 5. Set HttpOnly cookies on response for both access and refresh tokens
+        set_auth_cookies(response, access_token, new_refresh_token_str)
         
         return {
             "message": "success",

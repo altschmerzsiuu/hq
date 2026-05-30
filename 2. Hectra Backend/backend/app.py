@@ -1366,9 +1366,10 @@ async def update_reproduction_record(record_id: int, data: dict, current_user: d
                 hpl_final = None
 
             # 3. FIX QUERY: Bandingkan rfid dengan cow_id (sesama String)
+            jumlah_ib = int(data['jumlah_ib']) if data.get('jumlah_ib') is not None else None
             result = await conn.execute("""
                 UPDATE reproduksi_ternak 
-                SET rfid = $1, tanggal_ib = $2, pemberi_ib = $3, catatan = $4, results = $5, hpl = $6
+                SET rfid = $1, tanggal_ib = $2, pemberi_ib = $3, catatan = $4, results = $5, hpl = $6, jumlah_ib = COALESCE($9, jumlah_ib)
                 WHERE id = $7 AND rfid IN (SELECT id FROM hewan WHERE owner_id = $8)
             """, 
             data['rfid'],      # $1
@@ -1378,7 +1379,8 @@ async def update_reproduction_record(record_id: int, data: dict, current_user: d
             results_bool,      # $5
             hpl_final,         # $6
             record_id,         # $7
-            owner_id            # $8
+            owner_id,           # $8
+            jumlah_ib          # $9
             )
             
             if result == "UPDATE 0":
@@ -1487,7 +1489,7 @@ async def get_repro_stats(current_user: dict = Depends(get_current_user)):
                     FROM reproduksi_ternak
                     WHERE rfid IN (SELECT id FROM hewan WHERE owner_id = $1)
                 )
-                SELECT EXTRACT(DAY FROM AVG(diff)) FROM intervals WHERE diff IS NOT NULL
+                SELECT AVG(diff) FROM intervals WHERE diff IS NOT NULL
             """, owner_id)
 
             avg_interval = f"{int(avg_val)} days" if avg_val is not None else None

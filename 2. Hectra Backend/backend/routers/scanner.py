@@ -95,6 +95,7 @@ class ReproduksiCreate(BaseModel):
     catatan: Optional[str] = None
 
 class EditHewanRequest(BaseModel):
+    new_rfid: Optional[str] = None
     nama: Optional[str] = None
     jenis: Optional[str] = None
     bulan_tahun_lahir: Optional[date] = None
@@ -216,6 +217,36 @@ async def edit_hewan_full(rfid: str, data: EditHewanRequest, request: Request, c
             if not existing:
                 raise HTTPException(status_code=404, detail="Sapi tidak ditemukan atau bukan milik farm Anda.")
             
+            # Support updating the RFID itself
+            if data.new_rfid and data.new_rfid.upper().strip() != rfid.upper().strip():
+                new_rfid_upper = data.new_rfid.upper().strip()
+                conflict = await conn.fetchrow("SELECT id FROM hewan WHERE UPPER(id) = UPPER($1)", new_rfid_upper)
+                if conflict:
+                    raise HTTPException(status_code=400, detail="RFID baru sudah terdaftar di sistem.")
+                
+                # Update primary key and cascade manually to referencing tables in the transaction
+                await conn.execute("UPDATE hewan SET id = $1 WHERE UPPER(id) = UPPER($2)", new_rfid_upper, rfid)
+                await conn.execute("UPDATE reproduksi_ternak SET rfid = $1 WHERE UPPER(rfid) = UPPER($2)", new_rfid_upper, rfid)
+                await conn.execute("UPDATE riwayat_reproduksi SET rfid = $1 WHERE UPPER(rfid) = UPPER($2)", new_rfid_upper, rfid)
+                await conn.execute("UPDATE feed_ai SET rfid = $1 WHERE UPPER(rfid) = UPPER($2)", new_rfid_upper, rfid)
+                await conn.execute("UPDATE collar_registry SET cow_id = $1 WHERE UPPER(cow_id) = UPPER($2)", new_rfid_upper, rfid)
+                await conn.execute("UPDATE ai_predictions SET cow_id = $1 WHERE UPPER(cow_id) = UPPER($2)", new_rfid_upper, rfid)
+                await conn.execute("UPDATE notifications SET cow_id = $1 WHERE UPPER(cow_id) = UPPER($2)", new_rfid_upper, rfid)
+                await conn.execute("UPDATE siklus_individu SET rfid = $1 WHERE UPPER(rfid) = UPPER($2)", new_rfid_upper, rfid)
+                await conn.execute("UPDATE prediksi_birahi SET rfid = $1 WHERE UPPER(rfid) = UPPER($2)", new_rfid_upper, rfid)
+                
+                # Try optional/ML tables
+                try:
+                    await conn.execute("UPDATE observation_logs SET cow_id = $1 WHERE UPPER(cow_id) = UPPER($2)", new_rfid_upper, rfid)
+                except Exception:
+                    pass
+                try:
+                    await conn.execute("UPDATE estrus_label SET rfid = $1 WHERE UPPER(rfid) = UPPER($2)", new_rfid_upper, rfid)
+                except Exception:
+                    pass
+                
+                rfid = new_rfid_upper
+
             if any([data.nama, data.jenis, data.bulan_tahun_lahir, data.kesehatan]):
                 await conn.execute(
                     """
