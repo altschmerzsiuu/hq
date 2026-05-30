@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import axiosInstance from '@/lib/axios';
+import axiosInstance, { scheduleProactiveRefresh } from '@/lib/axios';
 
 // Attempt to parse JWT to get basic user info (for current_user['id'])
 function parseJwt(token) {
@@ -59,6 +59,9 @@ export const useAuthStore = create((set) => ({
       const decodedUser = parseJwt(access_token);
       
       localStorage.setItem('access_token', access_token);
+
+      // Start proactive refresh timer so token never expires mid-session
+      scheduleProactiveRefresh(access_token);
 
       set({ 
         token: access_token, 
