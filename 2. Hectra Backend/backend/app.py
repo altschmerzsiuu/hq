@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 import asyncpg
 import paho.mqtt.client as mqtt
@@ -345,6 +345,264 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
 
+# ═══════════════════════════════════════════════════════════════════════
+# SECTION A: WEBSOCKET CONNECTION MANAGER
+# Manages active WebSocket connections for realtime log streaming
+# ═══════════════════════════════════════════════════════════════════════
+
+class LogConnectionManager:
+    def __init__(self):
+        # Dict: collar_id -> list of active WebSocket connections
+        self.active_connections: dict[str, list[WebSocket]] = {}
+        # "ALL" key untuk connections yang mau monitor all collars
+        self._lock = threading.Lock()
+
+    async def connect(self, websocket: WebSocket, collar_id: str = "ALL"):
+        await websocket.accept()
+        with self._lock:
+            if collar_id not in self.active_connections:
+                self.active_connections[collar_id] = []
+            self.active_connections[collar_id].append(websocket)
+
+    def disconnect(self, websocket: WebSocket, collar_id: str = "ALL"):
+        with self._lock:
+            if collar_id in self.active_connections:
+                self.active_connections[collar_id] = [
+                    ws for ws in self.active_connections[collar_id] if ws != websocket
+                ]
+
+    async def broadcast_log(self, log_entry: dict, collar_id: str):
+        """Broadcast log ke semua subscribers: specific collar + ALL listeners"""
+        targets = []
+        with self._lock:
+            targets += list(self.active_connections.get(collar_id, []))
+            targets += list(self.active_connections.get("ALL", []))
+
+        dead = []
+        for ws in targets:
+            try:
+                await ws.send_json(log_entry)
+            except Exception:
+                dead.append((ws, collar_id))
+
+        # Cleanup dead connections
+        with self._lock:
+            for ws, cid in dead:
+                for key in [cid, "ALL"]:
+                    if key in self.active_connections and ws in self.active_connections[key]:
+                        self.active_connections[key].remove(ws)
+
+
+log_manager = LogConnectionManager()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# SECTION B: MQTT DEBUG SUBSCRIBER SETUP
+# Subscribe ke kandang/debug dan forward ke WebSocket
+# ═══════════════════════════════════════════════════════════════════════
+
+def handle_debug_message(msg_payload: str, topic: str):
+    """
+    Dipanggil dari on_mqtt_message yang sudah ada di app.py.
+    """
+    try:
+        data = json.loads(msg_payload)
+    except json.JSONDecodeError:
+        # Kalau bukan JSON, wrap aja jadi plain log entry
+        data = {
+            "ts": int(datetime.now().timestamp()),
+            "collar": "unknown",
+            "lvl": "RAW",
+            "msg": msg_payload
+        }
+
+    # Normalize field names (firmware kirim: ts, collar, fw, chip, lvl, msg)
+    collar_id = data.get("collar", "unknown")
+    log_entry = {
+        "timestamp": data.get("ts"),
+        "collar_id": collar_id,
+        "fw_version": data.get("fw", "-"),
+        "chip_id": data.get("chip", "-"),
+        "level": data.get("lvl", "INFO"),
+        "message": data.get("msg", ""),
+        "received_at": datetime.now().isoformat(),
+    }
+
+    # Fire and forget ke WebSocket — perlu asyncio karena paho callback sync
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.run_coroutine_threadsafe(
+                log_manager.broadcast_log(log_entry, collar_id),
+                loop
+            )
+    except RuntimeError:
+        pass
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# SECTION C: JWT AUTH HELPER untuk WebSocket
+# ═══════════════════════════════════════════════════════════════════════
+
+async def verify_ws_token(token: str) -> dict:
+    from auth_utils import verify_token
+    payload = verify_token(token, "access")
+    if not payload:
+        raise ValueError("Token invalid atau expired")
+    return payload
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# SECTION D: WEBSOCKET ENDPOINTS — Realtime Log Stream
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.websocket("/ws/device-logs")
+async def ws_device_logs_all(websocket: WebSocket, token: str):
+    """
+    ws://your-vps/ws/device-logs?token=JWT_TOKEN
+    Monitor semua collar sekaligus.
+    """
+    try:
+        await verify_ws_token(token)
+    except ValueError as e:
+        await websocket.close(code=4001, reason=str(e))
+        return
+
+    await log_manager.connect(websocket, collar_id="ALL")
+    try:
+        # Kirim ping tiap 30 detik biar koneksi ga timeout
+        while True:
+            try:
+                # Tunggu pesan dari client (ping/pong keepalive)
+                await asyncio.wait_for(websocket.receive_text(), timeout=30)
+            except asyncio.TimeoutError:
+                await websocket.send_json({"type": "ping"})
+    except WebSocketDisconnect:
+        log_manager.disconnect(websocket, collar_id="ALL")
+
+
+@app.websocket("/ws/device-logs/{collar_id}")
+async def ws_device_logs_collar(websocket: WebSocket, collar_id: str, token: str):
+    """
+    ws://your-vps/ws/device-logs/{collar_id}?token=JWT_TOKEN
+    Monitor satu collar spesifik.
+    """
+    try:
+        await verify_ws_token(token)
+    except ValueError as e:
+        await websocket.close(code=4001, reason=str(e))
+        return
+
+    await log_manager.connect(websocket, collar_id=collar_id)
+    try:
+        while True:
+            try:
+                await asyncio.wait_for(websocket.receive_text(), timeout=30)
+            except asyncio.TimeoutError:
+                await websocket.send_json({"type": "ping"})
+    except WebSocketDisconnect:
+        log_manager.disconnect(websocket, collar_id=collar_id)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# SECTION E: CONFIG UPDATE ENDPOINT — Secure Remote Config
+# ═══════════════════════════════════════════════════════════════════════
+
+ALLOWED_CONFIG_KEYS = {
+    "sleep_minutes":      {"type": int,  "min": 5,  "max": 60},
+    "batch_count":        {"type": int,  "min": 1,  "max": 20},
+    "window_size":        {"type": int,  "min": 5,  "max": 50},
+    "max_offline_cycles": {"type": int,  "min": 5,  "max": 100},
+    "device_active":      {"type": bool},
+}
+
+class ConfigUpdateRequest(BaseModel):
+    collar_id: str
+    key: str
+    value: object  # Will be validated manually
+
+    @field_validator("key")
+    @classmethod
+    def key_must_be_allowed(cls, v):
+        if v not in ALLOWED_CONFIG_KEYS:
+            raise ValueError(f"Key '{v}' tidak diizinkan. Allowed: {list(ALLOWED_CONFIG_KEYS.keys())}")
+        return v
+
+    @field_validator("collar_id")
+    @classmethod
+    def collar_id_not_empty(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError("collar_id tidak boleh kosong")
+        return v.strip()
+
+
+@app.post("/api/device/config")
+async def update_device_config(
+    req: ConfigUpdateRequest,
+    user = Depends(get_current_user)
+):
+    """
+    POST /api/device/config
+    Body: { "collar_id": "COLLAR_001", "key": "sleep_minutes", "value": 15 }
+    """
+    rule = ALLOWED_CONFIG_KEYS.get(req.key)
+    if not rule:
+        raise HTTPException(status_code=400, detail="Config key tidak diizinkan")
+
+    # ── Type coercion & validation ──
+    try:
+        expected_type = rule["type"]
+        if expected_type == bool:
+            if isinstance(req.value, str):
+                coerced = req.value.lower() in ("true", "1", "yes")
+            else:
+                coerced = bool(req.value)
+        else:
+            coerced = expected_type(req.value)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Value untuk '{req.key}' harus bertipe {rule['type'].__name__}"
+        )
+
+    if "min" in rule and coerced < rule["min"]:
+        raise HTTPException(status_code=422, detail=f"'{req.key}' minimal {rule['min']}")
+    if "max" in rule and coerced > rule["max"]:
+        raise HTTPException(status_code=422, detail=f"'{req.key}' maksimal {rule['max']}")
+
+    # ── Build payload JSON ──
+    if req.key == "device_active":
+        config_payload = json.dumps({
+            "device_active": coerced,
+            "updated_at": datetime.now().isoformat()
+        })
+    elif req.key == "sleep_minutes":
+        config_payload = json.dumps({
+            "sleep_minutes": coerced,
+            "updated_at": datetime.now().isoformat()
+        })
+    else:
+        config_payload = json.dumps({
+            req.key: coerced,
+            "updated_at": datetime.now().isoformat()
+        })
+
+    # ── Publish ke MQTT ──
+    topic = f"kandang/config/{req.collar_id}"
+    result = mqtt_client.publish(topic, config_payload, qos=1, retain=True)
+
+    if result.rc != 0:
+        raise HTTPException(status_code=503, detail="Gagal publish ke MQTT broker")
+
+    return {
+        "success": True,
+        "collar_id": req.collar_id,
+        "key": req.key,
+        "value": coerced,
+        "topic": topic,
+        "message": f"Config '{req.key}={coerced}' dikirim ke collar. Akan aktif saat device bangun dari sleep."
+    }
+
 # ==========================
 # TELEGRAM FUNCTIONS
 # ==========================
@@ -636,10 +894,15 @@ async def handle_estrus_alert(collar_id: str, kandang_id: Optional[str] = None, 
 def on_mqtt_connect(client, userdata, flags, rc):
     print(f" MQTT Connected (rc={rc})")
     client.subscribe(MQTT_TOPIC)
+    client.subscribe("kandang/debug", qos=1)
 
 def on_mqtt_message(client, userdata, message):
     """MQTT message callback (Runs in background thread)"""
     try:
+        if message.topic.startswith("kandang/debug"):
+            handle_debug_message(message.payload.decode(), message.topic)
+            return
+
         payload_raw = message.payload.decode().strip()
         print(f" MQTT Received: {payload_raw[:30]}...")
         
