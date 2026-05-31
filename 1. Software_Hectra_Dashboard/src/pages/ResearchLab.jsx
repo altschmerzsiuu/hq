@@ -26,10 +26,28 @@ function useDeviceMonitor(collarId, isEnabled) {
     setWsStatus('connecting');
     const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
     if (!token) { setWsStatus('disconnected'); return; }
-    const base = import.meta.env.VITE_WS_URL;
-    const url = collarId && collarId !== 'ALL'
-      ? `${base}/ws/device-logs/${collarId}?token=${token}`
-      : `${base}/ws/device-logs?token=${token}`;
+    // Build WS URL dynamically
+    let base = import.meta.env.VITE_WS_URL;
+    if (!base) {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      if (apiUrl) {
+        base = apiUrl.replace(/^http/, 'ws');
+      } else if (import.meta.env.DEV) {
+        base = 'ws://localhost:5000';
+      } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        base = `${protocol}//${host}`;
+      }
+    }
+    // Clean trailing slash
+    base = base.replace(/\/$/, '');
+
+    const path = collarId && collarId !== 'ALL'
+      ? `/ws/device-logs/${collarId}`
+      : `/ws/device-logs`;
+
+    const url = `${base}${path}?token=${token}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
     ws.onopen = () => { setWsStatus('connected'); clearTimeout(reconnectTimer.current); };
