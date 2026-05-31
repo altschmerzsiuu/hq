@@ -9,26 +9,10 @@ function App() {
   const { isAuthenticated, logout } = useAuthStore();
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const checkSessionExpiry = () => {
-      const expiry = localStorage.getItem('session_expiry') || sessionStorage.getItem('session_expiry');
-      if (expiry) {
-        const expiryTime = parseInt(expiry, 10);
-        if (!isNaN(expiryTime) && Date.now() >= expiryTime) {
-          logout();
-          window.location.href = '/login';
-        }
-      }
-    };
-
-    // Check immediately on mount/focus
-    checkSessionExpiry();
-
-    // Check periodically every 15 seconds
-    const interval = setInterval(checkSessionExpiry, 15000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated, logout]);
+    // Clear any legacy session_expiry keys to avoid interference
+    localStorage.removeItem('session_expiry');
+    sessionStorage.removeItem('session_expiry');
+  }, []);
 
   return (
     <>

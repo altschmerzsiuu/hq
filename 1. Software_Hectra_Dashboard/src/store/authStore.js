@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 import axiosInstance, { scheduleProactiveRefresh, cancelProactiveRefresh } from '@/lib/axios';
 
 // Attempt to parse JWT to get basic user info (for current_user['id'])
@@ -89,6 +89,8 @@ export const useAuthStore = create((set) => ({
     // calling logout() and clearing the new token during a fresh login
     cancelProactiveRefresh();
     localStorage.removeItem('access_token');
+    localStorage.removeItem('session_expiry');
+    sessionStorage.removeItem('session_expiry');
     set({ token: null, user: null, isAuthenticated: false, isLoading: true, error: null });
     try {
       const response = await axiosInstance.post('/auth/login', {
