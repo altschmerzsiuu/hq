@@ -1,4 +1,4 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
 
 const getBaseUrl = () => {
@@ -69,17 +69,28 @@ export function scheduleProactiveRefresh(token) {
 }
 
 async function doSilentRefresh() {
+  const tokenBeforeRefresh = localStorage.getItem('access_token');
   try {
     const resp = await axios.post(
       `${getBaseUrl()}/auth/refresh`,
       {},
       { withCredentials: true }
     );
+    // If the token changed during the request (e.g. by a fresh login), ignore the result of this refresh
+    if (localStorage.getItem('access_token') !== tokenBeforeRefresh) {
+      console.warn("Silent refresh completed but token was updated mid-flight. Ignoring.");
+      return;
+    }
     const newToken = resp.data.access_token;
     useAuthStore.getState().setToken(newToken);
     // Reschedule for the new token's expiry
     scheduleProactiveRefresh(newToken);
   } catch {
+    // If the token changed during the request, do NOT logout!
+    if (localStorage.getItem('access_token') !== tokenBeforeRefresh) {
+      console.warn("Silent refresh failed but token was updated mid-flight. Ignoring.");
+      return;
+    }
     // Refresh cookie also expired — graceful logout
     useAuthStore.getState().logout();
     // Show brief message then redirect
@@ -157,6 +168,7 @@ axiosInstance.interceptors.response.use(
 
       originalRequest._retry = true
       isRefreshing = true
+      const tokenBeforeInterceptor = localStorage.getItem('access_token');
 
       try {
         const refreshResponse = await axios.post(
@@ -164,6 +176,13 @@ axiosInstance.interceptors.response.use(
           {},
           { withCredentials: true }
         )
+
+        // If the token changed during the request, ignore
+        if (localStorage.getItem('access_token') !== tokenBeforeInterceptor) {
+          console.warn("Interceptor refresh completed but token was updated mid-flight. Ignoring.");
+          isRefreshing = false;
+          return axiosInstance(originalRequest);
+        }
 
         const newToken = refreshResponse.data.access_token
         useAuthStore.getState().setToken(newToken)
@@ -178,9 +197,12 @@ axiosInstance.interceptors.response.use(
 
       } catch (refreshError) {
         processQueue(refreshError, null)
-        localStorage.removeItem('access_token')
-        useAuthStore.getState().logout()
-        window.location.href = '/login'
+        // If the token changed during the request, do NOT logout!
+        if (localStorage.getItem('access_token') === tokenBeforeInterceptor) {
+          localStorage.removeItem('access_token')
+          useAuthStore.getState().logout()
+          window.location.href = '/login'
+        }
         return Promise.reject(refreshError)
 
       } finally {
