@@ -44,8 +44,8 @@ function useDeviceMonitor(collarId, isEnabled) {
     base = base.replace(/\/$/, '');
 
     const path = collarId && collarId !== 'ALL'
-      ? `/ws/device-logs/${collarId}`
-      : `/ws/device-logs`;
+      ? `/api/ws/device-logs/${collarId}`
+      : `/api/ws/device-logs`;
 
     const url = `${base}${path}?token=${token}`;
     const ws = new WebSocket(url);

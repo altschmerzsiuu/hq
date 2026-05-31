@@ -456,10 +456,10 @@ async def verify_ws_token(token: str) -> dict:
 # SECTION D: WEBSOCKET ENDPOINTS — Realtime Log Stream
 # ═══════════════════════════════════════════════════════════════════════
 
-@app.websocket("/ws/device-logs")
+@app.websocket("/api/ws/device-logs")
 async def ws_device_logs_all(websocket: WebSocket, token: str):
     """
-    ws://your-vps/ws/device-logs?token=JWT_TOKEN
+    ws://your-vps/api/ws/device-logs?token=JWT_TOKEN
     Monitor semua collar sekaligus.
     """
     try:
@@ -481,10 +481,10 @@ async def ws_device_logs_all(websocket: WebSocket, token: str):
         log_manager.disconnect(websocket, collar_id="ALL")
 
 
-@app.websocket("/ws/device-logs/{collar_id}")
+@app.websocket("/api/ws/device-logs/{collar_id}")
 async def ws_device_logs_collar(websocket: WebSocket, collar_id: str, token: str):
     """
-    ws://your-vps/ws/device-logs/{collar_id}?token=JWT_TOKEN
+    ws://your-vps/api/ws/device-logs/{collar_id}?token=JWT_TOKEN
     Monitor satu collar spesifik.
     """
     try:
