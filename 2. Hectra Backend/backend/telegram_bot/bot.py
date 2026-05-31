@@ -19,6 +19,9 @@ bot_application: Application | None = None
 
 async def start_telegram_bot():
     global bot_application
+    if os.getenv("START_TELEGRAM_BOT", "true").lower() != "true":
+        print("🤖 [TELEGRAM] Telegram Bot is disabled via START_TELEGRAM_BOT env var.")
+        return
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         print("⚠️ [TELEGRAM] TELEGRAM_BOT_TOKEN not set. Bot will not start.")
