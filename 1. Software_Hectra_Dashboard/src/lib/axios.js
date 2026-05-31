@@ -1,4 +1,4 @@
-import axios from 'axios'
+﻿import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
 
 const getBaseUrl = () => {
@@ -36,6 +36,14 @@ const axiosInstance = axios.create({
 
 // ─── Proactive Refresh Scheduler ────────────────────────────────────
 let proactiveRefreshTimer = null;
+
+// Export this so authStore can cancel stale timers when a fresh login begins
+export function cancelProactiveRefresh() {
+  if (proactiveRefreshTimer) {
+    clearTimeout(proactiveRefreshTimer);
+    proactiveRefreshTimer = null;
+  }
+}
 
 export function scheduleProactiveRefresh(token) {
   if (!token || token.startsWith('mock.')) return;
@@ -128,7 +136,8 @@ axiosInstance.interceptors.response.use(
       originalRequest.url.includes('/auth/register') ||
       originalRequest.url.includes('/auth/google') ||
       originalRequest.url.includes('/auth/refresh') ||
-      originalRequest.url.includes('/auth/logout')
+      originalRequest.url.includes('/auth/logout') ||
+      originalRequest.url.includes('/auth/pin')  // PIN endpoints must not trigger logout loop
     );
 
     // If 401 and not an auth endpoint and haven't retried yet

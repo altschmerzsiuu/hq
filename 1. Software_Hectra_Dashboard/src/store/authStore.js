@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import axiosInstance, { scheduleProactiveRefresh } from '@/lib/axios';
+﻿import { create } from 'zustand';
+import axiosInstance, { scheduleProactiveRefresh, cancelProactiveRefresh } from '@/lib/axios';
 
 // Attempt to parse JWT to get basic user info (for current_user['id'])
 function parseJwt(token) {
@@ -85,6 +85,9 @@ export const useAuthStore = create((set) => ({
   },
 
   login: async (email, password) => {
+    // Cancel any stale proactive refresh timer — prevents old session's timer from
+    // calling logout() and clearing the new token during a fresh login
+    cancelProactiveRefresh();
     localStorage.removeItem('access_token');
     set({ token: null, user: null, isAuthenticated: false, isLoading: true, error: null });
     try {
