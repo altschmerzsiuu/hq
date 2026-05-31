@@ -325,6 +325,10 @@ export default function Login() {
   const setupPinRefs = useRef([]);
   const confirmPinRefs = useRef([]);
 
+  // Guard ref: prevents useEffect from navigating to /dashboard while PIN setup is being prepared
+  // This is a synchronous guard that survives React 18 batch render boundaries
+  const pinSetupPendingRef = useRef(false);
+
   const { login, isLoading, error, isAuthenticated, clearError } = useAuthStore();
 
   // Startup: Detect existing UUID and previous user session to activate PIN login
@@ -357,8 +361,9 @@ export default function Login() {
   }, [lockedTimeRemaining]);
 
   useEffect(() => {
-    // Prevent redirect to dashboard if setup modal is open
-    if (isAuthenticated && !showPinSetup) {
+    // Prevent redirect to dashboard if setup modal is open OR pending
+    // pinSetupPendingRef is a synchronous guard that works even before React state commits
+    if (isAuthenticated && !showPinSetup && !pinSetupPendingRef.current) {
       navigate('/dashboard', { replace: true });
     }
     clearError();
@@ -422,15 +427,22 @@ export default function Login() {
 
       const userObj = data.user;
       
+      // Store token first so isAuthenticated=true is batched with showPinSetup=true in React 18
+      useAuthStore.getState().setToken(data.access_token, data.user);
+
       if (!userObj.has_pin) {
+        // Show PIN setup modal — all React state updates batched with Zustand in React 18
+        pinSetupPendingRef.current = true;
         setTempUserId(userObj.id);
         setTempUserName(userObj.full_name);
         setShowPinSetup(true);
-        useAuthStore.getState().setToken(data.access_token, data.user);
+        // Note: navigation to /dashboard is prevented by showPinSetup=true in the useEffect guard
       } else {
-        localStorage.setItem('hectra_user_id', userObj.id);
-        localStorage.setItem('hectra_user_name', userObj.full_name);
-        useAuthStore.getState().setToken(data.access_token, data.user);
+        localStorage.setItem('hectra_user_id', String(userObj.id));
+        localStorage.setItem('hectra_user_name', userObj.full_name || '');
+        // Register this device as trusted for PIN login
+        const { registerDevice } = useAuthStore.getState();
+        await registerDevice();
         toast.success('Berhasil masuk dengan Google!');
         navigate('/dashboard', { replace: true });
       }
@@ -464,9 +476,12 @@ export default function Login() {
         await registerDevice();
 
         if (!userObj.has_pin) {
+          // Set synchronous guard BEFORE React state updates to block useEffect navigation
+          pinSetupPendingRef.current = true;
           setTempUserId(userObj.id);
           setTempUserName(userObj.full_name);
           setShowPinSetup(true);
+          // Guard is cleared when PIN setup modal closes (handleSetupPinSubmit / handleSkipPinSetup)
         } else {
           localStorage.setItem('hectra_user_id', userObj.id);
           localStorage.setItem('hectra_user_name', userObj.full_name);
@@ -631,6 +646,7 @@ export default function Login() {
       }
       
       toast.success('PIN berhasil diatur!');
+      pinSetupPendingRef.current = false;
       setShowPinSetup(false);
       navigate('/dashboard', { replace: true });
     } catch (err) {
@@ -639,6 +655,7 @@ export default function Login() {
   };
 
   const handleSkipPinSetup = () => {
+    pinSetupPendingRef.current = false;
     setShowPinSetup(false);
     toast.info('PIN Setup dilewati.');
     navigate('/dashboard', { replace: true });

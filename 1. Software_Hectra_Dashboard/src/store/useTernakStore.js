@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import axiosInstance from '../lib/axios'
 
 // ─── Helper: Parse error message yang AMAN untuk ditampilkan ke user ───
@@ -111,10 +111,11 @@ export const useTernakStore = create((set, get) => ({
     set({ loading: true, error: null })
     try {
       const payload = {
+        new_rfid: data.new_rfid?.trim().toUpperCase() || undefined,
         nama: data.nama || undefined,
         jenis: data.jenis || undefined,
         bulan_tahun_lahir: data.bulan_tahun_lahir || undefined,
-        kesehatan: data.kesehatan || undefined,
+        status_kesehatan: data.kesehatan || undefined,
         // Repro fields — kirim undefined jika kosong (tidak akan di-update)
         tanggal_ib: data.tanggal_ib || undefined,
         pemberi_ib: data.pemberi_ib || undefined,
