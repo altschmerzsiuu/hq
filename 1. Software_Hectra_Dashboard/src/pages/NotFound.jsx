@@ -1,15 +1,16 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import image404 from '@/assets/logo/404.webp';
+// --------------------------
 
 export default function NotFound() {
-  const navigate = useNavigate();
-
+  const navigate = useNavigate(); 
+  
   return (
-    <div style={{
+    <div className="not-found-container" style={{
       width: '100vw',
       height: '100vh',
-      backgroundColor: '#0A0A0F',
+      backgroundColor: '#050508',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -18,30 +19,35 @@ export default function NotFound() {
       overflow: 'hidden',
       fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
     }}>
-      {/* Background Image - scales to fit screen dynamically (contain) without cropping or pixelation */}
+      
+      {/* --- AMBIENT GLOWS (Cahaya Latar) --- */}
+      <div className="ambient-glow glow-green" />
+      <div className="ambient-glow glow-purple" />
+
+      {/* --- BACKGROUND IMAGE --- */}
       <div style={{
         position: 'absolute',
         inset: 0,
         backgroundImage: `url(${image404})`,
-        backgroundSize: 'contain',
+        backgroundSize: 'cover', // Diubah ke cover agar lebih immersive
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        filter: 'brightness(0.35) contrast(1.15)',
-        mixBlendMode: 'luminosity',
-        opacity: 0.65,
+        filter: 'grayscale(100%) contrast(1.2)', // Bikin imejnya lebih menyatu dengan tema dark
+        mixBlendMode: 'overlay',
+        opacity: 0.15, // Dibuat lebih subtle agar teks lebih terbaca
         zIndex: 1,
       }} />
 
-      {/* Dark radial overlay to blend image borders with the page background */}
+      {/* --- VIGNETTE / RADIAL GRADIENT --- */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        background: 'radial-gradient(circle, rgba(10, 10, 15, 0.4) 0%, rgba(10, 10, 15, 0.95) 100%)',
+        background: 'radial-gradient(circle at center, transparent 0%, #050508 100%)',
         zIndex: 2,
       }} />
 
-      {/* Content Container */}
-      <div style={{
+      {/* --- MAIN CONTENT --- */}
+      <div className="content-wrapper" style={{
         zIndex: 3,
         display: 'flex',
         flexDirection: 'column',
@@ -49,75 +55,165 @@ export default function NotFound() {
         justifyContent: 'center',
         textAlign: 'center',
         padding: '2rem',
-        animation: 'hq-fadeup 1s cubic-bezier(0.16, 1, 0.3, 1) both',
       }}>
-        <h1 style={{
-          fontSize: '110px',
-          fontWeight: 900,
-          lineHeight: '0.95',
-          margin: '0 0 12px 0',
-          letterSpacing: '-0.05em',
-          color: 'rgba(255, 255, 255, 0.12)', // Low-contrast abstract typography
-          mixBlendMode: 'overlay',
-          fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
-        }}>
+        
+        {/* Glassmorphism Badge */}
+        <div className="glass-badge">
+          <span style={{ color: '#00D47E', marginRight: '8px', fontSize: '18px' }}>•</span>
+          404: THIS PAGE IS GONE FR FR
+        </div>
+
+        {/* Abstract Typography */}
+        <h1 className="sheesh-text">
           SHEESH
         </h1>
         
         <p style={{
-          fontSize: '14px',
-          fontWeight: 600,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: 'rgba(255, 255, 255, 0.4)', // Subtle and integrated subtext
-          margin: 0,
-          fontFamily: "'DM Sans', system-ui, sans-serif",
+          fontSize: '16px',
+          fontWeight: 400,
+          color: 'rgba(255, 255, 255, 0.5)',
+          maxWidth: '400px',
+          margin: '0 0 32px 0',
+          lineHeight: '1.6',
+          animation: 'fadeUp 1s ease-out 0.4s both',
         }}>
-          404: this page is gone fr fr.
+          Looks like you've wandered too far. The cow you're looking for doesn't exist in this farm anymore.
         </p>
 
-        {/* Small circular button to navigate back to dashboard */}
+        {/* Upgraded Pill Button */}
         <button
+          className="dashboard-btn"
           onClick={() => navigate('/dashboard')}
-          style={{
-            marginTop: '28px',
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            backgroundColor: '#16161F',
-            border: '1px solid #1D1D2B',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#00D47E',
-            cursor: 'pointer',
-            transition: 'all 0.25s ease',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = '#00D47E';
-            e.currentTarget.style.transform = 'scale(1.08)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = '#1D1D2B';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
           title="Back to Dashboard"
         >
-          <ArrowLeft size={18} />
+          <div className="icon-wrapper">
+            <ArrowLeft size={18} />
+          </div>
+          <span style={{ fontWeight: 600, letterSpacing: '0.02em' }}>
+            Back to Dashboard
+          </span>
         </button>
       </div>
 
+      {/* --- STYLES & ANIMATIONS --- */}
       <style>{`
-        @keyframes hq-fadeup {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        /* Animations */
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(40px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        @keyframes pulseGlow {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        /* Elements */
+        .content-wrapper {
+          animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .ambient-glow {
+          position: absolute;
+          width: 50vw;
+          height: 50vw;
+          border-radius: 50%;
+          filter: blur(80px);
+          z-index: 0;
+          animation: pulseGlow 8s infinite alternate ease-in-out;
+        }
+        .glow-green {
+          top: -10%;
+          left: -10%;
+          background: radial-gradient(circle, rgba(0, 212, 126, 0.15) 0%, transparent 70%);
+        }
+        .glow-purple {
+          bottom: -20%;
+          right: -10%;
+          background: radial-gradient(circle, rgba(100, 50, 255, 0.1) 0%, transparent 70%);
+          animation-delay: -4s;
+        }
+
+        .glass-badge {
+          display: flex;
+          align-items: center;
+          padding: 8px 20px;
+          border-radius: 100px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          font-family: "'DM Sans', system-ui, sans-serif";
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: rgba(255, 255, 255, 0.8);
+          margin-bottom: 24px;
+          animation: fadeUp 1s ease-out 0.1s both;
+        }
+
+        .sheesh-text {
+          font-size: clamp(80px, 15vw, 160px);
+          font-weight: 900;
+          line-height: 0.85;
+          margin: 0 0 24px 0;
+          letter-spacing: -0.04em;
+          background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.15) 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          text-shadow: 0px 20px 40px rgba(0,0,0,0.5);
+          animation: float 6s ease-in-out infinite;
+          user-select: none;
+        }
+
+        .dashboard-btn {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px 24px 8px 8px;
+          border-radius: 100px;
+          backgroundColor: transparent;
+          background: rgba(22, 22, 31, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.7);
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          font-family: inherit;
+          backdrop-filter: blur(10px);
+          animation: fadeUp 1s ease-out 0.6s both;
+        }
+
+        .dashboard-btn .icon-wrapper {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.05);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+        }
+
+        .dashboard-btn:hover {
+          background: rgba(0, 212, 126, 0.1);
+          border-color: rgba(0, 212, 126, 0.4);
+          color: #00D47E;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 212, 126, 0.15);
+        }
+
+        .dashboard-btn:hover .icon-wrapper {
+          background: #00D47E;
+          color: #050508;
+          transform: translateX(-2px);
+        }
+        
+        .dashboard-btn:active {
+          transform: translateY(1px);
         }
       `}</style>
     </div>

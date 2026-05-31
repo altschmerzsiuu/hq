@@ -306,6 +306,7 @@ export default function Login() {
   const [pinError, setPinError] = useState('');
   const [shake, setShake] = useState(false);
   const [lockedTimeRemaining, setLockedTimeRemaining] = useState(0);
+  const [emailLoginFromPin, setEmailLoginFromPin] = useState(false);
 
   // PIN Setup Modal states
   const [showPinSetup, setShowPinSetup] = useState(false);
@@ -648,6 +649,7 @@ export default function Login() {
     localStorage.removeItem('hectra_user_id');
     localStorage.removeItem('hectra_user_name');
     setIsPinLogin(false);
+    setEmailLoginFromPin(true);
     setPinDigits(Array(6).fill(''));
     setPinError('');
   };
@@ -889,12 +891,12 @@ export default function Login() {
                   <button type="button"
                     onClick={handleForgotPin}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: T.accent, fontWeight: 700, fontFamily: FONT_BODY }}>
-                    Lupa PIN?
+                    Forgot PIN?
                   </button>
                   <button type="button"
                     onClick={handleNotYou}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: T.t2, fontWeight: 600, fontFamily: FONT_BODY }}>
-                    Bukan kamu?
+                    Not you?
                   </button>
                 </div>
 
@@ -1051,6 +1053,29 @@ export default function Login() {
                   {isLogin ? 'Continue with Google' : 'Sign up with Google'}
                 </button>
 
+                {/* Back to PIN — OUTSIDE the Google button */}
+                {emailLoginFromPin && (
+                  <button type="button"
+                    onClick={() => {
+                      setIsPinLogin(true);
+                      setEmailLoginFromPin(false);
+                      setPinDigits(Array(6).fill(''));
+                      setTimeout(() => pinRefs.current[0]?.focus(), 150);
+                    }}
+                    style={{
+                      width: '100%', background: 'transparent',
+                      border: `1px solid ${T.border}`, borderRadius: 10,
+                      padding: '13px 0', fontSize: 12, fontWeight: 700,
+                      color: T.accent, cursor: 'pointer', marginTop: 10,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      transition: 'all 0.2s', fontFamily: FONT_BODY,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = T.hover; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    ← Back to PIN
+                  </button>
+                )}
                 {/* toggle */}
                 <p style={{ textAlign: 'center', fontSize: 11, color: T.t2, marginTop: 14 }}>
                   {isLogin ? 'New to Hectra? ' : 'Already have an account? '}
@@ -1281,7 +1306,7 @@ export default function Login() {
                 onMouseEnter={e => { e.currentTarget.style.background = T.hover; e.currentTarget.style.color = T.t1; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.t2; }}
               >
-                Lewati untuk sekarang
+                
               </button>
             </div>
           </div>
