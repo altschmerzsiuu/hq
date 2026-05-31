@@ -1,6 +1,10 @@
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import image404 from '@/assets/logo/404.webp';
 
 export default function NotFound() {
+  const navigate = useNavigate();
+
   return (
     <div style={{
       width: '100vw',
@@ -14,22 +18,21 @@ export default function NotFound() {
       overflow: 'hidden',
       fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
     }}>
-      {/* Background Image at crisp actual size, centered and blended behind text */}
+      {/* Background Image - scales to fit screen dynamically (contain) without cropping or pixelation */}
       <div style={{
         position: 'absolute',
-        width: '320px',
-        height: '320px',
+        inset: 0,
         backgroundImage: `url(${image404})`,
         backgroundSize: 'contain',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        filter: 'brightness(0.4) contrast(1.1)',
+        filter: 'brightness(0.35) contrast(1.15)',
         mixBlendMode: 'luminosity',
-        opacity: 0.35,
+        opacity: 0.65,
         zIndex: 1,
       }} />
 
-      {/* Dark overlay to match theme */}
+      {/* Dark radial overlay to blend image borders with the page background */}
       <div style={{
         position: 'absolute',
         inset: 0,
@@ -72,6 +75,37 @@ export default function NotFound() {
         }}>
           404: this page is gone fr fr.
         </p>
+
+        {/* Small circular button to navigate back to dashboard */}
+        <button
+          onClick={() => navigate('/dashboard')}
+          style={{
+            marginTop: '28px',
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            backgroundColor: '#16161F',
+            border: '1px solid #1D1D2B',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#00D47E',
+            cursor: 'pointer',
+            transition: 'all 0.25s ease',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = '#00D47E';
+            e.currentTarget.style.transform = 'scale(1.08)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = '#1D1D2B';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title="Back to Dashboard"
+        >
+          <ArrowLeft size={18} />
+        </button>
       </div>
 
       <style>{`
