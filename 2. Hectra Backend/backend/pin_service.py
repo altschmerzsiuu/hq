@@ -162,7 +162,7 @@ class PINService:
             }
 
     @staticmethod
-    async def register_device(user_id: int, device_uuid: str, device_label: str = None):
+    async def register_device(user_id: int, device_uuid: str, device_label: str | None = None):
         if not device_uuid or len(device_uuid.strip()) == 0:
             raise HTTPException(status_code=400, detail="device_uuid tidak boleh kosong.")
             

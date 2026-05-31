@@ -20,7 +20,7 @@ def get_headers(chat_id: Optional[str] = None) -> dict:
     cid = chat_id or DEFAULT_CHAT_ID
     headers = {"x-device-key": DEVICE_API_KEY}
     if cid:
-        headers["x-telegram-chat-id"] = str(cid)
+        headers["x-telegram-chat-id"] = cid
     return headers
 
 
