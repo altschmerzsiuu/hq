@@ -1,4 +1,4 @@
-// src/pages/Settings.jsx
+﻿// src/pages/Settings.jsx
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -115,6 +115,13 @@ export default function Settings() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Tab 3: Security -- PIN
+  const [pinNewDigits, setPinNewDigits] = useState('');
+  const [pinConfirmDigits, setPinConfirmDigits] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinLoading, setPinLoading] = useState(false);
+  const [userHasPin, setUserHasPin] = useState(user?.has_pin ?? false);
 
   // Tab 4: Team
   const [teamMembers, setTeamMembers] = useState([]);
@@ -510,6 +517,31 @@ export default function Settings() {
       toast.error(err.response?.data?.detail || (lang === 'id' ? 'Gagal mengubah password.' : 'Failed to change password.'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSavePIN = async (e) => {
+    e.preventDefault();
+    setPinError('');
+    if (!/^\d{6}$/.test(pinNewDigits)) {
+      setPinError(lang === 'id' ? 'PIN harus tepat 6 digit angka.' : 'PIN must be exactly 6 digits.');
+      return;
+    }
+    if (pinNewDigits !== pinConfirmDigits) {
+      setPinError(lang === 'id' ? 'Konfirmasi PIN tidak cocok.' : 'PIN entries do not match.');
+      return;
+    }
+    setPinLoading(true);
+    try {
+      await axiosInstance.post('/auth/pin/set', { pin: pinNewDigits });
+      setUserHasPin(true);
+      setPinNewDigits('');
+      setPinConfirmDigits('');
+      toast.success(lang === 'id' ? 'PIN berhasil diperbarui!' : 'PIN updated successfully!');
+    } catch (err) {
+      setPinError(err.response?.data?.detail || (lang === 'id' ? 'Gagal menyimpan PIN.' : 'Failed to save PIN.'));
+    } finally {
+      setPinLoading(false);
     }
   };
 
@@ -941,39 +973,130 @@ export default function Settings() {
               TAB 3 — SECURITY
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
-            <form onSubmit={handleSaveSecurity} className="space-y-6 animate-in fade-in duration-300">
-              <div className="flex items-center gap-2 border-b border-[var(--border)] pb-2 mb-4">
-                <h2 className="text-lg font-bold text-[var(--text-1)] font-display">{t.settings_security_title}</h2>
-                <div className="relative group">
-                  <div className="w-5 h-5 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-slate-400 hover:text-[var(--accent)] hover:border-[var(--accent)] cursor-help transition-all">i</div>
-                  <div className="absolute left-0 top-7 w-72 p-3.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-2)] text-[11px] font-semibold rounded-xl shadow-xl opacity-0 scale-95 origin-top-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50">
-                    <div className="absolute top-0 left-2 -translate-y-1 w-2.5 h-2.5 bg-[var(--bg-surface)] border-t border-l border-[var(--border)] rotate-45" />
-                    <p className="relative leading-relaxed">
-                      <strong className="text-[var(--accent)]">{lang === 'id' ? 'Catatan:' : 'Note:'}</strong> {t.settings_security_info}
-                    </p>
+            <div className="space-y-8 animate-in fade-in duration-300">
+
+              {/* ── Section: Login PIN ── */}
+              <section>
+                <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-4">
+                  <h2 className="text-base font-bold text-[var(--text-1)] font-display flex items-center gap-2">
+                    <Key className="w-4 h-4 text-[var(--accent)]" />
+                    {lang === 'id' ? 'Ubah PIN Login' : 'Change Login PIN'}
+                  </h2>
+                  <span
+                    className="text-[10px] font-bold px-2.5 py-1 rounded-full border"
+                    style={userHasPin
+                      ? { background: 'var(--accent-dim)', color: 'var(--accent)', borderColor: 'var(--accent-border)' }
+                      : { background: 'rgba(255,91,91,0.08)', color: '#ff5b5b', borderColor: 'rgba(255,91,91,0.25)' }
+                    }
+                  >
+                    {userHasPin
+                      ? (lang === 'id' ? 'PIN Aktif' : 'PIN Active')
+                      : (lang === 'id' ? 'Belum Ada PIN' : 'No PIN Set')}
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-2)] mb-4 leading-relaxed">
+                  {lang === 'id'
+                    ? 'Gunakan 6-digit PIN untuk login cepat dari perangkat terpercaya. PIN menggantikan password setelah login pertama.'
+                    : 'Use a 6-digit PIN for quick login from trusted devices. PIN replaces your password after the first login.'}
+                </p>
+                <form onSubmit={handleSavePIN} className="space-y-4">
+                  {pinError && (
+                    <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold">
+                      {pinError}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>{lang === 'id' ? 'PIN Baru (6 digit)' : 'New PIN (6 digits)'}</label>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={pinNewDigits}
+                        onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPinNewDigits(e.target.value); setPinError(''); } }}
+                        placeholder="••••••"
+                        className={`${inputClass} font-mono tracking-[0.5em]`}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>{lang === 'id' ? 'Konfirmasi PIN Baru' : 'Confirm New PIN'}</label>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={pinConfirmDigits}
+                        onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPinConfirmDigits(e.target.value); setPinError(''); } }}
+                        placeholder="••••••"
+                        className={`${inputClass} font-mono tracking-[0.5em]`}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={pinLoading || pinNewDigits.length !== 6 || pinConfirmDigits.length !== 6}
+                      className="flex items-center gap-2 px-5 py-3 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {pinLoading
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> {lang === 'id' ? 'Menyimpan...' : 'Saving...'}</>
+                        : <><Save className="w-4 h-4" /> {lang === 'id' ? 'Simpan PIN Baru' : 'Save New PIN'}</>}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-[var(--text-3)] leading-relaxed">
+                    💡 {lang === 'id'
+                      ? 'Hanya berlaku di perangkat terpercaya. Login PIN lebih cepat daripada ketik password tiap saat.'
+                      : 'Only works on trusted devices. PIN login is faster than typing your password every time.'}
+                  </p>
+                </form>
+              </section>
+
+              {/* ── Divider ── */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-[var(--border)]" />
+                <span className="text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider">
+                  {lang === 'id' ? 'atau' : 'or'}
+                </span>
+                <div className="flex-1 h-px bg-[var(--border)]" />
+              </div>
+
+              {/* ── Section: Change Password ── */}
+              <section>
+                <div className="flex items-center gap-2 border-b border-[var(--border)] pb-2 mb-4">
+                  <h2 className="text-base font-bold text-[var(--text-1)] font-display">
+                    {lang === 'id' ? 'Ubah Password Akun' : 'Change Account Password'}
+                  </h2>
+                  <div className="relative group">
+                    <div className="w-5 h-5 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-slate-400 hover:text-[var(--accent)] hover:border-[var(--accent)] cursor-help transition-all">i</div>
+                    <div className="absolute left-0 top-7 w-72 p-3.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-2)] text-[11px] font-semibold rounded-xl shadow-xl opacity-0 scale-95 origin-top-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50">
+                      <div className="absolute top-0 left-2 -translate-y-1 w-2.5 h-2.5 bg-[var(--bg-surface)] border-t border-l border-[var(--border)] rotate-45" />
+                      <p className="relative leading-relaxed">
+                        <strong className="text-[var(--accent)]">{lang === 'id' ? 'Catatan:' : 'Note:'}</strong> {t.settings_security_info}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className={labelClass}>{t.settings_current_pass}</label>
-                  <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder={lang === 'id' ? 'Masukkan password saat ini' : 'Enter current password'} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>{t.settings_new_pass}</label>
-                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={lang === 'id' ? 'Minimal 8 karakter' : 'Minimum 8 characters'} className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>{t.settings_confirm_pass}</label>
-                  <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={lang === 'id' ? 'Ketik ulang password baru' : 'Retype new password'} className={inputClass} />
-                </div>
-              </div>
-              <div className="pt-4 flex justify-end">
-                <button type="submit" className="flex items-center gap-2 px-5 py-3 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95">
-                  <Save className="w-4 h-4" /> {t.settings_change_pass_btn}
-                </button>
-              </div>
-            </form>
+                <form onSubmit={handleSaveSecurity} className="space-y-4">
+                  <div>
+                    <label className={labelClass}>{t.settings_current_pass}</label>
+                    <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder={lang === 'id' ? 'Masukkan password saat ini' : 'Enter current password'} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>{t.settings_new_pass}</label>
+                    <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={lang === 'id' ? 'Minimal 8 karakter' : 'Minimum 8 characters'} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>{t.settings_confirm_pass}</label>
+                    <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={lang === 'id' ? 'Ketik ulang password baru' : 'Retype new password'} className={inputClass} />
+                  </div>
+                  <div className="pt-2 flex justify-end">
+                    <button type="submit" className="flex items-center gap-2 px-5 py-3 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95">
+                      <Save className="w-4 h-4" /> {t.settings_change_pass_btn}
+                    </button>
+                  </div>
+                </form>
+              </section>
+
+            </div>
           )}
 
           {/* ══════════════════════════════════════════════════════════════════

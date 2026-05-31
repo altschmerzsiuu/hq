@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -297,6 +297,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem('remember_email'));
   const navigate = useNavigate();
 
   // PIN & Device states
@@ -452,7 +453,11 @@ export default function Login() {
       if (!email || !password) return;
       const userObj = await login(email, password);
       if (userObj) {
-        localStorage.setItem('remember_email', email);
+        if (rememberMe) {
+          localStorage.setItem('remember_email', email);
+        } else {
+          localStorage.removeItem('remember_email');
+        }
         
         // Auto register device
         const { registerDevice } = useAuthStore.getState();
@@ -973,7 +978,22 @@ export default function Login() {
                   )}
 
                   {isLogin && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 14 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', userSelect: 'none' }}>
+                        <span style={{
+                          width: 16, height: 16, borderRadius: 5, flexShrink: 0,
+                          border: `1.5px solid ${rememberMe ? T.accent : T.border}`,
+                          background: rememberMe ? T.accent : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.2s',
+                        }}
+                          onClick={() => setRememberMe(v => !v)}
+                        >
+                          {rememberMe && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#0A0A0F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </span>
+                        <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} style={{ display: 'none' }} />
+                        <span style={{ fontSize: 11, color: T.t2, fontWeight: 600, fontFamily: FONT_BODY }}>Remember me</span>
+                      </label>
                       <button type="button"
                         onClick={() => setShowForgotModal(true)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: T.accent, fontWeight: 700, fontFamily: FONT_BODY }}>
