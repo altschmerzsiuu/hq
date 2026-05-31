@@ -537,7 +537,17 @@ export default function Settings() {
       setUserHasPin(true);
       setPinNewDigits('');
       setPinConfirmDigits('');
-      toast.success(lang === 'id' ? 'PIN berhasil diperbarui!' : 'PIN updated successfully!');
+
+      // Save user ID + name to localStorage so PIN screen appears on next login
+      const { user: authUser, registerDevice } = useAuthStore.getState();
+      if (authUser?.id) {
+        localStorage.setItem('hectra_user_id', String(authUser.id));
+        localStorage.setItem('hectra_user_name', authUser.full_name || authUser.name || '');
+      }
+      // Ensure this device is registered as trusted
+      await registerDevice();
+
+      toast.success(lang === 'id' ? 'PIN berhasil diperbarui! Login berikutnya pakai PIN.' : 'PIN updated! Next login will use your PIN.');
     } catch (err) {
       setPinError(err.response?.data?.detail || (lang === 'id' ? 'Gagal menyimpan PIN.' : 'Failed to save PIN.'));
     } finally {
