@@ -1,5 +1,5 @@
 // src/store/settingsStore.js
-// Global UI Settings Store — Hectra (MP-3 Final)
+// Global UI Settings Store — HERD
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -24,7 +24,7 @@ const useSettingsStore = create(
       }),
     }),
     {
-      name: 'hectra-settings',
+      name: 'herd-settings',
       onRehydrateStorage: () => (state) => {
         // Re-apply theme from persisted storage on hydration
         if (state?.theme) {

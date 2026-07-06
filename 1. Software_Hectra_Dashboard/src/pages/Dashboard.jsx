@@ -1,5 +1,5 @@
 // src/pages/Dashboard.jsx
-// Hectra Dashboard — Neo Bio-Tech Intelligence UI (MP-3 §4, §7-9)
+// HERD Dashboard — Neo Bio-Tech Intelligence UI (MP-3 §4, §7-9)
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -340,7 +340,7 @@ export default function Dashboard() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Hectra_Laporan_Kandang_${new Date().toISOString().slice(0, 10)}.pdf`;
+      link.download = `HERD_Laporan_Kandang_${new Date().toISOString().slice(0, 10)}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -509,7 +509,7 @@ export default function Dashboard() {
           ]);
         }
       } catch (err) {
-        console.error('[Hectra Dashboard] Error fetching real-time data:', err);
+        console.error('[HERD Dashboard] Error fetching real-time data:', err);
       } finally {
         setLoading(false);
       }

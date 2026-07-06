@@ -14,7 +14,7 @@ def get_effective_owner_id(current_user: dict) -> int:
     return current_user.get("parent_id") or current_user["id"]
 
 def safe_error(e: Exception, context: str = "operasi") -> HTTPException:
-    logger.error(f"[Hectra Error] {context}: {type(e).__name__}: {str(e)}")
+    logger.error(f"[HERD Error] {context}: {type(e).__name__}: {str(e)}")
     err_str = str(e).lower()
     if "unique" in err_str or "duplicate key" in err_str:
         return HTTPException(status_code=400, detail="Data dengan ID tersebut sudah ada.")

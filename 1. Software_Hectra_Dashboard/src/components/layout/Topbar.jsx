@@ -1,5 +1,5 @@
 // src/components/layout/Topbar.jsx
-// Hectra Topbar — Neo Bio-Tech Intelligence UI (MP-3 §10)
+// HERD Topbar — Neo Bio-Tech Intelligence UI (MP-3 §10)
 
 import { useState, useRef, useEffect } from 'react';
 import { Bell, Globe, Menu, X, CheckCheck, ArrowRight } from 'lucide-react';

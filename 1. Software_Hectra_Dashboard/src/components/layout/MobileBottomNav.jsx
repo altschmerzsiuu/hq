@@ -1,5 +1,5 @@
 // src/components/layout/MobileBottomNav.jsx
-// Hectra Mobile Bottom Nav — MP-3 §13.5
+// HERD Mobile Bottom Nav — MP-3 §13.5
 
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';

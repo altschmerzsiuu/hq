@@ -4,8 +4,8 @@ import App from './App.jsx'
 import './index.css'
 
 // Set dark mode as default BEFORE React renders (MP-3 §17.1)
-const savedTheme = localStorage.getItem('hectra-settings')
-  ? JSON.parse(localStorage.getItem('hectra-settings'))?.state?.theme
+const savedTheme = localStorage.getItem('herd-settings')
+  ? JSON.parse(localStorage.getItem('herd-settings'))?.state?.theme
   : null;
 document.documentElement.setAttribute('data-theme', savedTheme || 'dark');
 

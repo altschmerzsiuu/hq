@@ -172,7 +172,7 @@ def _build_template_context(db_predictions: list[dict], farm_name: str) -> dict:
             "score":        score_pct,
             "width_pct":    f"{score_pct}%",
             "predicted_at": _fmt_date(row.get("prediction_ts", "")),
-            "model_version":"Sistem Hectra",
+            "model_version":"Sistem HERD",
         })
 
     # ── Countdown cards (HIGH risk only) ─────────────────────────────────────

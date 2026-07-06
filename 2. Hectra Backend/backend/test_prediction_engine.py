@@ -1,7 +1,7 @@
 """
 test_prediction_engine.py
 =========================
-Test script untuk validasi semua komponen sistem prediksi Hectra.
+Test script untuk validasi semua komponen sistem prediksi HERD.
 
 Cara pakai:
   python test_prediction_engine.py              # semua test
@@ -603,7 +603,7 @@ async def run_all_tests(rfid: str, owner_id: int, test_filter: str):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test prediction engine Hectra")
+    parser = argparse.ArgumentParser(description="Test prediction engine HERD")
     parser.add_argument("--test",     default="all",
                         choices=["all","model","layer1","layer2","layer3","db","full"])
     parser.add_argument("--rfid",     default="SIM0001", help="RFID sapi untuk test DB & full pipeline")

@@ -1,5 +1,5 @@
 // src/lib/i18n.js
-// Dual Language System — Hectra (MP-3 Final)
+// Dual Language System — HERD
 
 const translations = {
   en: {

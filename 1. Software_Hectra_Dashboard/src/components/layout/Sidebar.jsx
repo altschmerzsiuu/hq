@@ -1,5 +1,5 @@
 // src/components/layout/Sidebar.jsx
-// Hectra Sidebar — Neo Bio-Tech Intelligence UI (MP-3 Final)
+// HERD Sidebar — Neo Bio-Tech Intelligence UI
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
@@ -29,9 +29,7 @@ import { useAuthStore } from '@/store/authStore';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import hectraLogo from '@/assets/logo/hectra.webp'
-import hectraLightLogo from '@/assets/logo/Hectra_Light.webp'
-import hectraDarkLogo from '@/assets/logo/Hectra_Dark.webp'
+import herdLogo from '@/assets/logo/herd.jpeg'
 
 export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed }) {
   const { user, logout } = useAuthStore();
@@ -182,39 +180,19 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
           }}
         >
           {/* Logo */}
-          {!logoFailed ? (
-            <img
-              src={hectraLogo}
-              alt="Hectra"
-              style={{ width: '28px', height: '28px', objectFit: 'contain', flexShrink: 0 }}
-              onError={() => setLogoFailed(true)}
-            />
-          ) : (
-            <div style={{
-              width: '28px', height: '28px', borderRadius: '6px',
-              background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '14px', fontWeight: 700, color: 'var(--accent)',
-              fontFamily: 'DM Sans, sans-serif', flexShrink: 0,
-            }}>H</div>
-          )}
+          <img
+            src={herdLogo}
+            alt="HERD Logo"
+            style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
+          />
 
           {/* Text logo */}
           {!isCollapsed && (
-            !textFailed ? (
-              <img
-                src={theme === 'light' ? hectraLightLogo : hectraDarkLogo}
-                alt="Hectra"
-                style={{ height: '32px', objectFit: 'contain' }}
-                onError={() => setTextFailed(true)}
-              />
-            ) : (
-              <span style={{
-                fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
-                fontSize: '18px', color: 'var(--accent)',
-                letterSpacing: '-0.02em', whiteSpace: 'nowrap',
-              }}>Hectra</span>
-            )
+            <span style={{
+              fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
+              fontSize: '18px', color: 'var(--accent)',
+              letterSpacing: '-0.02em', whiteSpace: 'nowrap',
+            }}>HERD</span>
           )}
 
           {/* ✅ Close button mobile — ml-auto dorong ke kanan, hidden di desktop */}

@@ -717,7 +717,7 @@ async def main(mode: str, owner_id: int, n_sensor: int, n_sapi: int, n_siklus: i
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate data sintetis + retrain model Hectra")
+    parser = argparse.ArgumentParser(description="Generate data sintetis + retrain model HERD")
     parser.add_argument("--mode",      default="all",
                         choices=["all", "sensor", "historis", "retrain"],
                         help="Mode: all=semua, sensor=sensor saja, historis=reproduksi saja, retrain=retrain saja")

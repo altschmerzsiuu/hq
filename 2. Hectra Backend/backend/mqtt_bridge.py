@@ -446,7 +446,7 @@ if __name__ == "__main__":
     client.on_message = on_message
 
     # MQTT Authentication — required since allow_anonymous=false
-    mqtt_user = os.getenv('MQTT_BRIDGE_USER', 'hectra-bridge')
+    mqtt_user = os.getenv('MQTT_BRIDGE_USER', 'herd-bridge')
     mqtt_pass = os.getenv('MQTT_BRIDGE_PASS', '')
     if mqtt_user and mqtt_pass:
         client.username_pw_set(mqtt_user, mqtt_pass)

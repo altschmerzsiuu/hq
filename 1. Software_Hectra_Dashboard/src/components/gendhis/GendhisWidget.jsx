@@ -335,7 +335,7 @@ export default function GendhisWidget() {
                   </div>
                   <div>
                     <h2 className="font-bold text-sm text-[var(--text-1)]">Gendhis AI Session</h2>
-                    <span className="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest leading-none">Powered by Hectra</span>
+                    <span className="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest leading-none">Powered by HERD</span>
                   </div>
                 </div>
                 

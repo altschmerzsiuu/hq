@@ -541,8 +541,8 @@ export default function Settings() {
       // Save user ID + name to localStorage so PIN screen appears on next login
       const { user: authUser, registerDevice } = useAuthStore.getState();
       if (authUser?.id) {
-        localStorage.setItem('hectra_user_id', String(authUser.id));
-        localStorage.setItem('hectra_user_name', authUser.full_name || authUser.name || '');
+        localStorage.setItem('herd_user_id', String(authUser.id));
+        localStorage.setItem('herd_user_name', authUser.full_name || authUser.name || '');
       }
       // Ensure this device is registered as trusted
       await registerDevice();

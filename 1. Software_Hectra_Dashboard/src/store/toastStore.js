@@ -1,5 +1,5 @@
 // src/store/toastStore.js
-// Beautiful, lightweight custom React Toast Notification Store for Hectra
+// Beautiful, lightweight custom React Toast Notification Store for HERD
 
 import { create } from 'zustand';
 

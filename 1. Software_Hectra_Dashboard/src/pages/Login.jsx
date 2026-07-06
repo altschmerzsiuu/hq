@@ -1,10 +1,10 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
-import brandLogo from '@/assets/logo/hectra.webp';
-import hectraDarkLogo from '@/assets/logo/Hectra_Dark.webp';
+import brandLogo from '@/assets/logo/herd.jpeg';
+
 
 /* ─── Design Tokens ───────────────────────────────────────────────────── */
 const T = {
@@ -25,7 +25,7 @@ const FONT_DISPLAY = "'Plus Jakarta Sans', system-ui, sans-serif";
 const FONT_BODY = "'DM Sans', system-ui, sans-serif";
 
 /* ─── Marquee ─────────────────────────────────────────────────────────── */
-const MARQUEE_ITEMS = ['Hectra', 'Smart Farm', 'AI Powered', 'Livestock Intel', 'Realtime', 'Precision Farming'];
+const MARQUEE_ITEMS = ['HERD', 'Smart Farm', 'AI Powered', 'Livestock Intel', 'Realtime', 'Precision Farming'];
 
 function Marquee() {
   const items = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
@@ -80,10 +80,10 @@ function LeftPanel() {
             borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
             overflow: 'hidden', flexShrink: 0
           }}>
-            <img src={brandLogo} alt="Hectra Logo" style={{ width: '150%', height: '150%', objectFit: 'contain' }} />
+            <img src={brandLogo} alt="HERD Logo" style={{ width: '150%', height: '150%', objectFit: 'contain' }} />
           </div>
 
-          <img src={hectraDarkLogo} alt="Hectra" style={{ height: 64, objectFit: 'contain', marginLeft: '-0.5rem' }} />
+          
         </div>
 
         <p style={{
@@ -117,7 +117,7 @@ function LeftPanel() {
           {/* Instagram */}
           <li className="group relative list-none">
             <a
-              href="https://www.instagram.com/hectra.hq"
+              href="https://www.instagram.com/herd.hq"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -333,8 +333,8 @@ export default function Login() {
 
   // Startup: Detect existing UUID and previous user session to activate PIN login
   useEffect(() => {
-    const devUuid = localStorage.getItem('hectra_device_uuid');
-    const userId = localStorage.getItem('hectra_user_id');
+    const devUuid = localStorage.getItem('herd_device_uuid');
+    const userId = localStorage.getItem('herd_user_id');
     if (devUuid && userId) {
       setIsPinLogin(true);
       setTimeout(() => {
@@ -438,8 +438,8 @@ export default function Login() {
         setShowPinSetup(true);
         // Note: navigation to /dashboard is prevented by showPinSetup=true in the useEffect guard
       } else {
-        localStorage.setItem('hectra_user_id', String(userObj.id));
-        localStorage.setItem('hectra_user_name', userObj.full_name || '');
+        localStorage.setItem('herd_user_id', String(userObj.id));
+        localStorage.setItem('herd_user_name', userObj.full_name || '');
         // Register this device as trusted for PIN login
         const { registerDevice } = useAuthStore.getState();
         await registerDevice();
@@ -483,8 +483,8 @@ export default function Login() {
           setShowPinSetup(true);
           // Guard is cleared when PIN setup modal closes (handleSetupPinSubmit / handleSkipPinSetup)
         } else {
-          localStorage.setItem('hectra_user_id', userObj.id);
-          localStorage.setItem('hectra_user_name', userObj.full_name);
+          localStorage.setItem('herd_user_id', userObj.id);
+          localStorage.setItem('herd_user_name', userObj.full_name);
           toast.success('Selamat datang kembali!');
           navigate('/dashboard', { replace: true });
         }
@@ -521,8 +521,8 @@ export default function Login() {
             setTempUserName(userObj.full_name);
             setShowPinSetup(true);
           } else {
-            localStorage.setItem('hectra_user_id', userObj.id);
-            localStorage.setItem('hectra_user_name', userObj.full_name);
+            localStorage.setItem('herd_user_id', userObj.id);
+            localStorage.setItem('herd_user_name', userObj.full_name);
             navigate('/dashboard', { replace: true });
           }
         } else {
@@ -584,7 +584,7 @@ export default function Login() {
   };
 
   const handlePinSubmit = async (pinStr) => {
-    const userId = localStorage.getItem('hectra_user_id');
+    const userId = localStorage.getItem('herd_user_id');
     if (!userId) return;
     try {
       setPinError('');
@@ -639,10 +639,10 @@ export default function Login() {
       await setupPIN(pinStr);
       
       if (tempUserId) {
-        localStorage.setItem('hectra_user_id', tempUserId);
+        localStorage.setItem('herd_user_id', tempUserId);
       }
       if (tempUserName) {
-        localStorage.setItem('hectra_user_name', tempUserName);
+        localStorage.setItem('herd_user_name', tempUserName);
       }
       
       toast.success('PIN berhasil diatur!');
@@ -662,16 +662,16 @@ export default function Login() {
   };
 
   const handleNotYou = () => {
-    localStorage.removeItem('hectra_user_id');
-    localStorage.removeItem('hectra_user_name');
+    localStorage.removeItem('herd_user_id');
+    localStorage.removeItem('herd_user_name');
     setIsPinLogin(false);
     setPinDigits(Array(6).fill(''));
     setPinError('');
   };
 
   const handleForgotPin = () => {
-    localStorage.removeItem('hectra_user_id');
-    localStorage.removeItem('hectra_user_name');
+    localStorage.removeItem('herd_user_id');
+    localStorage.removeItem('herd_user_name');
     setIsPinLogin(false);
     setPinDigits(Array(6).fill(''));
     setPinError('');
@@ -818,12 +818,12 @@ export default function Login() {
                 width: 36, height: 36, borderRadius: 9,
                 overflow: 'hidden', flexShrink: 0,
               }}>
-                <img src={brandLogo} alt="Hectra Logo"
+                <img src={brandLogo} alt="HERD Logo"
                   style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
               <div>
                 <div style={{ fontSize: 18, fontWeight: 800, color: T.t1, fontFamily: FONT_DISPLAY, letterSpacing: '-0.5px' }}>
-                  Hectra
+                  HERD
                 </div>
                 <div style={{ fontSize: 9, color: T.t3, letterSpacing: '0.1em', fontWeight: 600, textTransform: 'uppercase' }}>
                   Smart Farm Dashboard
@@ -842,7 +842,7 @@ export default function Login() {
                   Selamat datang kembali.
                 </h2>
                 <p style={{ fontSize: 12, color: T.t2, marginBottom: '1.25rem', lineHeight: 1.55 }}>
-                  Halo <strong>{localStorage.getItem('hectra_user_name') || 'Operator Hectra'}</strong>, masukkan 6 digit PIN Anda untuk masuk.
+                  Halo <strong>{localStorage.getItem('herd_user_name') || 'Operator HERD'}</strong>, masukkan 6 digit PIN Anda untuk masuk.
                 </p>
 
                 {/* error banner */}
@@ -916,7 +916,7 @@ export default function Login() {
                 </div>
 
                 <p style={{ textAlign: 'center', fontSize: 9, color: T.t3, marginTop: 14, letterSpacing: '0.04em' }}>
-                  © 2026 Hectra. All rights reserved.
+                  © 2026 HERD. All rights reserved.
                 </p>
               </>
             ) : (
@@ -1070,7 +1070,7 @@ export default function Login() {
                 
                 {/* toggle */}
                 <p style={{ textAlign: 'center', fontSize: 11, color: T.t2, marginTop: 14 }}>
-                  {isLogin ? 'New to Hectra? ' : 'Already have an account? '}
+                  {isLogin ? 'New to HERD? ' : 'Already have an account? '}
                   <button onClick={handleToggleMode} style={{
                     background: 'none', border: 'none', cursor: 'pointer',
                     color: T.accent, fontWeight: 700, fontSize: 11, fontFamily: FONT_BODY,
@@ -1080,7 +1080,7 @@ export default function Login() {
                 </p>
 
                 <p style={{ textAlign: 'center', fontSize: 9, color: T.t3, marginTop: 14, letterSpacing: '0.04em' }}>
-                  © 2026 Hectra. All rights reserved.
+                  © 2026 HERD. All rights reserved.
                 </p>
               </>
             )}
@@ -1113,11 +1113,11 @@ export default function Login() {
           }}>
             <h3 style={{ fontSize: 18, color: T.t1, fontFamily: FONT_DISPLAY, marginBottom: 12 }}>Reset Password</h3>
             <p style={{ fontSize: 12, color: T.t2, lineHeight: 1.6, marginBottom: 20 }}>
-              Untuk alasan keamanan, proses reset password memerlukan verifikasi kepemilikan kandang. Silakan hubungi tim administrator HectraHQ melalui email atau WhatsApp Support di bawah ini:
+              Untuk alasan keamanan, proses reset password memerlukan verifikasi kepemilikan kandang. Silakan hubungi tim administrator HERD melalui email atau WhatsApp Support di bawah ini:
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
               <div style={{ background: T.surfaceBg, border: `1px solid ${T.border}`, padding: '10px 14px', borderRadius: 8, fontSize: 11, color: T.t1 }}>
-                <strong style={{ color: T.accent }}>Email:</strong> admin@hectra.my.id
+                <strong style={{ color: T.accent }}>Email:</strong> admin@herd.my.id
               </div>
               <div style={{ background: T.surfaceBg, border: `1px solid ${T.border}`, padding: '10px 14px', borderRadius: 8, fontSize: 11, color: T.t1 }}>
                 <strong style={{ color: T.accent }}>WhatsApp:</strong> +62 812-3456-7890

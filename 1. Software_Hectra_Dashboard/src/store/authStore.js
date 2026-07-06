@@ -31,7 +31,7 @@ const initialUser = token ? parseJwt(token) : null;
 
 // Helper to get or create device UUID
 export function getOrCreateDeviceUUID() {
-  let uuid = localStorage.getItem('hectra_device_uuid');
+  let uuid = localStorage.getItem('herd_device_uuid');
   if (!uuid) {
     // Basic fallback UUID generator if crypto.randomUUID is not available (e.g. non-HTTPS local)
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -39,7 +39,7 @@ export function getOrCreateDeviceUUID() {
     } else {
       uuid = 'f' + Math.random().toString(36).substring(2, 15) + '-' + Math.random().toString(36).substring(2, 15);
     }
-    localStorage.setItem('hectra_device_uuid', uuid);
+    localStorage.setItem('herd_device_uuid', uuid);
   }
   return uuid;
 }
@@ -118,7 +118,7 @@ export const useAuthStore = create((set) => ({
       console.warn("Backend server connection failed. Running in mock offline mode...", err);
       // Fallback: If network is offline/error, run in premium offline demo mode!
       if (err.message?.includes('Network Error') || err.code === 'ERR_NETWORK' || !err.response) {
-        // Fallback mockup login (e.g. admin@hectra.ai / password)
+        // Fallback mockup login (e.g. admin@herd.ai / password)
         const mockToken = "mock.eyJzdWIiOiIxIiwibmFtZSI6Ik9wZXJhdG9yIEhlY3RyYSIsImVtYWlsIjoiYWRtaW5AaGVjdHJhLmFpIiwicm9sZSI6ImFkbWluIiwiZnVsbF9uYW1lIjoiT3BlcmF0b3IgT3BlcmF0b3IgSGVjdHJhIiwiZXhwIjoyNjk1MzkxMTQ2fQ.mocksignature";
         const decodedUser = parseJwt(mockToken);
         const mockUser = { ...decodedUser, has_pin: false };

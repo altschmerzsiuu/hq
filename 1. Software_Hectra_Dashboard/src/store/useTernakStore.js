@@ -183,7 +183,7 @@ export const useTernakStore = create((set, get) => ({
       set({ unpairedCollars: response.data.data || [] })
     } catch (error) {
       // Silent fail — tidak perlu tampilkan error ke user untuk ini
-      console.warn('[Hectra] Gagal fetch unpaired collars:', parseErrorMessage(error))
+      console.warn('[HERD] Gagal fetch unpaired collars:', parseErrorMessage(error))
     }
   },
 

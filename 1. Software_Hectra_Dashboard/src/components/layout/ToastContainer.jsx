@@ -96,7 +96,7 @@ export default function ToastContainer() {
               {/* Header: Title & Time */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-2)', textTransform: 'uppercase' }}>
-                  HECTRA
+                  HERD
                 </span>
                 <span style={{ fontSize: '10px', color: 'var(--text-2)' }}>
                   Sekarang

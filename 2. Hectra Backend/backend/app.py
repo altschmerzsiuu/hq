@@ -152,10 +152,10 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:5174",
-        "https://hectra.my.id",        # Production frontend — update if domain changes
-        "https://www.hectra.my.id",
-        "https://hectrahq.my.id",
-        "https://www.hectrahq.my.id",
+        "https://herd.my.id",        # Production frontend — update if domain changes
+        "https://www.herd.my.id",
+        "https://herdhq.my.id",
+        "https://www.herdhq.my.id",
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
