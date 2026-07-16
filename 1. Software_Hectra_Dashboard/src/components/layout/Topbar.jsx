@@ -64,24 +64,10 @@ export default function Topbar({ onMenuClick }) {
     >
       {/* Left: Hamburger (mobile ONLY) + Date */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-        <button
-          onClick={onMenuClick}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '6px',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-2)',
-            borderRadius: '8px',
-            transition: 'background 0.15s',
-          }}
-          className="flex lg:hidden hover:bg-[var(--bg-hover)]"
-          aria-label="Open menu"
-        >
-          <Menu size={22} />
-        </button>
+        {/* Logo (mobile ONLY) */}
+        <div className="flex lg:hidden items-center justify-center w-8 h-8 rounded-lg overflow-hidden shrink-0">
+          <img src="/herd.jpeg" alt="HERD Logo" className="w-full h-full object-cover" />
+        </div>
 
         {/* Date — hidden on small mobile, visible md+ */}
         <span
@@ -94,43 +80,6 @@ export default function Topbar({ onMenuClick }) {
 
       {/* Right: Lang + Theme + Bell */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-
-        {/* Language Dropdown */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <Globe size={14} style={{ color: 'var(--text-2)', position: 'absolute', left: '10px', pointerEvents: 'none', zIndex: 1 }} />
-          <select
-            value={lang}
-            onChange={(e) => setLang(e.target.value)}
-            style={{
-              fontSize: '12px',
-              fontWeight: 700,
-              fontFamily: 'Inter, sans-serif',
-              color: 'var(--text-1)',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              outline: 'none',
-              padding: '6px 12px 6px 30px',
-              appearance: 'none',
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-              transition: 'border-color 0.15s, background-color 0.15s',
-            }}
-            className="hover:border-[var(--accent)] hover:bg-[var(--bg-hover)]"
-          >
-            <option value="id" style={{ background: 'var(--bg-surface)', color: 'var(--text-1)' }}>🇮🇩 ID</option>
-            <option value="en" style={{ background: 'var(--bg-surface)', color: 'var(--text-1)' }}>🇬🇧 EN</option>
-          </select>
-        </div>
-
-        {/* Separator */}
-        <div style={{ width: '1px', height: '18px', background: 'var(--border)' }} />
-
-        {/* Theme Toggle */}
-        <ThemeToggle />
-
-        {/* Separator */}
-        <div style={{ width: '1px', height: '18px', background: 'var(--border)' }} />
 
         {/* Notification Bell + Popover */}
         <div ref={notifRef} style={{ position: 'relative' }}>

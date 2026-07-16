@@ -162,49 +162,46 @@ export default function CowAnalyticsView({ selectedCow }) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-48 space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
-              <p className="text-sm text-[var(--text-2)]">Memuat data analitik...</p>
-            </div>
-          ) : (
-            <>
-              {/* Time Filter Pill Bar */}
-              <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '16px', padding: '10px 12px', boxShadow: 'var(--shadow-card)' }} className="mb-4">
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-                  {[
-                    { key: '1hr',  label: '1 Hr'  },
-                    { key: '1wk',  label: '1 Mg'  },
-                    { key: '1bln', label: '1 Bln' },
-                    { key: '3bln', label: '3 Bln' },
-                    { key: '6bln', label: '6 Bln' },
-                    { key: '1th',  label: '1 Th'  },
-                  ].map(opt => (
-                    <button
-                      key={opt.key}
-                      onClick={() => setTimeFilter(opt.key)}
-                      className="shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all"
-                      style={{
-                        background: timeFilter === opt.key ? 'var(--color-primary)' : 'var(--bg-surface)',
-                        color: timeFilter === opt.key ? '#fff' : 'var(--text-2)',
-                        border: timeFilter === opt.key ? 'none' : '0.5px solid var(--border)',
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+    <div className="space-y-6 animate-in fade-in duration-300 relative">
+      {/* Time Filter Pill Bar (Always visible) */}
+      <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '16px', padding: '10px 12px', boxShadow: 'var(--shadow-card)' }} className="mb-4">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          {[
+            { key: '1hr',  label: '1 Hr'  },
+            { key: '1wk',  label: '1 Mg'  },
+            { key: '1bln', label: '1 Bln' },
+            { key: '3bln', label: '3 Bln' },
+            { key: '6bln', label: '6 Bln' },
+            { key: '1th',  label: '1 Th'  },
+          ].map(opt => (
+            <button
+              key={opt.key}
+              onClick={() => setTimeFilter(opt.key)}
+              disabled={loading}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              style={{
+                background: timeFilter === opt.key ? 'var(--color-primary)' : 'var(--bg-surface)',
+                color: timeFilter === opt.key ? '#fff' : 'var(--text-2)',
+                border: timeFilter === opt.key ? 'none' : '0.5px solid var(--border)',
+              }}
+            >
+              {opt.label}
+              {loading && timeFilter === opt.key && <Loader2 size={12} className="inline ml-1 animate-spin" />}
+            </button>
+          ))}
+        </div>
+      </div>
 
-              {/* Health Summary Card */}
+      <div className="transition-opacity duration-300 opacity-100 flex flex-col gap-6">
+        {/* Health Summary Card */}
+
               <div style={{
                 background: healthStatus === 'warning' ? 'var(--red-dim, #FFF1F1)' : 'var(--bg-card)',
                 border: `0.5px solid ${healthStatus === 'warning' ? 'var(--red, #EF4444)' : 'var(--border)'}`,
                 borderRadius: '16px',
                 padding: '16px 18px',
                 boxShadow: 'var(--shadow-card)',
-              }} className="mb-2 flex items-center justify-between gap-4">
+              }} className="flex items-center justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <div style={{
                     background: healthStatus === 'warning' ? '#FEE2E2' : 'var(--bg-surface)',
@@ -269,7 +266,9 @@ export default function CowAnalyticsView({ selectedCow }) {
                   </div>
                 </div>
                 <div className="w-full h-[220px] md:h-[280px]" style={{ minWidth: 0 }}>
-                  {telemetryData.length === 0 ? (
+                  {loading ? (
+                    <div className="w-full h-full bg-[var(--bg-surface)] animate-pulse rounded-xl" />
+                  ) : telemetryData.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center">
                       <Activity className="w-10 h-10 text-[var(--text-3)] mb-2" />
                       <p className="text-sm font-medium text-[var(--text-2)]">{lang === 'id' ? 'Belum ada rekaman telemetry untuk grafik' : 'No telemetry records for chart yet'}</p>
@@ -285,8 +284,8 @@ export default function CowAnalyticsView({ selectedCow }) {
                           contentStyle={{ borderRadius: '12px', border: '0.5px solid var(--border)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-dropdown)' }}
                           labelStyle={{ fontWeight: 'bold', color: 'var(--text-1)' }}
                         />
-                        <Line yAxisId="left" type="monotone" dataKey="temp" stroke="var(--color-warning)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} connectNulls={true} />
-                        <Line yAxisId="right" type="monotone" dataKey="activity" stroke="var(--color-forest)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} connectNulls={true} />
+                        <Line isAnimationActive={false} yAxisId="left" type="monotone" dataKey="temp" stroke="var(--color-warning)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} connectNulls={true} />
+                        <Line isAnimationActive={false} yAxisId="right" type="monotone" dataKey="activity" stroke="var(--color-forest)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} connectNulls={true} />
                       </LineChart>
                     </ResponsiveContainer>
                   )}
@@ -299,7 +298,9 @@ export default function CowAnalyticsView({ selectedCow }) {
                 <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '16px', boxShadow: 'var(--shadow-card)', padding: '24px' }} className="lg:col-span-4">
                   <h2 className="text-lg font-semibold text-[var(--text-1)] font-display mb-4">{t.behavior_pie_title || "Distribusi Aktivitas"}</h2>
                   <div className="h-[220px]">
-                    {localizedPieData.length === 0 || localizedPieData.every(item => item.value === 0) ? (
+                    {loading ? (
+                      <div className="w-[170px] h-[170px] bg-[var(--bg-surface)] animate-pulse rounded-full mx-auto mt-4" />
+                    ) : localizedPieData.length === 0 || localizedPieData.every(item => item.value === 0) ? (
                       <div className="h-full flex flex-col items-center justify-center text-center p-4">
                         <Activity className="w-8 h-8 text-[var(--text-3)] mb-2" />
                         <p className="text-sm font-medium text-[var(--text-2)]">{t.behavior_pie_empty || "Tidak ada data sensor hari ini"}</p>
@@ -317,6 +318,7 @@ export default function CowAnalyticsView({ selectedCow }) {
                             paddingAngle={3}
                             dataKey="value"
                             stroke="none"
+                            isAnimationActive={false}
                           >
                             {localizedPieData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
@@ -351,9 +353,11 @@ export default function CowAnalyticsView({ selectedCow }) {
                       {lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}
                     </span>
                   </div>
-                  <div className="flex-1 min-h-[300px]">
-                    {localizedWeeklyData.length === 0 || localizedWeeklyData.every(item => item.aktif === 0 && item.makan === 0 && item.istirahat === 0) ? (
-                      <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-4">
+                  <div className="h-[300px]">
+                    {loading ? (
+                      <div className="w-full h-full bg-[var(--bg-surface)] animate-pulse rounded-xl" />
+                    ) : localizedWeeklyData.length === 0 || localizedWeeklyData.every(item => item.aktif === 0 && item.makan === 0 && item.istirahat === 0) ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-4">
                         <Activity className="w-8 h-8 text-[var(--text-3)] mb-2" />
                         <p className="text-sm font-medium text-[var(--text-2)]">{t.behavior_bar_empty || "Belum ada data sensor mingguan"}</p>
                         <p className="text-xs text-[var(--text-3)] mt-1">{lang === 'id' ? 'Data aktivitas akan muncul setelah collar aktif mengirim data selama beberapa hari.' : 'Activity data will appear after active collars send data for a few days.'}</p>
@@ -366,17 +370,16 @@ export default function CowAnalyticsView({ selectedCow }) {
                           <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-3)', fontSize: 12 }} tickFormatter={v => `${v}%`} />
                           <Tooltip content={<BarTooltip />} cursor={{ fill: 'var(--bg-hover)', opacity: 0.5 }} />
                           <Legend iconType="circle" iconSize={8} wrapperStyle={{ paddingTop: '20px', fontSize: '12px', color: 'var(--text-2)' }} />
-                          <Bar dataKey="aktif"    name={t.behavior_legend_active}  stackId="a" fill="var(--color-gold, #C9963A)" radius={[0, 0, 4, 4]} />
-                          <Bar dataKey="makan"    name={t.behavior_legend_eating}  stackId="a" fill="var(--color-forest, #2D4A3E)" />
-                          <Bar dataKey="istirahat" name={t.behavior_legend_resting} stackId="a" fill="var(--color-sage, #7A9E8E)" radius={[4, 4, 0, 0]} />
+                          <Bar isAnimationActive={false} dataKey="aktif"    name={t.behavior_legend_active}  stackId="a" fill="var(--color-gold, #C9963A)" radius={[0, 0, 4, 4]} />
+                          <Bar isAnimationActive={false} dataKey="makan"    name={t.behavior_legend_eating}  stackId="a" fill="var(--color-forest, #2D4A3E)" />
+                          <Bar isAnimationActive={false} dataKey="istirahat" name={t.behavior_legend_resting} stackId="a" fill="var(--color-sage, #7A9E8E)" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     )}
                   </div>
                 </div>
               </div>
-            </>
-          )}
+      </div>
     </div>
   );
 }

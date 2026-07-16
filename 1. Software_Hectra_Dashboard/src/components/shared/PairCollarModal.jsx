@@ -216,9 +216,26 @@ export default function PairCollarModal({
             type="button"
             onClick={handlePair}
             disabled={!pairSelectedSapi || !pairSelectedCollar || loading}
-            className="flex-1 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl shadow-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              color: '#fff',
+              fontWeight: 600,
+              borderRadius: '12px',
+              background:
+                !pairSelectedSapi || !pairSelectedCollar || loading
+                  ? 'var(--border)'
+                  : 'var(--color-primary)',
+              cursor:
+                !pairSelectedSapi || !pairSelectedCollar || loading
+                  ? 'not-allowed'
+                  : 'pointer',
+              flex: 1,
+              opacity: loading ? 0.7 : 1,
+            }}
+            className="shadow-lg hover:brightness-110 transition-all"
           >
-            {loading ? 'Memproses...' : 'Pasangkan Sekarang'}
+            {loading ? 'Menyimpan...' : 'Pasang'}
           </button>
         </div>
       </div>

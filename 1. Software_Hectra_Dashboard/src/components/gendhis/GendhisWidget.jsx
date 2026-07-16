@@ -301,7 +301,7 @@ export default function GendhisWidget() {
     return (
       <button 
         onClick={() => setViewState('compact')}
-        className="fixed bottom-[104px] md:bottom-6 right-4 md:right-6 w-14 h-14 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-30 group active:scale-95"
+        className="fixed bottom-[130px] md:bottom-6 right-4 md:right-6 w-14 h-14 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-[60] group active:scale-95"
         title="Tanya Gendhis"
       >
         <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform animate-pulse" />
@@ -623,7 +623,7 @@ export default function GendhisWidget() {
       {/* Tombol launcher silang melayang */}
       <button 
         onClick={() => setViewState('minimized')}
-        className="fixed bottom-[104px] md:bottom-6 right-4 md:right-6 w-14 h-14 bg-slate-700 hover:bg-slate-800 rotate-90 text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-30 group active:scale-95"
+        className="fixed bottom-[130px] md:bottom-6 right-4 md:right-6 w-14 h-14 bg-slate-700 hover:bg-slate-800 rotate-90 text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-30 group active:scale-95"
         title="Tutup Chat"
       >
         <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -637,7 +637,7 @@ export default function GendhisWidget() {
           borderRadius: '24px',
           border: '1px solid var(--border)'
         }}
-        className="fixed bottom-[164px] md:bottom-[84px] right-4 md:right-6 w-[360px] h-[440px] max-w-[calc(100vw-32px)] z-[200] animate-in slide-in-from-bottom-8 fade-in duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-1)] transition-all duration-300 ease-out"
+        className="fixed bottom-[190px] md:bottom-[84px] right-4 md:right-6 w-[360px] h-[440px] max-w-[calc(100vw-32px)] z-[200] animate-in slide-in-from-bottom-8 fade-in duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-1)] transition-all duration-300 ease-out"
       >
         {/* HEADER (Removed Trash Button as requested!) */}
         <div className="bg-[var(--accent)] text-white px-5 py-3.5 flex items-center justify-between shrink-0 shadow-md">

@@ -127,6 +127,23 @@ export default function ManajemenTernak() {
     }
   }, [location.state, sapiList]);
 
+  // Intercept hardware back button to close drawer instead of going back
+  useEffect(() => {
+    if (selectedSapi) {
+      window.history.pushState({ drawerOpen: true }, '');
+    }
+  }, [selectedSapi]);
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (selectedSapi) {
+        setSelectedSapi(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [selectedSapi]);
+
   // Pairing states
   const [pairSelectedSapi, setPairSelectedSapi] = useState(null);
   const [pairSelectedCollar, setPairSelectedCollar] = useState(null);
@@ -264,9 +281,16 @@ export default function ManajemenTernak() {
   const onTambahReproduksi = async (e) => {
     e.preventDefault();
     if (!selectedSapi) return;
+
+    if (editReproItem) {
+      await saveEditRepro(editReproItem);
+      return;
+    }
+
     const payload = { ...reproForm, rfid: selectedSapi.id };
     const res = await tambahReproduksi(payload);
     if (res.success) {
+      setEditReproItem(null);
       setIsReproModalOpen(false);
       setReproForm({
         tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
@@ -280,40 +304,46 @@ export default function ManajemenTernak() {
     }
   };
 
-  // --- Edit inline reproduksi record ---
+  // --- Edit reproduksi record ---
   const startEditRepro = (item) => {
-    setEditReproItem(item.id);
-    const tgl = item.tanggal_ib ? new Date(item.tanggal_ib).toISOString().split('T')[0] : '';
+    setEditReproItem(item);
+    const tgl = item.tanggal_ib || item.service_date ? new Date(item.tanggal_ib || item.service_date).toISOString().split('T')[0] : '';
     const hpl = item.hpl ? new Date(item.hpl).toISOString().split('T')[0] : '';
-    setEditReproForm({
+    setReproForm({
       tanggal_ib: tgl,
       pemberi_ib: item.pemberi_ib || item.petugas || item.technician || '',
       jumlah_ib: item.jumlah_ib || 1,
       catatan: item.catatan || item.notes || '',
       hpl: hpl,
     });
+    setIsReproModalOpen(true);
   };
 
   const cancelEditRepro = () => {
     setEditReproItem(null);
-    setEditReproForm({});
+    setReproForm({});
+    setIsReproModalOpen(false);
   };
 
   const saveEditRepro = async (item) => {
     setSavingRepro(true);
     try {
-      // Map to the API format used by PUT /api/reproduction/{id}
       const payload = {
         rfid: selectedSapi.id,
-        service_date: editReproForm.tanggal_ib,
-        technician: editReproForm.pemberi_ib,
-        notes: editReproForm.catatan,
-        jumlah_ib: parseInt(editReproForm.jumlah_ib) || 1,
-        is_pregnant: item.results === true ? 'true' : item.results === false ? 'false' : 'pending',
+        service_date: reproForm.tanggal_ib,
+        technician: reproForm.pemberi_ib,
+        notes: reproForm.catatan,
+        jumlah_ib: parseInt(reproForm.jumlah_ib) || 1,
+        is_pregnant: item.results === true || item.is_pregnant === true || item.results === 'true' ? 'true' : item.results === false || item.is_pregnant === false || item.results === 'failed' ? 'false' : 'pending',
       };
       await axiosInstance.put(`/reproduction/${item.id}`, payload);
       toast.success(t.repro_toast_update_success);
       setEditReproItem(null);
+      setIsReproModalOpen(false);
+      setReproForm({
+        tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
+        birahi: '', bunting: '', hpl: '', sapih: '', catatan: ''
+      });
       reloadReproHistory(selectedSapi.id);
     } catch (err) {
       toast.error(err?.response?.data?.detail || t.repro_toast_update_failed);
@@ -552,22 +582,21 @@ export default function ManajemenTernak() {
         </div>
 
         {/* Filter Chips Row */}
-        <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', alignItems: 'center', margin: '0 -16px', padding: '0 16px' }}>
+        <div className="py-3 -mx-4 px-4 bg-[var(--bg-base)] border-b border-gray-100 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide items-center">
           {['Semua', 'Perlu IB', 'Bunting', 'Sehat'].map((f, i) => (
-            <React.Fragment key={f}>
-              <button 
-                onClick={() => setFilters(prev => ({...prev, kesehatan: f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f)}))}
-                style={{
-                  padding: '8px 16px', borderRadius: '100px', fontSize: '14px', fontWeight: 700, whiteSpace: 'nowrap',
-                  background: (filters.kesehatan === (f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f))) ? '#EAEAEA' : 'transparent',
-                  color: (filters.kesehatan === (f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f))) ? '#111' : 'var(--text-2)',
-                  border: 'none', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'Inter, sans-serif'
-                }}
-              >
-                {f}
-              </button>
-              {i < 3 && <span style={{ color: 'var(--border)', fontSize: '16px', padding: '0 4px' }}>/</span>}
-            </React.Fragment>
+            <button 
+              key={f}
+              onClick={() => setFilters(prev => ({...prev, kesehatan: f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f)}))}
+              className="shrink-0 transition-all font-bold"
+              style={{
+                padding: '6px 14px', borderRadius: '100px', fontSize: '13px',
+                background: (filters.kesehatan === (f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f))) ? 'var(--bg-card)' : 'transparent',
+                color: (filters.kesehatan === (f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f))) ? 'var(--text-1)' : 'var(--text-3)',
+                border: (filters.kesehatan === (f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f))) ? '1px solid var(--border)' : '1px solid transparent',
+              }}
+            >
+              {f}
+            </button>
           ))}
         </div>
 
@@ -1110,20 +1139,20 @@ export default function ManajemenTernak() {
                           {/* ── Mode Edit Inline ─────────────────────────── */}
                           {isEditingThis ? (
                             <div className="space-y-3 p-3 bg-[var(--color-bg-surface)] rounded-xl border border-[var(--color-border)] animate-in fade-in duration-200">
-                              <div className="grid grid-cols-2 gap-3">
-                                <div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="w-full min-w-0">
                                   <label className="block text-[10px] font-bold text-[var(--color-text-muted)] mb-1">{t.repro_ib_date}</label>
                                   <input type="date"
-                                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
+                                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
                                     className="w-full px-2 py-1.5 rounded-lg text-xs outline-none"
                                     value={editReproForm.tanggal_ib}
                                     onChange={e => setEditReproForm(f => ({...f, tanggal_ib: e.target.value}))}
                                   />
                                 </div>
-                                <div>
+                                <div className="w-full min-w-0">
                                   <label className="block text-[10px] font-bold text-[var(--color-text-muted)] mb-1">{t.repro_ib_count}</label>
                                   <input type="number" min="1" max="10"
-                                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
+                                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
                                     className="w-full px-2 py-1.5 rounded-lg text-xs outline-none"
                                     value={editReproForm.jumlah_ib}
                                     onChange={e => setEditReproForm(f => ({...f, jumlah_ib: e.target.value}))}
@@ -1220,7 +1249,7 @@ export default function ManajemenTernak() {
                               )}
 
                               {/* Tombol ubah ulang jika sudah dikonfirmasi */}
-                              {(isPregnant || isFailed) && (
+                      {(isPregnant || isFailed) && (
                                 <div className="pt-2 border-t border-[var(--color-border)]">
                                   <button
                                     onClick={() => confirmPregnancy(item, !isPregnant)}
@@ -1244,9 +1273,9 @@ export default function ManajemenTernak() {
         </div>
 
         {/* ── MOBILE FULLSCREEN DETAIL MODAL ── */}
-        <div className="md:hidden fixed inset-0 z-[900] bg-white overflow-y-auto animate-in slide-in-from-bottom duration-300">
+        <div className="md:hidden fixed inset-0 z-[900] bg-[#F3F4F6] overflow-y-auto animate-in slide-in-from-bottom duration-300 no-scrollbar pb-20">
           {/* Header Photo */}
-          <div className="relative w-full h-[60vh] min-h-[450px]">
+          <div className="sticky top-0 w-full h-[60vh] min-h-[450px] z-0">
             {selectedSapi.foto ? (
               <img 
                 src={selectedSapi.foto} 
@@ -1302,13 +1331,9 @@ export default function ManajemenTernak() {
 
             {/* Text Content at Bottom */}
             <div className="absolute bottom-0 left-0 right-0 p-6 pb-12 text-white">
-               <div className="flex gap-2 mb-3">
+               <div className="flex gap-2 mb-2 -ml-0.5">
                   <span className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-bold text-white border border-white/10 uppercase tracking-wider">
                     ID: #{selectedSapi.id}
-                  </span>
-                  <span className="bg-[#2E7D32] px-3 py-1.5 rounded-full text-[10px] font-bold text-white shadow-sm flex items-center gap-1.5 tracking-wider uppercase">
-                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                     {selectedSapi.status_kesehatan === 'Sehat' ? 'PRODUKTIF' : selectedSapi.status_kesehatan?.toUpperCase() || 'PRODUKTIF'}
                   </span>
                </div>
                <h2 className="text-[36px] font-extrabold mb-1 tracking-tight leading-none" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
@@ -1320,15 +1345,17 @@ export default function ManajemenTernak() {
             </div>
           </div>
 
-          {/* Action Buttons — Tab Switchers */}
-          <div className="px-5 py-6 grid grid-cols-3 gap-3 bg-white relative z-10 -mt-6 rounded-t-[32px] shadow-[0_-8px_20px_rgba(0,0,0,0.06)]">
-            {/* Tab 1: Riwayat Ternak */}
+          {/* Scrollable Bottom Sheet Content */}
+          <div className="relative z-10 bg-[#F3F4F6] min-h-[calc(100vh-200px)] -mt-6 rounded-t-[32px] shadow-[0_-12px_30px_rgba(0,0,0,0.1)] overflow-hidden">
+            {/* Action Buttons — Tab Switchers */}
+            <div className="px-5 py-6 grid grid-cols-3 gap-3 bg-white">
+              {/* Tab 1: Riwayat Ternak */}
             <button 
               onClick={() => setActiveDetailTab('riwayat')}
               className={`py-3.5 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
                 activeDetailTab === 'riwayat'
                   ? 'bg-[#2E7D32] text-white shadow-lg shadow-green-900/15'
-                  : 'bg-[#E8F5E9] text-[#1B5E20] border border-[#C8E6C9]'
+                  : 'bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]'
               }`}
             >
                <ClipboardList size={20} strokeWidth={2.5} />
@@ -1339,8 +1366,8 @@ export default function ManajemenTernak() {
               onClick={() => setActiveDetailTab('analitik')}
               className={`py-3.5 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
                 activeDetailTab === 'analitik'
-                  ? 'bg-[#FFF8E1] text-[#F57F17] shadow-lg shadow-yellow-900/10'
-                  : 'bg-[#FFF8E1] text-[#F57F17] border border-[#FFECB3] opacity-70'
+                  ? 'bg-[#2E7D32] text-white shadow-lg shadow-green-900/15'
+                  : 'bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]'
               }`}
             >
                <LineChart size={20} strokeWidth={2.5} />
@@ -1351,8 +1378,8 @@ export default function ManajemenTernak() {
               onClick={() => setActiveDetailTab('estrus')}
               className={`py-3.5 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
                 activeDetailTab === 'estrus'
-                  ? 'bg-[#EDE7F6] text-[#6200EA] shadow-lg shadow-purple-900/10'
-                  : 'bg-[#EDE7F6] text-[#7C4DFF] border border-[#D1C4E9] opacity-70'
+                  ? 'bg-[#2E7D32] text-white shadow-lg shadow-green-900/15'
+                  : 'bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]'
               }`}
             >
                <Sparkles size={20} strokeWidth={2.5} />
@@ -1367,6 +1394,17 @@ export default function ManajemenTernak() {
               <div className="px-5 pb-6 bg-white">
                 <div className="flex justify-between items-center mb-4">
                    <h3 className="text-[17px] font-extrabold text-[#111]">Riwayat Ternak</h3>
+                   <button
+                     onClick={() => {
+                       const today = new Date().toISOString().split('T')[0];
+                       const countIB = sortedReproHistory.filter(h => h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
+                       setReproForm(f => ({ ...f, tanggal_ib: today, jumlah_ib: countIB }));
+                       setIsReproModalOpen(true);
+                     }}
+                     className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-[#2E7D32] hover:bg-[#1B5E20] transition-colors"
+                   >
+                     Catat IB
+                   </button>
                 </div>
 
                 {sortedReproHistory.length === 0 ? (
@@ -1393,7 +1431,7 @@ export default function ManajemenTernak() {
                             <div>
                               <p className="font-extrabold text-[14px]" style={{ color: 'var(--text-1)' }}>
                                 {(item.metode || 'IB').toUpperCase()}
-                                {item.jumlah_ib ? <span className="font-normal text-[11px] ml-1.5" style={{ color: 'var(--text-3)' }}>(Ke-{item.jumlah_ib})</span> : ''}
+                                {item.jumlah_ib ? <span className="font-bold text-[12px] text-gray-500 ml-1.5">(Ke-{item.jumlah_ib})</span> : ''}
                               </p>
                               {item.catatan && <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-3)' }}>{item.catatan}</p>}
                             </div>
@@ -1443,11 +1481,17 @@ export default function ManajemenTernak() {
                               </>
                             )}
                             <button
+                              onClick={() => startEditRepro(item)}
+                              className="p-2 rounded-lg ml-auto text-gray-500 hover:bg-gray-100"
+                            >
+                              <Pencil size={18} />
+                            </button>
+                            <button
                               onClick={() => deleteReproRecord(item)}
-                              className="p-1.5 rounded-lg ml-auto"
+                              className="p-2 rounded-lg"
                               style={{ color: 'var(--red, #EF4444)', background: 'var(--bg-hover)' }}
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={18} />
                             </button>
                           </div>
                         </div>
@@ -1456,20 +1500,6 @@ export default function ManajemenTernak() {
                   </div>
                 )}
 
-                {/* Catat IB Button */}
-                <button
-                  onClick={() => {
-                    const today = new Date().toISOString().split('T')[0];
-                    const countIB = sortedReproHistory.filter(h => h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
-                    setReproForm(f => ({ ...f, tanggal_ib: today, jumlah_ib: countIB }));
-                    setIsReproModalOpen(true);
-                  }}
-                  className="w-full mt-4 py-3 rounded-[14px] flex items-center justify-center gap-2 font-bold text-[13px] transition-all active:scale-95"
-                  style={{ background: '#2E7D32', color: '#fff' }}
-                >
-                  <ClipboardList size={16} strokeWidth={2.5} />
-                  + Catat IB
-                </button>
               </div>
 
               {/* Promo Banner */}
@@ -1488,14 +1518,15 @@ export default function ManajemenTernak() {
               </div>
             </>
           ) : activeDetailTab === 'analitik' ? (
-            <div className="px-5 pb-12 pt-2 bg-[var(--bg-surface)] min-h-[500px]">
+            <div className="px-5 pb-12 pt-2 bg-[#F3F4F6] min-h-[500px]">
               <CowAnalyticsView selectedCow={selectedSapi} />
             </div>
           ) : (
-            <div className="px-5 pb-12 pt-2 bg-[var(--bg-surface)] min-h-[500px]">
+            <div className="px-5 pb-12 pt-2 bg-[#F3F4F6] min-h-[500px]">
               <CowEstrusView selectedCow={selectedSapi} reproHistory={sortedReproHistory} />
             </div>
           )}
+          </div>
         </div>
         </>
       )}
@@ -1507,31 +1538,31 @@ export default function ManajemenTernak() {
         <div className="fixed inset-0 z-[1100] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
           <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">{t.repro_record_new}</h2>
+              <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">{editReproItem ? "Edit Data IB" : t.repro_record_new}</h2>
               <button onClick={() => setIsReproModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]">
                 <X size={20} />
               </button>
             </div>
 
             <form className="space-y-4" onSubmit={onTambahReproduksi}>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="w-full min-w-0">
                   <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_ib_date}</label>
                   <input 
                     type="date" 
-                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
-                    className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" 
+                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
+                    className="w-full px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" 
                     required
                     value={reproForm.tanggal_ib}
                     onChange={handleTanggalIbChange}
                   />
                 </div>
-                <div>
+                <div className="w-full min-w-0">
                   <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_ib_count}</label>
                   <input 
                     type="number" min="1" max="10"
-                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
-                    className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
+                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
+                    className="w-full px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
                     value={reproForm.jumlah_ib}
                     onChange={e => setReproForm({...reproForm, jumlah_ib: parseInt(e.target.value)})}
                   />
@@ -1543,15 +1574,20 @@ export default function ManajemenTernak() {
                 <input 
                   type="text" 
                   placeholder={t.repro_inseminator_placeholder} 
-                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
-                  className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" 
+                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
+                  className="w-full min-w-0 px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" 
                   value={reproForm.pemberi_ib}
                   onChange={e => setReproForm({...reproForm, pemberi_ib: e.target.value})}
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_notes}</label>
+                <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }} className="w-full min-w-0 px-4 py-3 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({...reproForm, catatan: e.target.value})} />
+              </div>
+
               {reproForm.tanggal_ib && (
-                <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)' }} className="p-4 rounded-2xl space-y-3 shadow-inner">
+                <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)' }} className="p-4 rounded-2xl space-y-3 shadow-inner mt-2">
                   <h4 className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1.5 uppercase tracking-wider">
                     <Calendar size={14}/> Estimasi Jadwal (Auto)
                   </h4>
@@ -1575,11 +1611,6 @@ export default function ManajemenTernak() {
                   </div>
                 </div>
               )}
-              
-              <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_notes}</label>
-                <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({...reproForm, catatan: e.target.value})} />
-              </div>
 
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ padding: '10px 24px', border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>{t.btn_cancel}</button>

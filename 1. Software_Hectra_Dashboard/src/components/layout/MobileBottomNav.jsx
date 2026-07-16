@@ -29,7 +29,9 @@ export default function MobileBottomNav() {
     <>
       {/* Floating Bottom Nav Bar */}
       <nav style={{
-        position: 'fixed', bottom: '16px', left: '16px', right: '16px',
+        position: 'fixed', 
+        bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', 
+        left: '16px', right: '16px',
         background: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
@@ -37,7 +39,6 @@ export default function MobileBottomNav() {
         border: '1px solid var(--border)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
         zIndex: 40,
-        paddingBottom: 'env(safe-area-inset-bottom, 0)',
       }} className="md:hidden">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px', padding: '0 16px' }}>
           {items.map((item, i) => {

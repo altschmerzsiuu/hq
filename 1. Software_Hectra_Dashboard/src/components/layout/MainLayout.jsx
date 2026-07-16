@@ -8,6 +8,7 @@ import MobileBottomNav from './MobileBottomNav';
 import ToastContainer from './ToastContainer';
 import { useNotificationStore } from '@/store/notificationStore';
 import { toast } from '@/store/toastStore';
+import ScrollToTop from './ScrollToTop';
 
 export default function MainLayout() {
   const location = useLocation();
@@ -112,6 +113,7 @@ export default function MainLayout() {
           className="px-4 py-4 md:px-[22px] md:py-5"
         >
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <ScrollToTop />
             <Outlet />
           </div>
 

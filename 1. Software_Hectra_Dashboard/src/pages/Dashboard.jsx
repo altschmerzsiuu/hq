@@ -16,6 +16,7 @@ import SeeAllLink from '@/components/ui/SeeAllLink';
 import PairCollarModal from '@/components/shared/PairCollarModal';
 import { useTernakStore } from '@/store/useTernakStore';
 import { useAuthStore } from '@/store/authStore';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ── CONFIDENCE RING SVG ──────────────────────────────────────
 function ConfidenceRing({ value = null, label }) {
@@ -318,8 +319,8 @@ const WEEKLY_INSIGHTS = [
     summary: "Rata-rata suhu kawanan sedikit meningkat siang ini. Pastikan ventilasi menyala optimal.",
     hasDetail: true,
     detail: "Data sensor menunjukkan suhu rata-rata mencapai 30°C antara pukul 12.00 hingga 14.00, yang berpotensi memicu stres panas ringan pada sapi laktasi. Langkah preventif yang disarankan: menyalakan kipas ekstra dan memastikan ketersediaan air minum yang cukup di setiap kandang.",
-    pattern: "repeating-linear-gradient(45deg, rgba(245,158,11,0.04), rgba(245,158,11,0.04) 10px, transparent 10px, transparent 20px)",
-    patternSize: "auto",
+    pattern: "radial-gradient(circle at 100% 0%, rgba(245,158,11,0.12) 0%, transparent 50%), radial-gradient(circle at 0% 100%, rgba(245,158,11,0.05) 0%, transparent 50%)",
+    patternSize: "cover",
     isDark: false,
     icon: ThermometerSun
   },
@@ -329,8 +330,8 @@ const WEEKLY_INSIGHTS = [
     summary: "3 sapi menunjukkan tanda-tanda awal birahi. Persiapkan jadwal IB.",
     hasDetail: true,
     detail: "Sapi dengan ID C3938A, C4618A, dan C2911B mengalami peningkatan langkah kaki dan penurunan waktu istirahat yang signifikan dalam 12 jam terakhir, menandakan permulaan fase estrus. Tim reproduksi disarankan untuk bersiap melakukan inseminasi buatan (IB) pada sore hari atau besok pagi untuk tingkat keberhasilan terbaik.",
-    pattern: "linear-gradient(rgba(16,185,129,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,0.05) 1px, transparent 1px)",
-    patternSize: "20px 20px",
+    pattern: "radial-gradient(circle at 0% 100%, rgba(16,185,129,0.15) 0%, transparent 60%), radial-gradient(circle at 100% 0%, rgba(16,185,129,0.05) 0%, transparent 40%)",
+    patternSize: "cover",
     isDark: false,
     icon: Target
   },
@@ -385,76 +386,88 @@ function InsightSlideshow({ onOpenDetail }) {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       style={{
-        background: insight.bgImage ? 'linear-gradient(to right, #1a1a1a, #2a2a2a)' : 'var(--bg-surface)',
-        backgroundImage: insight.bgImage ? `url(${insight.bgImage})` : (insight.pattern || 'none'),
-        backgroundSize: insight.bgImage ? 'cover' : (insight.patternSize || 'auto'),
-        backgroundPosition: insight.bgImage ? 'center' : '0 0',
-        border: insight.bgImage ? 'none' : '0.5px solid var(--border)',
-        borderRadius: '16px',
-        boxShadow: 'var(--shadow-sm)',
         position: 'relative',
         overflow: 'hidden',
         height: '280px',
-        margin: '0 -10px',
-        transition: 'background 0.3s ease'
+        borderRadius: '16px',
+        boxShadow: 'var(--shadow-sm)',
+        margin: '0',
       }}
     >
-      {insight.bgImage && (
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)' }} />
-      )}
+      <AnimatePresence initial={false}>
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -50 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: insight.bgImage ? 'linear-gradient(to right, #1a1a1a, #2a2a2a)' : 'var(--bg-surface)',
+            backgroundImage: insight.bgImage ? `url(${insight.bgImage})` : (insight.pattern || 'none'),
+            backgroundSize: insight.bgImage ? 'cover' : (insight.patternSize || 'auto'),
+            backgroundPosition: insight.bgImage ? 'center' : '0 0',
+            border: insight.bgImage ? 'none' : '0.5px solid var(--border)',
+            borderRadius: '16px',
+          }}
+        >
+          {insight.bgImage && (
+            <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '16px' }} />
+          )}
 
-      {/* Top right indicator dots */}
-      <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '4px', zIndex: 1 }}>
-        {WEEKLY_INSIGHTS.map((_, idx) => (
+          {/* Top right indicator dots */}
+          <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '4px', zIndex: 1 }}>
+            {WEEKLY_INSIGHTS.map((_, idx) => (
+              <div
+                key={idx}
+                style={{
+                  width: idx === currentIndex ? '16px' : '6px',
+                  height: '6px',
+                  borderRadius: '3px',
+                  background: idx === currentIndex ? (insight.isDark ? '#fff' : 'var(--accent)') : (insight.isDark ? 'rgba(255,255,255,0.3)' : 'var(--border-2)'),
+                  transition: 'all 0.3s ease'
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Bottom left text content */}
           <div
-            key={idx}
+            className="flex flex-col gap-1.5 z-10"
             style={{
-              width: idx === currentIndex ? '16px' : '6px',
-              height: '6px',
-              borderRadius: '3px',
-              background: idx === currentIndex ? (insight.isDark ? '#fff' : 'var(--accent)') : (insight.isDark ? 'rgba(255,255,255,0.3)' : 'var(--border-2)'),
-              transition: 'all 0.3s ease'
+              position: 'absolute', bottom: '20px', left: '20px', right: '20px',
             }}
-          />
-        ))}
-      </div>
-
-      {/* Bottom left text content */}
-      <div
-        key={insight.id}
-        className="animate-in fade-in slide-in-from-right-4 duration-500"
-        style={{
-          position: 'absolute', bottom: '20px', left: '20px', right: '20px',
-          display: 'flex', flexDirection: 'column', gap: '6px', zIndex: 1
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: insight.isDark ? 'var(--accent)' : insight.color, boxShadow: `0 0 8px ${insight.isDark ? 'var(--accent)' : insight.color}` }} />
-          <span style={{ fontSize: '12px', fontWeight: 700, color: insight.isDark ? '#fff' : insight.color, letterSpacing: '0.06em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>
-            SOROTAN MINGGU INI
-          </span>
-        </div>
-        <h3 style={{ fontSize: '24px', fontWeight: 700, color: insight.isDark ? '#fff' : 'var(--text-1)', margin: 0, fontFamily: 'DM Sans, sans-serif' }}>
-          {insight.title}
-        </h3>
-        <p style={{ fontSize: '14px', color: insight.isDark ? 'rgba(255,255,255,0.9)' : 'var(--text-2)', lineHeight: 1.4, margin: '2px 0 0 0', maxWidth: '85%' }}>
-          {insight.summary}
-        </p>
-
-        {insight.hasDetail && (
-          <button
-            onClick={() => onOpenDetail(insight)}
-            style={{
-              padding: '6px 14px', background: 'transparent', border: insight.isDark ? '1px solid rgba(255,255,255,0.3)' : '1px solid var(--border-2)',
-              borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: insight.isDark ? '#fff' : 'var(--text-1)',
-              cursor: 'pointer', transition: 'all 0.2s', width: 'fit-content', marginTop: '6px'
-            }}
-            className={insight.isDark ? "hover:bg-white/10" : "hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"}
           >
-            Baca Selengkapnya
-          </button>
-        )}
-      </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: insight.isDark ? 'var(--accent)' : insight.color, boxShadow: `0 0 8px ${insight.isDark ? 'var(--accent)' : insight.color}` }} />
+              <span style={{ fontSize: '12px', fontWeight: 700, color: insight.isDark ? '#fff' : insight.color, letterSpacing: '0.06em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>
+                SOROTAN MINGGU INI
+              </span>
+            </div>
+            <h3 style={{ fontSize: '24px', fontWeight: 700, color: insight.isDark ? '#fff' : 'var(--text-1)', margin: 0, fontFamily: 'DM Sans, sans-serif' }}>
+              {insight.title}
+            </h3>
+            <p style={{ fontSize: '14px', color: insight.isDark ? 'rgba(255,255,255,0.9)' : 'var(--text-2)', lineHeight: 1.4, margin: '2px 0 0 0', maxWidth: '85%' }}>
+              {insight.summary}
+            </p>
+
+            {insight.hasDetail && (
+              <button
+                onClick={() => onOpenDetail(insight)}
+                style={{
+                  padding: '6px 14px', background: 'transparent', border: insight.isDark ? '1px solid rgba(255,255,255,0.3)' : '1px solid var(--border-2)',
+                  borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: insight.isDark ? '#fff' : 'var(--text-1)',
+                  cursor: 'pointer', transition: 'all 0.2s', width: 'fit-content', marginTop: '6px'
+                }}
+                className={insight.isDark ? "hover:bg-white/10" : "hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"}
+              >
+                Baca Selengkapnya
+              </button>
+            )}
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
@@ -752,14 +765,14 @@ export default function Dashboard() {
   let greetingText = '';
 
   if (lang === 'id') {
-    if (currentHour >= 5 && currentHour < 12) greetingText = 'Selamat pagi';
-    else if (currentHour >= 12 && currentHour < 15) greetingText = 'Selamat siang';
-    else if (currentHour >= 15 && currentHour < 18) greetingText = 'Selamat sore';
-    else greetingText = 'Selamat malam';
+    if (currentHour >= 5 && currentHour < 12) greetingText = 'Selamat Pagi';
+    else if (currentHour >= 12 && currentHour < 15) greetingText = 'Selamat Siang';
+    else if (currentHour >= 15 && currentHour < 18) greetingText = 'Selamat Sore';
+    else greetingText = 'Selamat Malam';
   } else {
-    if (currentHour >= 5 && currentHour < 12) greetingText = 'Good morning';
-    else if (currentHour >= 12 && currentHour < 18) greetingText = 'Good afternoon';
-    else greetingText = 'Good evening';
+    if (currentHour >= 5 && currentHour < 12) greetingText = 'Good Morning';
+    else if (currentHour >= 12 && currentHour < 18) greetingText = 'Good Afternoon';
+    else greetingText = 'Good Evening';
   }
 
   let statusMessage = '';
@@ -807,15 +820,32 @@ export default function Dashboard() {
 
         {/* ─── 0. GREETING ─────────────────────────────────────── */}
         <div className="mb-2">
-          <p className="eyebrow" style={{ marginBottom: '6px', color: 'var(--text-3)' }}>
-            {greetingText.toUpperCase()}, {userName.toUpperCase()}
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-[22px] md:text-[26px] font-black text-gray-900 tracking-tight leading-tight">
+              {greetingText}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#009254] to-emerald-500">{userName.split(' ')[0]}</span>
+            </h1>
+          </div>
+          <p className="text-[13px] font-medium text-gray-500 mt-1 mb-3">
+            {lang === 'id' ? 'Berikut ringkasan kondisi peternakanmu.' : "Here is your herd's summary today."}
           </p>
-          <h2 style={{
-            fontFamily: 'DM Sans, sans-serif', fontSize: '20px', fontWeight: 700,
-            letterSpacing: '-0.02em', color: 'var(--text-1)', lineHeight: 1.2, margin: 0,
-          }}>
-            {stats.collars} ternak dipantau · {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length} perlu tindakan
-          </h2>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50/80 border border-green-100 text-[#009254] rounded-full text-[11px] font-bold">
+              <span className="w-2 h-2 rounded-full bg-[#009254] animate-pulse"></span>
+              {stats.collars} {lang === 'id' ? 'Ternak Dipantau' : 'Cows Monitored'}
+            </div>
+            {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length > 0 ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50/80 border border-red-100 text-red-600 rounded-full text-[11px] font-bold">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length} {lang === 'id' ? 'Perlu Tindakan' : 'Action Needed'}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50/80 border border-gray-200 text-gray-500 rounded-full text-[11px] font-bold">
+                <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
+                {lang === 'id' ? '0 Perlu Tindakan' : '0 Action Needed'}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ─── 1. WEEKLY INSIGHT SLIDESHOW ─────────────── */}
@@ -942,8 +972,8 @@ export default function Dashboard() {
                   {t.repro_select_cow}
                 </label>
                 <select
-                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', height: '40px' }}
-                  className="w-full px-3 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
+                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
+                  className="w-full px-3 h-[42px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
                   required
                   value={reproForm.rfid}
                   onChange={e => setReproForm({ ...reproForm, rfid: e.target.value })}
@@ -955,21 +985,21 @@ export default function Dashboard() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="w-full min-w-0">
                   <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_ib_date}</label>
                   <input
                     type="date"
-                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', height: '40px' }}
-                    className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
+                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
+                    className="w-full px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
                     required
                     value={reproForm.tanggal_ib}
                     onChange={handleTanggalIBChange}
                   />
                 </div>
-                <div>
+                <div className="w-full min-w-0">
                   <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_ib_count}</label>
-                  <input type="number" min="1" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', height: '40px' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.jumlah_ib} onChange={e => setReproForm({ ...reproForm, jumlah_ib: e.target.value })} />
+                  <input type="number" min="1" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }} className="w-full px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.jumlah_ib} onChange={e => setReproForm({ ...reproForm, jumlah_ib: e.target.value })} />
                 </div>
               </div>
 
@@ -978,8 +1008,8 @@ export default function Dashboard() {
                 <input
                   type="text"
                   placeholder={t.repro_inseminator_placeholder}
-                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', height: '40px' }}
-                  className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
+                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
+                  className="w-full min-w-0 px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
                   value={reproForm.pemberi_ib}
                   onChange={e => setReproForm({ ...reproForm, pemberi_ib: e.target.value })}
                 />
@@ -987,7 +1017,7 @@ export default function Dashboard() {
 
               <div>
                 <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_notes}</label>
-                <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({ ...reproForm, catatan: e.target.value })} />
+                <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }} className="w-full min-w-0 px-4 py-3 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({ ...reproForm, catatan: e.target.value })} />
               </div>
 
               <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl p-4">
@@ -1153,11 +1183,8 @@ export default function Dashboard() {
                 )}
               </div>
 
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setIsEstrusModalOpen(false)} style={{ padding: '10px 24px', border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>Tutup</button>
-                <button type="button" onClick={() => { setIsEstrusModalOpen(false); navigate('/estrus-prediction', { state: { runPredict: true } }); }} className="flex-1 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg flex items-center justify-center gap-2">
-                  Lihat Laporan <ChevronRight size={16} />
-                </button>
+              <div className="flex">
+                <button type="button" onClick={() => setIsEstrusModalOpen(false)} style={{ padding: '12px 24px', color: 'var(--color-primary)', fontWeight: 700, borderRadius: '12px', background: 'var(--color-primary-dim)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>Tutup</button>
               </div>
             </div>
           </div>

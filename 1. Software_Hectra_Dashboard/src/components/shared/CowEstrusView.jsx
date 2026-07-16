@@ -8,6 +8,7 @@ import {
   Layers,
   TrendingUp,
   Lock,
+  Target
 } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
@@ -229,32 +230,29 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
             </div>
           </div>
 
-          {/* Date pills */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingLeft: '8px' }}>
-            {[
-              { label: t.prediction_card_pred_label,   value: fmtDate(prediction.prediksi_tanggal, lang) },
-              { label: t.prediction_card_window_label, value: `${fmtDate(prediction.window_awal, lang)} – ${fmtDate(prediction.window_akhir, lang)}` },
-              { label: t.prediction_card_optimal_ib,   value: fmtDate(prediction.prediksi_ib_optimal, lang) },
-              { label: t.prediction_card_countdown,    value: fmtDays(prediction.days_until, t), highlight: true },
-            ].map(({ label, value, highlight }) => (
-              <div key={label} style={{ padding: '6px 10px', background: 'var(--bg-card)', borderRadius: '8px', border: '0.5px solid var(--border)' }}>
-                <p style={{ fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
-                <p style={{ fontSize: '12px', fontWeight: 700, color: highlight ? cs.text : 'var(--text-1)', marginTop: '1px' }}>{value}</p>
+          {/* Core Metrics */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '8px', marginTop: '4px' }}>
+            {/* Optimal IB - Enlarge */}
+            <div style={{ padding: '12px 16px', background: 'var(--bg-card)', borderRadius: '12px', border: `1px solid ${cs.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', right: '-10px', top: '-10px', opacity: 0.05 }}>
+                <Target size={64} color={cs.text} />
               </div>
-            ))}
-          </div>
+              <p style={{ fontSize: '11px', color: 'var(--text-2)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>{t.prediction_card_optimal_ib || 'Optimal IB'}</p>
+              <p style={{ fontSize: '20px', fontWeight: 800, color: cs.text }}>{fmtDate(prediction.prediksi_ib_optimal, lang)}</p>
+            </div>
 
-          {/* Layer confidences */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', paddingLeft: '8px' }}>
-            {[
-              { label: 'L1', value: prediction.confidence_layer1 },
-              { label: 'L2', value: prediction.confidence_layer2 },
-              { label: 'L3', value: prediction.confidence_layer3 },
-            ].filter(l => l.value != null).map(({ label, value }) => (
-              <span key={label} style={{ fontSize: '11px', color: 'var(--text-3)', background: 'var(--bg-hover)', padding: '3px 8px', borderRadius: '6px' }}>
-                {label}: <strong style={{ color: 'var(--text-2)' }}>{Math.round(value * 100)}%</strong>
-              </span>
-            ))}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              {/* Window */}
+              <div style={{ padding: '10px 12px', background: 'var(--bg-card)', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
+                <p style={{ fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.prediction_card_window_label || 'Window'}</p>
+                <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-1)', marginTop: '2px', lineHeight: 1.3 }}>{fmtDate(prediction.window_awal, lang)} –<br/>{fmtDate(prediction.window_akhir, lang)}</p>
+              </div>
+              {/* Countdown */}
+              <div style={{ padding: '10px 12px', background: 'var(--bg-card)', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
+                <p style={{ fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.prediction_card_countdown || 'Countdown'}</p>
+                <p style={{ fontSize: '15px', fontWeight: 800, color: cs.text, marginTop: '2px' }}>{fmtDays(prediction.days_until, t)}</p>
+              </div>
+            </div>
           </div>
 
           {/* Footnote */}

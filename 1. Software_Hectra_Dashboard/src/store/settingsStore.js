@@ -8,7 +8,7 @@ const useSettingsStore = create(
   persist(
     (set) => ({
       lang:  'id',    // Default: Bahasa Indonesia
-      theme: 'dark',  // Default: Dark mode (MP-3 §17.1)
+      theme: 'light',  // Default: Light mode
 
       setLang: (lang) => set({ lang }),
 
