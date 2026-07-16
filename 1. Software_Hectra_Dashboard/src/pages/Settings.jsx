@@ -1,4 +1,4 @@
-﻿// src/pages/Settings.jsx
+// src/pages/Settings.jsx
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -16,6 +16,8 @@ import {
   Search,
   Check,
   AlertTriangle,
+  Bell,
+  Smartphone,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
@@ -79,6 +81,7 @@ export default function Settings() {
   // Tab 1: Profile
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [createdAt, setCreatedAt] = useState('--');
   const [lastLogin, setLastLogin] = useState('--');
 
@@ -101,20 +104,12 @@ export default function Settings() {
   // Geocoding search state
   const [geoSearching, setGeoSearching] = useState(false);
 
-  // Tab 2: Telegram
-  const [telegramChatId, setTelegramChatId] = useState('');
-  const [showChatId, setShowChatId] = useState(false);
-  const [tgSavedBadge, setTgSavedBadge] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
+  // Tab 2: Notifications
+  const [fcmEnabled, setFcmEnabled] = useState(false);
   const [notifEstrus, setNotifEstrus] = useState(false);
   const [notifAnomaly, setNotifAnomaly] = useState(false);
   const [notifDaily, setNotifDaily] = useState(false);
   const [notifBreeding, setNotifBreeding] = useState(false);
-
-  // Tab 3: Security
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Tab 3: Security -- PIN
   const [pinNewDigits, setPinNewDigits] = useState('');
@@ -330,6 +325,7 @@ export default function Settings() {
         const u = data.user || {};
         setFullName(u.full_name || '');
         setEmail(u.email || '');
+        setPhoneNumber(u.phone_number || '');
         setCreatedAt(u.created_at ? new Date(u.created_at).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { dateStyle: 'long' }) : '--');
         setLastLogin(u.last_login_at ? new Date(u.last_login_at).toLocaleString(lang === 'id' ? 'id-ID' : 'en-US') : '--');
 
@@ -361,19 +357,12 @@ export default function Settings() {
       setCurrentCattleCount(0);
     }
 
-    // 2. Fetch Telegram Settings
+    // 2. Fetch FCM Settings (Mock)
     try {
-      const tgRes = await axiosInstance.get('/user/telegram-settings');
-      if (tgRes.data?.has_chat_id) {
-        setTgSavedBadge(true);
-        if (tgRes.data.chat_id_masked) setTelegramChatId(tgRes.data.chat_id_masked);
-      }
+      // Logic for FCM token checking would go here
+      setFcmEnabled(true);
     } catch (err) {
-      console.warn('Telegram settings fetch failed', err);
-      if (!profileLoaded) {
-        setTelegramChatId('648392013');
-        setTgSavedBadge(true);
-      }
+      console.warn('FCM settings fetch failed', err);
     }
 
     // 3. Fetch Notification Preferences
@@ -427,7 +416,7 @@ export default function Settings() {
     setLoading(true);
     try {
       await Promise.all([
-        axiosInstance.put('/profile', { full_name: fullName, email }),
+        axiosInstance.put('/profile', { full_name: fullName, email, phone_number: phoneNumber }),
         axiosInstance.put('/profile/farm', {
           farm_name: farmName,
           farm_type: farmType,
@@ -451,28 +440,16 @@ export default function Settings() {
     }
   };
 
-  const handleSaveTelegramId = async (e) => {
-    e.preventDefault();
-    if (!telegramChatId.trim()) return;
+  // --- Push Notification Handler ---
+  const handleEnableFCM = async () => {
     setLoading(true);
     try {
-      await axiosInstance.put('/user/telegram-settings', { telegram_chat_id: telegramChatId });
-      setTgSavedBadge(true);
-      toast.success(lang === 'id' ? 'Chat ID Telegram berhasil disimpan!' : 'Telegram Chat ID saved successfully!');
+      // Simulate requesting notification permission
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setFcmEnabled(true);
+      toast.success(lang === 'id' ? 'Notifikasi perangkat diaktifkan!' : 'Device notifications enabled!');
     } catch {
-      toast.error(lang === 'id' ? 'Gagal menyimpan Chat ID.' : 'Failed to save Chat ID.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTestTelegram = async () => {
-    setLoading(true);
-    try {
-      await axiosInstance.post('/user/telegram-test');
-      toast.success(lang === 'id' ? 'Pesan test terkirim! Periksa Telegram kamu.' : 'Test message sent! Check your Telegram.');
-    } catch {
-      toast.error(lang === 'id' ? 'Gagal mengirim test alert.' : 'Failed to send test alert.');
+      toast.error(lang === 'id' ? 'Gagal mengaktifkan notifikasi.' : 'Failed to enable notifications.');
     } finally {
       setLoading(false);
     }
@@ -492,31 +469,6 @@ export default function Settings() {
       toast.success(lang === 'id' ? 'Preferensi notifikasi diperbarui!' : 'Notification preferences updated!');
     } catch {
       toast.error(lang === 'id' ? 'Gagal menyimpan preferensi.' : 'Failed to save notification preferences.');
-    }
-  };
-
-  const handleSaveSecurity = async (e) => {
-    e.preventDefault();
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error(lang === 'id' ? 'Mohon isi semua kolom password.' : 'Please fill all password fields.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error(lang === 'id' ? 'Konfirmasi password baru tidak cocok.' : 'New password confirmation does not match.');
-      return;
-    }
-    setLoading(true);
-    try {
-      await axiosInstance.post('/profile/change-password', {
-        current_password: currentPassword,
-        new_password: newPassword,
-      });
-      toast.success(lang === 'id' ? 'Password berhasil diubah!' : 'Password changed successfully!');
-      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
-    } catch (err) {
-      toast.error(err.response?.data?.detail || (lang === 'id' ? 'Gagal mengubah password.' : 'Failed to change password.'));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -607,7 +559,7 @@ export default function Settings() {
       <div className="flex border-b border-[var(--border)] overflow-x-auto pb-0.5 gap-1 scrollbar-none">
         {[
           { id: 'profile', icon: User, label: t.settings_tab_general },
-          { id: 'telegram', icon: Send, label: t.settings_tab_telegram },
+          { id: 'notifications', icon: Bell, label: lang === 'id' ? 'Notifikasi' : 'Notifications' },
           { id: 'security', icon: Key, label: t.settings_tab_security },
           ...((['owner', 'admin'].includes(user?.role))
             ? [{ id: 'team', icon: Users, label: t.settings_tab_team }]
@@ -654,25 +606,24 @@ export default function Settings() {
             <form onSubmit={handleSaveGeneral} className="space-y-8 animate-in fade-in duration-300">
 
               {/* Profile Card */}
-              <div className="flex items-center gap-4 p-4 md:p-5 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)] shadow-sm">
+              <div className="flex items-center gap-4 p-5 md:p-6 bg-white rounded-3xl border border-gray-200 shadow-sm">
                 <div
-                  style={{ background: 'var(--accent)' }}
-                  className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-white text-lg md:text-xl font-black shrink-0"
+                  className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white text-xl md:text-2xl font-black shrink-0 bg-[#009254]"
                 >
                   {fullName ? fullName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : '--'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm md:text-base font-bold text-[var(--text-1)] truncate">{fullName || (lang === 'id' ? 'Operator' : 'Operator')}</p>
-                  <p className="text-xs text-[var(--text-2)] truncate">{email || 'admin@farm.com'}</p>
+                  <p className="text-base md:text-lg font-extrabold text-gray-900 truncate">{fullName || (lang === 'id' ? 'Operator' : 'Operator')}</p>
+                  <p className="text-sm text-gray-500 truncate mt-0.5">{email || 'admin@farm.com'}</p>
                 </div>
               </div>
 
               {/* ── Section: Personal Information ── */}
               <section className="space-y-4">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[var(--accent)] border-b border-[var(--border)] pb-1.5 flex items-center gap-1.5">
-                  <User className="w-4 h-4" /> {t.settings_personal_info}
+                <h3 className="text-xs font-black uppercase tracking-wider text-[var(--text-1)] border-b border-[var(--border)] pb-1.5 flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-[#009254]" /> {t.settings_personal_info}
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className={labelClass}>{t.settings_full_name}</label>
                     <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className={inputClass} placeholder={lang === 'id' ? 'Nama Lengkap Anda' : 'Your Full Name'} />
@@ -681,13 +632,17 @@ export default function Settings() {
                     <label className={labelClass}>{t.settings_email}</label>
                     <input type="email" value={email} onChange={e => setEmail(e.target.value)} className={inputClass} placeholder="nama@email.com" />
                   </div>
+                  <div>
+                    <label className={labelClass}>{lang === 'id' ? 'NOMOR HP' : 'PHONE NUMBER'}</label>
+                    <input type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className={inputClass} placeholder="081234567890" />
+                  </div>
                 </div>
               </section>
 
               {/* ── Section: Farm Details ── */}
               <section className="space-y-5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[var(--accent)] border-b border-[var(--border)] pb-1.5 flex items-center gap-1.5">
-                  <Globe className="w-4 h-4" /> {t.settings_farm_details}
+                <h3 className="text-xs font-black uppercase tracking-wider text-[var(--text-1)] border-b border-[var(--border)] pb-1.5 flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-[#009254]" /> {t.settings_farm_details}
                 </h3>
 
                 {/* Farm name + type + capacity — 3-col on desktop */}
@@ -725,9 +680,9 @@ export default function Settings() {
                 </div>
 
                 {/* ── Address block ── */}
-                <div className="space-y-3 p-4 md:p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-base)]">
-                  <p className="text-xs font-black uppercase tracking-wider text-[var(--text-2)] flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5" /> {t.settings_farm_location}
+                <div className="space-y-3 p-5 md:p-6 rounded-3xl border border-gray-200 bg-white">
+                  <p className="text-xs font-black uppercase tracking-wider text-[var(--text-1)] flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-[#009254]" /> {t.settings_farm_location}
                   </p>
 
                   {/* Row 1: Province + City/Kab (2-col) */}
@@ -858,89 +813,60 @@ export default function Settings() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════════
-              TAB 2 — TELEGRAM & ALERTS
+              TAB 2 — NOTIFICATIONS
           ══════════════════════════════════════════════════════════════════ */}
-          {activeTab === 'telegram' && (
+          {activeTab === 'notifications' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div>
-                <h2 className="text-lg font-bold text-[var(--text-1)] font-display border-b border-[var(--border)] pb-2 mb-2">{t.settings_telegram_title}</h2>
-                <p className="text-xs text-[var(--text-2)]">{t.settings_telegram_desc}</p>
+                <h2 className="text-lg font-bold text-[var(--text-1)] font-display border-b border-[var(--border)] pb-2 mb-2">
+                  {lang === 'id' ? 'Pengaturan Notifikasi' : 'Notification Settings'}
+                </h2>
+                <p className="text-xs text-[var(--text-2)]">
+                  {lang === 'id' ? 'Kelola bagaimana aplikasi HERD memberitahu Anda.' : 'Manage how the HERD app notifies you.'}
+                </p>
               </div>
 
-              <div
-                style={{
-                  backgroundColor: tgSavedBadge ? 'var(--accent-dim)' : 'var(--amber-dim)',
-                  borderColor: tgSavedBadge ? 'var(--accent-border)' : 'rgba(184, 122, 10, 0.3)',
-                  color: tgSavedBadge ? 'var(--accent)' : 'var(--amber)',
-                  borderWidth: '1px',
-                  borderStyle: 'solid',
-                }}
-                className="p-4 rounded-xl text-xs font-bold flex items-center gap-3"
-              >
-                {tgSavedBadge ? (
-                  <Check className="w-5 h-5 flex-shrink-0" />
+              {/* Push Notification Card */}
+              <div className="p-5 bg-white border border-gray-200 rounded-3xl shadow-sm space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className={`p-3 rounded-2xl ${fcmEnabled ? 'bg-[#009254]/10 text-[#009254]' : 'bg-gray-100 text-gray-500'}`}>
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-gray-900">
+                      {lang === 'id' ? 'Notifikasi Perangkat' : 'Device Notifications'}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                      {lang === 'id' 
+                        ? 'Aktifkan agar HERD bisa mengirimkan peringatan langsung ke layar HP Anda (seperti pesan WhatsApp).' 
+                        : 'Enable this so HERD can send alerts directly to your phone screen.'}
+                    </p>
+                  </div>
+                </div>
+
+                {!fcmEnabled ? (
+                  <button
+                    type="button"
+                    onClick={handleEnableFCM}
+                    className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-[#009254] hover:bg-[#007b46] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95"
+                  >
+                    {lang === 'id' ? 'Aktifkan Notifikasi' : 'Enable Notifications'}
+                  </button>
                 ) : (
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                  <div className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-gray-100 text-[#009254] rounded-xl text-xs font-bold border border-gray-200">
+                    <Check className="w-4 h-4" /> {lang === 'id' ? 'Notifikasi Perangkat Aktif' : 'Device Notifications Enabled'}
+                  </div>
                 )}
-                <span>{tgSavedBadge ? t.settings_telegram_connected : t.settings_telegram_disconnected}</span>
               </div>
-
-              <form onSubmit={handleSaveTelegramId} className="space-y-5">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className={labelClass}>
-                      Telegram Chat ID
-                      {tgSavedBadge && <span className="ml-2 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 text-[9px] font-bold rounded-full">{t.settings_telegram_saved}</span>}
-                    </label>
-                    <button type="button" onClick={() => setShowGuide(!showGuide)} className="text-xs text-[var(--accent)] hover:underline font-bold">
-                      {showGuide ? t.settings_telegram_hide : t.settings_telegram_show}
-                    </button>
-                  </div>
-
-                  {showGuide && (
-                    <div className="mb-4 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs text-slate-600 dark:text-slate-300 space-y-2.5 animate-in slide-in-from-top-2 duration-300 shadow-sm">
-                      <p className="font-bold text-slate-700 dark:text-slate-200">{t.settings_telegram_guide_title}</p>
-                      <ol className="list-decimal pl-4 space-y-1.5 font-semibold">
-                        <li>{lang === 'id' ? 'Buka Telegram, cari' : 'Open Telegram, search for'} <a href="https://t.me/chatIDrobot" target="_blank" rel="noreferrer" className="text-[var(--accent)] font-bold hover:underline">@chatIDrobot</a>.</li>
-                        <li>{lang === 'id' ? 'Kirim perintah' : 'Send command'} <code className="bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-[10px]">/start</code>.</li>
-                        <li>{t.settings_telegram_guide_step3}</li>
-                        <li className="text-[10px] text-slate-400 italic">{t.settings_telegram_guide_footer}</li>
-                      </ol>
-                    </div>
-                  )}
-
-                  <div className="relative">
-                    <input
-                      type={showChatId ? 'text' : 'password'}
-                      value={telegramChatId}
-                      onChange={e => { setTelegramChatId(e.target.value); setTgSavedBadge(false); }}
-                      placeholder={lang === 'id' ? 'Contoh: 128472910' : 'Example: 128472910'}
-                      className={`${inputClass} pr-12 font-mono`}
-                    />
-                    <button type="button" onClick={() => setShowChatId(!showChatId)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                      {showChatId ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-[var(--accent)]" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button type="button" onClick={handleTestTelegram} disabled={!tgSavedBadge} className="flex items-center gap-2 px-4 py-3 border border-[var(--border)] rounded-xl text-xs font-bold text-[var(--text-1)] bg-[var(--bg-base)] hover:bg-[var(--bg-hover)] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm">
-                    {t.settings_telegram_test}
-                  </button>
-                  <button type="submit" disabled={!telegramChatId} className="flex items-center gap-2 px-5 py-3 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl text-xs font-bold shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                    {t.settings_telegram_save_btn}
-                  </button>
-                </div>
-              </form>
 
               {/* Notification Preferences */}
               <div className="pt-6 border-t border-[var(--border)] space-y-4">
                 <h3 className="text-sm font-bold text-[var(--text-1)] font-display">{t.settings_notif_pref}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    { key: 'estrus', label: lang === 'id' ? 'Peringatan Estrus' : 'Estrus Alerts', badge: lang === 'id' ? 'Telegram & Email' : 'Telegram & Email', badgeColor: 'emerald', checked: notifEstrus },
-                    { key: 'anomaly', label: lang === 'id' ? 'Peringatan Anomali' : 'Anomaly Alerts', badge: lang === 'id' ? 'Telegram Saja' : 'Telegram Only', badgeColor: 'amber', checked: notifAnomaly },
-                    { key: 'daily', label: lang === 'id' ? 'Ringkasan Harian' : 'Daily Summary', badge: lang === 'id' ? 'Telegram & Email' : 'Telegram & Email', badgeColor: 'blue', checked: notifDaily },
+                    { key: 'estrus', label: lang === 'id' ? 'Peringatan Estrus' : 'Estrus Alerts', badge: lang === 'id' ? 'Push & Email' : 'Push & Email', badgeColor: 'emerald', checked: notifEstrus },
+                    { key: 'anomaly', label: lang === 'id' ? 'Peringatan Anomali' : 'Anomaly Alerts', badge: lang === 'id' ? 'Push Saja' : 'Push Only', badgeColor: 'amber', checked: notifAnomaly },
+                    { key: 'daily', label: lang === 'id' ? 'Ringkasan Harian' : 'Daily Summary', badge: lang === 'id' ? 'Push & Email' : 'Push & Email', badgeColor: 'blue', checked: notifDaily },
                     { key: 'breeding', label: lang === 'id' ? 'Pengingat Perkawinan' : 'Breeding Reminders', badge: lang === 'id' ? 'Kalender & Email' : 'Calendar & Email', badgeColor: 'purple', checked: notifBreeding },
                   ].map(({ key, label, badge, badgeColor, checked }) => {
                     const badgeStyles = {
@@ -983,19 +909,18 @@ export default function Settings() {
               TAB 3 — SECURITY
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
-            <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="flex flex-col items-center justify-start min-h-[400px] py-4 animate-in fade-in duration-300">
 
-              {/* ── Section: Login PIN ── */}
-              <section>
-                <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-4">
-                  <h2 className="text-base font-bold text-[var(--text-1)] font-display flex items-center gap-2">
-                    <Key className="w-4 h-4 text-[var(--accent)]" />
+              <div className="w-full max-w-lg bg-white border border-gray-200 p-6 md:p-8 rounded-3xl shadow-sm">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-5">
+                  <h2 className="text-lg font-bold text-gray-900 font-display flex items-center gap-2">
+                    <Key className="w-5 h-5 text-[#009254]" />
                     {lang === 'id' ? 'Ubah PIN Login' : 'Change Login PIN'}
                   </h2>
                   <span
-                    className="text-[10px] font-bold px-2.5 py-1 rounded-full border"
+                    className="text-[10px] font-bold px-3 py-1.5 rounded-full border"
                     style={userHasPin
-                      ? { background: 'var(--accent-dim)', color: 'var(--accent)', borderColor: 'var(--accent-border)' }
+                      ? { background: 'rgba(0,146,84,0.1)', color: '#009254', borderColor: 'rgba(0,146,84,0.2)' }
                       : { background: 'rgba(255,91,91,0.08)', color: '#ff5b5b', borderColor: 'rgba(255,91,91,0.25)' }
                     }
                   >
@@ -1004,18 +929,18 @@ export default function Settings() {
                       : (lang === 'id' ? 'Belum Ada PIN' : 'No PIN Set')}
                   </span>
                 </div>
-                <p className="text-xs text-[var(--text-2)] mb-4 leading-relaxed">
+                <p className="text-xs text-gray-500 mb-6 leading-relaxed">
                   {lang === 'id'
-                    ? 'Gunakan 6-digit PIN untuk login cepat dari perangkat terpercaya. PIN menggantikan password setelah login pertama.'
-                    : 'Use a 6-digit PIN for quick login from trusted devices. PIN replaces your password after the first login.'}
+                    ? 'Gunakan 6-digit PIN untuk login cepat dari perangkat terpercaya. PIN menggantikan password.'
+                    : 'Use a 6-digit PIN for quick login from trusted devices. PIN replaces your password.'}
                 </p>
-                <form onSubmit={handleSavePIN} className="space-y-4">
+                <form onSubmit={handleSavePIN} className="space-y-5">
                   {pinError && (
-                    <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold">
+                    <div className="px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
                       {pinError}
                     </div>
                   )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div>
                       <label className={labelClass}>{lang === 'id' ? 'PIN Baru (6 digit)' : 'New PIN (6 digits)'}</label>
                       <input
@@ -1025,7 +950,7 @@ export default function Settings() {
                         value={pinNewDigits}
                         onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPinNewDigits(e.target.value); setPinError(''); } }}
                         placeholder="••••••"
-                        className={`${inputClass} font-mono tracking-[0.5em]`}
+                        className={`${inputClass} font-mono tracking-[0.5em] text-center`}
                       />
                     </div>
                     <div>
@@ -1037,75 +962,28 @@ export default function Settings() {
                         value={pinConfirmDigits}
                         onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPinConfirmDigits(e.target.value); setPinError(''); } }}
                         placeholder="••••••"
-                        className={`${inputClass} font-mono tracking-[0.5em]`}
+                        className={`${inputClass} font-mono tracking-[0.5em] text-center`}
                       />
                     </div>
                   </div>
-                  <div className="flex justify-end">
+                  <div className="flex justify-center pt-2">
                     <button
                       type="submit"
                       disabled={pinLoading || pinNewDigits.length !== 6 || pinConfirmDigits.length !== 6}
-                      className="flex items-center gap-2 px-5 py-3 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-[#009254] hover:bg-[#007b46] text-white rounded-xl text-sm font-bold shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {pinLoading
                         ? <><Loader2 className="w-4 h-4 animate-spin" /> {lang === 'id' ? 'Menyimpan...' : 'Saving...'}</>
                         : <><Save className="w-4 h-4" /> {lang === 'id' ? 'Simpan PIN Baru' : 'Save New PIN'}</>}
                     </button>
                   </div>
-                  <p className="text-[10px] text-[var(--text-3)] leading-relaxed">
+                  <p className="text-[10px] text-gray-400 leading-relaxed text-center mt-4">
                     💡 {lang === 'id'
                       ? 'Hanya berlaku di perangkat terpercaya. Login PIN lebih cepat daripada ketik password tiap saat.'
                       : 'Only works on trusted devices. PIN login is faster than typing your password every time.'}
                   </p>
                 </form>
-              </section>
-
-              {/* ── Divider ── */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-[var(--border)]" />
-                <span className="text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider">
-                  {lang === 'id' ? 'atau' : 'or'}
-                </span>
-                <div className="flex-1 h-px bg-[var(--border)]" />
               </div>
-
-              {/* ── Section: Change Password ── */}
-              <section>
-                <div className="flex items-center gap-2 border-b border-[var(--border)] pb-2 mb-4">
-                  <h2 className="text-base font-bold text-[var(--text-1)] font-display">
-                    {lang === 'id' ? 'Ubah Password Akun' : 'Change Account Password'}
-                  </h2>
-                  <div className="relative group">
-                    <div className="w-5 h-5 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-slate-400 hover:text-[var(--accent)] hover:border-[var(--accent)] cursor-help transition-all">i</div>
-                    <div className="absolute left-0 top-7 w-72 p-3.5 bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-2)] text-[11px] font-semibold rounded-xl shadow-xl opacity-0 scale-95 origin-top-left pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50">
-                      <div className="absolute top-0 left-2 -translate-y-1 w-2.5 h-2.5 bg-[var(--bg-surface)] border-t border-l border-[var(--border)] rotate-45" />
-                      <p className="relative leading-relaxed">
-                        <strong className="text-[var(--accent)]">{lang === 'id' ? 'Catatan:' : 'Note:'}</strong> {t.settings_security_info}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <form onSubmit={handleSaveSecurity} className="space-y-4">
-                  <div>
-                    <label className={labelClass}>{t.settings_current_pass}</label>
-                    <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder={lang === 'id' ? 'Masukkan password saat ini' : 'Enter current password'} className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>{t.settings_new_pass}</label>
-                    <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={lang === 'id' ? 'Minimal 8 karakter' : 'Minimum 8 characters'} className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>{t.settings_confirm_pass}</label>
-                    <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={lang === 'id' ? 'Ketik ulang password baru' : 'Retype new password'} className={inputClass} />
-                  </div>
-                  <div className="pt-2 flex justify-end">
-                    <button type="submit" className="flex items-center gap-2 px-5 py-3 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95">
-                      <Save className="w-4 h-4" /> {t.settings_change_pass_btn}
-                    </button>
-                  </div>
-                </form>
-              </section>
-
             </div>
           )}
 
