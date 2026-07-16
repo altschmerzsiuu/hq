@@ -125,8 +125,8 @@ export default function Settings() {
   const [inviteRole, setInviteRole] = useState('worker');
   const [teamLoading, setTeamLoading] = useState(false);
 
-  const inputClass = "w-full px-4 py-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-sm font-semibold text-[var(--text-1)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all shadow-sm";
-  const labelClass = "block text-xs font-bold text-[var(--text-2)] mb-1.5 uppercase tracking-wider";
+  const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#009254]/20 focus:border-[#009254] transition-all shadow-sm";
+  const labelClass = "block text-[11px] font-black text-gray-500 mb-2 uppercase tracking-wider";
 
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
@@ -574,16 +574,8 @@ export default function Settings() {
         ))}
       </div>
 
-      {/* Content Card */}
-      <div
-        style={{
-          background: 'var(--bg-surface)',
-          border: '0.5px solid var(--border)',
-          borderRadius: '24px',
-          boxShadow: 'var(--shadow-card)',
-        }}
-        className="p-5 md:p-8 relative overflow-hidden"
-      >
+      {/* Content Area */}
+      <div className="relative mt-6 md:mt-8">
         {loading && (
           <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-30 flex items-center justify-center rounded-3xl">
             <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
@@ -599,7 +591,7 @@ export default function Settings() {
             <form onSubmit={handleSaveGeneral} className="space-y-8 animate-in fade-in duration-300">
 
               {/* Profile Card */}
-              <div className="flex items-center gap-4 p-5 md:p-6 bg-white rounded-3xl border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-4 p-5 md:p-6 bg-white rounded-3xl border border-gray-200 shadow-sm mb-6">
                 <div
                   className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white text-xl md:text-2xl font-black shrink-0 bg-[#009254]"
                 >
@@ -613,10 +605,10 @@ export default function Settings() {
 
               {/* ── Section: Personal Information ── */}
               <section className="space-y-4">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[var(--text-1)] border-b border-[var(--border)] pb-1.5 flex items-center gap-1.5">
+                <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-2 mb-4 flex items-center gap-2">
                   <User className="w-4 h-4 text-[#009254]" /> {t.settings_personal_info}
                 </h3>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-4">
                   <div>
                     <label className={labelClass}>{t.settings_full_name}</label>
                     <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className={inputClass} placeholder={lang === 'id' ? 'Nama Lengkap Anda' : 'Your Full Name'} />
@@ -633,14 +625,13 @@ export default function Settings() {
               </section>
 
               {/* ── Section: Farm Details ── */}
-              <section className="space-y-5">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[var(--text-1)] border-b border-[var(--border)] pb-1.5 flex items-center gap-1.5">
+              <section className="space-y-4 pt-6">
+                <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-2 mb-4 flex items-center gap-2">
                   <Globe className="w-4 h-4 text-[#009254]" /> {t.settings_farm_details}
                 </h3>
 
-                {/* Farm name + type + capacity — 3-col on desktop */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2 lg:col-span-1">
+                <div className="space-y-4">
+                  <div>
                     <label className={labelClass}>{t.settings_farm_name}</label>
                     <input type="text" value={farmName} onChange={e => setFarmName(e.target.value)} placeholder={lang === 'id' ? 'Peternakan Jaya Abadi' : 'Jaya Abadi Farm'} className={inputClass} />
                   </div>
@@ -659,27 +650,26 @@ export default function Settings() {
                 </div>
 
                 {/* Capacity bar */}
-                <div className="p-4 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] flex items-center justify-between gap-4 shadow-sm">
+                <div className="p-5 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between gap-4 mt-2">
                   <div>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{t.settings_total_registered}</p>
-                    <p className="text-2xl font-black text-[var(--accent)] mt-0.5">{currentCattleCount} <span className="text-sm font-semibold text-[var(--text-2)]">{lang === 'id' ? 'sapi' : 'cows'}</span></p>
+                    <p className="text-[10px] text-gray-500 font-extrabold uppercase tracking-wider">{t.settings_total_registered}</p>
+                    <p className="text-3xl font-black text-[#009254] mt-0.5">{currentCattleCount} <span className="text-sm font-bold text-gray-600">{lang === 'id' ? 'sapi' : 'cows'}</span></p>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">{t.settings_capacity_used}</span>
-                    <span className="text-sm font-bold text-[var(--text-1)] block mt-0.5">
+                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest block">{t.settings_capacity_used}</span>
+                    <span className="text-base font-black text-gray-900 block mt-1">
                       {totalCapacity ? Math.round((currentCattleCount / totalCapacity) * 100) : 0}%
                     </span>
                   </div>
                 </div>
 
                 {/* ── Address block ── */}
-                <div className="space-y-3 p-5 md:p-6 rounded-3xl border border-gray-200 bg-white">
-                  <p className="text-xs font-black uppercase tracking-wider text-[var(--text-1)] flex items-center gap-1.5">
+                <div className="space-y-4 pt-6">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-2 mb-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#009254]" /> {t.settings_farm_location}
-                  </p>
+                  </h3>
 
-                  {/* Row 1: Province + City/Kab (2-col) */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-4">
                     <div>
                       <label className={labelClass}>{t.settings_province}</label>
                       <select
@@ -705,9 +695,8 @@ export default function Settings() {
                     </div>
                   </div>
 
-                  {/* Row 2: Street address + Postal code (3:1 ratio) */}
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div className="sm:col-span-3">
+                  <div className="space-y-4 mt-4">
+                    <div>
                       <label className={labelClass}>{t.settings_street_address}</label>
                       <input
                         type="text"
@@ -736,74 +725,64 @@ export default function Settings() {
                     type="button"
                     onClick={handleSearchOnMap}
                     disabled={geoSearching}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] hover:bg-[var(--bg-hover)] hover:text-[var(--accent)] hover:border-[var(--accent)] text-xs font-bold text-[var(--text-2)] rounded-xl transition-all shadow-sm disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:border-[#009254] hover:text-[#009254] text-xs font-bold text-gray-700 rounded-xl transition-all shadow-sm disabled:opacity-50 mt-2"
                   >
                     {geoSearching
-                      ? <><Loader2 size={14} className="animate-spin" /> {t.settings_searching_map}</>
-                      : <><Search size={14} /> {t.settings_search_map}</>
+                      ? <><Loader2 size={16} className="animate-spin" /> {t.settings_searching_map}</>
+                      : <><Search size={16} /> {t.settings_search_map}</>
                     }
                   </button>
 
                   {/* Coordinates — compact 2-col */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4 mt-4">
                     <div>
                       <label className={labelClass}>{t.settings_latitude}</label>
                       <div className="relative">
-                        <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--accent)]" />
-                        <input
-                          type="number" step="any" value={latitude}
-                          onChange={e => setLatitude(parseFloat(e.target.value))}
-                          className={`${inputClass} pl-8`}
-                          placeholder="-7.9666"
-                        />
+                        <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#009254]" />
+                        <input type="number" step="any" value={latitude} onChange={e => setLatitude(e.target.value)} className={`${inputClass} pl-9`} />
                       </div>
                     </div>
                     <div>
                       <label className={labelClass}>{t.settings_longitude}</label>
                       <div className="relative">
-                        <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-3)]" />
-                        <input
-                          type="number" step="any" value={longitude}
-                          onChange={e => setLongitude(parseFloat(e.target.value))}
-                          className={`${inputClass} pl-8`}
-                          placeholder="112.6326"
-                        />
+                        <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input type="number" step="any" value={longitude} onChange={e => setLongitude(e.target.value)} className={`${inputClass} pl-9`} />
                       </div>
                     </div>
                   </div>
 
-                  {/* Map */}
-                  <div
-                    ref={mapContainerRef}
-                    className="border border-[var(--border)] rounded-xl overflow-hidden shadow-inner mt-1"
-                    style={{ height: '260px', width: '100%', zIndex: 1 }}
-                  />
-                  <p className="text-[10px] text-[var(--text-3)] text-center">
+                  <div className="relative h-[250px] mt-4 rounded-xl overflow-hidden border border-gray-200 shadow-sm z-0">
+                    <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+                  </div>
+                  <p className="text-[10px] text-gray-400 text-center mt-2 font-medium">
                     {t.settings_map_help}
                   </p>
                 </div>
               </section>
 
-              {/* Account meta */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[var(--border)]">
-                <div>
-                  <p className="text-[10px] text-[var(--text-3)] font-black uppercase tracking-wider">{t.settings_created_at}</p>
-                  <p className="text-xs font-bold text-[var(--text-1)] mt-1">{createdAt}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-[var(--text-3)] font-black uppercase tracking-wider">{t.settings_last_login}</p>
-                  <p className="text-xs font-bold text-[var(--text-1)] mt-1">{lastLogin}</p>
+              {/* Account Created & Last Login */}
+              <div className="pt-6 mt-8 border-t border-gray-200">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t.settings_acc_created}</p>
+                    <p className="text-sm font-extrabold text-gray-900 mt-1">{createdAt}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t.settings_last_login}</p>
+                    <p className="text-sm font-extrabold text-gray-900 mt-1">{lastLogin}</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Save button */}
-              <div className="flex justify-end pt-2">
-                <button type="submit" className="flex items-center gap-2 px-5 py-3 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95">
-                  <Save className="w-4 h-4" /> {t.settings_save_changes}
+              {/* Save button (Full width sticky-like at the bottom) */}
+              <div className="pt-8 pb-4">
+                <button type="submit" className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#009254] hover:bg-[#007b46] text-white rounded-2xl text-sm font-bold shadow-md transition-all active:scale-95">
+                  <Save className="w-5 h-5" /> {t.settings_save_changes}
                 </button>
               </div>
             </form>
           )}
+
 
           {/* ══════════════════════════════════════════════════════════════════
               TAB 2 — NOTIFICATIONS
