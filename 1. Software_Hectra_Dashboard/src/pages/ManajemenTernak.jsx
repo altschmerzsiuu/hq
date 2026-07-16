@@ -1251,7 +1251,7 @@ export default function ManajemenTernak() {
                 className="w-full h-full object-cover" 
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 relative z-20">
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 relative">
                  <Beef size={48} className="text-gray-300 mb-2" />
                  <p className="text-xs font-semibold text-gray-400 mb-4">Tidak ada foto</p>
                  <div className="flex gap-3">
