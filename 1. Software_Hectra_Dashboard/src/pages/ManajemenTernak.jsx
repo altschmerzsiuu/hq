@@ -1253,31 +1253,38 @@ export default function ManajemenTernak() {
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 relative">
                  <Beef size={48} className="text-gray-300 mb-2" />
-                 <p className="text-xs font-semibold text-gray-400 mb-4">Tidak ada foto</p>
-                 <div className="flex gap-3">
-                   <label className="bg-white/80 backdrop-blur px-4 py-2.5 rounded-xl text-[11px] font-bold text-gray-700 shadow-sm border border-white/50 cursor-pointer active:scale-95 transition-transform flex items-center gap-2">
-                     <Camera size={14} /> Ambil Foto
-                     <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                           const url = URL.createObjectURL(e.target.files[0]);
-                           setSelectedSapi({...selectedSapi, foto: url});
-                        }
-                     }} />
-                   </label>
-                   <label className="bg-white/80 backdrop-blur px-4 py-2.5 rounded-xl text-[11px] font-bold text-gray-700 shadow-sm border border-white/50 cursor-pointer active:scale-95 transition-transform flex items-center gap-2">
-                     <ImagePlus size={14} /> Unggah Foto
-                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                           const url = URL.createObjectURL(e.target.files[0]);
-                           setSelectedSapi({...selectedSapi, foto: url});
-                        }
-                     }} />
-                   </label>
-                 </div>
+                 <p className="text-xs font-semibold text-gray-400">Tidak ada foto</p>
               </div>
             )}
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/40 to-transparent pointer-events-none" />
+            
+            {/* Photo Action Buttons if No Photo */}
+            {!selectedSapi.foto && (
+               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
+                  <div className="mt-20 flex items-center bg-white/20 backdrop-blur-md p-1 rounded-2xl border border-white/30 shadow-xl pointer-events-auto">
+                     <label className="px-4 py-2 rounded-xl text-[11px] font-bold text-white cursor-pointer active:scale-95 transition-transform flex items-center gap-2 hover:bg-white/10">
+                       <Camera size={14} /> Ambil Foto
+                       <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                             const url = URL.createObjectURL(e.target.files[0]);
+                             setSelectedSapi({...selectedSapi, foto: url});
+                          }
+                       }} />
+                     </label>
+                     <div className="w-[1px] h-4 bg-white/30 mx-1" />
+                     <label className="px-4 py-2 rounded-xl text-[11px] font-bold text-white cursor-pointer active:scale-95 transition-transform flex items-center gap-2 hover:bg-white/10">
+                       <ImagePlus size={14} /> Unggah Foto
+                       <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                             const url = URL.createObjectURL(e.target.files[0]);
+                             setSelectedSapi({...selectedSapi, foto: url});
+                          }
+                       }} />
+                     </label>
+                  </div>
+               </div>
+            )}
             
             {/* Top Bar / Back Button */}
             <div className="absolute top-0 left-0 right-0 p-4 pt-6 flex justify-between items-start z-30">
