@@ -1,74 +1,28 @@
 // src/pages/Settings.jsx
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User,
   Globe,
-  Send,
   Key,
   Users,
   Save,
   Loader2,
-  Eye,
-  EyeOff,
   UserPlus,
-  MapPin,
-  Search,
-  Check,
-  AlertTriangle,
   Bell,
-  Smartphone,
+  Camera,
+  LogOut,
+  Trash2,
+  ChevronDown,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
 import axiosInstance from '@/lib/axios';
-import regionData from '@/data/indonesia-region.json';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
+import regionData from '@/data/indonesia-region.json';
 
-const loadLeafletAssets = () => {
-  return new Promise((resolve, reject) => {
-    if (window.L) {
-      resolve(window.L);
-      return;
-    }
 
-    let link = document.querySelector('link[href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"]');
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
-
-    let script = document.querySelector('script[src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"]');
-    if (!script) {
-      script = document.createElement('script');
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.async = true;
-      script.onload = () => {
-        if (window.L) {
-          resolve(window.L);
-        } else {
-          reject(new Error('Leaflet global object L not found'));
-        }
-      };
-      script.onerror = (err) => reject(err);
-      document.body.appendChild(script);
-    } else {
-      const check = setInterval(() => {
-        if (window.L) {
-          clearInterval(check);
-          resolve(window.L);
-        }
-      }, 50);
-      setTimeout(() => {
-        clearInterval(check);
-        if (!window.L) reject(new Error('Timeout loading Leaflet'));
-      }, 10000);
-    }
-  });
-};
 
 export default function Settings() {
   const { lang, setLang } = useSettingsStore();
@@ -82,34 +36,19 @@ export default function Settings() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  // loginMethod: 'phone' = login via WA OTP, 'google' = login via Google
+  // Determined from API response, NOT from phoneNumber state (to avoid the re-render bug)
+  const [loginMethod, setLoginMethod] = useState('phone');
   const [createdAt, setCreatedAt] = useState('--');
-  const [lastLogin, setLastLogin] = useState('--');
 
   // Tab 1: Farm Details
   const [farmName, setFarmName] = useState('');
-  const [farmType, setFarmType] = useState('dairy');
-  const [totalCapacity, setTotalCapacity] = useState('');
-  const [currentCattleCount, setCurrentCattleCount] = useState(0);
-
-  // Address fields — all separate, combined on save
   const [selectedProv, setSelectedProv] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [selectedPostal, setSelectedPostal] = useState('');
-  const [streetAddress, setStreetAddress] = useState('');
 
-  // Coordinates
-  const [latitude, setLatitude] = useState(-2.5);
-  const [longitude, setLongitude] = useState(118.0);
-
-  // Geocoding search state
-  const [geoSearching, setGeoSearching] = useState(false);
-
-  // Tab 2: Notifications
-  const [fcmEnabled, setFcmEnabled] = useState(false);
-  const [notifEstrus, setNotifEstrus] = useState(false);
-  const [notifAnomaly, setNotifAnomaly] = useState(false);
-  const [notifDaily, setNotifDaily] = useState(false);
-  const [notifBreeding, setNotifBreeding] = useState(false);
+  // Tab 2: Notifications — master toggle + channel toggles (local state / mock)
+  const [notifEnabled, setNotifEnabled] = useState(true);
+  const [notifChannels, setNotifChannels] = useState({ whatsapp: true, telegram: false, email: false });
 
   // Tab 3: Security -- PIN
   const [pinNewDigits, setPinNewDigits] = useState('');
@@ -125,181 +64,9 @@ export default function Settings() {
   const [inviteRole, setInviteRole] = useState('worker');
   const [teamLoading, setTeamLoading] = useState(false);
 
-  const inputClass = "w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#009254]/20 focus:border-[#009254] transition-all shadow-sm";
+  const inputClass = "w-full min-h-[46px] px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#009254]/20 focus:border-[#009254] transition-all shadow-sm";
   const labelClass = "block text-[11px] font-black text-gray-500 mb-2 uppercase tracking-wider";
 
-  const mapContainerRef = useRef(null);
-  const mapRef = useRef(null);
-  const markerRef = useRef(null);
-
-  // ─── Derived helpers ─────────────────────────────────────────────────────────
-
-  const currentProv = regionData.find(p => p.id === selectedProv);
-  const currentCity = currentProv?.cities.find(c => c.id === selectedCity);
-
-  /** Build a human-readable address string from current dropdown + street state */
-  const buildAddressString = useCallback(() => {
-    const parts = [
-      streetAddress,
-      currentCity?.nama,
-      currentProv?.nama,
-      selectedPostal,
-      'Indonesia',
-    ].filter(Boolean);
-    return parts.join(', ');
-  }, [streetAddress, currentCity, currentProv, selectedPostal]);
-
-  // ─── Map init (only when activeTab === 'profile') ─────────────────────────────
-  useEffect(() => {
-    if (activeTab !== 'profile') {
-      // Destroy map when leaving tab so it re-inits cleanly on return
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-        markerRef.current = null;
-      }
-      return;
-    }
-
-    let isMounted = true;
-
-    const initMap = async () => {
-      try {
-        await loadLeafletAssets();
-        if (!isMounted || !mapContainerRef.current) return;
-        if (mapRef.current) return; // already inited
-
-        const isDark = document.documentElement.classList.contains('dark');
-        const tileUrl = isDark
-          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-          : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-
-        const map = window.L.map(mapContainerRef.current).setView([latitude, longitude], 13);
-        window.L.tileLayer(tileUrl, { attribution: '© OpenStreetMap contributors' }).addTo(map);
-
-        const marker = window.L.marker([latitude, longitude], { draggable: true }).addTo(map);
-
-        // ✅ Drag end → reverse geocode → fill street field
-        marker.on('dragend', async () => {
-          const pos = marker.getLatLng();
-          setLatitude(parseFloat(pos.lat.toFixed(6)));
-          setLongitude(parseFloat(pos.lng.toFixed(6)));
-          await reverseGeocode(pos.lat, pos.lng);
-        });
-
-        // ✅ Map click → move marker + reverse geocode
-        map.on('click', async (e) => {
-          const pos = e.latlng;
-          marker.setLatLng(pos);
-          setLatitude(parseFloat(pos.lat.toFixed(6)));
-          setLongitude(parseFloat(pos.lng.toFixed(6)));
-          await reverseGeocode(pos.lat, pos.lng);
-        });
-
-        mapRef.current = map;
-        markerRef.current = marker;
-      } catch (err) {
-        console.error('Failed to initialize Leaflet Map:', err);
-      }
-    };
-
-    // Small delay so the tab panel is visible before Leaflet measures the container
-    const t = setTimeout(initMap, 80);
-    return () => {
-      isMounted = false;
-      clearTimeout(t);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
-  // ─── Sync marker position whenever lat/lng state changes ──────────────────────
-  useEffect(() => {
-    if (!mapRef.current || !markerRef.current) return;
-    const cur = markerRef.current.getLatLng();
-    if (Math.abs(cur.lat - latitude) > 0.00001 || Math.abs(cur.lng - longitude) > 0.00001) {
-      markerRef.current.setLatLng([latitude, longitude]);
-      mapRef.current.setView([latitude, longitude]);
-    }
-  }, [latitude, longitude]);
-
-  // ─── Reverse geocode helper (map → text fields) ───────────────────────────────
-  const reverseGeocode = async (lat, lng) => {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
-      );
-      const data = await res.json();
-      if (!data?.address) return;
-
-      const addr = data.address;
-
-      // Try to match province
-      const provName = addr.state || addr.province || '';
-      const matchedProv = regionData.find(p =>
-        p.nama.toLowerCase().includes(provName.toLowerCase()) ||
-        provName.toLowerCase().includes(p.nama.toLowerCase())
-      );
-      if (matchedProv) {
-        setSelectedProv(matchedProv.id);
-
-        // Try to match city
-        const cityName = addr.city || addr.regency || addr.county || addr.town || '';
-        const matchedCity = matchedProv.cities.find(c =>
-          c.nama.toLowerCase().includes(cityName.toLowerCase()) ||
-          cityName.toLowerCase().includes(c.nama.toLowerCase())
-        );
-        if (matchedCity) {
-          setSelectedCity(matchedCity.id);
-          // Try to match postal code
-          const pc = addr.postcode;
-          if (pc && matchedCity.postalCodes.includes(pc)) {
-            setSelectedPostal(pc);
-          } else if (matchedCity.postalCodes.length > 0) {
-            setSelectedPostal(matchedCity.postalCodes[0]);
-          }
-        }
-      }
-
-      // Fill street address from Nominatim response
-      const road = addr.road || addr.pedestrian || addr.neighbourhood || '';
-      const village = addr.village || addr.suburb || '';
-      const district = addr.district || addr.subdistrict || '';
-      const streetParts = [road, village, district].filter(Boolean);
-      if (streetParts.length > 0) {
-        setStreetAddress(streetParts.join(', '));
-      }
-    } catch (err) {
-      console.warn('Reverse geocode failed', err);
-    }
-  };
-
-  // ─── Forward geocode: text → map (debounced, triggered by button) ─────────────
-  const handleSearchOnMap = async () => {
-    const query = buildAddressString();
-    if (!query || query === 'Indonesia') {
-      toast.error(lang === 'id' ? 'Isi detail alamat terlebih dahulu.' : 'Please fill in address details first.');
-      return;
-    }
-    setGeoSearching(true);
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
-      );
-      const data = await res.json();
-      if (data?.length > 0) {
-        const { lat, lon } = data[0];
-        setLatitude(parseFloat(parseFloat(lat).toFixed(6)));
-        setLongitude(parseFloat(parseFloat(lon).toFixed(6)));
-        toast.success(lang === 'id' ? 'Lokasi ditemukan & pin dipindahkan!' : 'Location found and pin moved!');
-      } else {
-        toast.error(lang === 'id' ? 'Lokasi tidak ditemukan. Coba perjelas alamat.' : 'Location not found. Try clarifying address.');
-      }
-    } catch {
-      toast.error(lang === 'id' ? 'Gagal mencari lokasi. Cek koneksi internet.' : 'Failed to search location. Check internet connection.');
-    } finally {
-      setGeoSearching(false);
-    }
-  };
 
   // ─── Load profile on mount ────────────────────────────────────────────────────
   useEffect(() => {
@@ -319,63 +86,28 @@ export default function Settings() {
         setFullName(u.full_name || '');
         setEmail(u.email || '');
         setPhoneNumber(u.phone_number || '');
+        // Determine login method from API: if user has a phone_number, they logged in via WA OTP
+        setLoginMethod(u.phone_number ? 'phone' : 'google');
         setCreatedAt(u.created_at ? new Date(u.created_at).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { dateStyle: 'long' }) : '--');
-        setLastLogin(u.last_login_at ? new Date(u.last_login_at).toLocaleString(lang === 'id' ? 'id-ID' : 'en-US') : '--');
 
         const f = data.farm || {};
         setFarmName(f.farm_name || '');
-        setFarmType(f.farm_type || 'dairy');
-        setTotalCapacity(f.total_cattle_capacity || '');
-        setCurrentCattleCount(data.cattle_count || 0);
-        if (f.latitude) setLatitude(f.latitude);
-        if (f.longitude) setLongitude(f.longitude);
-
-        // Restore address dropdowns from saved farm_location string if needed
-        if (f.street_address) setStreetAddress(f.street_address);
         if (f.province_id) setSelectedProv(f.province_id);
         if (f.city_id) setSelectedCity(f.city_id);
-        if (f.postal_code) setSelectedPostal(f.postal_code);
-
+        if (f.kecamatan) setKecamatan(f.kecamatan);
         profileLoaded = true;
       }
     } catch (err) {
       console.warn('Profile fetch failed, loading offline defaults', err);
       setFullName(user?.full_name || 'Iwan Prianto');
       setEmail(user?.email || 'wan@farm.com');
+      setLoginMethod(user?.phone_number ? 'phone' : 'google');
+      setPhoneNumber(user?.phone_number || '');
       setCreatedAt(new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { dateStyle: 'long' }));
-      setLastLogin(new Date().toLocaleString(lang === 'id' ? 'id-ID' : 'en-US'));
       setFarmName('Peternakan DeAraf');
-      setStreetAddress('Jalan Ahmad Yani');
-      setTotalCapacity(150);
-      setCurrentCattleCount(0);
     }
 
-    // 2. Fetch FCM Settings (Mock)
-    try {
-      // Logic for FCM token checking would go here
-      setFcmEnabled(true);
-    } catch (err) {
-      console.warn('FCM settings fetch failed', err);
-    }
-
-    // 3. Fetch Notification Preferences
-    try {
-      const notifRes = await axiosInstance.get('/user/notification-preferences');
-      if (notifRes.data) {
-        setNotifEstrus(notifRes.data.notif_estrus);
-        setNotifAnomaly(notifRes.data.notif_anomaly);
-        setNotifDaily(notifRes.data.notif_daily);
-      }
-    } catch (err) {
-      console.warn('Notification preferences fetch failed', err);
-      if (!profileLoaded) {
-        setNotifEstrus(true);
-        setNotifAnomaly(true);
-        setNotifDaily(true);
-      }
-    }
-
-    // 4. Load Team Members (Owners/Admins only)
+    // 2. Load Team Members (Owners/Admins only)
     try {
       if (['owner', 'admin'].includes(user?.role)) {
         await loadTeamMembers();
@@ -412,16 +144,8 @@ export default function Settings() {
         axiosInstance.put('/profile', { full_name: fullName, email, phone_number: phoneNumber }),
         axiosInstance.put('/profile/farm', {
           farm_name: farmName,
-          farm_type: farmType,
-          total_cattle_capacity: totalCapacity ? parseInt(totalCapacity) : null,
-          latitude,
-          longitude,
-          street_address: streetAddress,
-          province_id: selectedProv,
-          city_id: selectedCity,
-          postal_code: selectedPostal,
-          // Composed display string for legacy farm_location field
-          farm_location: buildAddressString(),
+          province_id: selectedProv || null,
+          city_id: selectedCity || null,
         }),
       ]);
       toast.success(lang === 'id' ? 'Profil & Detail Peternakan berhasil diperbarui!' : 'Profile & Farm Details successfully updated!');
@@ -433,36 +157,10 @@ export default function Settings() {
     }
   };
 
-  // --- Push Notification Handler ---
-  const handleEnableFCM = async () => {
-    setLoading(true);
-    try {
-      // Simulate requesting notification permission
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setFcmEnabled(true);
-      toast.success(lang === 'id' ? 'Notifikasi perangkat diaktifkan!' : 'Device notifications enabled!');
-    } catch {
-      toast.error(lang === 'id' ? 'Gagal mengaktifkan notifikasi.' : 'Failed to enable notifications.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTogglePreference = async (type, checked) => {
-    const updated = {
-      notif_estrus: type === 'estrus' ? checked : notifEstrus,
-      notif_anomaly: type === 'anomaly' ? checked : notifAnomaly,
-      notif_daily: type === 'daily' ? checked : notifDaily,
-    };
-    if (type === 'estrus') setNotifEstrus(checked);
-    if (type === 'anomaly') setNotifAnomaly(checked);
-    if (type === 'daily') setNotifDaily(checked);
-    try {
-      await axiosInstance.put('/user/notification-preferences', updated);
-      toast.success(lang === 'id' ? 'Preferensi notifikasi diperbarui!' : 'Notification preferences updated!');
-    } catch {
-      toast.error(lang === 'id' ? 'Gagal menyimpan preferensi.' : 'Failed to save notification preferences.');
-    }
+  // --- Notification Toggle (local mock) ---
+  const handleToggleNotif = () => {
+    setNotifEnabled(prev => !prev);
+    toast.success(lang === 'id' ? 'Preferensi notifikasi diperbarui!' : 'Notification preference updated!');
   };
 
   const handleSavePIN = async (e) => {
@@ -590,195 +288,136 @@ export default function Settings() {
           {activeTab === 'profile' && (
             <form onSubmit={handleSaveGeneral} className="space-y-8 animate-in fade-in duration-300">
 
-              {/* Profile Card */}
-              <div className="flex items-center gap-4 p-5 md:p-6 bg-white rounded-3xl border border-gray-200 shadow-sm mb-6">
-                <div
-                  className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white text-xl md:text-2xl font-black shrink-0 bg-[#009254]"
-                >
+              {/* ── Avatar + Name (centered) ── */}
+              <div className="flex flex-col items-center gap-3 mb-8">
+                <div className="relative w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl font-black bg-[#009254] cursor-pointer overflow-hidden group shadow-lg ring-4 ring-[#009254]/20">
                   {fullName ? fullName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : '--'}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-7 h-7 text-white" />
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-base md:text-lg font-extrabold text-gray-900 truncate">{fullName || (lang === 'id' ? 'Operator' : 'Operator')}</p>
-                  <p className="text-sm text-gray-500 truncate mt-0.5">{email || 'admin@farm.com'}</p>
+                <div className="text-center">
+                  <p className="text-2xl font-extrabold" style={{ background: 'linear-gradient(135deg, #009254, #00c47a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    {fullName || '—'}
+                  </p>
+                  <span className="inline-block mt-1 px-3 py-0.5 text-[10px] font-bold rounded-full bg-[#009254]/10 text-[#009254] border border-[#009254]/20 uppercase tracking-widest">
+                    {user?.role === 'owner' ? '👑 Pemilik Peternakan' : user?.role === 'admin' ? '🛠️ Admin' : '🐄 Peternak'}
+                  </span>
                 </div>
               </div>
 
-              {/* ── Section: Personal Information ── */}
               <section className="space-y-4">
-                <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-2 mb-4 flex items-center gap-2">
-                  <User className="w-4 h-4 text-[#009254]" /> {t.settings_personal_info}
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className={labelClass}>{t.settings_full_name}</label>
-                    <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className={inputClass} placeholder={lang === 'id' ? 'Nama Lengkap Anda' : 'Your Full Name'} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>{t.settings_email}</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className={inputClass} placeholder="nama@email.com" />
-                  </div>
-                  <div>
-                    <label className={labelClass}>{lang === 'id' ? 'NOMOR HP' : 'PHONE NUMBER'}</label>
-                    <input type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className={inputClass} placeholder="081234567890" />
-                  </div>
+                <div>
+                  <label className={labelClass}>{t.settings_full_name}</label>
+                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className={inputClass} placeholder={lang === 'id' ? 'Nama Lengkap Anda' : 'Your Full Name'} />
                 </div>
+
+                {/* Identity login — keyed on loginMethod, NOT phoneNumber, to avoid re-render bug */}
+                {loginMethod === 'phone' ? (
+                  <div>
+                    <label className={labelClass}>{lang === 'id' ? 'NOMOR WHATSAPP' : 'WHATSAPP NUMBER'}</label>
+                    <div className={`${inputClass} flex items-center justify-between bg-gray-50 cursor-default`}>
+                      <span className="text-gray-700">{phoneNumber || '—'}</span>
+                      <button type="button" className="text-[10px] font-bold text-[#009254] hover:text-[#007b46] underline underline-offset-2 shrink-0 ml-3 transition-colors">
+                        {lang === 'id' ? 'Ganti Nomor' : 'Change'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className={labelClass}>{lang === 'id' ? 'EMAIL' : 'EMAIL'}</label>
+                      <div className={`${inputClass} bg-gray-50 cursor-default text-gray-600`}>{email || '—'}</div>
+                    </div>
+                    <div>
+                      <label className={labelClass}>{lang === 'id' ? 'NOMOR HP' : 'PHONE NUMBER'}</label>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        value={phoneNumber}
+                        onChange={e => { const v = e.target.value.replace(/\D/g, ''); setPhoneNumber(v); }}
+                        className={inputClass}
+                        placeholder="081234567890"
+                        maxLength={15}
+                      />
+                    </div>
+                  </div>
+                )}
               </section>
 
               {/* ── Section: Farm Details ── */}
-              <section className="space-y-4 pt-6">
-                <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-2 mb-4 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-[#009254]" /> {t.settings_farm_details}
+              <div className="mt-8 p-5 md:p-6 rounded-3xl border border-[#009254]/20 bg-[#f2fcf5] relative overflow-hidden">
+                <Globe className="absolute -right-4 -bottom-4 w-32 h-32 md:w-40 md:h-40 text-[#009254] opacity-5 pointer-events-none" />
+                
+                <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#009254] mb-6 flex items-center gap-2 relative z-10">
+                  <Globe className="w-4 h-4 md:w-5 md:h-5" /> {t.settings_farm_details}
                 </h3>
 
-                <div className="space-y-4">
+                <div className="space-y-4 relative z-10">
+                  {/* Nama Peternakan */}
                   <div>
                     <label className={labelClass}>{t.settings_farm_name}</label>
                     <input type="text" value={farmName} onChange={e => setFarmName(e.target.value)} placeholder={lang === 'id' ? 'Peternakan Jaya Abadi' : 'Jaya Abadi Farm'} className={inputClass} />
                   </div>
-                  <div>
-                    <label className={labelClass}>{t.settings_farm_type}</label>
-                    <select value={farmType} onChange={e => setFarmType(e.target.value)} className={inputClass}>
-                      <option value="dairy">{t.settings_type_dairy}</option>
-                      <option value="beef">{t.settings_type_beef}</option>
-                      <option value="breeding">{t.settings_type_breeding}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelClass}>{t.settings_farm_capacity}</label>
-                    <input type="number" value={totalCapacity} onChange={e => setTotalCapacity(e.target.value)} placeholder="150" className={inputClass} />
-                  </div>
-                </div>
 
-                {/* Capacity bar */}
-                <div className="p-5 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between gap-4 mt-2">
+                  {/* Provinsi */}
                   <div>
-                    <p className="text-[10px] text-gray-500 font-extrabold uppercase tracking-wider">{t.settings_total_registered}</p>
-                    <p className="text-3xl font-black text-[#009254] mt-0.5">{currentCattleCount} <span className="text-sm font-bold text-gray-600">{lang === 'id' ? 'sapi' : 'cows'}</span></p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest block">{t.settings_capacity_used}</span>
-                    <span className="text-base font-black text-gray-900 block mt-1">
-                      {totalCapacity ? Math.round((currentCattleCount / totalCapacity) * 100) : 0}%
-                    </span>
-                  </div>
-                </div>
-
-                {/* ── Address block ── */}
-                <div className="space-y-4 pt-6">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-gray-900 border-b border-gray-100 pb-2 mb-4 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#009254]" /> {t.settings_farm_location}
-                  </h3>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className={labelClass}>{t.settings_province}</label>
+                    <label className={labelClass}>{lang === 'id' ? 'PROVINSI' : 'PROVINCE'}</label>
+                    <div className="relative">
                       <select
                         value={selectedProv}
-                        onChange={e => { setSelectedProv(e.target.value); setSelectedCity(''); setSelectedPostal(''); }}
-                        className={inputClass}
+                        onChange={e => { setSelectedProv(e.target.value); setSelectedCity(''); }}
+                        className={`${inputClass} appearance-none pr-10`}
                       >
                         <option value="">{lang === 'id' ? 'Pilih Provinsi...' : 'Select Province...'}</option>
                         {regionData.map(p => <option key={p.id} value={p.id}>{p.nama}</option>)}
                       </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                     </div>
-                    <div>
-                      <label className={labelClass}>{t.settings_city}</label>
+                  </div>
+
+                  {/* Kota / Kabupaten */}
+                  <div>
+                    <label className={labelClass}>{lang === 'id' ? 'KOTA / KABUPATEN' : 'CITY / REGENCY'}</label>
+                    <div className="relative">
                       <select
                         value={selectedCity}
-                        onChange={e => { setSelectedCity(e.target.value); setSelectedPostal(''); }}
+                        onChange={e => setSelectedCity(e.target.value)}
                         disabled={!selectedProv}
-                        className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        className={`${inputClass} appearance-none pr-10 disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
-                        <option value="">{lang === 'id' ? 'Pilih Kota/Kab...' : 'Select City/Regency...'}</option>
-                        {currentProv?.cities.map(c => <option key={c.id} value={c.id}>{c.nama}</option>)}
+                        <option value="">{lang === 'id' ? 'Pilih Kota/Kabupaten...' : 'Select City/Regency...'}</option>
+                        {regionData.find(p => p.id === selectedProv)?.cities.map(c => (
+                          <option key={c.id} value={c.id}>{c.nama}</option>
+                        ))}
                       </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                     </div>
-                  </div>
-
-                  <div className="space-y-4 mt-4">
-                    <div>
-                      <label className={labelClass}>{t.settings_street_address}</label>
-                      <input
-                        type="text"
-                        value={streetAddress}
-                        onChange={e => setStreetAddress(e.target.value)}
-                        placeholder={lang === 'id' ? 'Jalan, RT/RW, Dusun, Kelurahan, Kecamatan...' : 'Street, RT/RW, Sub-district, District...'}
-                        className={inputClass}
-                      />
-                    </div>
-                    <div>
-                      <label className={labelClass}>{t.settings_postal_code}</label>
-                      <select
-                        value={selectedPostal}
-                        onChange={e => setSelectedPostal(e.target.value)}
-                        disabled={!selectedCity}
-                        className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        <option value="">—</option>
-                        {currentCity?.postalCodes.map(pc => <option key={pc} value={pc}>{pc}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Search button */}
-                  <button
-                    type="button"
-                    onClick={handleSearchOnMap}
-                    disabled={geoSearching}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:border-[#009254] hover:text-[#009254] text-xs font-bold text-gray-700 rounded-xl transition-all shadow-sm disabled:opacity-50 mt-2"
-                  >
-                    {geoSearching
-                      ? <><Loader2 size={16} className="animate-spin" /> {t.settings_searching_map}</>
-                      : <><Search size={16} /> {t.settings_search_map}</>
-                    }
-                  </button>
-
-                  {/* Coordinates — compact 2-col */}
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <label className={labelClass}>{t.settings_latitude}</label>
-                      <div className="relative">
-                        <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#009254]" />
-                        <input type="number" step="any" value={latitude} onChange={e => setLatitude(e.target.value)} className={`${inputClass} pl-9`} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className={labelClass}>{t.settings_longitude}</label>
-                      <div className="relative">
-                        <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input type="number" step="any" value={longitude} onChange={e => setLongitude(e.target.value)} className={`${inputClass} pl-9`} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="relative h-[250px] mt-4 rounded-xl overflow-hidden border border-gray-200 shadow-sm z-0">
-                    <div ref={mapContainerRef} className="absolute inset-0 z-0" />
-                  </div>
-                  <p className="text-[10px] text-gray-400 text-center mt-2 font-medium">
-                    {t.settings_map_help}
-                  </p>
-                </div>
-              </section>
-
-              {/* Account Created & Last Login */}
-              <div className="pt-6 mt-8 border-t border-gray-200">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t.settings_acc_created}</p>
-                    <p className="text-sm font-extrabold text-gray-900 mt-1">{createdAt}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t.settings_last_login}</p>
-                    <p className="text-sm font-extrabold text-gray-900 mt-1">{lastLogin}</p>
                   </div>
                 </div>
               </div>
 
               {/* Save button (Full width sticky-like at the bottom) */}
-              <div className="pt-8 pb-4">
+              <div className="pt-8">
                 <button type="submit" className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#009254] hover:bg-[#007b46] text-white rounded-2xl text-sm font-bold shadow-md transition-all active:scale-95">
                   <Save className="w-5 h-5" /> {t.settings_save_changes}
                 </button>
+              </div>
+
+              {/* Account Created & Danger Zone */}
+              <div className="pt-8 mt-8 border-t border-gray-100 text-center space-y-6">
+                <p className="text-xs font-bold text-gray-400">
+                  {lang === 'id' ? 'Account Created: ' : 'Account Created: '} {createdAt}
+                </p>
+                
+                <div className="flex justify-center items-center gap-8">
+                  <button type="button" className="text-red-500 hover:text-red-700 text-sm font-bold flex items-center gap-2 transition-colors">
+                    <Trash2 className="w-4 h-4" /> {lang === 'id' ? 'Hapus Akun' : 'Delete Account'}
+                  </button>
+                  <button type="button" className="text-gray-500 hover:text-gray-800 text-sm font-bold flex items-center gap-2 transition-colors">
+                    <LogOut className="w-4 h-4" /> {lang === 'id' ? 'Log Out' : 'Log Out'}
+                  </button>
+                </div>
               </div>
             </form>
           )}
@@ -788,7 +427,7 @@ export default function Settings() {
               TAB 2 — NOTIFICATIONS
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'notifications' && (
-            <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="space-y-5 animate-in fade-in duration-300">
               <div>
                 <h2 className="text-lg font-bold text-[var(--text-1)] font-display border-b border-[var(--border)] pb-2 mb-2">
                   {lang === 'id' ? 'Pengaturan Notifikasi' : 'Notification Settings'}
@@ -798,80 +437,75 @@ export default function Settings() {
                 </p>
               </div>
 
-              {/* Push Notification Card */}
-              <div className="p-5 bg-white border border-gray-200 rounded-3xl shadow-sm space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-2xl ${fcmEnabled ? 'bg-[#009254]/10 text-[#009254]' : 'bg-gray-100 text-gray-500'}`}>
-                    <Smartphone className="w-6 h-6" />
+              {/* Master toggle */}
+              <div className="p-5 bg-white border border-gray-200 rounded-3xl shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-2xl shrink-0 ${notifEnabled ? 'bg-[#009254]/10 text-[#009254]' : 'bg-gray-100 text-gray-400'}`}>
+                      <Bell className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900">
+                        {lang === 'id' ? 'Aktifkan Notifikasi' : 'Enable Notifications'}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                        {lang === 'id'
+                          ? 'Dapatkan peringatan penting seperti waktu IB atau ternak sakit.'
+                          : 'Get important alerts like insemination time or sick livestock.'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-bold text-gray-900">
-                      {lang === 'id' ? 'Notifikasi Perangkat' : 'Device Notifications'}
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                      {lang === 'id' 
-                        ? 'Aktifkan agar HERD bisa mengirimkan peringatan langsung ke layar HP Anda (seperti pesan WhatsApp).' 
-                        : 'Enable this so HERD can send alerts directly to your phone screen.'}
-                    </p>
-                  </div>
+                  <Toggle checked={notifEnabled} onChange={handleToggleNotif} />
                 </div>
-
-                {!fcmEnabled ? (
-                  <button
-                    type="button"
-                    onClick={handleEnableFCM}
-                    className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-[#009254] hover:bg-[#007b46] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95"
-                  >
-                    {lang === 'id' ? 'Aktifkan Notifikasi' : 'Enable Notifications'}
-                  </button>
-                ) : (
-                  <div className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-gray-100 text-[#009254] rounded-xl text-xs font-bold border border-gray-200">
-                    <Check className="w-4 h-4" /> {lang === 'id' ? 'Notifikasi Perangkat Aktif' : 'Device Notifications Enabled'}
-                  </div>
-                )}
               </div>
 
-              {/* Notification Preferences */}
-              <div className="pt-6 border-t border-[var(--border)] space-y-4">
-                <h3 className="text-sm font-bold text-[var(--text-1)] font-display">{t.settings_notif_pref}</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[
-                    { key: 'estrus', label: lang === 'id' ? 'Peringatan Estrus' : 'Estrus Alerts', badge: lang === 'id' ? 'Push & Email' : 'Push & Email', badgeColor: 'emerald', checked: notifEstrus },
-                    { key: 'anomaly', label: lang === 'id' ? 'Peringatan Anomali' : 'Anomaly Alerts', badge: lang === 'id' ? 'Push Saja' : 'Push Only', badgeColor: 'amber', checked: notifAnomaly },
-                    { key: 'daily', label: lang === 'id' ? 'Ringkasan Harian' : 'Daily Summary', badge: lang === 'id' ? 'Push & Email' : 'Push & Email', badgeColor: 'blue', checked: notifDaily },
-                    { key: 'breeding', label: lang === 'id' ? 'Pengingat Perkawinan' : 'Breeding Reminders', badge: lang === 'id' ? 'Kalender & Email' : 'Calendar & Email', badgeColor: 'purple', checked: notifBreeding },
-                  ].map(({ key, label, badge, badgeColor, checked }) => {
-                    const badgeStyles = {
-                      emerald: { bg: 'var(--accent-dim)', text: 'var(--accent)', border: 'var(--accent-border)' },
-                      amber: { bg: 'var(--amber-dim)', text: 'var(--amber)', border: 'rgba(184, 122, 10, 0.2)' },
-                      blue: { bg: 'var(--blue-dim)', text: 'var(--blue)', border: 'rgba(26, 96, 145, 0.2)' },
-                      purple: { bg: 'rgba(168, 85, 247, 0.08)', text: 'rgb(168, 85, 247)', border: 'rgba(168, 85, 247, 0.2)' },
-                    }[badgeColor] || { bg: 'var(--accent-dim)', text: 'var(--accent)', border: 'var(--accent-border)' };
+              {/* Channel toggles */}
+              <div className="p-5 bg-white border border-gray-200 rounded-3xl shadow-sm space-y-1">
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-wider mb-4">
+                  {lang === 'id' ? 'Kirim Notifikasi Ke' : 'Send Notifications Via'}
+                </p>
 
-                    return (
-                      <div key={key} className="flex items-center justify-between p-3.5 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] shadow-sm">
-                        <div>
-                          <span className="text-xs font-bold text-[var(--text-1)] block">{label}</span>
-                          <span
-                            style={{
-                              backgroundColor: badgeStyles.bg,
-                              color: badgeStyles.text,
-                              borderColor: badgeStyles.border,
-                              borderWidth: '1px',
-                              borderStyle: 'solid',
-                            }}
-                            className="text-[9px] font-bold mt-1.5 inline-block px-2.5 py-0.5 rounded-full"
-                          >
-                            {badge}
-                          </span>
-                        </div>
-                        <Toggle
-                          checked={checked}
-                          onChange={e => key === 'breeding' ? setNotifBreeding(e.target.checked) : handleTogglePreference(key, e.target.checked)}
-                        />
-                      </div>
-                    );
-                  })}
+                {/* WhatsApp */}
+                <div className={`flex items-center justify-between py-3 px-1 border-b border-gray-100 transition-opacity ${!notifEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#25D366' }}>
+                      {/* WhatsApp icon SVG */}
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.558 4.121 1.535 5.849L.057 23.617a.75.75 0 0 0 .92.92l5.799-1.487A11.944 11.944 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.956 9.956 0 0 1-5.143-1.427l-.369-.214-3.797.974.997-3.704-.235-.38A9.953 9.953 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">WhatsApp</p>
+                      <p className="text-[10px] text-gray-400">{lang === 'id' ? 'Pesan langsung ke nomor WA' : 'Direct message to WA number'}</p>
+                    </div>
+                  </div>
+                  <Toggle checked={notifChannels.whatsapp} onChange={() => setNotifChannels(p => ({ ...p, whatsapp: !p.whatsapp }))} />
+                </div>
+
+                {/* Telegram */}
+                <div className={`flex items-center justify-between py-3 px-1 border-b border-gray-100 transition-opacity ${!notifEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#229ED9' }}>
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">Telegram</p>
+                      <p className="text-[10px] text-gray-400">{lang === 'id' ? 'Notif via bot Telegram HERD' : 'Notifications via HERD Telegram bot'}</p>
+                    </div>
+                  </div>
+                  <Toggle checked={notifChannels.telegram} onChange={() => setNotifChannels(p => ({ ...p, telegram: !p.telegram }))} />
+                </div>
+
+                {/* Email */}
+                <div className={`flex items-center justify-between py-3 px-1 transition-opacity ${!notifEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#EA4335' }}>
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">Email</p>
+                      <p className="text-[10px] text-gray-400">{lang === 'id' ? 'Ringkasan ke inbox email kamu' : 'Summary to your email inbox'}</p>
+                    </div>
+                  </div>
+                  <Toggle checked={notifChannels.email} onChange={() => setNotifChannels(p => ({ ...p, email: !p.email }))} />
                 </div>
               </div>
             </div>
@@ -977,10 +611,16 @@ export default function Settings() {
                   <input type="text" value={inviteName} onChange={e => setInviteName(e.target.value)} placeholder={lang === 'id' ? 'Nama Lengkap' : 'Full Name'} required className={inputClass} />
                   <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder={lang === 'id' ? 'Alamat Email' : 'Email Address'} required className={inputClass} />
                   <div className="flex gap-2">
-                    <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className={inputClass}>
-                      <option value="worker">{t.settings_role_worker} / Operator</option>
-                      <option value="admin">Administrator</option>
-                    </select>
+                    <div>
+                      <label className={labelClass}>{lang === 'id' ? 'PERAN' : 'ROLE'}</label>
+                      <div className="relative">
+                        <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className={`${inputClass} appearance-none pr-10`}>
+                          <option value="worker">{lang === 'id' ? 'Pekerja Kandang (Worker)' : 'Farm Worker'}</option>
+                          <option value="admin">{lang === 'id' ? 'Admin / Manajer' : 'Admin / Manager'}</option>
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                      </div>
+                    </div>
                     <button type="submit" disabled={teamLoading} className="px-4 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center shrink-0">
                       {t.settings_invite_send}
                     </button>

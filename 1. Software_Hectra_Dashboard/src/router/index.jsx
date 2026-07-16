@@ -8,7 +8,7 @@ const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const SensorData = lazy(() => import('@/pages/SensorData'));
 const EstrusPrediction = lazy(() => import('@/pages/EstrusPrediction'));
 const Recommendations = lazy(() => import('@/pages/Recommendations'));
-const BehaviorAnalytics = lazy(() => import('@/pages/BehaviorAnalytics'));
+
 const Notifications = lazy(() => import('@/pages/Notifications'));
 const Settings = lazy(() => import('@/pages/Settings'));
 const ManajemenTernak = lazy(() => import('@/pages/ManajemenTernak'));
@@ -67,10 +67,7 @@ export const router = createBrowserRouter([
         path: 'recommendations',
         element: withSuspense(Recommendations),
       },
-      {
-        path: 'behavior-analytics',
-        element: withSuspense(BehaviorAnalytics),
-      },
+
       {
         path: 'notifications',
         element: withSuspense(Notifications),

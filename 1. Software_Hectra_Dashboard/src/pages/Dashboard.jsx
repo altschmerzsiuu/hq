@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Scan, Plus, Cpu, FileText,
   Thermometer, AlertTriangle, BatteryWarning, CheckCircle2,
-  Sparkles, Wifi, Zap, Calendar, X
+  Sparkles, Wifi, Zap, Calendar, X, Check, ChevronRight, Activity, Syringe, ClipboardList, ThermometerSun, Target
 } from 'lucide-react';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
@@ -131,12 +131,35 @@ function QAButton({ icon: Icon, label, onClick }) {
   );
 }
 
+// ── SQUARE QUICK ACTION BUTTON ───────────────────────────────
+function SquareQAButton({ icon: Icon, label, color = "var(--accent)", onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex-1 flex flex-col items-center justify-center gap-2 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm transition-all group"
+      style={{
+        boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+        cursor: 'pointer'
+      }}
+    >
+      <Icon size={24} style={{ color }} className="mb-1" />
+      <span style={{
+        fontSize: '11px', color: 'var(--text-1)',
+        fontFamily: 'DM Sans, sans-serif', fontWeight: 700, textAlign: 'center',
+        lineHeight: 1.2
+      }}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
 // ── INTELLIGENCE CARD ────────────────────────────────────────
 function IntelCard({ urgency, icon: Icon, title, sub, conf, time, recommendation, t }) {
   const colorMap = {
-    critical:  { color: 'var(--red)',   bg: 'var(--red-dim)',   bar: 'intel-bar-red',   badge: t.intel_critical_badge },
-    monitor:   { color: 'var(--amber)', bg: 'var(--amber-dim)', bar: 'intel-bar-amber', badge: t.intel_monitor_badge },
-    scheduled: { color: 'var(--accent)',bg: 'var(--accent-dim)',bar: 'intel-bar-green', badge: t.intel_sched_badge },
+    critical: { color: 'var(--red)', bg: 'var(--red-dim)', bar: 'intel-bar-red', badge: t.intel_critical_badge },
+    monitor: { color: 'var(--amber)', bg: 'var(--amber-dim)', bar: 'intel-bar-amber', badge: t.intel_monitor_badge },
+    scheduled: { color: 'var(--accent)', bg: 'var(--accent-dim)', bar: 'intel-bar-green', badge: t.intel_sched_badge },
   };
   const { color, bg, bar, badge } = colorMap[urgency] || colorMap.monitor;
 
@@ -184,10 +207,10 @@ function IntelCard({ urgency, icon: Icon, title, sub, conf, time, recommendation
         </p>
 
         {recommendation && (
-          <p style={{ 
-            fontSize: '11px', 
-            color: 'var(--accent)', 
-            fontFamily: 'Inter, sans-serif', 
+          <p style={{
+            fontSize: '11px',
+            color: 'var(--accent)',
+            fontFamily: 'Inter, sans-serif',
             fontWeight: 600,
             marginTop: '8px',
             background: 'var(--accent-dim)',
@@ -219,9 +242,9 @@ function IntelCard({ urgency, icon: Icon, title, sub, conf, time, recommendation
 // ── STATUS BADGE ─────────────────────────────────────────────
 function StatusBadge({ status, t }) {
   const map = {
-    normal:  { color: 'var(--accent)', bg: 'var(--accent-dim)', label: t.herd_normal },
-    estrus:  { color: 'var(--red)',    bg: 'var(--red-dim)',    label: t.herd_estrus },
-    monitor: { color: 'var(--amber)',  bg: 'var(--amber-dim)',  label: t.herd_monitor },
+    normal: { color: 'var(--accent)', bg: 'var(--accent-dim)', label: t.herd_normal },
+    estrus: { color: 'var(--red)', bg: 'var(--red-dim)', label: t.herd_estrus },
+    monitor: { color: 'var(--amber)', bg: 'var(--amber-dim)', label: t.herd_monitor },
   };
   const { color, bg, label } = map[status] || map.normal;
   return (
@@ -232,8 +255,209 @@ function StatusBadge({ status, t }) {
     }}>{label}</span>
   );
 }
+// ── RECOMMENDATION CARD ──────────────────────────────────────
+function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, message }) {
+  const actionName = title.split('—')[1]?.trim() || title;
+  const displayTitle = `${name} | ${id}`;
 
-// ── MAIN COMPONENT ───────────────────────────────────────────
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:border-[#009254]/30 transition-all cursor-pointer relative">
+      <span className="absolute top-4 right-4 text-[10px] font-bold text-blue-600 border border-blue-200 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+        {badgeText}
+      </span>
+      <div className="flex items-start gap-3">
+        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+          <Icon size={20} className="text-blue-500" />
+        </div>
+        <div className="flex flex-col flex-1 min-w-0 pr-16">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <h4 className="text-sm font-bold text-gray-900 font-display truncate">{displayTitle}</h4>
+          </div>
+          <p className="text-sm text-gray-600 font-medium truncate mb-1.5">
+            {actionName} • Dalam {daysLeft} hari
+          </p>
+          {message && (
+            <p className="text-[11px] text-gray-700 leading-snug">
+              {message}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="h-px w-full bg-gray-100 my-1" />
+
+      <div className="flex items-center justify-between gap-2">
+        <button className="flex items-center gap-2 bg-[#009254] hover:bg-[#007b46] text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">
+          <Check size={14} /> Selesai
+        </button>
+        <button className="flex items-center justify-center w-8 h-8 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 rounded-xl transition-colors">
+          <ChevronRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── WEEKLY INSIGHTS MOCK DATA & SLIDESHOW ────────────────────
+const WEEKLY_INSIGHTS = [
+  {
+    id: 0,
+    title: "KESEHATAN KANDANG",
+    summary: "Status: Optimal. Kondisi lingkungan dan aktivitas ternak terpantau stabil.",
+    detail: "Berdasarkan pantauan sensor 24 jam terakhir, seluruh metrik utama kandang (suhu, kelembapan, dan aktivitas gerak) berada dalam rentang ideal. Tidak ditemukan anomali yang signifikan.",
+    icon: Sparkles,
+    color: "#fff",
+    bg: "#1a1a1a",
+    bgImage: "/kesehatan_kandang.png",
+    isDark: true,
+    hasDetail: false
+  },
+  {
+    id: 1,
+    title: "SUHU",
+    summary: "Rata-rata suhu kawanan sedikit meningkat siang ini. Pastikan ventilasi menyala optimal.",
+    hasDetail: true,
+    detail: "Data sensor menunjukkan suhu rata-rata mencapai 30°C antara pukul 12.00 hingga 14.00, yang berpotensi memicu stres panas ringan pada sapi laktasi. Langkah preventif yang disarankan: menyalakan kipas ekstra dan memastikan ketersediaan air minum yang cukup di setiap kandang.",
+    pattern: "repeating-linear-gradient(45deg, rgba(245,158,11,0.04), rgba(245,158,11,0.04) 10px, transparent 10px, transparent 20px)",
+    patternSize: "auto",
+    isDark: false,
+    icon: ThermometerSun
+  },
+  {
+    id: 2,
+    title: "BIRAHI",
+    summary: "3 sapi menunjukkan tanda-tanda awal birahi. Persiapkan jadwal IB.",
+    hasDetail: true,
+    detail: "Sapi dengan ID C3938A, C4618A, dan C2911B mengalami peningkatan langkah kaki dan penurunan waktu istirahat yang signifikan dalam 12 jam terakhir, menandakan permulaan fase estrus. Tim reproduksi disarankan untuk bersiap melakukan inseminasi buatan (IB) pada sore hari atau besok pagi untuk tingkat keberhasilan terbaik.",
+    pattern: "linear-gradient(rgba(16,185,129,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,0.05) 1px, transparent 1px)",
+    patternSize: "20px 20px",
+    isDark: false,
+    icon: Target
+  },
+  {
+    id: 3,
+    title: "AKTIVITAS",
+    summary: "Aktivitas makan turun 5% di area B. Cek kualitas pakan.",
+    hasDetail: true,
+    detail: "Sensor kalung mendeteksi penurunan durasi makan (ruminasi) pada kelompok sapi di Area B dibandingkan rata-rata harian. Hal ini mungkin disebabkan oleh kualitas pakan yang kurang segar atau masalah pada sistem distribusi pakan. Periksa silase dan konsentrat yang disajikan hari ini.",
+    pattern: "radial-gradient(rgba(59,130,246,0.06) 2px, transparent 2px)",
+    patternSize: "20px 20px",
+    isDark: false,
+    icon: Activity
+  }
+];
+
+function InsightSlideshow({ onOpenDetail }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const touchStartX = useRef(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % WEEKLY_INSIGHTS.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!touchStartX.current) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+
+    if (diff > 50) {
+      // swipe left
+      setCurrentIndex((prev) => (prev + 1) % WEEKLY_INSIGHTS.length);
+    } else if (diff < -50) {
+      // swipe right
+      setCurrentIndex((prev) => (prev - 1 + WEEKLY_INSIGHTS.length) % WEEKLY_INSIGHTS.length);
+    }
+    touchStartX.current = null;
+  };
+
+  const insight = WEEKLY_INSIGHTS[currentIndex];
+  const Icon = insight.icon;
+
+  return (
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        background: insight.bgImage ? 'linear-gradient(to right, #1a1a1a, #2a2a2a)' : 'var(--bg-surface)',
+        backgroundImage: insight.bgImage ? `url(${insight.bgImage})` : (insight.pattern || 'none'),
+        backgroundSize: insight.bgImage ? 'cover' : (insight.patternSize || 'auto'),
+        backgroundPosition: insight.bgImage ? 'center' : '0 0',
+        border: insight.bgImage ? 'none' : '0.5px solid var(--border)',
+        borderRadius: '16px',
+        boxShadow: 'var(--shadow-sm)',
+        position: 'relative',
+        overflow: 'hidden',
+        height: '280px',
+        margin: '0 -10px',
+        transition: 'background 0.3s ease'
+      }}
+    >
+      {insight.bgImage && (
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+      )}
+
+      {/* Top right indicator dots */}
+      <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '4px', zIndex: 1 }}>
+        {WEEKLY_INSIGHTS.map((_, idx) => (
+          <div
+            key={idx}
+            style={{
+              width: idx === currentIndex ? '16px' : '6px',
+              height: '6px',
+              borderRadius: '3px',
+              background: idx === currentIndex ? (insight.isDark ? '#fff' : 'var(--accent)') : (insight.isDark ? 'rgba(255,255,255,0.3)' : 'var(--border-2)'),
+              transition: 'all 0.3s ease'
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Bottom left text content */}
+      <div
+        key={insight.id}
+        className="animate-in fade-in slide-in-from-right-4 duration-500"
+        style={{
+          position: 'absolute', bottom: '20px', left: '20px', right: '20px',
+          display: 'flex', flexDirection: 'column', gap: '6px', zIndex: 1
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: insight.isDark ? 'var(--accent)' : insight.color, boxShadow: `0 0 8px ${insight.isDark ? 'var(--accent)' : insight.color}` }} />
+          <span style={{ fontSize: '12px', fontWeight: 700, color: insight.isDark ? '#fff' : insight.color, letterSpacing: '0.06em', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase' }}>
+            SOROTAN MINGGU INI
+          </span>
+        </div>
+        <h3 style={{ fontSize: '24px', fontWeight: 700, color: insight.isDark ? '#fff' : 'var(--text-1)', margin: 0, fontFamily: 'DM Sans, sans-serif' }}>
+          {insight.title}
+        </h3>
+        <p style={{ fontSize: '14px', color: insight.isDark ? 'rgba(255,255,255,0.9)' : 'var(--text-2)', lineHeight: 1.4, margin: '2px 0 0 0', maxWidth: '85%' }}>
+          {insight.summary}
+        </p>
+
+        {insight.hasDetail && (
+          <button
+            onClick={() => onOpenDetail(insight)}
+            style={{
+              padding: '6px 14px', background: 'transparent', border: insight.isDark ? '1px solid rgba(255,255,255,0.3)' : '1px solid var(--border-2)',
+              borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: insight.isDark ? '#fff' : 'var(--text-1)',
+              cursor: 'pointer', transition: 'all 0.2s', width: 'fit-content', marginTop: '6px'
+            }}
+            className={insight.isDark ? "hover:bg-white/10" : "hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"}
+          >
+            Baca Selengkapnya
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 // ── HELPERS ──────────────────────────────────────────────────
 function formatRelativeTime(isoString, lang) {
   if (!isoString) return lang === 'id' ? 'Baru saja' : 'Just now';
@@ -271,32 +495,37 @@ export default function Dashboard() {
   });
   const [herd, setHerd] = useState([]);
   const [intel, setIntel] = useState([]);
+  const [selectedInsight, setSelectedInsight] = useState(null);
+  const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const { sapiList, fetchSapiList, tambahReproduksi, loading: reproLoading } = useTernakStore();
   const [isReproModalOpen, setIsReproModalOpen] = useState(false);
+  const [isEstrusModalOpen, setIsEstrusModalOpen] = useState(false);
   const [reproForm, setReproForm] = useState({
     rfid: '',
     tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
-    birahi: '', bunting: '', hpl: '', sapih: '', catatan: ''
+    bunting: '', hpl: '', catatan: ''
   });
 
-  const handleBirahiChange = (e) => {
+  const handleTanggalIBChange = (e) => {
     const val = e.target.value;
-    setReproForm(prev => {
-      let b = prev.bunting;
-      let h = prev.hpl;
-      if (val) {
+    if (val) {
+      const date = new Date(val);
+      let b = '', h = '';
+      if (!isNaN(date.getTime())) {
         const bDate = new Date(val);
         bDate.setMonth(bDate.getMonth() + 3);
         b = bDate.toISOString().split('T')[0];
-        
+
         const hDate = new Date(val);
         hDate.setMonth(hDate.getMonth() + 9);
         hDate.setDate(hDate.getDate() + 10);
         h = hDate.toISOString().split('T')[0];
       }
-      return { ...prev, birahi: val, bunting: b, hpl: h };
-    });
+      setReproForm({ ...reproForm, tanggal_ib: val, bunting: b, hpl: h });
+    } else {
+      setReproForm({ ...reproForm, tanggal_ib: val, bunting: '', hpl: '' });
+    }
   };
 
   const onTambahReproduksi = async (e) => {
@@ -311,7 +540,7 @@ export default function Dashboard() {
       setReproForm({
         rfid: '',
         tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
-        birahi: '', bunting: '', hpl: '', sapih: '', catatan: ''
+        bunting: '', hpl: '', catatan: ''
       });
       toast.success(lang === 'id' ? "Riwayat reproduksi berhasil disimpan!" : "Reproduction record saved successfully!");
     } else {
@@ -324,8 +553,8 @@ export default function Dashboard() {
 
   const handleExportPDF = async () => {
     // Show beautiful premium toast alert
-    toast.info(lang === 'id' 
-      ? "Sedang membuat laporan PDF profesional, mohon tunggu..." 
+    toast.info(lang === 'id'
+      ? "Sedang membuat laporan PDF profesional, mohon tunggu..."
       : "Generating professional PDF report, please wait..."
     );
 
@@ -347,8 +576,8 @@ export default function Dashboard() {
       URL.revokeObjectURL(url);
 
       // Show beautiful success toast
-      toast.success(lang === 'id' 
-        ? "Laporan PDF berhasil diunduh!" 
+      toast.success(lang === 'id'
+        ? "Laporan PDF berhasil diunduh!"
         : "PDF report downloaded successfully!"
       );
     } catch (err) {
@@ -409,7 +638,7 @@ export default function Dashboard() {
             let urgency = 'info';
             if (item.severity?.toUpperCase() === 'HIGH' || item.type?.toLowerCase() === 'estrus' || item.severity?.toLowerCase() === 'critical') {
               urgency = 'critical';
-            } else if (item.severity?.toUpperCase() === 'WARNING' || item.type?.toLowerCase() === 'anomaly' || item.type?.toLowerCase() === 'battery') {
+            } else if (item.severity?.toUpperCase() === 'WARNING' || item.type?.toLowerCase() === 'anomaly' || item.severity?.toLowerCase() === 'battery') {
               urgency = 'monitor';
             } else {
               urgency = 'scheduled';
@@ -500,7 +729,7 @@ export default function Dashboard() {
               urgency: 'scheduled',
               icon: CheckCircle2,
               title: lang === 'id' ? 'Registri Sistem Aktif' : 'System Registry Active',
-              sub: lang === 'id' 
+              sub: lang === 'id'
                 ? 'Semua sensor kalung memantau aktivitas ternak secara normal. Tidak ada estrus terdeteksi.'
                 : 'All collar sensors are monitoring herd activity normally. No estrus detected.',
               conf: 100,
@@ -536,23 +765,23 @@ export default function Dashboard() {
   let statusMessage = '';
   if (stats.estrus > 0) {
     statusMessage = lang === 'id'
-      ? `Hari ini ada ${stats.estrus} sapi yang terdeteksi estrus. Segera periksa detailnya untuk inseminasi buatan.`
+      ? `Ada ${stats.estrus} sapi yang terdeteksi birahi hari ini. Sebaiknya segera dicek untuk persiapan inseminasi buatan.`
       : `We detected ${stats.estrus} cows in active estrus today. Please review the details for artificial insemination.`;
   } else if (stats.ibWindows > 0) {
     statusMessage = lang === 'id'
-      ? `Kondisi kandang aman. Ada ${stats.ibWindows} jadwal IB aktif yang siap Anda persiapkan.`
+      ? `Kondisi kandang aman. Ada ${stats.ibWindows} jadwal IB aktif yang perlu kamu persiapkan.`
       : `The barn condition is stable. There are ${stats.ibWindows} active breeding windows ready for prep.`;
   } else if (stats.avgTemp && parseFloat(stats.avgTemp) > 39.0) {
     statusMessage = lang === 'id'
-      ? `Semua aman, tapi suhu rata-rata ternak sedikit hangat (${stats.avgTemp}°C). Pantau ventilasi kandang ya.`
+      ? `Secara umum aman, tapi suhu rata-rata ternak sedikit hangat di ${stats.avgTemp}°C. Sebaiknya pantau ventilasi kandang agar tetap nyaman.`
       : `All looks good, but the herd's average temperature is slightly warm (${stats.avgTemp}°C). Keep an eye on ventilation.`;
   } else if (stats.collars > 0) {
     statusMessage = lang === 'id'
-      ? `Sistem aktif memantau ${stats.collars} kalung sensor. Seluruh kondisi ternak terpantau stabil.`
+      ? `Sistem sedang memantau ${stats.collars} kalung sensor. Seluruh kondisi ternak terpantau stabil.`
       : `System is actively monitoring ${stats.collars} collar sensors. The herd status is fully stable.`;
   } else {
     statusMessage = lang === 'id'
-      ? `Kondisi kawanan stabil, tidak ada anomali reproduksi terdeteksi.`
+      ? `Kondisi kandang terpantau stabil. Tidak ada anomali reproduksi yang terdeteksi.`
       : `Herd condition is stable, no reproductive anomalies detected.`;
   }
 
@@ -576,218 +805,121 @@ export default function Dashboard() {
     <>
       <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-      {/* ─── 1. HERO SECTION ───────────────────────────────── */}
-      <div style={{
-        background: 'var(--bg-surface)',
-        border: '0.5px solid var(--border)',
-        borderRadius: '12px',
-        padding: '20px 22px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '20px',
-      }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Eyebrow */}
-          <p className="eyebrow" style={{ marginBottom: '8px' }}>{t.hero_eyebrow}</p>
-
-          {/* Title */}
-          <h1 style={{
-            fontFamily: 'DM Sans, sans-serif', fontSize: '26px', fontWeight: 700,
+        {/* ─── 0. GREETING ─────────────────────────────────────── */}
+        <div className="mb-2">
+          <p className="eyebrow" style={{ marginBottom: '6px', color: 'var(--text-3)' }}>
+            {greetingText.toUpperCase()}, {userName.toUpperCase()}
+          </p>
+          <h2 style={{
+            fontFamily: 'DM Sans, sans-serif', fontSize: '20px', fontWeight: 700,
             letterSpacing: '-0.02em', color: 'var(--text-1)', lineHeight: 1.2, margin: 0,
           }}>
-            {t.hero_status_stable}
-            <span style={{ color: 'var(--accent)' }}>{t.hero_status_word}</span>
-          </h1>
+            {stats.collars} ternak dipantau · {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length} perlu tindakan
+          </h2>
+        </div>
 
-          {/* Subtitle */}
-          <p style={{
-            fontSize: '13px', color: 'var(--text-2)', fontFamily: 'Inter, sans-serif',
-            marginTop: '8px', lineHeight: 1.6,
-          }}>
-            {`${greetingText}, ${userName}. ${statusMessage}`}
-          </p>
+        {/* ─── 1. WEEKLY INSIGHT SLIDESHOW ─────────────── */}
+        <InsightSlideshow onOpenDetail={(insight) => {
+          setSelectedInsight(insight);
+          setIsInsightModalOpen(true);
+        }} />
 
-          {/* Meta row */}
-          <div style={{
-            display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginTop: '14px',
-          }}>
-            {[
-              { label: t.hero_last_sync, value: stats.lastSync },
-              { label: 'Model', value: t.hero_model },
-              { label: t.hero_collars_online, value: `${stats.collars}` },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-3)', fontFamily: 'Inter, sans-serif' }}>{label}:</span>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-2)', fontFamily: 'Inter, sans-serif' }}>{value}</span>
-              </div>
-            ))}
+        {/* ─── 2. URGENT ACTIONS CONTAINER ─────────────────────── */}
+        <div style={{
+          background: 'var(--bg-surface)',
+          border: '0.5px solid var(--border)',
+          borderRadius: '12px',
+          padding: '20px 22px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+        }}>
+          {/* Subheader */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+            <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
+            <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-1)', fontFamily: 'DM Sans, sans-serif' }}>
+              Ada hal yang perlu kamu perhatikan hari ini
+            </span>
+          </div>
 
-            {/* Gendhis badge */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '5px',
-              padding: '3px 10px', borderRadius: '999px',
-              background: 'var(--accent-dim)', border: '0.5px solid var(--accent-border)',
-            }}>
-              <Sparkles size={11} style={{ color: 'var(--accent)' }} />
-              <span style={{
-                fontSize: '10px', fontWeight: 600, color: 'var(--accent)',
-                fontFamily: 'Inter, sans-serif', letterSpacing: '0.04em',
+          {/* Urgent Cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').length > 0 ? (
+              intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').map((card, i) => (
+                <IntelCard key={i} {...card} t={t} />
+              ))
+            ) : (
+              <div style={{
+                padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
+                borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
               }}>
-                {t.hero_gendhis_active}
-              </span>
-            </div>
+                Kondisi semua ternak terpantau aman. Tidak ada tindakan mendesak yang perlu dilakukan sekarang.
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Confidence Ring */}
-        <ConfidenceRing value={stats.aiConf} label={t.hero_ai_conf} />
-      </div>
-
-      {/* ─── 2. STATS GRID ─────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard
-          label={t.stat_active_collars}
-          value={stats.collars}
-          sub={t.stat_all_online}
-          color="var(--accent)"
-          icon={Wifi}
-        />
-        <StatCard
-          label={t.stat_estrus_signals}
-          value={stats.estrus}
-          sub={t.stat_trend_up}
-          color="var(--red)"
-          icon={Zap}
-        />
-        <StatCard
-          label={t.stat_avg_temp}
-          value={stats.avgTemp !== null && stats.avgTemp !== undefined ? `${stats.avgTemp}°` : '—'}
-          sub={t.stat_normal_range}
-          color="var(--amber)"
-          icon={Thermometer}
-        />
-        <StatCard
-          label={t.stat_breeding_windows}
-          value={stats.ibWindows}
-          sub={t.stat_next_window}
-          color="var(--blue)"
-          icon={CheckCircle2}
-        />
-      </div>
-
-      {/* ─── 3. QUICK ACTIONS ──────────────────────────────── */}
-      <div style={{
-        background: 'var(--bg-surface)',
-        border: '0.5px solid var(--border)',
-        borderRadius: '12px',
-        padding: '18px 22px',
-      }}>
-        <p className="eyebrow hidden md:block" style={{ marginBottom: '16px' }}>{t.section_quick_actions}</p>
-        <div className="flex flex-row overflow-x-auto no-scrollbar gap-6 pb-2 md:flex-wrap">
-          <QAButton icon={Plus}     label={t.qa_add_ib} onClick={() => {
-            fetchSapiList();
-            setIsReproModalOpen(true);
-          }} />
-          <QAButton icon={Cpu}      label={t.qa_pair_collar} onClick={() => setIsPairModalOpen(true)} />
-          <QAButton icon={Zap}      label={t.qa_run_prediction} onClick={() => navigate('/estrus-prediction', { state: { runPredict: true } })} />
-          <QAButton icon={FileText} label={t.qa_export} onClick={handleExportPDF} />
-        </div>
-      </div>
-
-      {/* ─── 4. HERD STATUS ────────────────────────────────── */}
-      <div style={{
-        background: 'var(--bg-surface)',
-        border: '0.5px solid var(--border)',
-        borderRadius: '12px',
-        padding: '18px 22px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <p className="eyebrow">{t.section_herd_status}</p>
-          <SeeAllLink label={t.section_view_all} to="/ternak" />
+        {/* ─── 3. QUICK ACTIONS ──────────────────────────────── */}
+        <div>
+          <p className="eyebrow" style={{ marginBottom: '12px' }}>AKSI CEPAT</p>
+          <div className="flex flex-row gap-3 md:gap-4">
+            <SquareQAButton icon={Plus} label="Tambah Data IB" onClick={() => {
+              fetchSapiList();
+              setIsReproModalOpen(true);
+            }} />
+            <SquareQAButton icon={Cpu} label="Pasang Kalung" onClick={() => setIsPairModalOpen(true)} />
+            <SquareQAButton icon={Zap} label="Prediksi Estrus" onClick={() => setIsEstrusModalOpen(true)} />
+          </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {herd.map((cow) => (
-            <div key={cow.id} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '10px 14px',
-              background: 'var(--bg-card)', border: '0.5px solid var(--border)',
-              borderRadius: '8px', gap: '12px',
-              transition: 'border-color 0.15s, background 0.15s',
-              cursor: 'pointer',
-            }}
-              className="hover:border-[var(--border-2)] hover:bg-[var(--bg-hover)]"
-            >
-              {/* Name */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                <div style={{
-                  width: '28px', height: '28px', borderRadius: '50%',
-                  background: 'var(--accent-dim)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '11px', fontWeight: 700, color: 'var(--accent)',
-                  fontFamily: 'DM Sans, sans-serif', flexShrink: 0,
-                }}>
-                  {(() => {
-                    if (!cow.name) return 'SP';
-                    const parts = cow.name.trim().split(/\s+/);
-                    if (parts.length >= 2) {
-                      return (parts[0][0] + parts[1][0]).toUpperCase();
-                    }
-                    return cow.name.slice(0, 2).toUpperCase();
-                  })()}
-                </div>
-                <div>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-1)', fontFamily: 'DM Sans, sans-serif' }}>
-                    {cow.name}
-                  </p>
-                  <p style={{ fontSize: '11px', color: 'var(--text-3)', fontFamily: 'Inter, sans-serif' }}>
-                    ID: {cow.id}
-                  </p>
-                </div>
+        {/* ─── 4. REKOMENDASI LAINNYA ────────────────────────── */}
+        <div style={{
+          background: 'var(--bg-surface)',
+          border: '0.5px solid var(--border)',
+          borderRadius: '12px',
+          padding: '18px 22px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <p className="eyebrow">REKOMENDASI LAINNYA</p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {intel.filter(card => card.urgency === 'scheduled').length > 0 ? (
+              intel.filter(card => card.urgency === 'scheduled').map((card, i) => {
+                const cowName = card.title.split('—')[0].trim() || 'Ternak';
+                let friendlyMsg = '';
+                if (card.title.toLowerCase().includes('kebuntingan')) {
+                  friendlyMsg = `Update kebuntingan ${cowName} perlu dicatat. Sebaiknya diperbarui sekarang agar data kehamilan tetap akurat dan bisa diprediksi dengan baik.`;
+                } else if (card.title.toLowerCase().includes('inseminasi')) {
+                  friendlyMsg = `Jadwal inseminasi ${cowName} sudah tiba. Pastikan persiapan sudah matang agar peluang kebuntingan maksimal.`;
+                } else if (card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')) {
+                  friendlyMsg = `${cowName} menunjukkan tanda birahi. Waktu terbaik untuk inseminasi adalah 12–18 jam ke depan, jangan sampai terlewat.`;
+                } else {
+                  friendlyMsg = `Ada hal yang perlu kamu tindak lanjuti untuk ${cowName}. Sebaiknya segera dicek agar tidak terlewat.`;
+                }
+                return (
+                  <RecommendationCard
+                    key={i}
+                    title={card.title}
+                    badgeText="SEDANG"
+                    id={`C${Math.floor(Math.random() * 9000) + 1000}A`}
+                    name={cowName}
+                    daysLeft={Math.floor(Math.random() * 10) + 1}
+                    icon={card.icon}
+                    message={friendlyMsg}
+                  />
+                );
+              })
+            ) : (
+              <div style={{
+                padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
+                borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
+              }}>
+                Semua kondisi ternak hari ini dalam keadaan baik. Tidak ada rekomendasi tambahan untuk saat ini.
               </div>
-
-              {/* Temp */}
-              <span style={{
-                fontSize: '13px', fontWeight: 700, color: cow.temp ? (cow.temp >= 39 ? 'var(--red)' : 'var(--amber)') : 'var(--text-3)',
-                fontFamily: 'DM Sans, sans-serif',
-              }}>
-                {cow.temp ? `${cow.temp}°C` : '—'}
-              </span>
-
-              {/* Battery */}
-              <span style={{
-                fontSize: '11px', color: cow.battery ? (cow.battery < 20 ? 'var(--red)' : 'var(--text-3)') : 'var(--text-3)',
-                fontFamily: 'Inter, sans-serif', minWidth: '36px', textAlign: 'right',
-              }}>
-                {cow.battery !== null && cow.battery !== undefined ? `${cow.battery}%` : '—'}
-              </span>
-
-              {/* Status */}
-              <StatusBadge status={cow.status} t={t} />
-            </div>
-          ))}
+            )}
+          </div>
         </div>
-      </div>
-
-      {/* ─── 5. REPRODUCTIVE INTELLIGENCE ─────────────────── */}
-      <div style={{
-        background: 'var(--bg-surface)',
-        border: '0.5px solid var(--border)',
-        borderRadius: '12px',
-        padding: '18px 22px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <p className="eyebrow">{t.section_repro_intel}</p>
-          <SeeAllLink label={t.section_see_all} to="/notifications" />
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {intel.map((card, i) => (
-            <IntelCard key={i} {...card} t={t} />
-          ))}
-        </div>
-      </div>
 
       </div>
 
@@ -809,11 +941,12 @@ export default function Dashboard() {
                 <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
                   {t.repro_select_cow}
                 </label>
-                <select 
-                  style={{ width: '100%', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'var(--bg-surface)', color: 'var(--text-1)', outline: 'none', fontFamily: 'Inter, sans-serif' }}
+                <select
+                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', height: '40px' }}
+                  className="w-full px-3 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
                   required
                   value={reproForm.rfid}
-                  onChange={e => setReproForm({...reproForm, rfid: e.target.value})}
+                  onChange={e => setReproForm({ ...reproForm, rfid: e.target.value })}
                 >
                   <option value="">-- {t.repro_choose_cow} --</option>
                   {sapiList.map(s => (
@@ -825,61 +958,76 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_ib_date}</label>
-                  <input 
-                    type="date" 
-                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
-                    className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" 
+                  <input
+                    type="date"
+                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', height: '40px' }}
+                    className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
                     required
                     value={reproForm.tanggal_ib}
-                    onChange={e => setReproForm({...reproForm, tanggal_ib: e.target.value})}
+                    onChange={handleTanggalIBChange}
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_ib_count}</label>
-                  <input type="number" min="1" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.jumlah_ib} onChange={e => setReproForm({...reproForm, jumlah_ib: e.target.value})}/>
+                  <input type="number" min="1" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', height: '40px' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.jumlah_ib} onChange={e => setReproForm({ ...reproForm, jumlah_ib: e.target.value })} />
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_inseminator}</label>
-                <input 
-                  type="text" 
-                  placeholder={t.repro_inseminator_placeholder} 
-                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
-                  className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" 
+                <input
+                  type="text"
+                  placeholder={t.repro_inseminator_placeholder}
+                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', height: '40px' }}
+                  className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
                   value={reproForm.pemberi_ib}
-                  onChange={e => setReproForm({...reproForm, pemberi_ib: e.target.value})}
+                  onChange={e => setReproForm({ ...reproForm, pemberi_ib: e.target.value })}
                 />
               </div>
 
-              <div className="p-4 bg-[var(--color-bg-surface)] border border-[var(--color-border)] rounded-2xl space-y-4">
-                <h4 className="text-sm font-bold text-[var(--color-primary)] flex items-center gap-2">
-                  <Calendar size={16}/> {t.repro_auto_calculator}
-                </h4>
-                <div>
-                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_estrus_date}</label>
-                  <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.birahi} onChange={handleBirahiChange}/>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_pregnancy_pred}</label>
-                    <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm" value={reproForm.bunting} onChange={e => setReproForm({...reproForm, bunting: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_estimated_hpl}</label>
-                    <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--color-primary)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm font-bold" value={reproForm.hpl} onChange={e => setReproForm({...reproForm, hpl: e.target.value})} />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_weaning_date}</label>
-                <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.sapih} onChange={e => setReproForm({...reproForm, sapih: e.target.value})} />
-              </div>
-              
               <div>
                 <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_notes}</label>
-                <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({...reproForm, catatan: e.target.value})} />
+                <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-3 py-2 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({ ...reproForm, catatan: e.target.value })} />
+              </div>
+
+              <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl p-4">
+                <h4 className="text-sm font-bold text-[var(--color-primary)] flex items-center gap-2 mb-4 uppercase tracking-wide">
+                  <Calendar size={16} /> ESTIMASI JADWAL (AUTO)
+                </h4>
+                
+                {(() => {
+                  const ibDate = reproForm.tanggal_ib ? new Date(reproForm.tanggal_ib) : null;
+                  const formatDate = (date) => {
+                    if (!date || isNaN(date.getTime())) return '—';
+                    return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+                  };
+
+                  const estrusReturn = ibDate ? new Date(ibDate.getTime() + 21 * 24 * 60 * 60 * 1000) : null;
+                  const pregCheck = ibDate ? new Date(ibDate.getTime() + 60 * 24 * 60 * 60 * 1000) : null;
+                  const hpl = ibDate ? new Date(ibDate.getTime() + 283 * 24 * 60 * 60 * 1000) : null;
+                  const weaning = hpl ? new Date(hpl.getTime() + 180 * 24 * 60 * 60 * 1000) : null;
+
+                  return (
+                    <div className="grid grid-cols-2 gap-y-5 gap-x-4">
+                      <div>
+                        <p className="text-[13px] font-medium text-[var(--color-text-secondary)] mb-1">Deteksi Birahi Kembali</p>
+                        <p className="text-sm font-bold text-[var(--color-text-primary)]">{formatDate(estrusReturn)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-medium text-[var(--color-text-secondary)] mb-1">Pemeriksaan Kebuntingan</p>
+                        <p className="text-sm font-bold text-[var(--color-text-primary)]">{formatDate(pregCheck)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-medium text-[var(--color-text-secondary)] mb-1">Perkiraan Melahirkan (HPL)</p>
+                        <p className="text-sm font-bold text-[var(--color-primary)]">{formatDate(hpl)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-medium text-[var(--color-text-secondary)] mb-1">Estimasi Lepas Sapih</p>
+                        <p className="text-sm font-bold text-[var(--color-text-primary)]">{formatDate(weaning)}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="pt-4 flex gap-3">
@@ -905,6 +1053,116 @@ export default function Dashboard() {
         pairSelectedCollar={pairSelectedCollar}
         setPairSelectedCollar={setPairSelectedCollar}
       />
+
+      {/* MODAL: Insight Detail */}
+      {isInsightModalOpen && selectedInsight && (
+        <div className="fixed inset-0 z-[999] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-md animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '12px',
+                  background: `${selectedInsight.color}1A`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  <selectedInsight.icon size={20} style={{ color: selectedInsight.color }} />
+                </div>
+                <h2 className="text-lg font-heading font-bold text-[var(--color-primary)]">
+                  {selectedInsight.title}
+                </h2>
+              </div>
+              <button onClick={() => setIsInsightModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p style={{ fontSize: '15px', color: 'var(--text-1)', fontWeight: 600, lineHeight: 1.5 }}>
+                {selectedInsight.summary}
+              </p>
+              <div style={{ padding: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-2)', borderRadius: '12px' }}>
+                <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                  {selectedInsight.detail}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-6">
+              <button
+                onClick={() => setIsInsightModalOpen(false)}
+                className="w-full py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEstrusModalOpen && (
+        <div className="fixed inset-0 z-[999] flex justify-center items-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-[var(--bg-card)] w-full max-w-md rounded-[24px] shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-[var(--border)] flex items-center justify-between">
+              <h2 className="text-xl font-heading font-bold text-[var(--color-primary)] flex items-center gap-2">
+                <Zap size={22} className="text-[var(--color-accent)]" /> 
+                Prediksi Estrus AI
+              </h2>
+              <button onClick={() => setIsEstrusModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--border)] transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-4 mb-6">
+                <div className="bg-white p-3 rounded-xl shadow-sm text-blue-500 h-fit flex-shrink-0">
+                  <Activity size={24} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-blue-900 mb-1">Analisis Berhasil</h4>
+                  <p className="text-sm text-blue-800 leading-relaxed">
+                    Sistem mendeteksi sapi dengan probabilitas tinggi mengalami estrus hari ini berdasarkan pola aktivitas pergerakan.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                {sapiList.slice(0, 3).map((cow, idx) => {
+                  const prob = [92, 88, 85][idx] || 80; // Dummy probability fallback for UI
+                  return (
+                    <div 
+                      key={cow.id} 
+                      onClick={() => {
+                        setIsEstrusModalOpen(false);
+                        navigate('/ternak', { state: { selectedCowId: cow.id } });
+                      }}
+                      className="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full bg-[var(--color-accent)] ${idx === 0 ? 'animate-pulse' : ''}`} />
+                        <div>
+                          <p className="font-bold text-gray-900">{cow.nama} | {cow.id}</p>
+                          <p className="text-xs text-gray-500">Probabilitas: {prob}%</p>
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="text-gray-400" />
+                    </div>
+                  );
+                })}
+                {sapiList.length === 0 && (
+                  <p className="text-sm text-center text-gray-500 py-4">Belum ada data sapi.</p>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setIsEstrusModalOpen(false)} style={{ padding: '10px 24px', border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>Tutup</button>
+                <button type="button" onClick={() => { setIsEstrusModalOpen(false); navigate('/estrus-prediction', { state: { runPredict: true } }); }} className="flex-1 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg flex items-center justify-center gap-2">
+                  Lihat Laporan <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

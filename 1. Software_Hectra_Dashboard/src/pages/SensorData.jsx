@@ -7,10 +7,16 @@ import {
   Battery, 
   Wifi,
   MoreVertical,
-  RefreshCw,
   ChevronLeft,
   ChevronRight,
-  Loader2
+  Loader2,
+  FileText,
+  Download,
+  CheckCircle,
+  AlertTriangle,
+  ChevronDown,
+  ShieldAlert,
+  HeartPulse
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -19,7 +25,14 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import axiosInstance from '@/lib/axios';
@@ -73,6 +86,8 @@ export default function SensorData() {
   const [search, setSearch] = useState('');
   const [tableData, setTableData] = useState([]);
   const [chartData, setChartData] = useState([]);
+  const [timeFilter, setTimeFilter] = useState('1wk');
+  const [showMoreReports, setShowMoreReports] = useState(false);
 
   const fetchAllData = async (showMainLoader = false) => {
     if (showMainLoader) setLoading(true);
@@ -145,6 +160,44 @@ export default function SensorData() {
     return matchSearch;
   });
 
+  // Mock data for new widgets
+  const mockPopulation = [
+    { name: 'Jan', val: 900 },
+    { name: 'Feb', val: 950 },
+    { name: 'Mar', val: 1000 },
+    { name: 'Apr', val: 1100 },
+    { name: 'Mei', val: 1284 }
+  ];
+
+  const mockPregnant = [
+    { name: 'Jan', val: 20 },
+    { name: 'Feb', val: 30 },
+    { name: 'Mar', val: 50 },
+    { name: 'Apr', val: 70 },
+    { name: 'Mei', val: 82 }
+  ];
+
+  const mockMonthlyTrend = [
+    { name: 'Jan', val: 15 },
+    { name: 'Feb', val: 18 },
+    { name: 'Mar', val: 12 },
+    { name: 'Apr', val: 25 },
+    { name: 'Mei', val: 35 },
+    { name: 'Jun', val: 10 }
+  ];
+
+  const healthData = {
+    sangatSehat: 92,
+    observasi: 6,
+    perluPenanganan: 2
+  };
+  
+  const collarData = [
+    { name: 'Normal', value: 85, color: '#009254' },
+    { name: 'Baterai Lemah', value: 10, color: '#F59E0B' },
+    { name: 'Sinyal Hilang', value: 5, color: '#EF4444' }
+  ];
+
   if (loading) {
     return (
       <div className="animate-pulse space-y-6">
@@ -158,93 +211,202 @@ export default function SensorData() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)]">{t.sensor_title}</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">{t.sensor_sub}</p>
-        </div>
+      {/* ── Header ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => fetchAllData(false)}
-            disabled={syncing}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border border-[var(--border)] rounded-lg text-sm font-medium text-[var(--text-2)] hover:text-[var(--accent)] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCw className={cn("w-4 h-4", syncing && "animate-spin text-[var(--accent)]")} />
-            {syncing ? t.sensor_syncing : t.btn_refresh}
-          </button>
+          <div style={{ color: 'var(--accent)' }}>
+            <Activity size={32} strokeWidth={2} />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-[var(--text-1)] leading-tight tracking-tight">
+              {t.sensor_title}
+            </h1>
+            <p className="text-[10px] md:text-sm font-extrabold text-[var(--accent)] uppercase tracking-wider mt-0.5">
+              {t.sensor_sub}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* CHART AREA */}
-      <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', boxShadow: 'var(--shadow-card)', padding: '24px', border: '0.5px solid var(--border)' }}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] font-display">{t.sensor_chart_title}</h2>
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[var(--color-warning)]"></span>
-              <span className="text-[var(--color-text-secondary)]">{t.sensor_chart_temp}</span>
+      {/* ── NEW CONTAINERS ── */}
+      {/* Container 2: Ringkasan Populasi & Sapi Bunting (Merged) */}
+      <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm mb-4">
+        <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-6">
+          {lang === 'id' ? 'Ringkasan Populasi & Kebuntingan' : 'Population & Pregnancy Summary'}
+        </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          
+          {/* Total Populasi */}
+          <div className="flex flex-col justify-between">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <p className="text-xs font-bold text-gray-500">{lang === 'id' ? 'Total Populasi' : 'Total Population'}</p>
+                <h3 className="text-2xl font-black text-gray-900 mt-1">1,284</h3>
+                <p className="text-[10px] font-bold text-[#009254] mt-1 flex items-center gap-1">
+                  <span className="text-[#009254]">📈</span> +12 {lang === 'id' ? 'bulan ini' : 'this month'}
+                </p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-[#009254]/10 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-[#009254]" />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[var(--color-forest)]"></span>
-              <span className="text-[var(--color-text-secondary)]">{t.sensor_chart_activity}</span>
+            <div className="h-28 w-full mt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={mockPopulation} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.5} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} dy={5} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} />
+                  <Tooltip cursor={{ fill: 'rgba(0,146,84,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                  <Bar dataKey="val" fill="#009254" radius={[4, 4, 0, 0]} fillOpacity={0.8} barSize={30} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
-        </div>
-        <div className="w-full h-[220px] md:h-[280px]" style={{ minWidth: 0 }}>
-          {chartData.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center">
-              <Activity className="w-10 h-10 text-[var(--color-text-muted)] mb-2" />
-              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{lang === 'id' ? 'Belum ada rekaman telemetry untuk grafik' : 'No telemetry records for chart yet'}</p>
+
+          {/* Sapi Bunting */}
+          <div className="flex flex-col justify-between">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <p className="text-xs font-bold text-gray-500">{lang === 'id' ? 'Sapi Bunting' : 'Pregnant Cows'}</p>
+                <h3 className="text-2xl font-black text-gray-900 mt-1">82</h3>
+                <p className="text-[10px] font-bold text-[#F59E0B] mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span> 
+                  4 {lang === 'id' ? 'kelahiran diprediksi minggu ini' : 'births predicted this week'}
+                </p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-[#F59E0B]/10 flex items-center justify-center">
+                <HeartPulse className="w-4 h-4 text-[#F59E0B]" />
+              </div>
             </div>
-          ) : (
+            <div className="h-28 w-full mt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={mockPregnant} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorPreg" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.5} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} dy={5} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} />
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                  <Area type="monotone" dataKey="val" stroke="#F59E0B" strokeWidth={3} fillOpacity={1} fill="url(#colorPreg)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Container 3: Trend Bulanan */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm lg:col-span-2">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display">{lang === 'id' ? 'Trend Kesehatan' : 'Health Trend'}</h3>
+          </div>
+          <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-sage-light)" opacity={0.3} />
-                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} dy={10} />
-                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} domain={[35, 42]} />
-                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-muted)', fontSize: 12 }} />
-                <Tooltip 
-                  contentStyle={{ 
-                    borderRadius: '12px', 
-                    border: '0.5px solid var(--border)', 
-                    background: 'var(--bg-card)', 
-                    boxShadow: 'var(--shadow-dropdown)' 
-                  }}
-                  labelStyle={{ fontWeight: 'bold', color: 'var(--color-text-primary)' }}
-                />
-                <Line yAxisId="left" type="monotone" dataKey="temp" stroke="var(--color-warning)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} connectNulls={true} />
-                <Line yAxisId="right" type="monotone" dataKey="activity" stroke="var(--color-forest)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} connectNulls={true} />
-              </LineChart>
+              <BarChart data={mockMonthlyTrend} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} />
+                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.02)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                <Bar dataKey="val" radius={[4, 4, 0, 0]}>
+                  {mockMonthlyTrend.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.name === 'Mei' ? '#009254' : '#F3F4F6'} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
-          )}
+          </div>
+        </div>
+
+        {/* Container 4: Status Kesehatan */}
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-6">{lang === 'id' ? 'Status Kesehatan' : 'Health Status'}</h3>
+          
+          <div className="flex-1 flex flex-col justify-center space-y-5 relative z-10">
+            <div>
+              <div className="flex justify-between text-xs mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#009254]"></div>
+                  <span className="font-medium text-gray-700">{lang === 'id' ? 'Sangat Sehat' : 'Very Healthy'}</span>
+                </div>
+                <span className="font-black text-gray-900">{healthData.sangatSehat}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-[#009254] rounded-full" style={{ width: `${healthData.sangatSehat}%` }}></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></div>
+                  <span className="font-medium text-gray-700">{lang === 'id' ? 'Observasi Ringan' : 'Mild Observation'}</span>
+                </div>
+                <span className="font-black text-gray-900">{healthData.observasi}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-[#F59E0B] rounded-full" style={{ width: `${healthData.observasi}%` }}></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></div>
+                  <span className="font-medium text-gray-700">{lang === 'id' ? 'Perlu Penanganan' : 'Needs Action'}</span>
+                </div>
+                <span className="font-black text-gray-900">{healthData.perluPenanganan}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-[#EF4444] rounded-full" style={{ width: `${healthData.perluPenanganan}%` }}></div>
+              </div>
+            </div>
+          </div>
+          
+          <ShieldAlert className="absolute right-[-20px] bottom-[-20px] w-40 h-40 text-gray-50 pointer-events-none z-0" />
         </div>
       </div>
 
-      {/* TABLE SECTION */}
-      <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', boxShadow: 'var(--shadow-card)', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
-        
-        {/* Table Toolbar */}
-        <div className="p-4 border-b border-[var(--color-sage-light)]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="relative w-full sm:w-72">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-[var(--color-text-muted)]" />
-            </div>
-            <input
-              type="text"
-              placeholder={t.sensor_search_placeholder}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-[var(--border)] rounded-lg leading-5 bg-[var(--bg-card)] text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] text-sm transition-colors"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="p-2 border border-[var(--color-sage-light)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-sage-light)]/20 transition-colors">
-              <Filter className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
 
+      {/* Container 5 & TABLE SECTION: Status Perangkat IoT Collar & List */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden mb-4">
+        
+        {/* Grafik Collar */}
+        <div className="p-5 md:p-6 border-b border-gray-100">
+           <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-2">{lang === 'id' ? 'Status Perangkat IoT Collar' : 'IoT Collar Device Status'}</h3>
+           <div className="h-40 w-full flex items-center justify-center">
+             <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={collarData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={45}
+                    outerRadius={65}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {collarData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                </PieChart>
+             </ResponsiveContainer>
+           </div>
+           <div className="flex justify-center gap-4 text-[10px] font-medium text-gray-600 mt-2">
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#009254]"></span>Normal</div>
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span>Bat. Lemah</div>
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>Sinyal Hilang</div>
+           </div>
+        </div>
+        
         {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto">
           {filteredTableData.length === 0 ? (
@@ -257,9 +419,6 @@ export default function SensorData() {
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                     {t.sensor_table_cow_collar}
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-                    {t.sensor_table_temp}
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                     {t.sensor_table_activity}
@@ -296,20 +455,6 @@ export default function SensorData() {
                             <div className="text-sm font-semibold text-[var(--color-text-primary)]">{row.cowName}</div>
                             <div className="text-xs text-[var(--color-text-secondary)] font-medium">Collar: {row.id}</div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <Thermometer className={cn(
-                            "w-4 h-4", 
-                            row.temp !== null && row.temp >= 39.0 ? "text-[var(--color-danger)]" : "text-[var(--color-text-muted)]"
-                          )} />
-                          <span className={cn(
-                            "text-sm font-medium",
-                            row.temp !== null && row.temp >= 39.0 ? "text-[var(--color-danger)] font-bold" : "text-[var(--color-text-secondary)]"
-                          )}>
-                            {row.temp !== null ? `${row.temp}°C` : '—'}
-                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -397,15 +542,6 @@ export default function SensorData() {
                   </div>
                   <div className="space-y-1.5 text-xs" style={{ color: 'var(--text-2)' }}>
                     <div className="flex justify-between">
-                      <span>{t.sensor_table_temp}</span>
-                      <span className={cn(
-                        "font-bold",
-                        row.temp !== null && row.temp >= 39.0 ? "text-[var(--color-danger)]" : ""
-                      )} style={{ color: row.temp !== null && row.temp >= 39.0 ? undefined : 'var(--text-1)' }}>
-                        {row.temp !== null ? `${row.temp}°C` : '—'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
                       <span>{lang === 'id' ? 'Baterai' : 'Battery'}</span>
                       <span className={cn(
                         "font-bold",
@@ -481,6 +617,55 @@ export default function SensorData() {
           </div>
         </div>
 
+      </div>
+
+      {/* Container 6: Laporan Bulanan */}
+      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display">{lang === 'id' ? 'Laporan Bulanan' : 'Monthly Reports'}</h3>
+          <span 
+            onClick={() => setShowMoreReports(!showMoreReports)}
+            className="text-[11px] font-bold text-[#009254] cursor-pointer hover:underline"
+          >
+            {showMoreReports 
+              ? (lang === 'id' ? 'Lihat Lebih Sedikit' : 'View Less') 
+              : (lang === 'id' ? 'Lihat Lebih Banyak' : 'View More')}
+          </span>
+        </div>
+        
+        <div className="space-y-3 flex flex-col justify-center">
+          {/* Report Item 1 */}
+          <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-[#009254]/30 transition-colors group bg-gray-50/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#009254]/10 flex items-center justify-center text-[#009254]">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-gray-900 group-hover:text-[#009254] transition-colors line-clamp-1">Laporan Operasional W21-2024</h4>
+                <p className="text-[10px] text-gray-500 mt-0.5">14 Mei - 20 Mei 2024 • 2.4 MB</p>
+              </div>
+            </div>
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm shrink-0">
+              <Download className="w-3 h-3" /> <span className="hidden sm:inline">Unduh</span>
+            </button>
+          </div>
+
+          {/* Report Item 2 */}
+          <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-[#009254]/30 transition-colors group bg-gray-50/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#009254]/10 flex items-center justify-center text-[#009254]">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-gray-900 group-hover:text-[#009254] transition-colors line-clamp-1">Analisis Kesehatan & Birahi W20</h4>
+                <p className="text-[10px] text-gray-500 mt-0.5">7 Mei - 13 Mei 2024 • 1.8 MB</p>
+              </div>
+            </div>
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm shrink-0">
+              <Download className="w-3 h-3" /> <span className="hidden sm:inline">Unduh</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

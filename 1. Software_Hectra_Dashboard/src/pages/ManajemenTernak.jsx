@@ -1,12 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, Plus, Filter, Link, Unlink, ChevronRight, Edit2, Trash2, Activity, MapPin, X, Calendar, ClipboardList, Beef, Loader2, CheckCircle, XCircle, Baby, Pencil, Save, Tractor, PawPrint, SlidersHorizontal, ChevronLeft, Camera, ImagePlus } from 'lucide-react';
+import { Search, Plus, Filter, Link, Unlink, ChevronRight, Edit2, Trash2, Activity, MapPin, X, Calendar, ClipboardList, Beef, Loader2, CheckCircle, XCircle, Baby, Pencil, Save, Tractor, PawPrint, SlidersHorizontal, ChevronLeft, Camera, ImagePlus, LineChart, Sparkles, Edit3 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTernakStore } from '../store/useTernakStore';
 import axiosInstance from '../lib/axios';
 import { toast } from '@/store/toastStore';
 import ScanModal from '@/components/scan/ScanModal';
 import PairCollarModal from '@/components/shared/PairCollarModal';
+import CowAnalyticsView from '@/components/shared/CowAnalyticsView';
+import CowEstrusView from '@/components/shared/CowEstrusView';
 import useConfirmStore from '@/store/confirmStore';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
@@ -65,6 +67,7 @@ export default function ManajemenTernak() {
 
   const [selectedSapi, setSelectedSapi] = useState(null);
   const [isReproModalOpen, setIsReproModalOpen] = useState(false);
+  const [activeDetailTab, setActiveDetailTab] = useState('riwayat'); // 'riwayat' | 'analitik' | 'estrus'
   const [isTambahModalOpen, setIsTambahModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
@@ -1317,124 +1320,182 @@ export default function ManajemenTernak() {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="px-5 py-6 grid grid-cols-2 gap-4 bg-white relative z-10 -mt-6 rounded-t-[32px] shadow-[0_-8px_20px_rgba(0,0,0,0.06)]">
+          {/* Action Buttons — Tab Switchers */}
+          <div className="px-5 py-6 grid grid-cols-3 gap-3 bg-white relative z-10 -mt-6 rounded-t-[32px] shadow-[0_-8px_20px_rgba(0,0,0,0.06)]">
+            {/* Tab 1: Riwayat Ternak */}
             <button 
-              onClick={() => {
-                const today = new Date().toISOString().split('T')[0];
-                const countIB = sortedReproHistory.filter(h => h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
-                setReproForm(f => ({ ...f, tanggal_ib: today, jumlah_ib: countIB }));
-                setIsReproModalOpen(true);
-              }} 
-              className="bg-[#2E7D32] text-white py-4 rounded-[20px] flex flex-col items-center justify-center gap-2 shadow-lg shadow-green-900/10 active:scale-95 transition-transform"
+              onClick={() => setActiveDetailTab('riwayat')}
+              className={`py-3.5 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
+                activeDetailTab === 'riwayat'
+                  ? 'bg-[#2E7D32] text-white shadow-lg shadow-green-900/15'
+                  : 'bg-[#E8F5E9] text-[#1B5E20] border border-[#C8E6C9]'
+              }`}
             >
-               <ClipboardList size={22} strokeWidth={2.5} />
-               <span className="font-bold text-[13px] tracking-wide">Catat IB</span>
+               <ClipboardList size={20} strokeWidth={2.5} />
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Riwayat{`\n`}Ternak</span>
             </button>
-            <button className="bg-[#E8F5E9] text-[#1B5E20] py-4 rounded-[20px] flex flex-col items-center justify-center gap-2 shadow-sm border border-[#C8E6C9] active:scale-95 transition-transform">
-               <Activity size={22} strokeWidth={2.5} />
-               <span className="font-bold text-[13px] tracking-wide">Lapor Sakit</span>
+            {/* Tab 2: Analitik */}
+            <button 
+              onClick={() => setActiveDetailTab('analitik')}
+              className={`py-3.5 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
+                activeDetailTab === 'analitik'
+                  ? 'bg-[#FFF8E1] text-[#F57F17] shadow-lg shadow-yellow-900/10'
+                  : 'bg-[#FFF8E1] text-[#F57F17] border border-[#FFECB3] opacity-70'
+              }`}
+            >
+               <LineChart size={20} strokeWidth={2.5} />
+               <span className="font-bold text-[10px] tracking-wide">Analitik</span>
+            </button>
+            {/* Tab 3: Prediksi Estrus */}
+            <button 
+              onClick={() => setActiveDetailTab('estrus')}
+              className={`py-3.5 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
+                activeDetailTab === 'estrus'
+                  ? 'bg-[#EDE7F6] text-[#6200EA] shadow-lg shadow-purple-900/10'
+                  : 'bg-[#EDE7F6] text-[#7C4DFF] border border-[#D1C4E9] opacity-70'
+              }`}
+            >
+               <Sparkles size={20} strokeWidth={2.5} />
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Prediksi{`\n`}Estrus</span>
             </button>
           </div>
 
-          {/* Riwayat Ternak */}
-          <div className="px-5 pb-6 bg-white">
-            <div className="flex justify-between items-center mb-6">
-               <h3 className="text-[17px] font-extrabold text-[#111] flex items-center gap-2">
-                  Riwayat Ternak
-               </h3>
-               <button className="text-[11px] font-bold text-[#2E7D32]">Lihat Semua</button>
+          {/* Bottom Display Area */}
+          {activeDetailTab === 'riwayat' ? (
+            <>
+              {/* Riwayat Ternak - Card Style */}
+              <div className="px-5 pb-6 bg-white">
+                <div className="flex justify-between items-center mb-4">
+                   <h3 className="text-[17px] font-extrabold text-[#111]">Riwayat Ternak</h3>
+                </div>
+
+                {sortedReproHistory.length === 0 ? (
+                  <div className="text-center text-sm text-[var(--text-3)] py-8">Belum ada riwayat.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {sortedReproHistory.map((item) => {
+                      const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
+                      const isFailed      = item.results === false || item.results === 'failed' || item.is_pregnant === false;
+                      const isNote        = item.catatan && !item.pemberi_ib && !item.metode;
+                      const isPending     = !isPregnant && !isFailed && !isNote;
+                      const rawDate       = item.tanggal_ib || item.service_date;
+                      const estCalving    = rawDate && isPregnant
+                        ? new Date(new Date(rawDate).getTime() + 283 * 24 * 60 * 60 * 1000)
+                            .toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : '—';
+                      const formattedDate = rawDate
+                        ? new Date(rawDate).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : '—';
+                      return (
+                        <div key={item.id} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '14px' }}>
+                          {/* Header */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <p className="font-extrabold text-[14px]" style={{ color: 'var(--text-1)' }}>
+                                {(item.metode || 'IB').toUpperCase()}
+                                {item.jumlah_ib ? <span className="font-normal text-[11px] ml-1.5" style={{ color: 'var(--text-3)' }}>(Ke-{item.jumlah_ib})</span> : ''}
+                              </p>
+                              {item.catatan && <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-3)' }}>{item.catatan}</p>}
+                            </div>
+                            {isPregnant && <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#10B981] shrink-0">Bunting</span>}
+                            {isFailed   && <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FEF2F2] text-[#EF4444] shrink-0">Gagal</span>}
+                            {isPending  && <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FFF8E1] text-[#F57F17] shrink-0">Menunggu</span>}
+                          </div>
+                          {/* Detail rows */}
+                          <div className="space-y-1.5 text-xs" style={{ color: 'var(--text-2)' }}>
+                            <div className="flex justify-between">
+                              <span>Tanggal Kawin</span>
+                              <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{formattedDate}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Metode</span>
+                              <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{(item.metode || 'IB').toUpperCase()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Perkiraan Calving</span>
+                              <span style={{ color: isPregnant ? 'var(--color-forest)' : 'var(--text-1)', fontWeight: isPregnant ? 700 : 600 }}>{estCalving}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Inseminator</span>
+                              <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{item.pemberi_ib || item.petugas || item.technician || '—'}</span>
+                            </div>
+                          </div>
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: '0.5px solid var(--border)' }}>
+                            {isPending && (
+                              <>
+                                <button
+                                  onClick={() => confirmPregnancy(item, true)}
+                                  disabled={confirmingPregnancy === item.id}
+                                  className="flex-1 py-1.5 text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                                  style={{ background: '#ECFDF5', color: '#10B981' }}
+                                >
+                                  {confirmingPregnancy === item.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />} Bunting
+                                </button>
+                                <button
+                                  onClick={() => confirmPregnancy(item, false)}
+                                  disabled={confirmingPregnancy === item.id}
+                                  className="flex-1 py-1.5 text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                                  style={{ background: '#FEF2F2', color: '#EF4444' }}
+                                >
+                                  {confirmingPregnancy === item.id ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />} Gagal
+                                </button>
+                              </>
+                            )}
+                            <button
+                              onClick={() => deleteReproRecord(item)}
+                              className="p-1.5 rounded-lg ml-auto"
+                              style={{ color: 'var(--red, #EF4444)', background: 'var(--bg-hover)' }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Catat IB Button */}
+                <button
+                  onClick={() => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const countIB = sortedReproHistory.filter(h => h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
+                    setReproForm(f => ({ ...f, tanggal_ib: today, jumlah_ib: countIB }));
+                    setIsReproModalOpen(true);
+                  }}
+                  className="w-full mt-4 py-3 rounded-[14px] flex items-center justify-center gap-2 font-bold text-[13px] transition-all active:scale-95"
+                  style={{ background: '#2E7D32', color: '#fff' }}
+                >
+                  <ClipboardList size={16} strokeWidth={2.5} />
+                  + Catat IB
+                </button>
+              </div>
+
+              {/* Promo Banner */}
+              <div className="px-5 pb-12 bg-white">
+                <div className="bg-[#F5F8F6] p-5 rounded-[20px] border border-[#E8F0EA] flex gap-4 overflow-hidden relative">
+                   <div className="absolute -right-8 -top-8 w-32 h-32 bg-[#E8F0EA] rounded-full opacity-50 pointer-events-none" />
+                   <div className="bg-[#E8F0EA] w-11 h-11 rounded-xl flex items-center justify-center shrink-0">
+                      <Activity size={22} className="text-[#2E7D32]" />
+                   </div>
+                   <div className="relative z-10">
+                      <h4 className="text-[14px] font-bold text-[#111] mb-1">Pantau {selectedSapi.nama} 24/7</h4>
+                      <p className="text-[11px] text-[#555] leading-relaxed mb-3 pr-2">Gunakan Smart Collar HERD untuk deteksi estrus otomatis dan monitoring kesehatan.</p>
+                      <button className="text-[11px] font-bold text-[#2E7D32] flex items-center gap-1">Lihat Produk Sensor <ChevronRight size={14} /></button>
+                   </div>
+                </div>
+              </div>
+            </>
+          ) : activeDetailTab === 'analitik' ? (
+            <div className="px-5 pb-12 pt-2 bg-[var(--bg-surface)] min-h-[500px]">
+              <CowAnalyticsView selectedCow={selectedSapi} />
             </div>
-
-            <div className="space-y-0 relative">
-               {sortedReproHistory.length === 0 ? (
-                  <div className="text-center text-sm text-[var(--text-3)] py-4">Belum ada riwayat.</div>
-               ) : (
-                  sortedReproHistory.map((item, idx) => {
-                     const isLast = idx === sortedReproHistory.length - 1;
-                     const isPregnant = item.results === true || item.results === 'true' || item.is_pregnant === true;
-                     const isFailed = item.results === false || item.results === 'failed' || item.is_pregnant === false;
-                     const isNote = item.catatan && !item.pemberi_ib && !item.metode;
-                     const actualIsFailed = isFailed && !isNote && !isPregnant;
-                     
-                     let title = '';
-                     if (item.catatan && !item.metode) {
-                        title = item.catatan;
-                     } else {
-                        title = `${(item.metode || 'IB').toUpperCase()}`;
-                        if (item.pemberi_ib) title += ` - Inseminator: ${item.pemberi_ib}`;
-                     }
-                     if (item.catatan && item.metode) {
-                        title += ` (${item.catatan})`;
-                     }
-                     
-                     return (
-                       <div key={item.id || idx} className="relative pl-8 pb-6">
-                         {/* Line */}
-                         {!isLast && <div className="absolute left-[9px] top-4 bottom-[-16px] w-[2px] bg-[#E0E0E0]" />}
-                         {/* Dot */}
-                         <div className={`absolute left-0 top-1 w-5 h-5 rounded-full shadow-sm z-10 flex items-center justify-center ${isPregnant ? 'bg-[#10B981]' : 'bg-white border-[4.5px]'} ${!isPregnant && actualIsFailed ? 'border-[#EF4444]' : (!isPregnant ? 'border-[#D1D5DB]' : '')}`}>
-                            {isPregnant && <CheckCircle size={12} color="white" strokeWidth={3} />}
-                         </div>
-                         
-                         {/* Card */}
-                         <div className="bg-white p-4 rounded-xl border border-[#E0E0E0] shadow-sm flex flex-col justify-center relative group">
-                           {/* Tombol Hapus */}
-                           <button 
-                             onClick={() => deleteReproRecord(item)}
-                             className="absolute top-3 right-3 p-1.5 rounded-lg text-[#9CA3AF] hover:text-[#EF4444] hover:bg-red-50 transition-colors"
-                           >
-                             <Trash2 size={14} />
-                           </button>
-
-                           <div className="flex justify-between items-start mb-1.5 pr-8">
-                              <p className={`text-[10px] font-bold ${actualIsFailed ? 'text-[#EF4444]' : (isPregnant ? 'text-[#10B981]' : 'text-[#6B7280]')}`}>{formatTgl(item.tanggal_ib || item.service_date, lang)}</p>
-                              {actualIsFailed && <span className="bg-[#FEF2F2] text-[#EF4444] text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Gagal</span>}
-                              {isPregnant && <span className="bg-[#ECFDF5] text-[#10B981] text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Berhasil</span>}
-                           </div>
-                           <p className="text-[13px] font-semibold text-[#111] leading-snug">{title}</p>
-
-                           {/* Tombol Konfirmasi (jika status masih pending dan bukan catatan) */}
-                           {(!isPregnant && !actualIsFailed && !isNote) && (
-                              <div className="flex gap-2 mt-3 pt-3 border-t border-[#F3F4F6]">
-                                 <button 
-                                   onClick={() => confirmPregnancy(item, true)}
-                                   disabled={confirmingPregnancy === item.id}
-                                   className="flex-1 py-1.5 bg-[#ECFDF5] text-[#10B981] text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-transform"
-                                 >
-                                   {confirmingPregnancy === item.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />} Bunting
-                                 </button>
-                                 <button 
-                                   onClick={() => confirmPregnancy(item, false)}
-                                   disabled={confirmingPregnancy === item.id}
-                                   className="flex-1 py-1.5 bg-[#FEF2F2] text-[#EF4444] text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-transform"
-                                 >
-                                   {confirmingPregnancy === item.id ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />} Gagal
-                                 </button>
-                              </div>
-                           )}
-                         </div>
-                       </div>
-                     );
-                  })
-               )}
+          ) : (
+            <div className="px-5 pb-12 pt-2 bg-[var(--bg-surface)] min-h-[500px]">
+              <CowEstrusView selectedCow={selectedSapi} reproHistory={sortedReproHistory} />
             </div>
-          </div>
-
-          {/* Promo Banner */}
-          <div className="px-5 pb-12 bg-white">
-            <div className="bg-[#F5F8F6] p-5 rounded-[20px] border border-[#E8F0EA] flex gap-4 overflow-hidden relative">
-               <div className="absolute -right-8 -top-8 w-32 h-32 bg-[#E8F0EA] rounded-full opacity-50 pointer-events-none" />
-               <div className="bg-[#E8F0EA] w-11 h-11 rounded-xl flex items-center justify-center shrink-0">
-                  <Activity size={22} className="text-[#2E7D32]" />
-               </div>
-               <div className="relative z-10">
-                  <h4 className="text-[14px] font-bold text-[#111] mb-1">Pantau {selectedSapi.nama} 24/7</h4>
-                  <p className="text-[11px] text-[#555] leading-relaxed mb-3 pr-2">Gunakan Smart Collar HERD untuk deteksi estrus otomatis dan monitoring kesehatan.</p>
-                  <button className="text-[11px] font-bold text-[#2E7D32] flex items-center gap-1">Lihat Produk Sensor <ChevronRight size={14} /></button>
-               </div>
-            </div>
-          </div>
+          )}
         </div>
         </>
       )}
@@ -1545,6 +1606,8 @@ export default function ManajemenTernak() {
         toast.success((lang === 'id' ? 'RFID ditemukan: ' : 'RFID found: ') + scannedRfid);
       }}
     />
+
+
     </>
   );
 }

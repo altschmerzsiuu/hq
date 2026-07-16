@@ -194,7 +194,7 @@ export default function PairCollarModal({
         </div>
 
         {/* Footer */}
-        <div className="mt-8 flex justify-end gap-3">
+        <div className="mt-8 flex gap-3">
           <button
             type="button"
             onClick={onClose}
@@ -207,6 +207,7 @@ export default function PairCollarModal({
               background: 'var(--bg-card)',
               cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
+              flex: 1
             }}
           >
             Batal
@@ -215,7 +216,7 @@ export default function PairCollarModal({
             type="button"
             onClick={handlePair}
             disabled={!pairSelectedSapi || !pairSelectedCollar || loading}
-            className="px-8 py-2.5 bg-[var(--color-primary)] text-white font-bold rounded-xl shadow-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="flex-1 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl shadow-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {loading ? 'Memproses...' : 'Pasangkan Sekarang'}
           </button>

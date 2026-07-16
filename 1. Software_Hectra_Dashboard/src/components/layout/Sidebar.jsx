@@ -97,7 +97,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
       label: 'INTELLIGENCE',
       items: [
         { name: t.nav_estrus_intel, path: '/estrus-prediction', icon: Zap },
-        { name: t.nav_herd_analytics, path: '/behavior-analytics', icon: PieChart },
+
         { name: t.nav_activity_timeline, path: '/activity-timeline', icon: Clock },
         { name: t.nav_recommendations, path: '/recommendations', icon: Lightbulb },
       ]
