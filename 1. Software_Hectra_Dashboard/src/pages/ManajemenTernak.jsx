@@ -1251,10 +1251,7 @@ export default function ManajemenTernak() {
                 className="w-full h-full object-cover" 
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 relative">
-                 <Beef size={48} className="text-gray-300 mb-2" />
-                 <p className="text-xs font-semibold text-gray-400">Tidak ada foto</p>
-              </div>
+              <div className="w-full h-full bg-gray-300 relative" />
             )}
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/40 to-transparent pointer-events-none" />
@@ -1262,7 +1259,13 @@ export default function ManajemenTernak() {
             {/* Photo Action Buttons if No Photo */}
             {!selectedSapi.foto && (
                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
-                  <div className="mt-20 flex items-center bg-white/20 backdrop-blur-md p-1 rounded-2xl border border-white/30 shadow-xl pointer-events-auto">
+                  <div className="flex flex-col items-center mb-6">
+                     <div className="bg-white/10 backdrop-blur-md p-4 rounded-full mb-3 border border-white/20 shadow-lg">
+                        <Beef size={40} className="text-white/80" />
+                     </div>
+                     <p className="text-[13px] font-medium text-white/90 tracking-wide" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>Belum ada foto</p>
+                  </div>
+                  <div className="flex items-center bg-white/20 backdrop-blur-md p-1 rounded-2xl border border-white/30 shadow-xl pointer-events-auto">
                      <label className="px-4 py-2 rounded-xl text-[11px] font-bold text-white cursor-pointer active:scale-95 transition-transform flex items-center gap-2 hover:bg-white/10">
                        <Camera size={14} /> Ambil Foto
                        <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
@@ -1295,7 +1298,7 @@ export default function ManajemenTernak() {
             </div>
 
             {/* Text Content at Bottom */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 pb-8 text-white">
+            <div className="absolute bottom-0 left-0 right-0 p-6 pb-12 text-white">
                <div className="flex gap-2 mb-3">
                   <span className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-bold text-white border border-white/10 uppercase tracking-wider">
                     ID: #{selectedSapi.id}
