@@ -149,13 +149,6 @@ export default function Settings() {
     return parts.join(', ');
   }, [streetAddress, currentCity, currentProv, selectedPostal]);
 
-  // ─── Telegram guide auto-close ────────────────────────────────────────────────
-  useEffect(() => {
-    let timer;
-    if (showGuide) timer = setTimeout(() => setShowGuide(false), 30000);
-    return () => clearTimeout(timer);
-  }, [showGuide]);
-
   // ─── Map init (only when activeTab === 'profile') ─────────────────────────────
   useEffect(() => {
     if (activeTab !== 'profile') {
