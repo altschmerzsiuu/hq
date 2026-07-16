@@ -23,7 +23,7 @@ export default function GendhistPullUpSheet() {
   const suggestions = getSuggestions(location.pathname);
 
   const handleDragStart = () => {
-    if (sheetState === 'closed') setSheetState('peek');
+    if (sheetState === 'closed') setSheetState('open');
   };
 
   const closeSheet = (e) => {
@@ -44,34 +44,31 @@ export default function GendhistPullUpSheet() {
       {/* Main Container */}
       <div 
         className={cn(
-          "fixed md:hidden bg-[var(--bg-surface)] transition-all duration-300 ease-in-out flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[var(--color-border)] overflow-hidden",
-          sheetState === 'closed' ? "bottom-[100px] right-6 w-auto h-[48px] rounded-full px-4" :
-          sheetState === 'peek' ? "bottom-[100px] right-6 left-6 h-[220px] rounded-3xl" :
-          sheetState === 'open' ? "bottom-[100px] right-6 left-6 h-[70vh] rounded-3xl" :
-          "inset-0 rounded-none" // fullscreen
+          "fixed md:hidden transition-all duration-300 ease-in-out flex flex-col overflow-hidden",
+          sheetState === 'closed' 
+            ? "bottom-[104px] right-6 w-[56px] h-[56px] rounded-full bg-[var(--color-primary)] shadow-[0_4px_16px_rgba(13,99,27,0.3)] border-none" 
+            : "bg-[var(--bg-surface)] shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-[var(--color-border)]",
+          sheetState === 'peek' ? "bottom-[100px] right-4 left-4 h-[220px] rounded-3xl" :
+          sheetState === 'open' ? "bottom-[100px] right-4 left-4 h-[70vh] rounded-3xl" :
+          sheetState === 'fullscreen' ? "inset-0 rounded-none" : ""
         )}
-        style={{ zIndex: sheetState === 'fullscreen' ? 9999 : sheetState === 'open' ? 200 : 30 }}
+        style={{ zIndex: sheetState === 'fullscreen' ? 9999 : sheetState === 'open' ? 200 : 50 }}
       >
         {/* Handle Bar Area */}
         <div 
           className={cn(
-            "h-[48px] flex items-center cursor-pointer shrink-0",
-            sheetState === 'closed' ? "justify-center gap-2" : "w-full justify-between px-5"
+            "flex items-center cursor-pointer shrink-0",
+            sheetState === 'closed' ? "w-full h-full justify-center" : "h-[48px] w-full justify-between px-5"
           )}
           onClick={() => {
-            if (sheetState === 'closed') setSheetState('peek');
+            if (sheetState === 'closed') setSheetState('open');
             else if (sheetState === 'peek') setSheetState('open');
             else if (sheetState === 'open') setSheetState('fullscreen');
           }}
           onTouchStart={handleDragStart}
         >
           {sheetState === 'closed' && (
-            <div className="flex items-center gap-2 whitespace-nowrap">
-              <div className="w-7 h-7 bg-[var(--color-primary)]/10 rounded-full flex items-center justify-center">
-                <Bot size={16} className="text-[var(--color-primary)]" />
-              </div>
-              <span className="text-[14px] font-body font-bold text-[var(--color-primary)]">Tanya Gendhis</span>
-            </div>
+            <Bot size={28} className="text-white" />
           )}
 
           {sheetState !== 'closed' && (

@@ -119,16 +119,13 @@ export default function MainLayout() {
           {!isResearchLab && <div className="md:hidden" style={{ height: '140px' }} />}
         </main>
 
-        {/* Mobile Gendhis + Nav */}
-        {!isResearchLab && <GendhistPullUpSheet />}
+        {/* Mobile Nav */}
         {!isResearchLab && <MobileBottomNav />}
       </div>
 
-      {/* Desktop Gendhis Floating Widget */}
+      {/* Gendhis Floating Widget (Mobile & Desktop) */}
       {!isResearchLab && (
-        <div className="hidden md:block">
-          <GendhisWidget />
-        </div>
+        <GendhisWidget />
       )}
 
       {/* Dynamic Toast System */}

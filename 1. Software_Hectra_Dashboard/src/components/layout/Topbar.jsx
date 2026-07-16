@@ -64,11 +64,6 @@ export default function Topbar({ onMenuClick }) {
     >
       {/* Left: Hamburger (mobile ONLY) + Date */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-
-        {/* ✅ FIX 1: Hamburger hanya muncul di mobile (< lg = < 1024px).
-            Pakai `block lg:hidden` supaya di desktop dia benar-benar tidak dirender.
-            Sebelumnya hanya `lg:hidden` yang kadang tidak ter-apply karena specificity
-            inline style `display:flex` pada parent menang. */}
         <button
           onClick={onMenuClick}
           style={{
@@ -100,7 +95,7 @@ export default function Topbar({ onMenuClick }) {
       {/* Right: Lang + Theme + Bell */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
 
-        {/* Language Dropdown (Enlarged with real flags & larger click area) */}
+        {/* Language Dropdown */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <Globe size={14} style={{ color: 'var(--text-2)', position: 'absolute', left: '10px', pointerEvents: 'none', zIndex: 1 }} />
           <select

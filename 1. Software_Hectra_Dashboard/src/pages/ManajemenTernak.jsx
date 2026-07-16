@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, Plus, Filter, Link, Unlink, ChevronRight, Edit2, Trash2, Activity, MapPin, X, Calendar, ClipboardList, Beef, Loader2, CheckCircle, XCircle, Baby, Pencil, Save } from 'lucide-react';
+import { Search, Plus, Filter, Link, Unlink, ChevronRight, Edit2, Trash2, Activity, MapPin, X, Calendar, ClipboardList, Beef, Loader2, CheckCircle, XCircle, Baby, Pencil, Save, Tractor, PawPrint, SlidersHorizontal, ChevronLeft, Camera, ImagePlus } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTernakStore } from '../store/useTernakStore';
 import axiosInstance from '../lib/axios';
@@ -344,14 +344,14 @@ export default function ManajemenTernak() {
   // --- Konfirmasi hasil IB (hamil / tidak) ---
   const confirmPregnancy = async (item, isPregnant) => {
     const label = isPregnant 
-      ? (lang === 'id' ? 'Bunting (Berhasil)' : 'Pregnant (Success)') 
-      : (lang === 'id' ? 'Gagal (Kembali Birahi)' : 'Failed (Return to Estrus)');
+      ? (lang === 'id' ? 'Bunting' : 'Pregnant') 
+      : (lang === 'id' ? 'Gagal' : 'Failed');
     const confirmed = await ask({
       title: t.livestock_repro_confirm_title,
       message: (lang === 'id'
         ? `Tandai hasil inseminasi sapi ${selectedSapi?.nama} sebagai "${label}"? Status ini akan tersimpan ke database dan memperbarui notifikasi.`
         : `Mark artificial insemination result for cow ${selectedSapi?.nama} as "${label}"? This status will be saved to the database and update notifications.`),
-      confirmText: isPregnant ? t.livestock_repro_confirm_pregnant : t.livestock_repro_confirm_failed,
+      confirmText: label,
       cancelText: t.btn_cancel,
       isDanger: !isPregnant
     });
@@ -381,7 +381,9 @@ export default function ManajemenTernak() {
     <>
       <div className="space-y-6 pb-6">
         {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* ── Header ── */}
+      {/* Desktop Header */}
+      <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold text-[var(--color-text-primary)]">{t.livestock_title}</h1>
           <p className="text-[var(--color-text-secondary)] mt-1">{t.livestock_sub}</p>
@@ -404,8 +406,29 @@ export default function ManajemenTernak() {
         </div>
       </div>
 
-      <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '16px 24px', boxShadow: 'var(--shadow-card)', border: '0.5px solid var(--border)' }} className="animate-in fade-in duration-300">
-        <div className="flex flex-col md:flex-row gap-4 justify-between mb-4">
+      {/* Mobile Header (Like Screenshot) */}
+      <div className="md:hidden flex items-center justify-between pt-2 pb-2">
+        <div className="flex items-center gap-3">
+          <div style={{ color: 'var(--accent)' }}>
+            <Tractor size={32} strokeWidth={2} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text-1)', lineHeight: 1.1, margin: 0, letterSpacing: '-0.5px' }}>
+              Ternak
+            </h1>
+            <p style={{ fontSize: '10px', fontWeight: 800, color: 'var(--accent)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Manajemen Populasi
+            </p>
+          </div>
+        </div>
+        <div style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--accent)', padding: '6px 12px', borderRadius: '100px', fontSize: '13px', fontWeight: 800 }}>
+          {sapiList.length} Sapi
+        </div>
+      </div>
+
+      {/* ── DESKTOP CONTENT ── */}
+      <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '16px 24px', boxShadow: 'var(--shadow-card)', border: '0.5px solid var(--border)' }} className="hidden md:block animate-in fade-in duration-300">
+        <div className="flex gap-4 justify-between mb-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2" size={18} style={{ color: 'var(--text-3)' }} />
             <input 
@@ -449,7 +472,7 @@ export default function ManajemenTernak() {
         )}
 
         {/* Desktop View: Table */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
@@ -501,58 +524,172 @@ export default function ManajemenTernak() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* ── MOBILE CONTENT ── */}
+      <div className="md:hidden flex flex-col gap-4 mt-2">
+        {/* Search and Filter Row */}
+        <div className="flex items-center gap-2 w-full">
+          <div style={{ flex: 1, position: 'relative', background: 'var(--bg-surface)', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: '0 2px 12px rgba(0,0,0,0.03)' }}>
+            <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
+            <input 
+              type="text" 
+              placeholder="Cari nama sapi..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '14px 16px 14px 44px', background: 'transparent', border: 'none', outline: 'none', fontSize: '15px', color: 'var(--text-1)', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}
+            />
+          </div>
+          <button 
+            onClick={() => setShowFilter(f => !f)}
+            style={{ width: '50px', height: '50px', borderRadius: '16px', background: showFilter ? 'var(--accent-dim)' : 'var(--bg-surface)', border: `1px solid ${showFilter ? 'var(--accent)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: showFilter ? 'var(--accent)' : 'var(--text-2)', boxShadow: '0 2px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s' }}
+          >
+            <SlidersHorizontal size={20} />
+          </button>
+        </div>
+
+        {/* Filter Chips Row */}
+        <div className="no-scrollbar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', alignItems: 'center', margin: '0 -16px', padding: '0 16px' }}>
+          {['Semua', 'Perlu IB', 'Bunting', 'Sehat'].map((f, i) => (
+            <React.Fragment key={f}>
+              <button 
+                onClick={() => setFilters(prev => ({...prev, kesehatan: f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f)}))}
+                style={{
+                  padding: '8px 16px', borderRadius: '100px', fontSize: '14px', fontWeight: 700, whiteSpace: 'nowrap',
+                  background: (filters.kesehatan === (f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f))) ? '#EAEAEA' : 'transparent',
+                  color: (filters.kesehatan === (f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f))) ? '#111' : 'var(--text-2)',
+                  border: 'none', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'Inter, sans-serif'
+                }}
+              >
+                {f}
+              </button>
+              {i < 3 && <span style={{ color: 'var(--border)', fontSize: '16px', padding: '0 4px' }}>/</span>}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Advanced Filter Panel Mobile (Bottom Sheet Modal) */}
+        {showFilter && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            {/* Backdrop */}
+            <div 
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }} 
+              className="animate-in fade-in duration-200"
+              onClick={() => setShowFilter(false)} 
+            />
+            
+            {/* Modal Content */}
+            <div 
+              style={{ position: 'relative', width: '100%', background: 'var(--bg-surface)', padding: '24px 20px', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', boxShadow: '0 -4px 24px rgba(0,0,0,0.1)' }} 
+              className="animate-in slide-in-from-bottom-full duration-300"
+            >
+              {/* Drag Handle */}
+              <div style={{ width: '48px', height: '5px', background: 'var(--border)', borderRadius: '10px', margin: '0 auto 24px auto' }} />
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h4 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-1)', margin: 0 }}>Filter Lanjutan</h4>
+                <button onClick={() => setShowFilter(false)} style={{ background: 'var(--bg-hover)', border: 'none', color: 'var(--text-2)', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={18} />
+                </button>
+              </div>
+              
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-2)', display: 'block', marginBottom: '8px' }}>Jenis Sapi / Bangsa</label>
+                <select 
+                  value={filters.jenis} 
+                  onChange={e => setFilters(f => ({ ...f, jenis: e.target.value }))}
+                  style={{ width: '100%', padding: '14px 16px', borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--bg-base)', outline: 'none', fontSize: '15px', color: 'var(--text-1)', fontWeight: 600, fontFamily: 'Inter, sans-serif', appearance: 'none' }}
+                >
+                  <option value="all">Semua Jenis</option>
+                  <option value="Simmental">Simmental</option>
+                  <option value="Bali">Bali</option>
+                  <option value="Brahman">Brahman</option>
+                  <option value="Limosin">Limosin</option>
+                  <option value="Angus">Angus</option>
+                  <option value="Friesian Holstein">Friesian Holstein</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '32px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-2)', display: 'block', marginBottom: '8px' }}>Terakhir IB</label>
+                <select 
+                  style={{ width: '100%', padding: '14px 16px', borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--bg-base)', outline: 'none', fontSize: '15px', color: 'var(--text-1)', fontWeight: 600, fontFamily: 'Inter, sans-serif', appearance: 'none' }}
+                >
+                  <option value="all">Kapan Saja</option>
+                  <option value="7">7 Hari Terakhir</option>
+                  <option value="30">30 Hari Terakhir</option>
+                  <option value="older">Lebih dari 1 Bulan</option>
+                </select>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '12px', paddingBottom: 'env(safe-area-inset-bottom, 20px)' }}>
+                 <button 
+                  onClick={() => { setFilters({ kesehatan: 'all', jenis: 'all' }); setShowFilter(false); }} 
+                  style={{ flex: 1, padding: '14px', borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-2)', fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                 >
+                   Reset
+                 </button>
+                 <button 
+                  onClick={() => setShowFilter(false)} 
+                  style={{ flex: 1, padding: '14px', borderRadius: '16px', border: 'none', background: 'var(--accent)', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.2)', fontFamily: 'Inter, sans-serif' }}
+                 >
+                   Terapkan
+                 </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mobile View: List Items */}
-        <div className="md:hidden space-y-3">
+        <div className="space-y-4 pb-20">
           {filteredSapi.map(sapi => (
             <div 
               key={sapi.id} 
-              style={{ padding: '14px', border: '0.5px solid var(--border)', borderRadius: '16px', background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)' }}
-              className="space-y-3 cursor-pointer"
+              style={{ 
+                padding: '16px', borderRadius: '24px', background: 'var(--bg-surface)', 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' 
+              }}
               onClick={() => setSelectedSapi(sapi)}
             >
-              {/* Header row */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[var(--color-bg-surface)] rounded-full flex items-center justify-center shrink-0">
-                    <Beef size={20} className="text-[var(--color-primary)]" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-[var(--color-primary)]">{sapi.nama}</h3>
-                    <p className="text-xs text-[var(--color-text-muted)]">{sapi.id}</p>
-                  </div>
-                </div>
-                <span className={cn(
-                  "text-[10px] px-2.5 py-0.5 rounded-full font-bold",
-                  sapi.status_kesehatan === 'Sehat' ? "bg-[var(--color-success-bg)] text-[var(--color-success)]" :
-                  sapi.status_kesehatan === 'Hamil' ? "bg-[var(--color-info-bg)] text-[var(--color-info)]" :
-                  "bg-[var(--color-warning-bg)] text-[var(--color-warning)]"
-                )}>
-                  {sapi.status_kesehatan === 'Sehat' ? t.livestock_filter_sehat :
-                   sapi.status_kesehatan === 'Hamil' ? t.livestock_filter_hamil :
-                   sapi.status_kesehatan === 'Sakit' ? t.livestock_filter_sakit :
-                   t.livestock_filter_care}
-                </span>
+              {/* Cow Icon / Image */}
+              <div style={{ width: '72px', height: '72px', borderRadius: '16px', background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                {sapi.foto ? (
+                  <img src={sapi.foto} alt={sapi.nama} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <PawPrint size={32} color="var(--text-3)" />
+                )}
               </div>
-              {/* Detail rows */}
-              <div className="space-y-1.5 text-xs pt-2 border-t border-[var(--border)]" style={{ color: 'var(--text-2)' }}>
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-text-muted)]">{t.livestock_table_breed}</span>
-                  <span className="font-semibold">{sapi.jenis}</span>
+              
+              {/* Info Column */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-1)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {sapi.nama}
+                  </h3>
+                  <span style={{
+                    padding: '4px 10px', borderRadius: '100px', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', flexShrink: 0,
+                    background: sapi.status_kesehatan === 'Sehat' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                    color: sapi.status_kesehatan === 'Sehat' ? 'var(--accent)' : '#f59e0b'
+                  }}>
+                    {sapi.status_kesehatan === 'Sehat' ? 'SEHAT' : sapi.status_kesehatan === 'Hamil' ? 'BUNTING' : 'PERHATIAN'}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-text-muted)]">{t.livestock_table_age}</span>
-                  <span className="font-semibold">{hitungUsia(sapi.bulan_tahun_lahir, lang)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[var(--color-text-muted)]">{t.livestock_table_collar}</span>
-                  <span className="font-semibold">{sapi.collar_id || '-'}</span>
+                
+                <p style={{ fontSize: '13px', color: 'var(--text-2)', margin: '0 0 6px 0', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>
+                  Terakhir IB: {sapi.terakhir_ib ? formatTgl(sapi.terakhir_ib, lang) : '45 hari lalu'}
+                </p>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-3)', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>
+                  <span>Jenis: {sapi.jenis || '-'}</span>
+                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--border)' }} />
+                  <span>Usia: {hitungUsia(sapi.bulan_tahun_lahir, lang) || '-'}</span>
                 </div>
               </div>
             </div>
           ))}
           {filteredSapi.length === 0 && (
-            <p className="text-center text-xs italic text-[var(--color-text-muted)] py-8">{t.livestock_no_data}</p>
+            <p className="text-center text-sm italic text-[var(--color-text-muted)] py-12">{t.livestock_no_data}</p>
           )}
         </div>
       </div>
@@ -733,7 +870,9 @@ export default function ManajemenTernak() {
       {/* DRAWER: Detail Sapi — z-[900], di bawah modal edit (z-[1100]) */}
       {/* ────────────────────────────────────────────────────────────── */}
       {selectedSapi && (
-        <div className="fixed inset-0 z-[900] flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setSelectedSapi(null)}>
+        <>
+        {/* ── DESKTOP MODAL ── */}
+        <div className="hidden md:flex fixed inset-0 z-[900] justify-end bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setSelectedSapi(null)}>
           <div style={{ background: 'var(--bg-surface)', borderLeft: '0.5px solid var(--border)' }} className="w-full max-w-md h-full shadow-2xl overflow-hidden animate-in slide-in-from-right duration-300 flex flex-col" onClick={e => e.stopPropagation()}>
             <div style={{ background: 'var(--bg-surface)', borderBottom: '0.5px solid var(--border)' }} className="px-6 py-4 flex justify-between items-center">
               <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">{t.livestock_detail_title}</h2>
@@ -875,7 +1014,12 @@ export default function ManajemenTernak() {
                       <span>{reproSortOrder === 'desc' ? (lang === 'id' ? 'Terbaru' : 'Newest') : (lang === 'id' ? 'Terlama' : 'Oldest')}</span>
                     </button>
                     <button 
-                      onClick={() => setIsReproModalOpen(true)}
+                      onClick={() => {
+                        const today = new Date().toISOString().split('T')[0];
+                        const countIB = sortedReproHistory.filter(h => h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
+                        setReproForm(f => ({ ...f, tanggal_ib: today, jumlah_ib: countIB }));
+                        setIsReproModalOpen(true);
+                      }}
                       className="text-xs font-bold text-white bg-[var(--color-primary)] px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-[var(--color-primary-hover)] transition-colors"
                     >
                       <Plus size={14} /> <span>{t.btn_add}</span>
@@ -1095,6 +1239,194 @@ export default function ManajemenTernak() {
             </div>
           </div>
         </div>
+
+        {/* ── MOBILE FULLSCREEN DETAIL MODAL ── */}
+        <div className="md:hidden fixed inset-0 z-[900] bg-white overflow-y-auto animate-in slide-in-from-bottom duration-300">
+          {/* Header Photo */}
+          <div className="relative w-full h-[60vh] min-h-[450px]">
+            {selectedSapi.foto ? (
+              <img 
+                src={selectedSapi.foto} 
+                alt={selectedSapi.nama} 
+                className="w-full h-full object-cover" 
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 relative z-20">
+                 <Beef size={48} className="text-gray-300 mb-2" />
+                 <p className="text-xs font-semibold text-gray-400 mb-4">Tidak ada foto</p>
+                 <div className="flex gap-3">
+                   <label className="bg-white/80 backdrop-blur px-4 py-2.5 rounded-xl text-[11px] font-bold text-gray-700 shadow-sm border border-white/50 cursor-pointer active:scale-95 transition-transform flex items-center gap-2">
+                     <Camera size={14} /> Ambil Foto
+                     <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                           const url = URL.createObjectURL(e.target.files[0]);
+                           setSelectedSapi({...selectedSapi, foto: url});
+                        }
+                     }} />
+                   </label>
+                   <label className="bg-white/80 backdrop-blur px-4 py-2.5 rounded-xl text-[11px] font-bold text-gray-700 shadow-sm border border-white/50 cursor-pointer active:scale-95 transition-transform flex items-center gap-2">
+                     <ImagePlus size={14} /> Unggah Foto
+                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                           const url = URL.createObjectURL(e.target.files[0]);
+                           setSelectedSapi({...selectedSapi, foto: url});
+                        }
+                     }} />
+                   </label>
+                 </div>
+              </div>
+            )}
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/40 to-transparent pointer-events-none" />
+            
+            {/* Top Bar / Back Button */}
+            <div className="absolute top-0 left-0 right-0 p-4 pt-6 flex justify-between items-start z-30">
+              <button onClick={() => setSelectedSapi(null)} className="p-2 bg-white/80 backdrop-blur-md rounded-full text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.1)] flex items-center justify-center border border-white/50 active:scale-95 transition-transform">
+                <ChevronLeft size={24} />
+              </button>
+              {/* Optional top right buttons */}
+            </div>
+
+            {/* Text Content at Bottom */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 pb-8 text-white">
+               <div className="flex gap-2 mb-3">
+                  <span className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-bold text-white border border-white/10 uppercase tracking-wider">
+                    ID: #{selectedSapi.id}
+                  </span>
+                  <span className="bg-[#2E7D32] px-3 py-1.5 rounded-full text-[10px] font-bold text-white shadow-sm flex items-center gap-1.5 tracking-wider uppercase">
+                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                     {selectedSapi.status_kesehatan === 'Sehat' ? 'PRODUKTIF' : selectedSapi.status_kesehatan?.toUpperCase() || 'PRODUKTIF'}
+                  </span>
+               </div>
+               <h2 className="text-[36px] font-extrabold mb-1 tracking-tight leading-none" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+                 {selectedSapi.nama}
+               </h2>
+               <p className="text-[13px] text-white/90 font-medium" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+                 {selectedSapi.jenis} • {hitungUsia(selectedSapi.bulan_tahun_lahir, lang)}
+               </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="px-5 py-6 grid grid-cols-2 gap-4 bg-white relative z-10 -mt-6 rounded-t-[32px] shadow-[0_-8px_20px_rgba(0,0,0,0.06)]">
+            <button 
+              onClick={() => {
+                const today = new Date().toISOString().split('T')[0];
+                const countIB = sortedReproHistory.filter(h => h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
+                setReproForm(f => ({ ...f, tanggal_ib: today, jumlah_ib: countIB }));
+                setIsReproModalOpen(true);
+              }} 
+              className="bg-[#2E7D32] text-white py-4 rounded-[20px] flex flex-col items-center justify-center gap-2 shadow-lg shadow-green-900/10 active:scale-95 transition-transform"
+            >
+               <ClipboardList size={22} strokeWidth={2.5} />
+               <span className="font-bold text-[13px] tracking-wide">Catat IB</span>
+            </button>
+            <button className="bg-[#E8F5E9] text-[#1B5E20] py-4 rounded-[20px] flex flex-col items-center justify-center gap-2 shadow-sm border border-[#C8E6C9] active:scale-95 transition-transform">
+               <Activity size={22} strokeWidth={2.5} />
+               <span className="font-bold text-[13px] tracking-wide">Lapor Sakit</span>
+            </button>
+          </div>
+
+          {/* Riwayat Ternak */}
+          <div className="px-5 pb-6 bg-white">
+            <div className="flex justify-between items-center mb-6">
+               <h3 className="text-[17px] font-extrabold text-[#111] flex items-center gap-2">
+                  Riwayat Ternak
+               </h3>
+               <button className="text-[11px] font-bold text-[#2E7D32]">Lihat Semua</button>
+            </div>
+
+            <div className="space-y-0 relative">
+               {sortedReproHistory.length === 0 ? (
+                  <div className="text-center text-sm text-[var(--text-3)] py-4">Belum ada riwayat.</div>
+               ) : (
+                  sortedReproHistory.map((item, idx) => {
+                     const isLast = idx === sortedReproHistory.length - 1;
+                     const isPregnant = item.results === true || item.results === 'true' || item.is_pregnant === true;
+                     const isFailed = item.results === false || item.results === 'failed' || item.is_pregnant === false;
+                     const isNote = item.catatan && !item.pemberi_ib && !item.metode;
+                     const actualIsFailed = isFailed && !isNote && !isPregnant;
+                     
+                     let title = '';
+                     if (item.catatan && !item.metode) {
+                        title = item.catatan;
+                     } else {
+                        title = `${(item.metode || 'IB').toUpperCase()}`;
+                        if (item.pemberi_ib) title += ` - Inseminator: ${item.pemberi_ib}`;
+                     }
+                     if (item.catatan && item.metode) {
+                        title += ` (${item.catatan})`;
+                     }
+                     
+                     return (
+                       <div key={item.id || idx} className="relative pl-8 pb-6">
+                         {/* Line */}
+                         {!isLast && <div className="absolute left-[9px] top-4 bottom-[-16px] w-[2px] bg-[#E0E0E0]" />}
+                         {/* Dot */}
+                         <div className={`absolute left-0 top-1 w-5 h-5 rounded-full shadow-sm z-10 flex items-center justify-center ${isPregnant ? 'bg-[#10B981]' : 'bg-white border-[4.5px]'} ${!isPregnant && actualIsFailed ? 'border-[#EF4444]' : (!isPregnant ? 'border-[#D1D5DB]' : '')}`}>
+                            {isPregnant && <CheckCircle size={12} color="white" strokeWidth={3} />}
+                         </div>
+                         
+                         {/* Card */}
+                         <div className="bg-white p-4 rounded-xl border border-[#E0E0E0] shadow-sm flex flex-col justify-center relative group">
+                           {/* Tombol Hapus */}
+                           <button 
+                             onClick={() => deleteReproRecord(item)}
+                             className="absolute top-3 right-3 p-1.5 rounded-lg text-[#9CA3AF] hover:text-[#EF4444] hover:bg-red-50 transition-colors"
+                           >
+                             <Trash2 size={14} />
+                           </button>
+
+                           <div className="flex justify-between items-start mb-1.5 pr-8">
+                              <p className={`text-[10px] font-bold ${actualIsFailed ? 'text-[#EF4444]' : (isPregnant ? 'text-[#10B981]' : 'text-[#6B7280]')}`}>{formatTgl(item.tanggal_ib || item.service_date, lang)}</p>
+                              {actualIsFailed && <span className="bg-[#FEF2F2] text-[#EF4444] text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Gagal</span>}
+                              {isPregnant && <span className="bg-[#ECFDF5] text-[#10B981] text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Berhasil</span>}
+                           </div>
+                           <p className="text-[13px] font-semibold text-[#111] leading-snug">{title}</p>
+
+                           {/* Tombol Konfirmasi (jika status masih pending dan bukan catatan) */}
+                           {(!isPregnant && !actualIsFailed && !isNote) && (
+                              <div className="flex gap-2 mt-3 pt-3 border-t border-[#F3F4F6]">
+                                 <button 
+                                   onClick={() => confirmPregnancy(item, true)}
+                                   disabled={confirmingPregnancy === item.id}
+                                   className="flex-1 py-1.5 bg-[#ECFDF5] text-[#10B981] text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                                 >
+                                   {confirmingPregnancy === item.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />} Bunting
+                                 </button>
+                                 <button 
+                                   onClick={() => confirmPregnancy(item, false)}
+                                   disabled={confirmingPregnancy === item.id}
+                                   className="flex-1 py-1.5 bg-[#FEF2F2] text-[#EF4444] text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                                 >
+                                   {confirmingPregnancy === item.id ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />} Gagal
+                                 </button>
+                              </div>
+                           )}
+                         </div>
+                       </div>
+                     );
+                  })
+               )}
+            </div>
+          </div>
+
+          {/* Promo Banner */}
+          <div className="px-5 pb-12 bg-white">
+            <div className="bg-[#F5F8F6] p-5 rounded-[20px] border border-[#E8F0EA] flex gap-4 overflow-hidden relative">
+               <div className="absolute -right-8 -top-8 w-32 h-32 bg-[#E8F0EA] rounded-full opacity-50 pointer-events-none" />
+               <div className="bg-[#E8F0EA] w-11 h-11 rounded-xl flex items-center justify-center shrink-0">
+                  <Activity size={22} className="text-[#2E7D32]" />
+               </div>
+               <div className="relative z-10">
+                  <h4 className="text-[14px] font-bold text-[#111] mb-1">Pantau {selectedSapi.nama} 24/7</h4>
+                  <p className="text-[11px] text-[#555] leading-relaxed mb-3 pr-2">Gunakan Smart Collar HERD untuk deteksi estrus otomatis dan monitoring kesehatan.</p>
+                  <button className="text-[11px] font-bold text-[#2E7D32] flex items-center gap-1">Lihat Produk Sensor <ChevronRight size={14} /></button>
+               </div>
+            </div>
+          </div>
+        </div>
+        </>
       )}
 
       {/* ────────────────────────────────────────────────────────────── */}

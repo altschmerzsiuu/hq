@@ -25,3 +25,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# macOS metadata files (resource forks from Finder)
+._*
+.AppleDouble
+.LSOverride

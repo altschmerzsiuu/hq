@@ -33,7 +33,7 @@ export default function GendhisWidget() {
   const [isTyping, setIsTyping] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const [currentSessionId, setCurrentSessionId] = useState(`session_widget_${Date.now()}`);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   
   const token = useAuthStore(state => state.token);
   const user = useAuthStore(state => state.user);
@@ -297,12 +297,11 @@ export default function GendhisWidget() {
   const userEmail = user?.email || 'wan@farm.com';
   const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
-  // If minimized, render only launcher button
   if (viewState === 'minimized') {
     return (
       <button 
         onClick={() => setViewState('compact')}
-        className="fixed bottom-24 md:bottom-6 right-4 md:right-6 w-14 h-14 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-30 group active:scale-95"
+        className="fixed bottom-[104px] md:bottom-6 right-4 md:right-6 w-14 h-14 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-30 group active:scale-95"
         title="Tanya Gendhis"
       >
         <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform animate-pulse" />
@@ -321,7 +320,7 @@ export default function GendhisWidget() {
         {/* SIDEBAR (Responsive Collapsible matching system theme!) */}
         <aside 
           className={cn(
-            "h-full bg-[var(--bg-surface)] border-r border-[var(--border)] flex flex-col p-4 shrink-0 transition-all duration-300 relative",
+            "h-full bg-[var(--bg-surface)] border-r border-[var(--border)] flex flex-col p-4 shrink-0 transition-all duration-300 absolute md:relative z-20",
             isSidebarCollapsed ? "w-0 p-0 border-r-0 overflow-hidden" : "w-[280px]"
           )}
         >
@@ -624,7 +623,7 @@ export default function GendhisWidget() {
       {/* Tombol launcher silang melayang */}
       <button 
         onClick={() => setViewState('minimized')}
-        className="fixed bottom-24 md:bottom-6 right-4 md:right-6 w-14 h-14 bg-slate-700 hover:bg-slate-800 rotate-90 text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-30 group active:scale-95"
+        className="fixed bottom-[104px] md:bottom-6 right-4 md:right-6 w-14 h-14 bg-slate-700 hover:bg-slate-800 rotate-90 text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-30 group active:scale-95"
         title="Tutup Chat"
       >
         <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
