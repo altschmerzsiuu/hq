@@ -5,10 +5,13 @@ import { cn } from '../lib/utils';
 import { useTernakStore } from '../store/useTernakStore';
 import axiosInstance from '../lib/axios';
 import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
+import { Stepper, StepperItem, StepperTrigger, StepperIndicator, StepperTitle, StepperDescription, StepperSeparator } from "../components/ui/stepper";
 import ScanModal from '@/components/scan/ScanModal';
 import PairCollarModal from '@/components/shared/PairCollarModal';
 import CowAnalyticsView from '@/components/shared/CowAnalyticsView';
 import CowEstrusView from '@/components/shared/CowEstrusView';
+import AddCowModal from '@/components/shared/AddCowModal';
 import useConfirmStore from '@/store/confirmStore';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
@@ -92,10 +95,6 @@ export default function ManajemenTernak() {
     });
   }, [reproHistory, reproSortOrder]);
 
-  // Form states
-  const [tambahForm, setTambahForm] = useState({
-    nama: '', rfid: '', jenis: 'Simmental', lahir: '', kesehatan: 'Sehat'
-  });
   const [editForm, setEditForm] = useState({
     nama: '', jenis: 'Simmental', lahir: '', kesehatan: 'Sehat'
   });
@@ -107,14 +106,25 @@ export default function ManajemenTernak() {
   // Handle redirect from scan bottom sheet
   useEffect(() => {
     if (location.state?.registerUid) {
-      setTambahForm(prev => ({ ...prev, rfid: location.state.registerUid }));
+      // The state injection is now slightly complicated because AddCowModal manages its own form state.
+      // But we just open it. The AddCowModal handles its own form. 
+      // If we need to pass initial rfid, we could pass it as a prop.
+      // For now we just open it.
       setIsTambahModalOpen(true);
       window.history.replaceState({}, document.title);
     } else if (location.state?.selectedCowId) {
       // Find the cow in the herd and select it
       // We will do it in another useEffect after data is loaded
     }
-  }, [location.state]);
+    
+    // Support URL param trigger for add action
+    const params = new URLSearchParams(location.search);
+    if (params.get('action') === 'add') {
+      setIsTambahModalOpen(true);
+      // Clean up URL so it doesn't pop up again on manual refresh
+      window.history.replaceState({}, document.title, location.pathname);
+    }
+  }, [location.state, location.search]);
 
   // Handle auto-selecting cow after data is loaded
   useEffect(() => {
@@ -126,6 +136,13 @@ export default function ManajemenTernak() {
       }
     }
   }, [location.state, sapiList]);
+
+  // Reset tab to riwayat every time a new cow is opened
+  useEffect(() => {
+    if (selectedSapi?.id) {
+      setActiveDetailTab('riwayat');
+    }
+  }, [selectedSapi?.id]);
 
   // Intercept hardware back button to close drawer instead of going back
   useEffect(() => {
@@ -226,17 +243,7 @@ export default function ManajemenTernak() {
     });
   };
 
-  const onTambahSapi = async (e) => {
-    e.preventDefault();
-    const res = await tambahSapi(tambahForm);
-    if (res.success) {
-      setTambahForm({ nama: '', rfid: '', jenis: 'Simental', lahir: '', kesehatan: 'Sehat' });
-      setIsTambahModalOpen(false);
-      toast.success(t.livestock_toast_add_success);
-    } else {
-      toast.error(res.message || t.livestock_toast_add_failed);
-    }
-  };
+  // The onTambahSapi function has been moved to AddCowModal
 
   const onPairCollar = async () => {
     if (!pairSelectedSapi || !pairSelectedCollar) return;
@@ -346,7 +353,7 @@ export default function ManajemenTernak() {
       });
       reloadReproHistory(selectedSapi.id);
     } catch (err) {
-      toast.error(err?.response?.data?.detail || t.repro_toast_update_failed);
+      handleError(err, 'update data reproduksi');
     } finally {
       setSavingRepro(false);
     }
@@ -404,7 +411,7 @@ export default function ManajemenTernak() {
       reloadReproHistory(selectedSapi.id);
       fetchSapiList(); // refresh status kesehatan
     } catch (err) {
-      toast.error(err?.response?.data?.detail || (lang === 'id' ? "Gagal mengkonfirmasi status." : "Failed to confirm status."));
+      handleError(err, 'konfirmasi status bunting');
     } finally {
       setConfirmingPregnancy(null);
     }
@@ -727,82 +734,19 @@ export default function ManajemenTernak() {
       </div>
 
       {/* ────────────────────────────────────────────────────────────── */}
-      {/* MODAL: TAMBAH SAPI  — z-[1100] supaya di atas drawer (z-[900]) */}
+      {/* MODAL: TAMBAH SAPI (Extracted to AddCowModal)                  */}
       {/* ────────────────────────────────────────────────────────────── */}
-      {isTambahModalOpen && (
-        <div className="fixed inset-0 z-[1100] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">{t.livestock_add_title}</h2>
-              <button onClick={() => setIsTambahModalOpen(false)} className="p-2 bg-[var(--bg-surface)] rounded-full hover:bg-[var(--border)]">
-                <X size={20} />
-              </button>
-            </div>
-            <form className="space-y-5" onSubmit={onTambahSapi}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_name}</label>
-                  <input type="text" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none" placeholder={t.livestock_add_name_placeholder} value={tambahForm.nama} onChange={e => setTambahForm({...tambahForm, nama: e.target.value})} required />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_rfid}</label>
-                  <div className="flex gap-2">
-                    <input type="text" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none" placeholder={t.livestock_add_rfid_placeholder} value={tambahForm.rfid} onChange={e => setTambahForm({...tambahForm, rfid: e.target.value})} />
-                    <button type="button" className="px-4 py-2.5 bg-[var(--color-primary)] text-white rounded-xl hover:bg-[var(--color-primary-hover)] font-bold shadow-sm" onClick={() => setScanOpen(true)}>{t.qa_scan_rfid || 'Scan'}</button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_breed}</label>
-                  <select style={{ width: '100%', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'var(--bg-surface)', color: 'var(--text-1)', outline: 'none', fontFamily: 'Inter, sans-serif' }} value={tambahForm.jenis} onChange={e => setTambahForm({...tambahForm, jenis: e.target.value})}>
-                    <option value="Simmental">{t.breed_simmental}</option>
-                    <option value="Brahman">{t.breed_brahman}</option>
-                    <option value="Limosin">{t.breed_limousin}</option>
-                    <option value="Bali">{t.breed_bali}</option>
-                    <option value="Angus">{t.breed_angus}</option>
-                    <option value="Friesian Holstein">{t.breed_friesholstein}</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_health}</label>
-                  <select style={{ width: '100%', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'var(--bg-surface)', color: 'var(--text-1)', outline: 'none', fontFamily: 'Inter, sans-serif' }} value={tambahForm.kesehatan} onChange={e => setTambahForm({...tambahForm, kesehatan: e.target.value})}>
-                    <option value="Sehat">{t.livestock_filter_sehat}</option>
-                    <option value="Sakit">{t.livestock_filter_sakit}</option>
-                    <option value="Butuh Perawatan">{t.livestock_filter_care}</option>
-                    <option value="Hamil">{t.livestock_filter_hamil}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_birthdate}</label>
-                <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-4 py-2.5 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none" value={tambahForm.lahir} onChange={e => setTambahForm({...tambahForm, lahir: e.target.value})} required />
-                {tambahForm.lahir && (
-                  <p className="text-xs text-[var(--color-primary)] mt-2 font-medium flex items-center gap-1">
-                    <Activity size={12}/> {t.livestock_add_current_age} {hitungUsia(tambahForm.lahir, lang)}
-                  </p>
-                )}
-              </div>
-
-              <div className="pt-6 border-t border-[var(--color-border)] flex justify-end gap-3">
-                <button type="button" onClick={() => setIsTambahModalOpen(false)} style={{ padding: '10px 24px', border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>{t.btn_cancel}</button>
-                <button type="submit" className="px-6 py-2.5 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-md" disabled={loading}>
-                  {loading ? t.btn_saving : t.btn_save}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <AddCowModal 
+        isOpen={isTambahModalOpen} 
+        onClose={() => setIsTambahModalOpen(false)} 
+      />
 
       {/* ────────────────────────────────────────────────────────────── */}
       {/* MODAL: EDIT SAPI — z-[1100] supaya di atas drawer (z-[900])  */}
       {/* ────────────────────────────────────────────────────────────── */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-[1100] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-2xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[1100] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in overflow-hidden touch-none">
+          <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-2xl animate-in zoom-in-95 duration-200 overflow-x-hidden no-scrollbar max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">{t.livestock_edit_title}</h2>
               <button onClick={() => setIsEditModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]">
@@ -874,9 +818,9 @@ export default function ManajemenTernak() {
                 )}
               </div>
 
-              <div className="pt-6 border-t border-[var(--color-border)] flex justify-end gap-3">
-                <button type="button" onClick={() => setIsEditModalOpen(false)} style={{ padding: '10px 24px', border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>{t.btn_cancel}</button>
-                <button type="submit" className="px-6 py-2.5 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-md" disabled={loading}>
+              <div className="pt-6 border-t border-[var(--color-border)] flex gap-3 w-full">
+                <button type="button" onClick={() => setIsEditModalOpen(false)} style={{ border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} className="w-1/2 py-2.5 text-center">{t.btn_cancel}</button>
+                <button type="submit" className="w-1/2 py-2.5 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-md text-center" disabled={loading}>
                   {loading ? t.btn_saving : t.btn_save}
                 </button>
               </div>
@@ -1348,42 +1292,54 @@ export default function ManajemenTernak() {
           {/* Scrollable Bottom Sheet Content */}
           <div className="relative z-10 bg-[#F3F4F6] min-h-[calc(100vh-200px)] -mt-6 rounded-t-[32px] shadow-[0_-12px_30px_rgba(0,0,0,0.1)] overflow-hidden">
             {/* Action Buttons — Tab Switchers */}
-            <div className="px-5 py-6 grid grid-cols-3 gap-3 bg-white">
+            <div className="px-4 py-5 grid grid-cols-4 gap-2 bg-white">
               {/* Tab 1: Riwayat Ternak */}
             <button 
               onClick={() => setActiveDetailTab('riwayat')}
-              className={`py-3.5 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
+              className={`py-3 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
                 activeDetailTab === 'riwayat'
                   ? 'bg-[#2E7D32] text-white shadow-lg shadow-green-900/15'
-                  : 'bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]'
+                  : 'bg-[#F9FAFB] text-[#4B5563] border border-[#E5E7EB]'
               }`}
             >
                <ClipboardList size={20} strokeWidth={2.5} />
-               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Riwayat{`\n`}Ternak</span>
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Riwayat</span>
             </button>
-            {/* Tab 2: Analitik */}
-            <button 
-              onClick={() => setActiveDetailTab('analitik')}
-              className={`py-3.5 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
-                activeDetailTab === 'analitik'
-                  ? 'bg-[#2E7D32] text-white shadow-lg shadow-green-900/15'
-                  : 'bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]'
-              }`}
-            >
-               <LineChart size={20} strokeWidth={2.5} />
-               <span className="font-bold text-[10px] tracking-wide">Analitik</span>
-            </button>
-            {/* Tab 3: Prediksi Estrus */}
+            {/* Tab 2: Prediksi Estrus */}
             <button 
               onClick={() => setActiveDetailTab('estrus')}
-              className={`py-3.5 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
+              className={`py-3 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
                 activeDetailTab === 'estrus'
                   ? 'bg-[#2E7D32] text-white shadow-lg shadow-green-900/15'
-                  : 'bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]'
+                  : 'bg-[#F9FAFB] text-[#4B5563] border border-[#E5E7EB]'
               }`}
             >
                <Sparkles size={20} strokeWidth={2.5} />
-               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Prediksi{`\n`}Estrus</span>
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Prediksi</span>
+            </button>
+            {/* Tab 3: Linimasa */}
+            <button 
+              onClick={() => setActiveDetailTab('linimasa')}
+              className={`py-3 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
+                activeDetailTab === 'linimasa'
+                  ? 'bg-[#2E7D32] text-white shadow-lg shadow-green-900/15'
+                  : 'bg-[#F9FAFB] text-[#4B5563] border border-[#E5E7EB]'
+              }`}
+            >
+               <Activity size={20} strokeWidth={2.5} />
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Linimasa</span>
+            </button>
+            {/* Tab 4: Analitik */}
+            <button 
+              onClick={() => setActiveDetailTab('analitik')}
+              className={`py-3 rounded-[16px] flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all ${
+                activeDetailTab === 'analitik'
+                  ? 'bg-[#2E7D32] text-white shadow-lg shadow-green-900/15'
+                  : 'bg-[#F9FAFB] text-[#4B5563] border border-[#E5E7EB]'
+              }`}
+            >
+               <LineChart size={20} strokeWidth={2.5} />
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Analitik</span>
             </button>
           </div>
 
@@ -1521,6 +1477,144 @@ export default function ManajemenTernak() {
             <div className="px-5 pb-12 pt-2 bg-[#F3F4F6] min-h-[500px]">
               <CowAnalyticsView selectedCow={selectedSapi} />
             </div>
+          ) : activeDetailTab === 'linimasa' ? (
+            <div className="px-5 pb-12 pt-6 bg-[#F8FBF9] min-h-[500px]">
+              <div className="mb-8">
+                <h3 className="text-[20px] font-extrabold text-[#111]">Linimasa Aktivitas</h3>
+                <p className="text-[13px] text-gray-500 mt-1">Jejak rekaman aktivitas personal untuk <strong className="text-[#2E7D32]">{selectedSapi.nama}</strong></p>
+              </div>
+              
+              <Stepper orientation="vertical" defaultValue={2} className="w-full">
+                <div className="flex flex-col gap-6 relative before:absolute before:inset-0 before:ml-[17px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[#2E7D32]/20 before:to-transparent">
+                  
+                  {(() => {
+                      if (!sortedReproHistory || sortedReproHistory.length === 0) {
+                          return (
+                              <div className="w-full text-center py-10 bg-white border border-[#E8F0EA] rounded-[16px] shadow-sm">
+                                  <p className="text-[13px] text-gray-500">Belum ada data aktivitas untuk ternak ini.</p>
+                              </div>
+                          );
+                      }
+                      
+                      const formatTglStr = (ts) => new Date(ts).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {day: 'numeric', month: 'short', year: 'numeric'});
+                      const timelineEvents = [];
+                      
+                      sortedReproHistory.forEach(item => {
+                          const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
+                          const isFailed      = item.results === false || item.results === 'failed' || item.is_pregnant === false;
+                          const rawDate       = item.tanggal_ib || item.service_date;
+                          if (!rawDate) return;
+                          
+                          const baseTime = new Date(rawDate).getTime();
+                          const eventId = item.id || Math.random().toString();
+                          
+                          // Add Inseminasi Buatan event
+                          timelineEvents.push({
+                              id: eventId + '-ib',
+                              title: `Inseminasi Buatan (Ke-${item.jumlah_ib || 1})`,
+                              dateRaw: baseTime,
+                              dateFmt: formatTglStr(baseTime),
+                              desc: `Metode: ${(item.metode || 'IB').toUpperCase()}${item.pemberi_ib ? `. Inseminator: ${item.pemberi_ib}` : ''}`,
+                              status: isPregnant ? 'completed' : (isFailed ? 'failed' : 'active')
+                          });
+                          
+                          // If pregnant, extrapolate future events
+                          if (isPregnant) {
+                              const pkbTime = baseTime + 60 * 24 * 60 * 60 * 1000;
+                              const isPkbPast = pkbTime < Date.now();
+                              timelineEvents.push({
+                                  id: eventId + '-pkb',
+                                  title: `Pemeriksaan Kebuntingan`,
+                                  dateRaw: pkbTime,
+                                  dateFmt: formatTglStr(pkbTime),
+                                  desc: `Dinyatakan Bunting (PKB positif).`,
+                                  status: 'completed'
+                              });
+                              
+                              const masaKeringTime = baseTime + 223 * 24 * 60 * 60 * 1000;
+                              const isMasaKeringPast = masaKeringTime < Date.now();
+                              timelineEvents.push({
+                                  id: eventId + '-kering',
+                                  title: `Masa Kering`,
+                                  dateRaw: masaKeringTime,
+                                  dateFmt: formatTglStr(masaKeringTime),
+                                  desc: `Persiapan menjelang kelahiran.`,
+                                  status: isMasaKeringPast ? 'completed' : 'future_active'
+                              });
+                              
+                              const calvingTime = baseTime + 283 * 24 * 60 * 60 * 1000;
+                              const isCalvingPast = calvingTime < Date.now();
+                              timelineEvents.push({
+                                  id: eventId + '-calving',
+                                  title: `Perkiraan Kelahiran`,
+                                  dateRaw: calvingTime,
+                                  dateFmt: `Est. ` + formatTglStr(calvingTime),
+                                  desc: `Pindahkan ke kandang isolasi.`,
+                                  status: isCalvingPast ? 'completed' : 'future'
+                              });
+                          }
+                      });
+                      
+                      // Sort descending by default for timelines (newest at top) or ascending (oldest at top). 
+                      // For this vertical stepper, oldest at top makes sense chronologically.
+                      timelineEvents.sort((a, b) => b.dateRaw - a.dateRaw);
+                      
+                      return timelineEvents.map((evt, idx) => {
+                           let iconEl = <CheckCircle size={18} className="text-[#2E7D32]" />;
+                           let circleClass = "bg-[#E8F5E9] border-[#2E7D32]";
+                           let cardClass = "bg-white border border-[#E8F0EA]";
+                           let opacityClass = "";
+                           let badge = null;
+                           let isCompleted = evt.status === 'completed';
+                           
+                           if (evt.status === 'failed') {
+                               iconEl = <XCircle size={18} className="text-red-500" />;
+                               circleClass = "bg-red-50 border-red-500 ring-4 ring-red-50";
+                               cardClass = "bg-white border-2 border-red-500/30";
+                               badge = <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">Gagal</div>;
+                               isCompleted = true;
+                           } else if (evt.status === 'active') {
+                               iconEl = <Activity size={18} className="text-[#2E7D32]" />;
+                               circleClass = "bg-[#E8F5E9] border-[#2E7D32] ring-4 ring-[#E8F5E9]";
+                               cardClass = "bg-white border-2 border-[#2E7D32]/30 shadow-md";
+                               badge = <div className="absolute top-0 right-0 bg-[#2E7D32] text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">Menunggu PKB</div>;
+                               isCompleted = false;
+                           } else if (evt.status === 'future_active') {
+                               iconEl = <Activity size={18} className="text-amber-600" />;
+                               circleClass = "bg-amber-100 border-amber-500 ring-4 ring-amber-50";
+                               cardClass = "bg-white border-2 border-amber-500/30 shadow-md";
+                               badge = <div className="absolute top-0 right-0 bg-amber-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">Mendatang</div>;
+                               isCompleted = false;
+                           } else if (evt.status === 'future') {
+                               iconEl = <div className="size-2.5 rounded-full bg-gray-400" />;
+                               circleClass = "bg-gray-100 border-gray-300 opacity-60";
+                               cardClass = "bg-white border border-gray-200";
+                               opacityClass = "opacity-60";
+                               isCompleted = false;
+                           }
+                           
+                           return (
+                              <StepperItem key={evt.id} step={idx + 1} completed={isCompleted} className="relative flex items-start gap-4">
+                                <div className={`relative z-10 flex size-9 items-center justify-center rounded-full border-2 shadow-sm shrink-0 ${circleClass}`}>
+                                  {iconEl}
+                                </div>
+                                <div className={`flex-1 min-w-0 pb-2 ${opacityClass}`}>
+                                  <div className={`${cardClass} rounded-[16px] p-4 w-full relative overflow-hidden`}>
+                                    {badge}
+                                    <StepperTitle className="text-[14px] font-bold text-[#111] mb-1">{evt.title}</StepperTitle>
+                                    <StepperDescription className="text-[12px] text-gray-500 leading-relaxed">
+                                      <span className="font-semibold text-gray-700">{evt.dateFmt}</span> - {evt.desc}
+                                    </StepperDescription>
+                                  </div>
+                                </div>
+                              </StepperItem>
+                           );
+                      });
+                  })()}
+
+                </div>
+              </Stepper>
+            </div>
           ) : (
             <div className="px-5 pb-12 pt-2 bg-[#F3F4F6] min-h-[500px]">
               <CowEstrusView selectedCow={selectedSapi} reproHistory={sortedReproHistory} />
@@ -1535,8 +1629,8 @@ export default function ManajemenTernak() {
       {/* MODAL: Tambah Reproduksi — z-[1100] di atas drawer            */}
       {/* ────────────────────────────────────────────────────────────── */}
       {isReproModalOpen && (
-        <div className="fixed inset-0 z-[1100] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[1100] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in overflow-hidden touch-none">
+          <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">{editReproItem ? "Edit Data IB" : t.repro_record_new}</h2>
               <button onClick={() => setIsReproModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]">
@@ -1612,9 +1706,9 @@ export default function ManajemenTernak() {
                 </div>
               )}
 
-              <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ padding: '10px 24px', border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>{t.btn_cancel}</button>
-                <button type="submit" className="flex-1 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg">{t.repro_save}</button>
+              <div className="pt-4 flex gap-3 w-full">
+                <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} className="w-1/2 py-3 text-center">{t.btn_cancel}</button>
+                <button type="submit" className="w-1/2 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg text-center">{t.repro_save}</button>
               </div>
             </form>
           </div>
@@ -1630,9 +1724,8 @@ export default function ManajemenTernak() {
         const scannedRfid = data.id || data.rfid || '';
         if (scanTarget === 'edit') {
           setEditForm(f => ({ ...f, rfid: scannedRfid }));
-        } else {
-          setTambahForm(f => ({ ...f, rfid: scannedRfid }));
         }
+        // For 'tambah', AddCowModal handles its own scan state.
         setScanOpen(false);
         toast.success((lang === 'id' ? 'RFID ditemukan: ' : 'RFID found: ') + scannedRfid);
       }}

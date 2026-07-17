@@ -7,6 +7,7 @@ import FeedbackModal from '@/components/shared/FeedbackModal';
 import ContactView from '@/components/shared/ContactView';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
 import axiosInstance from '@/lib/axios';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
@@ -59,7 +60,7 @@ export default function Settings() {
   const [inviteRole, setInviteRole] = useState('worker');
   const [teamLoading, setTeamLoading] = useState(false);
 
-  const inputClass = "w-full min-h-[46px] px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#009254]/20 focus:border-[#009254] transition-all shadow-sm";
+  const inputClass = "w-full min-h-[46px] px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2f7d31]/20 focus:border-[#2f7d31] transition-all shadow-sm";
   const labelClass = "block text-[11px] font-black text-gray-500 mb-2 uppercase tracking-wider";
 
 
@@ -94,12 +95,12 @@ export default function Settings() {
       }
     } catch (err) {
       console.warn('Profile fetch failed, loading offline defaults', err);
-      setFullName(user?.full_name || 'Iwan Prianto');
-      setEmail(user?.email || 'wan@farm.com');
+      setFullName(user?.full_name || '');
+      setEmail(user?.email || '');
       setLoginMethod(user?.phone_number ? 'phone' : 'google');
       setPhoneNumber(user?.phone_number || '');
       setCreatedAt(new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { dateStyle: 'long' }));
-      setFarmName('Peternakan DeAraf');
+      setFarmName('');
     }
 
     // 2. Load Team Members (Owners/Admins only)
@@ -120,10 +121,7 @@ export default function Settings() {
       const response = await axiosInstance.get('/admin/users');
       setTeamMembers(response.data || []);
     } catch {
-      setTeamMembers([
-        { id: 1, full_name: 'Iwan Prianto', email: 'wan@farm.com', role: 'owner' },
-        { id: 2, full_name: 'Ahmad Sodikin', email: 'sodikin@farm.com', role: 'worker' },
-      ]);
+      setTeamMembers([]);
     } finally {
       setTeamLoading(false);
     }
@@ -187,7 +185,7 @@ export default function Settings() {
 
       toast.success(lang === 'id' ? 'PIN berhasil diperbarui! Login berikutnya pakai PIN.' : 'PIN updated! Next login will use your PIN.');
     } catch (err) {
-      setPinError(err.response?.data?.detail || (lang === 'id' ? 'Gagal menyimpan PIN.' : 'Failed to save PIN.'));
+      handleError(err, 'simpan PIN baru');
     } finally {
       setPinLoading(false);
     }
@@ -255,15 +253,15 @@ export default function Settings() {
               
               {/* ── Avatar + Name (centered) ── */}
               <div className="flex flex-col items-center gap-2 pt-2">
-                <div className="relative w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-black bg-[#009254] overflow-hidden shadow-md ring-2 ring-[#009254]/20">
+                <div className="relative w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-black bg-[#2f7d31] overflow-hidden shadow-md ring-2 ring-[#2f7d31]/20">
                   {fullName ? fullName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : '--'}
                 </div>
                 <div className="text-center">
-                  <h2 className="text-xl font-extrabold" style={{ background: 'linear-gradient(135deg, #009254, #00c47a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  <h2 className="text-xl font-extrabold" style={{ background: 'linear-gradient(135deg, #2f7d31, #43a047)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                     {fullName || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}
                   </h2>
-                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-[#009254]/10 rounded-full border border-[#009254]/20">
-                    <span className="text-[10px] font-black tracking-wider text-[#009254] uppercase">
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-[#2f7d31]/10 rounded-full border border-[#2f7d31]/20">
+                    <span className="text-[10px] font-black tracking-wider text-[#2f7d31] uppercase">
                       {user?.role === 'owner' ? t.settings_role_owner : user?.role === 'admin' ? t.settings_role_admin : t.settings_role_worker}
                     </span>
                   </div>
@@ -275,7 +273,7 @@ export default function Settings() {
                 
                 <button onClick={() => setActiveTab('profile')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 active:scale-[0.99]">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-50 text-[#009254] rounded-lg"><User size={18} /></div>
+                    <div className="p-2 bg-green-50 text-[#2f7d31] rounded-lg"><User size={18} /></div>
                     <div className="text-left">
                       <p className="text-sm font-bold text-gray-900">{t.settings_tab_general || 'General'}</p>
                       <p className="text-[11px] text-gray-500 mt-0.5">{lang === 'id' ? 'Detail profil & peternakan' : 'Profile & farm details'}</p>
@@ -371,23 +369,26 @@ export default function Settings() {
           {activeTab === 'profile' && (
             <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300">
               
-              {/* Header: Back Button & Title */}
-              <div className="flex items-center relative mb-2">
-                <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+              {/* Header: Back Button & Title & Save Button */}
+              <div className="flex items-center justify-between mb-2">
+                <button type="button" onClick={() => setActiveTab('main')} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
-                <h2 className="w-full text-center text-lg font-bold text-gray-900">{t.settings_tab_general || 'Profile'}</h2>
+                <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_general || 'Profile'}</h2>
+                <button type="submit" disabled={loading} className="text-xs font-bold text-[#2f7d31] bg-[#2f7d31]/10 border border-[#2f7d31]/20 backdrop-blur-md px-5 py-2 rounded-full shadow-sm hover:bg-[#2f7d31]/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  {loading ? (lang === 'id' ? 'Menyimpan...' : 'Saving...') : (lang === 'id' ? 'Simpan' : 'Save')}
+                </button>
               </div>
 
               {/* Avatar section */}
               <div className="flex flex-col items-center gap-2 mb-4">
-                <div className="relative w-28 h-28 rounded-full flex items-center justify-center text-white text-4xl font-black bg-[#009254] cursor-pointer overflow-hidden group shadow-lg ring-4 ring-[#009254]/20">
+                <div className="relative w-28 h-28 rounded-full flex items-center justify-center text-white text-4xl font-black bg-[#2f7d31] cursor-pointer overflow-hidden group shadow-lg ring-4 ring-[#2f7d31]/20">
                   {fullName ? fullName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : '--'}
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Camera className="w-7 h-7 text-white" />
                   </div>
                 </div>
-                <button type="button" className="text-[#009254] text-sm font-bold mt-1 hover:underline">
+                <button type="button" className="text-[#2f7d31] text-sm font-bold mt-1 hover:underline">
                   {lang === 'id' ? 'Edit' : 'Edit'}
                 </button>
               </div>
@@ -395,8 +396,8 @@ export default function Settings() {
               {/* Personal Info Container */}
               <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm relative mt-2">
                 <div className="px-5 pt-5 pb-2 border-b border-gray-100 flex items-center gap-2 relative z-10">
-                  <User className="w-4 h-4 md:w-5 md:h-5 text-[#009254]" />
-                  <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#009254]">
+                  <User className="w-4 h-4 md:w-5 md:h-5 text-[#2f7d31]" />
+                  <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#2f7d31]">
                     {lang === 'id' ? 'INFORMASI PERSONAL' : 'PERSONAL INFORMATION'}
                   </h3>
                 </div>
@@ -411,7 +412,7 @@ export default function Settings() {
                     <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{lang === 'id' ? 'No. WhatsApp' : 'WhatsApp No.'}</label>
                     <div className="flex items-center justify-end w-full gap-2">
                       <span className="text-sm font-medium text-gray-500">{phoneNumber || '—'}</span>
-                      <button type="button" className="text-[10px] font-bold text-[#009254] hover:text-[#007b46] underline underline-offset-2 ml-2 transition-colors">
+                      <button type="button" className="text-[10px] font-bold text-[#2f7d31] hover:text-[#007b46] underline underline-offset-2 ml-2 transition-colors">
                         {lang === 'id' ? 'Ganti' : 'Change'}
                       </button>
                     </div>
@@ -441,11 +442,11 @@ export default function Settings() {
               {/* ── Section: Farm Details ── */}
               {/* ── Section: Farm Details ── */}
               <div className="bg-white border border-gray-200 rounded-3xl shadow-sm relative overflow-hidden mt-6">
-                <Globe className="absolute -right-4 -bottom-4 w-32 h-32 md:w-40 md:h-40 text-[#009254] opacity-5 pointer-events-none" />
+                <Globe className="absolute -right-4 -bottom-4 w-32 h-32 md:w-40 md:h-40 text-[#2f7d31] opacity-5 pointer-events-none" />
                 
                 <div className="px-5 pt-5 pb-2 border-b border-gray-100 flex items-center gap-2 relative z-10">
-                  <Globe className="w-4 h-4 md:w-5 md:h-5 text-[#009254]" />
-                  <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#009254]">
+                  <Globe className="w-4 h-4 md:w-5 md:h-5 text-[#2f7d31]" />
+                  <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#2f7d31]">
                     {t.settings_farm_details}
                   </h3>
                 </div>
@@ -496,12 +497,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              {/* Save button (Full width sticky-like at the bottom) */}
-              <div className="pt-8">
-                <button type="submit" className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#009254] hover:bg-[#007b46] text-white rounded-2xl text-sm font-bold shadow-md transition-all active:scale-95">
-                  <Save className="w-5 h-5" /> {t.settings_save_changes}
-                </button>
-              </div>
+              {/* Save button moved to header */}
 
               {/* End of General Content */}
             </form>
@@ -524,7 +520,7 @@ export default function Settings() {
               <div className="p-4 bg-white border border-gray-200 rounded-3xl shadow-sm">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2.5 rounded-2xl shrink-0 ${notifEnabled ? 'bg-[#009254]/10 text-[#009254]' : 'bg-gray-100 text-gray-400'}`}>
+                    <div className={`p-2.5 rounded-2xl shrink-0 ${notifEnabled ? 'bg-[#2f7d31]/10 text-[#2f7d31]' : 'bg-gray-100 text-gray-400'}`}>
                       <Bell className="w-5 h-5" />
                     </div>
                     <div>
@@ -593,20 +589,23 @@ export default function Settings() {
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
             <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300">
-              <div className="w-full max-w-lg mb-4 relative flex items-center">
-                <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+              <div className="w-full max-w-lg mb-4 flex items-center justify-between">
+                <button type="button" onClick={() => setActiveTab('main')} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
-                <h2 className="w-full text-center text-lg font-bold text-gray-900">{t.settings_tab_security || 'Security'}</h2>
+                <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_security || 'Security'}</h2>
+                <button type="submit" form="pin-form" disabled={pinLoading || pinNewDigits.length !== 6 || pinConfirmDigits.length !== 6} className="text-xs font-bold text-[#2f7d31] bg-[#2f7d31]/10 border border-[#2f7d31]/20 backdrop-blur-md px-5 py-2 rounded-full shadow-sm hover:bg-[#2f7d31]/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  {pinLoading ? (lang === 'id' ? 'Menyimpan...' : 'Saving...') : (lang === 'id' ? 'Simpan' : 'Save')}
+                </button>
               </div>
               <div className="w-full max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
                   <h2 className="text-lg font-bold text-gray-900 font-display flex items-center gap-2">
-                    <Key className="w-5 h-5 text-[#009254]" />
+                    <Key className="w-5 h-5 text-[#2f7d31]" />
                     {lang === 'id' ? 'Ubah PIN Login' : 'Change Login PIN'}
                   </h2>
                 </div>
-                <form onSubmit={handleSavePIN} className="space-y-4">
+                <form id="pin-form" onSubmit={handleSavePIN} className="space-y-4">
                   {pinError && (
                     <div className="px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
                       {pinError}
@@ -636,15 +635,6 @@ export default function Settings() {
                         className={`${inputClass} font-mono tracking-[0.5em] text-center`}
                       />
                   </div>
-                  <button
-                      type="submit"
-                      disabled={pinLoading || pinNewDigits.length !== 6 || pinConfirmDigits.length !== 6}
-                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#009254] hover:bg-[#007b46] text-white rounded-xl text-sm font-bold shadow-md transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      {pinLoading
-                        ? <><Loader2 className="w-4 h-4 animate-spin" /> {lang === 'id' ? 'Menyimpan...' : 'Saving...'}</>
-                        : <><Save className="w-4 h-4" /> {lang === 'id' ? 'Simpan PIN' : 'Save PIN'}</>}
-                    </button>
                 </form>
               </div>
             </div>

@@ -59,7 +59,7 @@ export default function NotFound() {
         
         {/* Glassmorphism Badge */}
         <div className="glass-badge">
-          <span style={{ color: '#00D47E', marginRight: '8px', fontSize: '18px' }}>•</span>
+          <span style={{ color: '#2f7d31', marginRight: '8px', fontSize: '18px' }}>•</span>
           404: THIS PAGE IS GONE FR FR
         </div>
 
@@ -201,13 +201,13 @@ export default function NotFound() {
         .dashboard-btn:hover {
           background: rgba(0, 212, 126, 0.1);
           border-color: rgba(0, 212, 126, 0.4);
-          color: #00D47E;
+          color: #2f7d31;
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0, 212, 126, 0.15);
         }
 
         .dashboard-btn:hover .icon-wrapper {
-          background: #00D47E;
+          background: #2f7d31;
           color: #050508;
           transform: translateX(-2px);
         }

@@ -88,6 +88,11 @@ export default function SensorData() {
   const [chartData, setChartData] = useState([]);
   const [timeFilter, setTimeFilter] = useState('1wk');
   const [showMoreReports, setShowMoreReports] = useState(false);
+  const [populationStats, setPopulationStats] = useState({ total: 0, pregnant: 0 });
+  const [healthStats, setHealthStats] = useState({ sangatSehat: 0, observasi: 0, perluPenanganan: 0 });
+  const [collarStats, setCollarStats] = useState([]);
+  const [popHistory, setPopHistory] = useState([]);
+  const [pregHistory, setPregHistory] = useState([]);
 
   const fetchAllData = async (showMainLoader = false) => {
     if (showMainLoader) setLoading(true);
@@ -97,9 +102,118 @@ export default function SensorData() {
         axiosInstance.get('/hewan'),
         axiosInstance.get('/sensor-data?limit=50')
       ]);
+      const allCows = cattleRes.data || [];
+
+      // Process Stats
+      const totalPop = allCows.length;
+      const pregnantCount = allCows.filter(c => c.status_kebuntingan === 'Bunting' || c.is_pregnant || c.status?.toLowerCase().includes('bunting')).length;
+      setPopulationStats({ total: totalPop, pregnant: pregnantCount });
+
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+      const current = new Date();
+      const pHistory = [];
+      const prHistory = [];
+      for (let i = 5; i >= 0; i--) {
+        let m = current.getMonth() - i;
+        let y = current.getFullYear();
+        if (m < 0) {
+          m += 12;
+          y -= 1;
+        }
+        
+        let popAtThisMonth = 0;
+        let pregAtThisMonth = 0;
+        
+        allCows.forEach(c => {
+          // Parse date properly (handle DD/MM/YYYY and YYYY-MM-DD)
+          let d = null;
+          if (c.bulan_tahun_lahir) {
+            const btl = c.bulan_tahun_lahir;
+            if (btl.includes('/')) {
+              const parts = btl.split('/');
+              if (parts.length >= 2) {
+                let yStr = parts.length > 2 ? parts[2] : new Date().getFullYear().toString();
+                if (yStr.length === 2) yStr = "20" + yStr;
+                d = new Date(parseInt(yStr), parseInt(parts[1]) - 1, parseInt(parts[0]) || 1);
+              }
+            } else if (btl.includes('-')) {
+              const parts = btl.split('-');
+              if (parts[0].length === 4) { // YYYY-MM-DD
+                d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]) || 1);
+              } else if (parts.length > 2 && parts[2].length === 4) { // DD-MM-YYYY
+                d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]) || 1);
+              }
+            }
+          }
+          // Fallback to first_activity_date if birth date parsing fails
+          if ((!d || isNaN(d.getTime())) && c.first_activity_date) {
+            d = new Date(c.first_activity_date);
+          }
+          // Fallback to created_at
+          if ((!d || isNaN(d.getTime())) && c.created_at) {
+            d = new Date(c.created_at);
+          }
+          // Absolute fallback
+          if (!d || isNaN(d.getTime())) {
+            d = new Date();
+          }
+
+          if (d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) {
+            popAtThisMonth++;
+            if (c.status_kebuntingan === 'Bunting' || c.is_pregnant || c.status?.toLowerCase().includes('bunting')) {
+              pregAtThisMonth++;
+            }
+          }
+        });
+        pHistory.push({ name: monthNames[m], val: popAtThisMonth });
+        prHistory.push({ name: monthNames[m], val: pregAtThisMonth });
+      }
+      setPopHistory(pHistory);
+      setPregHistory(prHistory);
+
+      let sehat = 0, observasi = 0, penanganan = 0;
+      let collarNormal = 0, collarLow = 0, collarLost = 0;
+
+      allCows.forEach(cow => {
+        // Health
+        if (cow.status === 'Sakit' || cow.status === 'Butuh Perawatan') {
+          penanganan++;
+        } else if (cow.temp && cow.temp > 39.0) {
+          observasi++;
+        } else {
+          sehat++;
+        }
+        
+        // Collar
+        if (cow.collar_id) {
+          const lastSyncDate = new Date(cow.last_sync || 0);
+          const hrsSinceSync = (new Date() - lastSyncDate) / (1000 * 60 * 60);
+          
+          if (hrsSinceSync > 24 || !cow.last_sync) {
+            collarLost++;
+          } else if (cow.battery !== null && cow.battery <= 20) {
+            collarLow++;
+          } else {
+            collarNormal++;
+          }
+        }
+      });
+
+      const totalHealth = sehat + observasi + penanganan || 1;
+      setHealthStats({
+        sangatSehat: Math.round((sehat / totalHealth) * 100),
+        observasi: Math.round((observasi / totalHealth) * 100),
+        perluPenanganan: Math.round((penanganan / totalHealth) * 100)
+      });
+      
+      setCollarStats([
+        { name: lang === 'id' ? 'Normal' : 'Normal', value: collarNormal, color: '#2f7d31' },
+        { name: lang === 'id' ? 'Baterai Lemah' : 'Low Battery', value: collarLow, color: '#F59E0B' },
+        { name: lang === 'id' ? 'Sinyal Hilang' : 'Signal Lost', value: collarLost, color: '#EF4444' }
+      ]);
 
       // Process table data: only show cows that have a collar_id
-      const liveCows = (cattleRes.data || [])
+      const liveCows = allCows
         .filter(cow => cow.collar_id !== null && cow.collar_id !== undefined && cow.collar_id !== '')
         .map(cow => {
           let status = 'good';
@@ -124,7 +238,8 @@ export default function SensorData() {
       setTableData(liveCows);
 
       // Process telemetry data for chart (chronological order)
-      const sortedTelemetry = [...(telemetryRes.data || [])].reverse();
+      const telemetryPayload = Array.isArray(telemetryRes?.data) ? telemetryRes.data : (telemetryRes?.data?.data || []);
+      const sortedTelemetry = [...telemetryPayload].reverse();
       const formattedChart = sortedTelemetry.map(d => {
         const timeStr = d.batch_ts ? new Date(d.batch_ts).toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
         return {
@@ -159,44 +274,6 @@ export default function SensorData() {
       (row.rfid || '').toLowerCase().includes(search.toLowerCase());
     return matchSearch;
   });
-
-  // Mock data for new widgets
-  const mockPopulation = [
-    { name: 'Jan', val: 900 },
-    { name: 'Feb', val: 950 },
-    { name: 'Mar', val: 1000 },
-    { name: 'Apr', val: 1100 },
-    { name: 'Mei', val: 1284 }
-  ];
-
-  const mockPregnant = [
-    { name: 'Jan', val: 20 },
-    { name: 'Feb', val: 30 },
-    { name: 'Mar', val: 50 },
-    { name: 'Apr', val: 70 },
-    { name: 'Mei', val: 82 }
-  ];
-
-  const mockMonthlyTrend = [
-    { name: 'Jan', val: 15 },
-    { name: 'Feb', val: 18 },
-    { name: 'Mar', val: 12 },
-    { name: 'Apr', val: 25 },
-    { name: 'Mei', val: 35 },
-    { name: 'Jun', val: 10 }
-  ];
-
-  const healthData = {
-    sangatSehat: 92,
-    observasi: 6,
-    perluPenanganan: 2
-  };
-  
-  const collarData = [
-    { name: 'Normal', value: 85, color: '#009254' },
-    { name: 'Baterai Lemah', value: 10, color: '#F59E0B' },
-    { name: 'Sinyal Hilang', value: 5, color: '#EF4444' }
-  ];
 
   if (loading) {
     return (
@@ -241,23 +318,26 @@ export default function SensorData() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <p className="text-xs font-bold text-gray-500">{lang === 'id' ? 'Total Populasi' : 'Total Population'}</p>
-                <h3 className="text-2xl font-black text-gray-900 mt-1">1,284</h3>
-                <p className="text-[10px] font-bold text-[#009254] mt-1 flex items-center gap-1">
-                  <span className="text-[#009254]">📈</span> +12 {lang === 'id' ? 'bulan ini' : 'this month'}
-                </p>
+                <h3 className="text-2xl font-black text-gray-900 mt-1">{populationStats.total}</h3>
+                {popHistory.length >= 2 && (
+                  <p className={`text-[10px] font-bold mt-1 flex items-center gap-1 ${popHistory[popHistory.length - 1].val - popHistory[popHistory.length - 2].val >= 0 ? 'text-[#2f7d31]' : 'text-[#EF4444]'}`}>
+                    {popHistory[popHistory.length - 1].val - popHistory[popHistory.length - 2].val > 0 && '+'}
+                    {popHistory[popHistory.length - 1].val - popHistory[popHistory.length - 2].val} {lang === 'id' ? 'bulan ini' : 'this month'}
+                  </p>
+                )}
               </div>
-              <div className="w-8 h-8 rounded-full bg-[#009254]/10 flex items-center justify-center">
-                <Activity className="w-4 h-4 text-[#009254]" />
+              <div className="w-8 h-8 rounded-full bg-[#2f7d31]/10 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-[#2f7d31]" />
               </div>
             </div>
             <div className="h-28 w-full mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockPopulation} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                <BarChart data={popHistory} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.5} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} dy={5} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} />
                   <Tooltip cursor={{ fill: 'rgba(0,146,84,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                  <Bar dataKey="val" fill="#009254" radius={[4, 4, 0, 0]} fillOpacity={0.8} barSize={30} />
+                  <Bar dataKey="val" fill="#2f7d31" radius={[4, 4, 0, 0]} fillOpacity={0.8} barSize={30} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -268,11 +348,14 @@ export default function SensorData() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <p className="text-xs font-bold text-gray-500">{lang === 'id' ? 'Sapi Bunting' : 'Pregnant Cows'}</p>
-                <h3 className="text-2xl font-black text-gray-900 mt-1">82</h3>
-                <p className="text-[10px] font-bold text-[#F59E0B] mt-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span> 
-                  4 {lang === 'id' ? 'kelahiran diprediksi minggu ini' : 'births predicted this week'}
-                </p>
+                <h3 className="text-2xl font-black text-gray-900 mt-1">{populationStats.pregnant}</h3>
+                {pregHistory.length >= 2 && (
+                  <p className={`text-[10px] font-bold mt-1 flex items-center gap-1 ${pregHistory[pregHistory.length - 1].val - pregHistory[pregHistory.length - 2].val >= 0 ? 'text-[#F59E0B]' : 'text-[#EF4444]'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${pregHistory[pregHistory.length - 1].val - pregHistory[pregHistory.length - 2].val >= 0 ? 'bg-[#F59E0B]' : 'bg-[#EF4444]'}`}></span> 
+                    {pregHistory[pregHistory.length - 1].val - pregHistory[pregHistory.length - 2].val > 0 && '+'}
+                    {pregHistory[pregHistory.length - 1].val - pregHistory[pregHistory.length - 2].val} {lang === 'id' ? 'kasus bulan ini' : 'cases this month'}
+                  </p>
+                )}
               </div>
               <div className="w-8 h-8 rounded-full bg-[#F59E0B]/10 flex items-center justify-center">
                 <HeartPulse className="w-4 h-4 text-[#F59E0B]" />
@@ -280,7 +363,7 @@ export default function SensorData() {
             </div>
             <div className="h-28 w-full mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={mockPregnant} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                <AreaChart data={pregHistory} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorPreg" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.4}/>
@@ -300,115 +383,97 @@ export default function SensorData() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Container 3: Trend Bulanan */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm lg:col-span-2">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display">{lang === 'id' ? 'Trend Kesehatan' : 'Health Trend'}</h3>
-          </div>
-          <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockMonthlyTrend} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} />
-                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.02)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                <Bar dataKey="val" radius={[4, 4, 0, 0]}>
-                  {mockMonthlyTrend.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.name === 'Mei' ? '#009254' : '#F3F4F6'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Container 4: Status Kesehatan */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden">
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden mb-4">
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-6">{lang === 'id' ? 'Status Kesehatan' : 'Health Status'}</h3>
           
           <div className="flex-1 flex flex-col justify-center space-y-5 relative z-10">
-            <div>
-              <div className="flex justify-between text-xs mb-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#009254]"></div>
-                  <span className="font-medium text-gray-700">{lang === 'id' ? 'Sangat Sehat' : 'Very Healthy'}</span>
-                </div>
-                <span className="font-black text-gray-900">{healthData.sangatSehat}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-[#009254] rounded-full" style={{ width: `${healthData.sangatSehat}%` }}></div>
-              </div>
-            </div>
+             <div className="h-40 w-full flex items-center justify-center">
+               <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: lang === 'id' ? 'Sangat Sehat' : 'Very Healthy', value: healthStats.sangatSehat, color: '#2f7d31' },
+                        { name: lang === 'id' ? 'Observasi Ringan' : 'Mild Observation', value: healthStats.observasi, color: '#F59E0B' },
+                        { name: lang === 'id' ? 'Perlu Penanganan' : 'Needs Action', value: healthStats.perluPenanganan, color: '#EF4444' }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={65}
+                      paddingAngle={5}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {[
+                        { name: lang === 'id' ? 'Sangat Sehat' : 'Very Healthy', value: healthStats.sangatSehat, color: '#2f7d31' },
+                        { name: lang === 'id' ? 'Observasi Ringan' : 'Mild Observation', value: healthStats.observasi, color: '#F59E0B' },
+                        { name: lang === 'id' ? 'Perlu Penanganan' : 'Needs Action', value: healthStats.perluPenanganan, color: '#EF4444' }
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} formatter={(value) => `${value}%`} />
+                  </PieChart>
+               </ResponsiveContainer>
+             </div>
+             
+             <div className="flex justify-center gap-4 text-[10px] font-medium text-gray-600 mt-2">
+                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#2f7d31]"></span>Sangat Sehat</div>
+                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span>Observasi</div>
+                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>Penanganan</div>
+             </div>
 
-            <div>
-              <div className="flex justify-between text-xs mb-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></div>
-                  <span className="font-medium text-gray-700">{lang === 'id' ? 'Observasi Ringan' : 'Mild Observation'}</span>
+             <div className="mt-2 flex flex-col gap-2">
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#2f7d31]"></span>
+                    <span className="text-gray-600">{lang === 'id' ? 'Sangat Sehat' : 'Very Healthy'}</span>
+                  </div>
+                  <span className="font-bold text-gray-900">{healthStats.sangatSehat}%</span>
                 </div>
-                <span className="font-black text-gray-900">{healthData.observasi}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-[#F59E0B] rounded-full" style={{ width: `${healthData.observasi}%` }}></div>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs mb-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></div>
-                  <span className="font-medium text-gray-700">{lang === 'id' ? 'Perlu Penanganan' : 'Needs Action'}</span>
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+                    <span className="text-gray-600">{lang === 'id' ? 'Observasi Ringan' : 'Mild Observation'}</span>
+                  </div>
+                  <span className="font-bold text-gray-900">{healthStats.observasi}%</span>
                 </div>
-                <span className="font-black text-gray-900">{healthData.perluPenanganan}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-[#EF4444] rounded-full" style={{ width: `${healthData.perluPenanganan}%` }}></div>
-              </div>
-            </div>
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>
+                    <span className="text-gray-600">{lang === 'id' ? 'Perlu Penanganan' : 'Needs Action'}</span>
+                  </div>
+                  <span className="font-bold text-gray-900">{healthStats.perluPenanganan}%</span>
+                </div>
+             </div>
           </div>
           
           <ShieldAlert className="absolute right-[-20px] bottom-[-20px] w-40 h-40 text-gray-50 pointer-events-none z-0" />
         </div>
-      </div>
 
-
-      {/* Container 5 & TABLE SECTION: Status Perangkat IoT Collar & List */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden mb-4">
-        
-        {/* Grafik Collar */}
-        <div className="p-5 md:p-6 border-b border-gray-100">
-           <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-2">{lang === 'id' ? 'Status Perangkat IoT Collar' : 'IoT Collar Device Status'}</h3>
-           <div className="h-40 w-full flex items-center justify-center">
-             <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={collarData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={65}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {collarData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                </PieChart>
-             </ResponsiveContainer>
-           </div>
-           <div className="flex justify-center gap-4 text-[10px] font-medium text-gray-600 mt-2">
-              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#009254]"></span>Normal</div>
-              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span>Bat. Lemah</div>
-              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>Sinyal Hilang</div>
-           </div>
-        </div>
-        
-        {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto">
+        {/* Container 5: Status Perangkat IoT Collar */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden mb-4">
+          {/* Grafik Collar */}
+          <div className="p-5 md:p-6 h-full flex flex-col">
+             <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-2">{lang === 'id' ? 'Status Perangkat IoT Collar' : 'IoT Collar Device Status'}</h3>
+             
+             <div className="grid grid-cols-3 gap-3 mt-4">
+                {collarStats.map((item, idx) => (
+                  <div key={idx} className="bg-[var(--color-cream)]/20 border border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center text-center hover:shadow-sm transition-all">
+                    <span className="w-2 h-2 rounded-full mb-2" style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}80` }}></span>
+                    <span className="text-2xl font-black text-gray-900 leading-none mb-1">{item.value}</span>
+                    <span className="text-[10px] text-gray-500 font-bold leading-tight">{item.name}</span>
+                  </div>
+                ))}
+             </div>
+          </div>
+          
+          <div className="border-t border-gray-100 w-full"></div>
+          
+          {/* List Perangkat */}
+          <div className="hidden md:block overflow-x-auto">
           {filteredTableData.length === 0 ? (
             <div className="text-center p-8 text-[var(--color-text-secondary)]">
               {t.sensor_empty}
@@ -616,56 +681,8 @@ export default function SensorData() {
             </div>
           </div>
         </div>
-
       </div>
-
-      {/* Container 6: Laporan Bulanan */}
-      <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col mb-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display">{lang === 'id' ? 'Laporan Bulanan' : 'Monthly Reports'}</h3>
-          <span 
-            onClick={() => setShowMoreReports(!showMoreReports)}
-            className="text-[11px] font-bold text-[#009254] cursor-pointer hover:underline"
-          >
-            {showMoreReports 
-              ? (lang === 'id' ? 'Lihat Lebih Sedikit' : 'View Less') 
-              : (lang === 'id' ? 'Lihat Lebih Banyak' : 'View More')}
-          </span>
-        </div>
-        
-        <div className="space-y-3 flex flex-col justify-center">
-          {/* Report Item 1 */}
-          <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-[#009254]/30 transition-colors group bg-gray-50/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#009254]/10 flex items-center justify-center text-[#009254]">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-gray-900 group-hover:text-[#009254] transition-colors line-clamp-1">Laporan Operasional W21-2024</h4>
-                <p className="text-[10px] text-gray-500 mt-0.5">14 Mei - 20 Mei 2024 • 2.4 MB</p>
-              </div>
-            </div>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm shrink-0">
-              <Download className="w-3 h-3" /> <span className="hidden sm:inline">Unduh</span>
-            </button>
-          </div>
-
-          {/* Report Item 2 */}
-          <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-[#009254]/30 transition-colors group bg-gray-50/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#009254]/10 flex items-center justify-center text-[#009254]">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-gray-900 group-hover:text-[#009254] transition-colors line-clamp-1">Analisis Kesehatan & Birahi W20</h4>
-                <p className="text-[10px] text-gray-500 mt-0.5">7 Mei - 13 Mei 2024 • 1.8 MB</p>
-              </div>
-            </div>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm shrink-0">
-              <Download className="w-3 h-3" /> <span className="hidden sm:inline">Unduh</span>
-            </button>
-          </div>
-        </div>
+      {/* End of grid */}
       </div>
     </div>
   );

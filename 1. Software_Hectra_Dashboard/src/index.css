@@ -13,13 +13,13 @@
   --bg-card:    #16161F;
   --bg-hover:   #1C1C27;
 
-  --accent:        #00D47E;
-  --accent-hover:  #00B86B;
+  --accent:        #2f7d31;
+  --accent-hover:  #236125;
   --accent-dim:    rgba(0,212,126,0.12);
   --accent-border: rgba(0,212,126,0.20);
 
-  --amber:      #FFB84D;
-  --amber-dim:  rgba(255,184,77,0.12);
+  --amber:      #f7771b;
+  --amber-dim:  rgba(247,119,27,0.12);
 
   --red:        #FF5B5B;
   --red-dim:    rgba(255,91,91,0.12);
@@ -39,7 +39,7 @@
 
   /* Backwards-compat aliases for dark mode */
   --color-primary:        var(--accent);
-  --color-primary-hover:  #00B86B;
+  --color-primary-hover:  #236125;
   --color-accent:         var(--accent);
   --color-bg-base:        var(--bg-base);
   --color-bg-surface:     var(--bg-surface);
@@ -72,6 +72,9 @@
   --shadow-card:    0 1px 4px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
   --shadow-dropdown:0 8px 32px rgba(0,0,0,0.4);
   --shadow-modal:   0 12px 56px rgba(0,0,0,0.5);
+
+  --chat-bubble-bot-bg: #27272a;
+  --chat-bubble-bot-text: #f4f4f5;
 }
 
 /* ── LIGHT MODE ──────────────────────────────────────────── */
@@ -81,13 +84,13 @@
   --bg-card:    #F8FBF9;
   --bg-hover:   #EEF5F1;
 
-  --accent:        #00A862;
+  --accent:        #2f7d31;
   --accent-hover:  #00875A;
   --accent-dim:    rgba(0,168,98,0.08);
   --accent-border: rgba(0,168,98,0.25);
 
-  --amber:      #B87A0A;
-  --amber-dim:  rgba(184,122,10,0.08);
+  --amber:      #f7771b;
+  --amber-dim:  rgba(247,119,27,0.08);
 
   --red:        #C0392B;
   --red-dim:    rgba(192,57,43,0.08);
@@ -106,9 +109,9 @@
   --shadow-toast: 0 16px 40px rgba(0, 0, 0, 0.06);
 
   /* Backwards-compat aliases (for existing pages still using old tokens) */
-  --color-primary:        #00A862;
+  --color-primary:        #2f7d31;
   --color-primary-hover:  #00875A;
-  --color-accent:         #00A862;
+  --color-accent:         #2f7d31;
   --color-bg-base:        var(--bg-base);
   --color-bg-surface:     var(--bg-surface);
   --color-bg-muted:       var(--bg-hover);
@@ -127,7 +130,7 @@
   --color-info:           var(--blue);
   --color-info-bg:        var(--blue-dim);
   --color-forest:         var(--accent);
-  --color-forest-light:   #00D47E;
+  --color-forest-light:   #2f7d31;
   --color-sage:           var(--text-3);
   --color-sage-light:     var(--border);
   --color-gold:           var(--amber);
@@ -140,6 +143,9 @@
   --shadow-card:    0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04);
   --shadow-dropdown:0 4px 24px rgba(0,0,0,0.10);
   --shadow-modal:   0 8px 48px rgba(0,0,0,0.14);
+
+  --chat-bubble-bot-bg: #e2e8f0;
+  --chat-bubble-bot-text: #0f172a;
 }
 
 /* ── BASE STYLES ─────────────────────────────────────────── */
@@ -428,4 +434,17 @@
   100% {
     top: 0;
   }
+}
+
+.chat-bubble-bot {
+  background-color: var(--chat-bubble-bot-bg);
+  color: var(--chat-bubble-bot-text);
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }

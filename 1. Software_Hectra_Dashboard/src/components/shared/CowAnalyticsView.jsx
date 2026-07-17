@@ -13,16 +13,23 @@ import {
   ResponsiveContainer,
   Legend,
   LineChart,
-  Line
+  Line,
+  ReferenceArea
 } from 'recharts';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 
 export default function CowAnalyticsView({ selectedCow }) {
   const { lang } = useSettingsStore();
-  const t = translations[lang];
+  const t = translations[lang] || translations.id;
+
+  // Zoom States
+  const [refAreaLeft, setRefAreaLeft] = useState('');
+  const [refAreaRight, setRefAreaRight] = useState('');
+  const [zoomData, setZoomData] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [pieData, setPieData] = useState([]);
@@ -44,24 +51,95 @@ export default function CowAnalyticsView({ selectedCow }) {
         if (timeFilter === '6bln') limit = 6000;
         if (timeFilter === '1th') limit = 12000;
 
-        const [behaviorRes, telemetryRes] = await Promise.all([
-          axiosInstance.get(`/behavior?cow_id=${selectedCow.id || selectedCow.cow_id}`),
-          axiosInstance.get(`/sensor-data?collar_id=${selectedCow.collar_id}&limit=${limit}`)
-        ]);
-        
-        setPieData(behaviorRes.data.pie_data || []);
-        setWeeklyData(behaviorRes.data.weekly_data || []);
+        let behaviorRes = null;
+        let telemetryRes = null;
 
-        const sortedTelemetry = [...(telemetryRes.data || [])].reverse();
+        if (selectedCow.collar_id) {
+          telemetryRes = await axiosInstance.get(`/sensor-data?collar_id=${selectedCow.collar_id}&limit=${limit}`);
+        } else {
+          telemetryRes = { data: [] }; // Mock empty data
+        }
+        
+        const telemetryPayload = Array.isArray(telemetryRes?.data) ? telemetryRes.data : (telemetryRes?.data?.data || []);
+        
+        // CLIENT-SIDE TIME FILTER
+        const now = new Date();
+        let cutoffTime = new Date();
+        if (timeFilter === '1hr') cutoffTime.setDate(now.getDate() - 1);
+        else if (timeFilter === '1wk' || timeFilter === '1mg') cutoffTime.setDate(now.getDate() - 7);
+        else if (timeFilter === '1bln') cutoffTime.setMonth(now.getMonth() - 1);
+        else if (timeFilter === '3bln') cutoffTime.setMonth(now.getMonth() - 3);
+        else if (timeFilter === '6bln') cutoffTime.setMonth(now.getMonth() - 6);
+        else if (timeFilter === '1th') cutoffTime.setFullYear(now.getFullYear() - 1);
+        
+        const filteredTelemetry = telemetryPayload.filter(d => {
+          if (!d.batch_ts && !d.created_at) return false;
+          const ts = new Date(d.batch_ts || d.created_at);
+          return ts >= cutoffTime;
+        });
+
+        // 1. Line Chart Data
+        const sortedTelemetry = [...filteredTelemetry].reverse();
         const formattedChart = sortedTelemetry.map(d => {
-          const timeStr = d.batch_ts ? new Date(d.batch_ts).toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
+          const ts = new Date(d.batch_ts || d.created_at);
+          const timeStr = ts.toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+          const dateStr = ts.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { month: 'short', day: 'numeric' });
           return {
-            time: timeStr,
+            time: timeFilter === '1hr' ? timeStr : `${dateStr} ${timeStr}`,
             temp: d.temperature !== null ? parseFloat(d.temperature.toFixed(1)) : null,
             activity: d.max_z !== null ? Math.round(d.max_z * 30) : 0
           };
         });
         setTelemetryData(formattedChart);
+        setZoomData(null); // Reset zoom on new data
+
+        // 2. Pie Chart Data (Dynamic from filtered telemetry)
+        const counts = { EATING: 0, RUMINATING: 0, RESTING: 0, ESTRUS: 0, SICK: 0, UNKNOWN: 0 };
+        filteredTelemetry.forEach(d => {
+          const state = d.activity_state || 'UNKNOWN';
+          if (counts[state] !== undefined) counts[state]++;
+          else counts.UNKNOWN++;
+        });
+        const totalPie = Object.values(counts).reduce((a, b) => a + b, 0);
+        const pct = (val) => totalPie > 0 ? Math.round((val / totalPie) * 100) : 0;
+        
+        const makanVal = pct(counts.EATING + counts.RUMINATING);
+        const istirahatVal = pct(counts.RESTING);
+        const aktifVal = pct(counts.ESTRUS);
+        const lainnyaVal = pct(counts.SICK + counts.UNKNOWN);
+        
+        setPieData([
+          { name: 'Makan / Memamah Biak', value: makanVal, color: '#2D4A3E' },
+          { name: 'Istirahat / Tidur', value: istirahatVal, color: '#7A9E8E' },
+          { name: 'Aktif / Estrus', value: aktifVal, color: '#C9963A' },
+          { name: 'Aktivitas Lainnya', value: lainnyaVal, color: '#A8C5B8' }
+        ]);
+
+        // 3. Bar Chart Data (Dynamic grouping by day)
+        const dailyStats = {};
+        filteredTelemetry.forEach(d => {
+          const ts = new Date(d.batch_ts || d.created_at);
+          const dtStr = ts.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' });
+          if (!dailyStats[dtStr]) {
+            dailyStats[dtStr] = { day: dtStr, ESTRUS: 0, EATING: 0, RUMINATING: 0, RESTING: 0, SICK: 0, UNKNOWN: 0, total: 0 };
+          }
+          const state = d.activity_state || 'UNKNOWN';
+          if (dailyStats[dtStr][state] !== undefined) dailyStats[dtStr][state]++;
+          else dailyStats[dtStr].UNKNOWN++;
+          dailyStats[dtStr].total++;
+        });
+        
+        const wData = Object.values(dailyStats).reverse().map(st => {
+          const tDay = st.total;
+          return {
+            day: st.day,
+            aktif: tDay > 0 ? Math.round((st.ESTRUS / tDay) * 100) : 0,
+            makan: tDay > 0 ? Math.round(((st.EATING + st.RUMINATING) / tDay) * 100) : 0,
+            istirahat: tDay > 0 ? Math.round((st.RESTING / tDay) * 100) : 0,
+            lainnya: tDay > 0 ? Math.round(((st.SICK + st.UNKNOWN) / tDay) * 100) : 0
+          };
+        });
+        setWeeklyData(wData);
 
         // --- Smart health check ---
         if (formattedChart.length > 5) {
@@ -80,8 +158,7 @@ export default function CowAnalyticsView({ selectedCow }) {
         }
 
       } catch (err) {
-        console.error('Gagal fetch analytics:', err);
-        toast.error(lang === 'id' ? 'Gagal memuat data analitik ternak.' : 'Failed to load cattle analytics data.');
+        handleError(err, 'muat analitik ternak');
       } finally {
         setLoading(false);
       }
@@ -103,63 +180,50 @@ export default function CowAnalyticsView({ selectedCow }) {
     return name;
   };
 
-  const formatDayTick = (day) => {
-    if (!day) return '';
-    const map = {
-      'Sen': lang === 'id' ? 'Sen' : 'Mon',
-      'Sel': lang === 'id' ? 'Sel' : 'Tue',
-      'Rab': lang === 'id' ? 'Rab' : 'Wed',
-      'Kam': lang === 'id' ? 'Kam' : 'Thu',
-      'Jum': lang === 'id' ? 'Jum' : 'Fri',
-      'Sab': lang === 'id' ? 'Sab' : 'Sat',
-      'Min': lang === 'id' ? 'Min' : 'Sun',
-      'Monday': lang === 'id' ? 'Sen' : 'Mon',
-      'Tuesday': lang === 'id' ? 'Sel' : 'Tue',
-      'Wednesday': lang === 'id' ? 'Rab' : 'Wed',
-      'Thursday': lang === 'id' ? 'Kam' : 'Thu',
-      'Friday': lang === 'id' ? 'Jum' : 'Fri',
-      'Saturday': lang === 'id' ? 'Sab' : 'Sat',
-      'Sunday': lang === 'id' ? 'Min' : 'Sun',
-    };
-    return map[day] || day;
+  const zoom = () => {
+    if (refAreaLeft === refAreaRight || refAreaRight === '') {
+      setRefAreaLeft('');
+      setRefAreaRight('');
+      return;
+    }
+
+    const dataToUse = zoomData || telemetryData;
+    let index1 = dataToUse.findIndex((d) => d.time === refAreaLeft);
+    let index2 = dataToUse.findIndex((d) => d.time === refAreaRight);
+    
+    if (index1 === -1 || index2 === -1) {
+      setRefAreaLeft('');
+      setRefAreaRight('');
+      return;
+    }
+
+    if (index1 > index2) {
+      [index1, index2] = [index2, index1];
+    }
+    
+    const newZoomData = dataToUse.slice(index1, index2 + 1);
+    setZoomData(newZoomData);
+    setRefAreaLeft('');
+    setRefAreaRight('');
   };
 
-  const localizedPieData = pieData.map(item => ({
-    ...item,
-    name: translateActivity(item.name)
-  }));
+  const zoomOut = () => {
+    setZoomData(null);
+  };
+
+  const getTimeFilterText = (tf) => {
+    if (tf === '1hr') return lang === 'id' ? '24 Jam Terakhir' : 'Last 24 Hours';
+    if (tf === '1wk' || tf === '1mg') return lang === 'id' ? '7 Hari Terakhir' : 'Last 7 Days';
+    if (tf === '1bln') return lang === 'id' ? '30 Hari Terakhir' : 'Last 30 Days';
+    if (tf === '3bln') return lang === 'id' ? '3 Bulan Terakhir' : 'Last 3 Months';
+    if (tf === '6bln') return lang === 'id' ? '6 Bulan Terakhir' : 'Last 6 Months';
+    if (tf === '1th') return lang === 'id' ? '1 Tahun Terakhir' : 'Last 1 Year';
+    return '';
+  };
 
   const localizedWeeklyData = weeklyData.map(item => ({
-    ...item,
-    day: formatDayTick(item.day)
+    ...item
   }));
-
-  const PieTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-    const entry = payload[0];
-    return (
-      <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '10px 14px', boxShadow: 'var(--shadow-dropdown)' }}>
-        <p style={{ fontWeight: 700, fontSize: '13px', color: entry.payload.color }}>{entry.name}</p>
-        <p style={{ fontSize: '12px', color: 'var(--text-2)', marginTop: '2px' }}>{entry.value}% {lang === 'id' ? 'dari total hari ini' : 'of today\'s data'}</p>
-      </div>
-    );
-  };
-
-  const BarTooltip = ({ active, payload, label }) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '10px 14px', boxShadow: 'var(--shadow-dropdown)' }}>
-        <p style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-1)', marginBottom: '6px' }}>{label}</p>
-        {payload.map(p => (
-          <div key={p.dataKey} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-2)', marginTop: '2px' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.fill, flexShrink: 0, display: 'inline-block' }} />
-            <span>{p.name}</span>
-            <span style={{ fontWeight: 700, color: 'var(--text-1)', marginLeft: 'auto' }}>{p.value}%</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 relative">
@@ -254,6 +318,14 @@ export default function CowAnalyticsView({ selectedCow }) {
                   <div className="flex flex-wrap items-center gap-4">
                     {/* Legends */}
                     <div className="flex items-center gap-4 text-xs font-medium">
+                      {zoomData && (
+                        <button 
+                          onClick={zoomOut}
+                          className="px-3 py-1 bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] text-[var(--text-1)] border border-[var(--border)] rounded-md font-medium transition-colors"
+                        >
+                          {lang === 'id' ? 'Tampilkan Semua' : 'Zoom Out'}
+                        </button>
+                      )}
                       <div className="flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full bg-[var(--color-warning)]"></span>
                         <span className="text-[var(--text-2)]">{t.sensor_chart_temp || "Suhu"}</span>
@@ -275,17 +347,29 @@ export default function CowAnalyticsView({ selectedCow }) {
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={telemetryData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                      <LineChart 
+                        data={zoomData || telemetryData} 
+                        margin={{ top: 5, right: 20, left: -20, bottom: 5 }}
+                        onMouseDown={(e) => e && setRefAreaLeft(e.activeLabel)}
+                        onMouseMove={(e) => e && refAreaLeft && setRefAreaRight(e.activeLabel)}
+                        onMouseUp={zoom}
+                        onTouchStart={(e) => e && setRefAreaLeft(e.activeLabel)}
+                        onTouchMove={(e) => e && refAreaLeft && setRefAreaRight(e.activeLabel)}
+                        onTouchEnd={zoom}
+                      >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-sage-light)" opacity={0.3} />
                         <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-3)', fontSize: 12 }} dy={10} />
-                        <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-3)', fontSize: 12 }} domain={[35, 42]} />
-                        <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-3)', fontSize: 12 }} />
+                        <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-3)', fontSize: 12 }} domain={['auto', 'auto']} label={{ value: lang === 'id' ? 'Suhu (°C)' : 'Temp (°C)', angle: -90, position: 'insideLeft', offset: -10, fill: 'var(--text-3)', fontSize: 11 }} />
+                        <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-3)', fontSize: 12 }} label={{ value: lang === 'id' ? 'Tingkat Aktivitas' : 'Activity Level', angle: 90, position: 'insideRight', offset: -10, fill: 'var(--text-3)', fontSize: 11 }} />
                         <Tooltip 
                           contentStyle={{ borderRadius: '12px', border: '0.5px solid var(--border)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-dropdown)' }}
                           labelStyle={{ fontWeight: 'bold', color: 'var(--text-1)' }}
                         />
-                        <Line isAnimationActive={false} yAxisId="left" type="monotone" dataKey="temp" stroke="var(--color-warning)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} connectNulls={true} />
-                        <Line isAnimationActive={false} yAxisId="right" type="monotone" dataKey="activity" stroke="var(--color-forest)" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} connectNulls={true} />
+                        <Line isAnimationActive={false} yAxisId="left" type="monotone" dataKey="temp" name={lang === 'id' ? 'Suhu' : 'Temp'} stroke="var(--color-warning)" strokeWidth={2} dot={(zoomData || telemetryData).length < 50 ? { fill: 'var(--color-warning)', r: 3, strokeWidth: 1, stroke: '#fff' } : false} activeDot={{ r: 4, strokeWidth: 0 }} connectNulls={true} />
+                        <Line isAnimationActive={false} yAxisId="right" type="monotone" dataKey="activity" name={lang === 'id' ? 'Aktivitas' : 'Activity'} stroke="var(--color-forest)" strokeWidth={2} dot={(zoomData || telemetryData).length < 50 ? { fill: 'var(--color-forest)', r: 3, strokeWidth: 1, stroke: '#fff' } : false} activeDot={{ r: 4, strokeWidth: 0 }} connectNulls={true} />
+                        {refAreaLeft && refAreaRight ? (
+                          <ReferenceArea yAxisId="left" x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} fill="var(--color-primary)" fillOpacity={0.1} />
+                        ) : null}
                       </LineChart>
                     </ResponsiveContainer>
                   )}
@@ -293,86 +377,38 @@ export default function CowAnalyticsView({ selectedCow }) {
               </div>
 
               {/* Behavior Charts Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Pie Chart */}
-                <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '16px', boxShadow: 'var(--shadow-card)', padding: '24px' }} className="lg:col-span-4">
-                  <h2 className="text-lg font-semibold text-[var(--text-1)] font-display mb-4">{t.behavior_pie_title || "Distribusi Aktivitas"}</h2>
-                  <div className="h-[220px]">
-                    {loading ? (
-                      <div className="w-[170px] h-[170px] bg-[var(--bg-surface)] animate-pulse rounded-full mx-auto mt-4" />
-                    ) : localizedPieData.length === 0 || localizedPieData.every(item => item.value === 0) ? (
-                      <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                        <Activity className="w-8 h-8 text-[var(--text-3)] mb-2" />
-                        <p className="text-sm font-medium text-[var(--text-2)]">{t.behavior_pie_empty || "Tidak ada data sensor hari ini"}</p>
-                        <p className="text-xs text-[var(--text-3)] mt-1">{lang === 'id' ? 'Pasangkan collar sensor pada sapi untuk melihat data.' : 'Pair a sensor collar to see activity data.'}</p>
-                      </div>
-                    ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={localizedPieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={55}
-                            outerRadius={85}
-                            paddingAngle={3}
-                            dataKey="value"
-                            stroke="none"
-                            isAnimationActive={false}
-                          >
-                            {localizedPieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip content={<PieTooltip />} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    )}
-                  </div>
-                  {/* Legend */}
-                  <div className="space-y-2.5 mt-4">
-                    {localizedPieData.map(item => (
-                      <div key={item.name} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></div>
-                          <span style={{ fontSize: '12px', color: 'var(--text-2)' }}>{item.name}</span>
-                        </div>
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: item.value > 0 ? 'var(--text-1)' : 'var(--text-3)' }}>
-                          {item.value}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-1 gap-6">
                 {/* Bar Chart */}
-                <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '16px', boxShadow: 'var(--shadow-card)', padding: '24px' }} className="lg:col-span-8 flex flex-col">
+                <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '16px', boxShadow: 'var(--shadow-card)', padding: '24px' }} className="flex flex-col">
                   <div className="flex items-center justify-between mb-5">
-                    <h2 className="text-lg font-semibold text-[var(--text-1)] font-display">{t.behavior_bar_title || "Komparasi Perilaku"}</h2>
-                    <span style={{ fontSize: '11px', color: 'var(--text-3)', background: 'var(--bg-surface)', padding: '3px 8px', borderRadius: '6px', border: '0.5px solid var(--border)' }}>
-                      {lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}
-                    </span>
+                    <h2 className="text-lg font-semibold text-[var(--text-1)] font-display">{lang === 'id' ? 'Komparasi Perilaku' : 'Behavior Comparison'}</h2>
+                    {getTimeFilterText(timeFilter) && (
+                      <span style={{ fontSize: '11px', color: 'var(--text-3)', background: 'var(--bg-surface)', padding: '3px 8px', borderRadius: '6px', border: '0.5px solid var(--border)' }}>
+                        {getTimeFilterText(timeFilter)}
+                      </span>
+                    )}
                   </div>
                   <div className="h-[300px]">
                     {loading ? (
                       <div className="w-full h-full bg-[var(--bg-surface)] animate-pulse rounded-xl" />
-                    ) : localizedWeeklyData.length === 0 || localizedWeeklyData.every(item => item.aktif === 0 && item.makan === 0 && item.istirahat === 0) ? (
+                    ) : localizedWeeklyData.length === 0 || localizedWeeklyData.every(item => item.aktif === 0 && item.makan === 0 && item.istirahat === 0 && item.lainnya === 0) ? (
                       <div className="h-full flex flex-col items-center justify-center text-center p-4">
                         <Activity className="w-8 h-8 text-[var(--text-3)] mb-2" />
-                        <p className="text-sm font-medium text-[var(--text-2)]">{t.behavior_bar_empty || "Belum ada data sensor mingguan"}</p>
-                        <p className="text-xs text-[var(--text-3)] mt-1">{lang === 'id' ? 'Data aktivitas akan muncul setelah collar aktif mengirim data selama beberapa hari.' : 'Activity data will appear after active collars send data for a few days.'}</p>
+                        <p className="text-sm font-medium text-[var(--text-2)]">{lang === 'id' ? 'Belum ada data pada periode ini' : 'No data in this period'}</p>
+                        <p className="text-xs text-[var(--text-3)] mt-1">{lang === 'id' ? 'Data aktivitas akan muncul jika ada rekaman sensor.' : 'Activity data will appear if sensor records exist.'}</p>
                       </div>
                     ) : (
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={localizedWeeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
-                          <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-3)', fontSize: 12 }} dy={10} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-3)', fontSize: 12 }} tickFormatter={v => `${v}%`} />
-                          <Tooltip content={<BarTooltip />} cursor={{ fill: 'var(--bg-hover)', opacity: 0.5 }} />
-                          <Legend iconType="circle" iconSize={8} wrapperStyle={{ paddingTop: '20px', fontSize: '12px', color: 'var(--text-2)' }} />
-                          <Bar isAnimationActive={false} dataKey="aktif"    name={t.behavior_legend_active}  stackId="a" fill="var(--color-gold, #C9963A)" radius={[0, 0, 4, 4]} />
-                          <Bar isAnimationActive={false} dataKey="makan"    name={t.behavior_legend_eating}  stackId="a" fill="var(--color-forest, #2D4A3E)" />
-                          <Bar isAnimationActive={false} dataKey="istirahat" name={t.behavior_legend_resting} stackId="a" fill="var(--color-sage, #7A9E8E)" radius={[4, 4, 0, 0]} />
+                          <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-3)' }} dy={10} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-3)' }} />
+                          <Tooltip cursor={{ fill: 'var(--bg-surface)' }} contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-dropdown)', padding: '12px' }} />
+                          <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }} />
+                          <Bar name={lang === 'id' ? 'Makan' : 'Eating'} dataKey="makan" stackId="a" fill="#2D4A3E" radius={[0, 0, 4, 4]} />
+                          <Bar name={lang === 'id' ? 'Istirahat' : 'Resting'} dataKey="istirahat" stackId="a" fill="#7A9E8E" />
+                          <Bar name={lang === 'id' ? 'Aktif' : 'Active'} dataKey="aktif" stackId="a" fill="#C9963A" />
+                          <Bar name={lang === 'id' ? 'Lainnya' : 'Other'} dataKey="lainnya" stackId="a" fill="#A8C5B8" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     )}

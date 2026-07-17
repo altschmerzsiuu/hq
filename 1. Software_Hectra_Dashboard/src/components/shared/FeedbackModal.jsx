@@ -36,7 +36,7 @@ export default function FeedbackModal({ isOpen, onClose, lang }) {
             </h2>
             <button 
               disabled={!feedback.trim()}
-              className={`text-[15px] font-bold transition-colors ${feedback.trim() ? 'text-[#009254] hover:text-[#00c47a]' : 'text-gray-500'}`}
+              className={`text-[15px] font-bold transition-colors ${feedback.trim() ? 'text-[#2f7d31] hover:text-[#43a047]' : 'text-gray-500'}`}
             >
               {lang === 'id' ? 'Kirim' : 'Send'}
             </button>
@@ -46,9 +46,9 @@ export default function FeedbackModal({ isOpen, onClose, lang }) {
           <div className="p-5 overflow-y-auto max-h-[80vh] scrollbar-hide">
             <p className="text-[13px] leading-relaxed text-gray-600 dark:text-gray-400 mb-6">
               {lang === 'id' ? (
-                <>Gunakan form ini untuk melaporkan masalah teknis atau menyarankan peningkatan. Untuk masalah lain, Anda dapat meminta bantuan di <span className="text-[#009254] font-semibold cursor-pointer">Pusat Bantuan</span>, atau <span className="text-[#009254] font-semibold cursor-pointer">hubungi kami</span>.</>
+                <>Gunakan form ini untuk melaporkan masalah teknis atau menyarankan peningkatan. Untuk masalah lain, Anda dapat meminta bantuan di <span className="text-[#2f7d31] font-semibold cursor-pointer">Pusat Bantuan</span>, atau <span className="text-[#2f7d31] font-semibold cursor-pointer">hubungi kami</span>.</>
               ) : (
-                <>Use this form to report technical issues or suggest improvements. For other issues, you can get help from the <span className="text-[#009254] font-semibold cursor-pointer">Help Centre</span>, or <span className="text-[#009254] font-semibold cursor-pointer">contact us</span>.</>
+                <>Use this form to report technical issues or suggest improvements. For other issues, you can get help from the <span className="text-[#2f7d31] font-semibold cursor-pointer">Help Centre</span>, or <span className="text-[#2f7d31] font-semibold cursor-pointer">contact us</span>.</>
               )}
             </p>
 
@@ -56,7 +56,7 @@ export default function FeedbackModal({ isOpen, onClose, lang }) {
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               placeholder={lang === 'id' ? 'Jelaskan masalah teknis' : 'Describe the technical issue'}
-              className="w-full min-h-[140px] p-4 rounded-xl resize-none outline-none text-[15px] transition-colors bg-gray-50 dark:bg-[#2c2c2e] text-gray-900 dark:text-white border border-transparent focus:border-[#009254]"
+              className="w-full min-h-[140px] p-4 rounded-xl resize-none outline-none text-[15px] transition-colors bg-gray-50 dark:bg-[#2c2c2e] text-gray-900 dark:text-white border border-transparent focus:border-[#2f7d31]"
             />
 
             <div className="mt-6">
@@ -75,9 +75,9 @@ export default function FeedbackModal({ isOpen, onClose, lang }) {
 
             <p className="text-[12px] leading-relaxed text-gray-500 mt-8">
               {lang === 'id' ? (
-                <>Dengan mengirim, Anda mengizinkan kami untuk meninjau info teknis terkait untuk membantu mengatasi masukan Anda. <span className="text-[#009254] font-semibold cursor-pointer">Pelajari lebih lanjut</span></>
+                <>Dengan mengirim, Anda mengizinkan kami untuk meninjau info teknis terkait untuk membantu mengatasi masukan Anda. <span className="text-[#2f7d31] font-semibold cursor-pointer">Pelajari lebih lanjut</span></>
               ) : (
-                <>By sending, you allow us to review related technical info to help address your feedback. <span className="text-[#009254] font-semibold cursor-pointer">Learn more</span></>
+                <>By sending, you allow us to review related technical info to help address your feedback. <span className="text-[#2f7d31] font-semibold cursor-pointer">Learn more</span></>
               )}
             </p>
           </div>

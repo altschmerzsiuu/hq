@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 
@@ -87,7 +88,7 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
       toast.success(lang === 'id' ? `Prediksi selesai!` : `Prediction done!`);
       await fetchPrediction();
     } catch (err) {
-      toast.error((lang === 'id' ? 'Gagal: ' : 'Failed: ') + (err.response?.data?.detail || err.message));
+      handleError(err, 'jalankan prediksi estrus per sapi');
     } finally {
       setIsPredicting(false);
     }

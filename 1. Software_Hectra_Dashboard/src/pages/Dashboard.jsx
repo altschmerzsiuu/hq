@@ -12,8 +12,10 @@ import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
 import SeeAllLink from '@/components/ui/SeeAllLink';
 import PairCollarModal from '@/components/shared/PairCollarModal';
+import AddCowModal from '@/components/shared/AddCowModal';
 import { useTernakStore } from '@/store/useTernakStore';
 import { useAuthStore } from '@/store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -262,7 +264,7 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
   const displayTitle = `${name} | ${id}`;
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:border-[#009254]/30 transition-all cursor-pointer relative">
+    <div className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:border-[#2f7d31]/30 transition-all cursor-pointer relative">
       <span className="absolute top-4 right-4 text-[10px] font-bold text-blue-600 border border-blue-200 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
         {badgeText}
       </span>
@@ -274,7 +276,7 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h4 className="text-sm font-bold text-gray-900 font-display truncate">{displayTitle}</h4>
           </div>
-          <p className="text-sm text-gray-600 font-medium truncate mb-1.5">
+          <p className="text-xs text-gray-600 font-medium mb-1.5">
             {actionName} • Dalam {daysLeft} hari
           </p>
           {message && (
@@ -288,7 +290,7 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
       <div className="h-px w-full bg-gray-100 my-1" />
 
       <div className="flex items-center justify-between gap-2">
-        <button className="flex items-center gap-2 bg-[#009254] hover:bg-[#007b46] text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">
+        <button className="flex items-center gap-2 bg-[#2f7d31] hover:bg-[#007b46] text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">
           <Check size={14} /> Selesai
         </button>
         <button className="flex items-center justify-center w-8 h-8 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 rounded-xl transition-colors">
@@ -508,12 +510,15 @@ export default function Dashboard() {
   });
   const [herd, setHerd] = useState([]);
   const [intel, setIntel] = useState([]);
+  const [activeEstrusPredictions, setActiveEstrusPredictions] = useState([]);
   const [selectedInsight, setSelectedInsight] = useState(null);
   const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const { sapiList, fetchSapiList, tambahReproduksi, loading: reproLoading } = useTernakStore();
   const [isReproModalOpen, setIsReproModalOpen] = useState(false);
   const [isEstrusModalOpen, setIsEstrusModalOpen] = useState(false);
+  const [isAddCowModalOpen, setIsAddCowModalOpen] = useState(false);
+  const [showAllRecommendations, setShowAllRecommendations] = useState(false);
   const [reproForm, setReproForm] = useState({
     rfid: '',
     tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
@@ -594,11 +599,7 @@ export default function Dashboard() {
         : "PDF report downloaded successfully!"
       );
     } catch (err) {
-      console.error(err);
-      toast.error(lang === 'id'
-        ? `Gagal membuat laporan: ${err.message || 'Error server'}`
-        : `Failed to generate report: ${err.message || 'Server error'}`
-      );
+      handleError(err, 'buat laporan PDF');
     }
   };
 
@@ -607,15 +608,19 @@ export default function Dashboard() {
       try {
         setLoading(true);
         // Call all API endpoints concurrently
-        const [statsRes, herdRes, intelRes] = await Promise.all([
+        const [statsRes, herdRes, intelRes, estrusRes] = await Promise.all([
           axiosInstance.get('/dashboard/stats'),
           axiosInstance.get('/hewan'),
-          axiosInstance.get('/notifications?limit=5')
+          axiosInstance.get('/notifications?limit=5'),
+          axiosInstance.get('/estrus-predictions?status=active')
         ]);
 
         const statsData = statsRes.data;
         const herdData = herdRes.data;
         const intelData = intelRes.data?.logs || [];
+        const estrusData = estrusRes.data || [];
+        
+        setActiveEstrusPredictions(Array.isArray(estrusData) ? estrusData : []);
 
         // 1. Process stats
         setStats({
@@ -822,7 +827,7 @@ export default function Dashboard() {
         <div className="mb-2">
           <div className="flex items-baseline gap-2">
             <h1 className="text-[22px] md:text-[26px] font-black text-gray-900 tracking-tight leading-tight">
-              {greetingText}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#009254] to-emerald-500">{userName.split(' ')[0]}</span>
+              {greetingText}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2f7d31] to-emerald-500">{userName.split(' ')[0]}</span>
             </h1>
           </div>
           <p className="text-[13px] font-medium text-gray-500 mt-1 mb-3">
@@ -830,8 +835,8 @@ export default function Dashboard() {
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50/80 border border-green-100 text-[#009254] rounded-full text-[11px] font-bold">
-              <span className="w-2 h-2 rounded-full bg-[#009254] animate-pulse"></span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50/80 border border-green-100 text-[#2f7d31] rounded-full text-[11px] font-bold">
+              <span className="w-2 h-2 rounded-full bg-[#2f7d31] animate-pulse"></span>
               {stats.collars} {lang === 'id' ? 'Ternak Dipantau' : 'Cows Monitored'}
             </div>
             {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length > 0 ? (
@@ -848,11 +853,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ─── 1. WEEKLY INSIGHT SLIDESHOW ─────────────── */}
-        <InsightSlideshow onOpenDetail={(insight) => {
-          setSelectedInsight(insight);
-          setIsInsightModalOpen(true);
-        }} />
 
         {/* ─── 2. URGENT ACTIONS CONTAINER ─────────────────────── */}
         <div style={{
@@ -892,8 +892,9 @@ export default function Dashboard() {
         {/* ─── 3. QUICK ACTIONS ──────────────────────────────── */}
         <div>
           <p className="eyebrow" style={{ marginBottom: '12px' }}>AKSI CEPAT</p>
-          <div className="flex flex-row gap-3 md:gap-4">
-            <SquareQAButton icon={Plus} label="Tambah Data IB" onClick={() => {
+          <div className="flex flex-row gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2">
+            <SquareQAButton icon={Plus} label="Tambah Ternak" onClick={() => navigate('/ternak?action=add')} />
+            <SquareQAButton icon={Syringe} label="Tambah Data IB" onClick={() => {
               fetchSapiList();
               setIsReproModalOpen(true);
             }} />
@@ -901,6 +902,12 @@ export default function Dashboard() {
             <SquareQAButton icon={Zap} label="Prediksi Estrus" onClick={() => setIsEstrusModalOpen(true)} />
           </div>
         </div>
+
+        {/* ─── 4. CARD SOROTAN (WEEKLY INSIGHT) ──────────────── */}
+        <InsightSlideshow onOpenDetail={(insight) => {
+          setSelectedInsight(insight);
+          setIsInsightModalOpen(true);
+        }} />
 
         {/* ─── 4. REKOMENDASI LAINNYA ────────────────────────── */}
         <div style={{
@@ -910,36 +917,88 @@ export default function Dashboard() {
           padding: '18px 22px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <p className="eyebrow">REKOMENDASI LAINNYA</p>
+            <p className="eyebrow" style={{ marginBottom: 0 }}>REKOMENDASI LAINNYA</p>
+            {intel.filter(card => card.urgency === 'scheduled').length > 2 && (
+              <button 
+                onClick={() => setShowAllRecommendations(!showAllRecommendations)}
+                className="text-xs font-bold text-[var(--color-primary)] hover:underline bg-transparent border-none cursor-pointer px-2 py-1 rounded-md hover:bg-[var(--color-primary)]/10 transition-colors"
+              >
+                {showAllRecommendations 
+                  ? (lang === 'id' ? 'Tampilkan Lebih Sedikit' : 'View Less')
+                  : (lang === 'id' ? 'Lihat Semua' : 'View All')}
+              </button>
+            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {intel.filter(card => card.urgency === 'scheduled').length > 0 ? (
-              intel.filter(card => card.urgency === 'scheduled').map((card, i) => {
-                const cowName = card.title.split('—')[0].trim() || 'Ternak';
-                let friendlyMsg = '';
-                if (card.title.toLowerCase().includes('kebuntingan')) {
-                  friendlyMsg = `Update kebuntingan ${cowName} perlu dicatat. Sebaiknya diperbarui sekarang agar data kehamilan tetap akurat dan bisa diprediksi dengan baik.`;
-                } else if (card.title.toLowerCase().includes('inseminasi')) {
-                  friendlyMsg = `Jadwal inseminasi ${cowName} sudah tiba. Pastikan persiapan sudah matang agar peluang kebuntingan maksimal.`;
-                } else if (card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')) {
-                  friendlyMsg = `${cowName} menunjukkan tanda birahi. Waktu terbaik untuk inseminasi adalah 12–18 jam ke depan, jangan sampai terlewat.`;
-                } else {
-                  friendlyMsg = `Ada hal yang perlu kamu tindak lanjuti untuk ${cowName}. Sebaiknya segera dicek agar tidak terlewat.`;
-                }
-                return (
-                  <RecommendationCard
-                    key={i}
-                    title={card.title}
-                    badgeText="SEDANG"
-                    id={`C${Math.floor(Math.random() * 9000) + 1000}A`}
-                    name={cowName}
-                    daysLeft={Math.floor(Math.random() * 10) + 1}
-                    icon={card.icon}
-                    message={friendlyMsg}
-                  />
-                );
-              })
+              <>
+                {/* 2 Item Pertama Selalu Ditampilkan */}
+                {intel.filter(card => card.urgency === 'scheduled')
+                  .slice(0, 2)
+                  .map((card, i) => {
+                  const cowName = card.title.split('—')[0].trim() || 'Ternak';
+                  let friendlyMsg = '';
+                  if (card.title.toLowerCase().includes('kebuntingan')) {
+                    friendlyMsg = `Update kebuntingan ${cowName} perlu dicatat. Sebaiknya diperbarui sekarang agar data kehamilan tetap akurat dan bisa diprediksi dengan baik.`;
+                  } else if (card.title.toLowerCase().includes('inseminasi')) {
+                    friendlyMsg = `Jadwal inseminasi ${cowName} sudah tiba. Pastikan persiapan sudah matang agar peluang kebuntingan maksimal.`;
+                  } else if (card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')) {
+                    friendlyMsg = `${cowName} menunjukkan tanda birahi. Waktu terbaik untuk inseminasi adalah 12–18 jam ke depan, jangan sampai terlewat.`;
+                  } else {
+                    friendlyMsg = `Ada hal yang perlu kamu tindak lanjuti untuk ${cowName}. Sebaiknya segera dicek agar tidak terlewat.`;
+                  }
+                  return (
+                    <RecommendationCard
+                      key={i}
+                      title={card.title}
+                      badgeText="SEDANG"
+                      id={`C${Math.floor(Math.random() * 9000) + 1000}A`}
+                      name={cowName}
+                      daysLeft={Math.floor(Math.random() * 10) + 1}
+                      icon={card.icon}
+                      message={friendlyMsg}
+                    />
+                  );
+                })}
+
+                {/* Sisa Item dengan Transisi Smooth */}
+                {intel.filter(card => card.urgency === 'scheduled').length > 2 && (
+                  <div style={{ display: 'grid', gridTemplateRows: showAllRecommendations ? '1fr' : '0fr', transition: 'grid-template-rows 400ms cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                    <div style={{ overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: showAllRecommendations ? '10px' : '0px', transition: 'padding-top 400ms cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                        {intel.filter(card => card.urgency === 'scheduled')
+                          .slice(2)
+                          .map((card, i) => {
+                          const cowName = card.title.split('—')[0].trim() || 'Ternak';
+                          let friendlyMsg = '';
+                          if (card.title.toLowerCase().includes('kebuntingan')) {
+                            friendlyMsg = `Update kebuntingan ${cowName} perlu dicatat. Sebaiknya diperbarui sekarang agar data kehamilan tetap akurat dan bisa diprediksi dengan baik.`;
+                          } else if (card.title.toLowerCase().includes('inseminasi')) {
+                            friendlyMsg = `Jadwal inseminasi ${cowName} sudah tiba. Pastikan persiapan sudah matang agar peluang kebuntingan maksimal.`;
+                          } else if (card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')) {
+                            friendlyMsg = `${cowName} menunjukkan tanda birahi. Waktu terbaik untuk inseminasi adalah 12–18 jam ke depan, jangan sampai terlewat.`;
+                          } else {
+                            friendlyMsg = `Ada hal yang perlu kamu tindak lanjuti untuk ${cowName}. Sebaiknya segera dicek agar tidak terlewat.`;
+                          }
+                          return (
+                            <RecommendationCard
+                              key={i + 2}
+                              title={card.title}
+                              badgeText="SEDANG"
+                              id={`C${Math.floor(Math.random() * 9000) + 1000}A`}
+                              name={cowName}
+                              daysLeft={Math.floor(Math.random() * 10) + 1}
+                              icon={card.icon}
+                              message={friendlyMsg}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div style={{
                 padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
@@ -955,8 +1014,8 @@ export default function Dashboard() {
 
       {/* MODAL: Tambah Reproduksi */}
       {isReproModalOpen && (
-        <div className="fixed inset-0 z-[999] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[999] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in overflow-hidden touch-none">
+          <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">
                 {t.repro_record_new}
@@ -1061,8 +1120,8 @@ export default function Dashboard() {
               </div>
 
               <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ padding: '10px 24px', border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>{t.btn_cancel}</button>
-                <button type="submit" className="flex-1 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg" disabled={reproLoading}>
+                <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} className="w-1/2 py-3 text-center">{t.btn_cancel}</button>
+                <button type="submit" className="w-1/2 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg text-center" disabled={reproLoading}>
                   {reproLoading ? t.repro_saving : t.repro_save}
                 </button>
               </div>
@@ -1156,21 +1215,21 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-3 mb-6">
-                {sapiList.slice(0, 3).map((cow, idx) => {
-                  const prob = [92, 88, 85][idx] || 80; // Dummy probability fallback for UI
+                {activeEstrusPredictions.slice(0, 5).map((pred, idx) => {
+                  const prob = Math.round((pred.confidence_final || 0) * 100);
                   return (
                     <div 
-                      key={cow.id} 
+                      key={pred.id} 
                       onClick={() => {
                         setIsEstrusModalOpen(false);
-                        navigate('/ternak', { state: { selectedCowId: cow.id } });
+                        navigate('/ternak', { state: { selectedCowId: pred.cow_id } });
                       }}
                       className="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-2 h-2 rounded-full bg-[var(--color-accent)] ${idx === 0 ? 'animate-pulse' : ''}`} />
                         <div>
-                          <p className="font-bold text-gray-900">{cow.nama} | {cow.id}</p>
+                          <p className="font-bold text-gray-900">{pred.cow_name || 'Sapi'} | {pred.cow_id}</p>
                           <p className="text-xs text-gray-500">Probabilitas: {prob}%</p>
                         </div>
                       </div>
@@ -1178,8 +1237,8 @@ export default function Dashboard() {
                     </div>
                   );
                 })}
-                {sapiList.length === 0 && (
-                  <p className="text-sm text-center text-gray-500 py-4">Belum ada data sapi.</p>
+                {activeEstrusPredictions.length === 0 && (
+                  <p className="text-sm text-center text-gray-500 py-4">Belum ada sapi terdeteksi estrus saat ini.</p>
                 )}
               </div>
 

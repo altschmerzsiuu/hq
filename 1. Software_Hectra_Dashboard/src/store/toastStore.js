@@ -1,26 +1,24 @@
 // src/store/toastStore.js
 // Beautiful, lightweight custom React Toast Notification Store for HERD
+// Now wrapping Sonner to provide drop-in replacement across the app
 
+import { toast as sonnerToast } from "sonner";
 import { create } from 'zustand';
 
-const useToastStore = create((set) => ({
+// Kept for backwards compatibility with any component that calls useToastStore()
+const useToastStore = create(() => ({
   toasts: [],
-  
   showToast: (message, type = 'success') => {
-    // Disabled as requested by user
-    return;
+    if (type === 'success') sonnerToast.success(message);
+    else if (type === 'error') sonnerToast.error(message);
+    else if (type === 'info') sonnerToast.info(message);
+    else if (type === 'warning') sonnerToast.warning(message);
+    else sonnerToast(message);
   },
-  
-  removeToast: (id) => {
-    // Disabled
-  }
+  removeToast: (id) => {}
 }));
 
-// Shortcut helpers similar to react-hot-toast or legacy showToast
-export const toast = {
-  success: (msg) => useToastStore.getState().showToast(msg, 'success'),
-  error: (msg) => useToastStore.getState().showToast(msg, 'error'),
-  info: (msg) => useToastStore.getState().showToast(msg, 'info'),
-};
+// Provide direct access to sonner's toast
+export const toast = sonnerToast;
 
 export default useToastStore;

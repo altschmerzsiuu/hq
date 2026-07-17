@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
-import ToastContainer from './components/layout/ToastContainer';
+import { Toaster } from './components/ui/sonner';
 import ConfirmDialog from './components/ui/ConfirmDialog';
 import { useAuthStore } from './store/authStore';
 
@@ -17,7 +17,7 @@ function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <ToastContainer />
+      <Toaster />
       <ConfirmDialog />
     </>
   );

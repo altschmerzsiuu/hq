@@ -15,6 +15,7 @@ import {
 import axiosInstance from '@/lib/axios';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 
@@ -79,7 +80,7 @@ export default function IotManager() {
       fetchData();
       toast.success(lang === 'id' ? "Kalung sensor berhasil dipasangkan!" : "Collar sensor successfully paired!");
     } catch (err) {
-      toast.error((lang === 'id' ? "Gagal memasangkan kalung: " : "Failed to pair collar: ") + (err.response?.data?.detail || err.message));
+      handleError(err, 'pasang kalung IoT');
     } finally {
       setPairing(false);
     }
@@ -103,7 +104,7 @@ export default function IotManager() {
       fetchData();
       toast.success(lang === 'id' ? `Kalung ${pendingUnpair.device_id} berhasil dilepaskan.` : `Collar ${pendingUnpair.device_id} successfully released.`);
     } catch (err) {
-      toast.error((lang === 'id' ? "Gagal melepas kalung: " : "Failed to unpair collar: ") + (err.response?.data?.detail || err.message));
+      handleError(err, 'lepas kalung IoT');
     } finally {
       setUnpairing(false);
     }

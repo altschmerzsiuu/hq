@@ -16,6 +16,7 @@ import {
   Clock,
   TrendingUp,
 } from 'lucide-react';
+import { handleError } from '@/lib/errorHandler';
 import { cn } from '@/lib/utils';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
@@ -117,7 +118,7 @@ export default function EstrusPrediction() {
       }
       await fetchPredictions(false);
     } catch (err) {
-      toast.error((lang === 'id' ? 'Gagal menjalankan prediksi: ' : 'Failed to run prediction: ') + (err.response?.data?.detail || err.message));
+      handleError(err, 'jalankan prediksi estrus');
     } finally {
       setIsPredicting(false);
     }
@@ -379,8 +380,7 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
         onFeedbackSubmitted();
       }
     } catch (err) {
-      console.error('Gagal menyimpan feedback:', err);
-      toast.error((lang === 'id' ? 'Gagal mengirim feedback: ' : 'Failed to send feedback: ') + (err.response?.data?.detail || err.message));
+      handleError(err, 'kirim feedback estrus');
     } finally {
       setSubmitting(false);
     }

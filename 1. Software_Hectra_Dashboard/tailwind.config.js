@@ -63,6 +63,60 @@ export default {
           muted:     'var(--color-text-muted)',
           inverse:   'var(--color-text-inverse)',
         },
+        // Smart override of Tailwind greens based on #2f7d31
+        green: {
+          50: '#f2f8f2',
+          100: '#e0efe1',
+          200: '#c2dfc4',
+          300: '#94c698',
+          400: '#60a566',
+          500: '#2f7d31', // User's precise color
+          600: '#236125',
+          700: '#1d4d1f',
+          800: '#183c1a',
+          900: '#143116',
+          950: '#0a1a0b',
+        },
+        emerald: {
+          50: '#f2f8f2',
+          100: '#e0efe1',
+          200: '#c2dfc4',
+          300: '#94c698',
+          400: '#60a566',
+          500: '#2f7d31', // User's precise color
+          600: '#236125',
+          700: '#1d4d1f',
+          800: '#183c1a',
+          900: '#143116',
+          950: '#0a1a0b',
+        },
+        // Smart override of Tailwind amber and orange based on #f7771b
+        amber: {
+          50:  '#fff4e6',
+          100: '#fee5ce',
+          200: '#fdcc9f',
+          300: '#fba973',
+          400: '#f99547',
+          500: '#f7771b', // User's precise orange accent
+          600: '#da5f10',
+          700: '#b44a0e',
+          800: '#8e3a0d',
+          900: '#75320d',
+          950: '#401805',
+        },
+        orange: {
+          50:  '#fff4e6',
+          100: '#fee5ce',
+          200: '#fdcc9f',
+          300: '#fba973',
+          400: '#f99547',
+          500: '#f7771b', // User's precise orange accent
+          600: '#da5f10',
+          700: '#b44a0e',
+          800: '#8e3a0d',
+          900: '#75320d',
+          950: '#401805',
+        }
       },
       borderRadius: {
         sm:  '6px',

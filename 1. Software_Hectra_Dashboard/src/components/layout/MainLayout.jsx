@@ -5,7 +5,6 @@ import Topbar from './Topbar';
 import GendhisWidget from '../gendhis/GendhisWidget';
 import GendhistPullUpSheet from '../gendhis/GendhistPullUpSheet';
 import MobileBottomNav from './MobileBottomNav';
-import ToastContainer from './ToastContainer';
 import { useNotificationStore } from '@/store/notificationStore';
 import { toast } from '@/store/toastStore';
 import ScrollToTop from './ScrollToTop';
@@ -129,9 +128,6 @@ export default function MainLayout() {
       {!isResearchLab && (
         <GendhisWidget />
       )}
-
-      {/* Dynamic Toast System */}
-      <ToastContainer />
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
 import { useAuthStore } from '@/store/authStore';
 import useConfirmStore from '@/store/confirmStore';
 
@@ -178,8 +179,7 @@ export default function GendhisWidget() {
         toast.success('Percakapan dimuat!');
       }
     } catch (err) {
-      console.warn("Failed to load session:", err);
-      toast.error("Gagal memuat percakapan.");
+      handleError(err, 'muat percakapan Gendhis');
     }
   };
 
@@ -408,7 +408,7 @@ export default function GendhisWidget() {
                                   fetchSessions();
                                 }
                               } catch (err) {
-                                console.error(err);
+                                handleError(err, 'hapus percakapan Gendhis');
                               }
                             }
                           }}
@@ -674,12 +674,9 @@ export default function GendhisWidget() {
 
           {messages.map((msg) => (
             <div key={msg.id} className={cn("flex w-full flex-col", msg.sender === 'user' ? "items-end" : "items-start")}>
-              {msg.sender === 'gendhis' && (
-                <div className="flex items-center gap-1 mb-1 ml-1">
-                  <Sparkles className="w-3 h-3 text-amber-500 animate-spin" />
-                  <span className="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest">AI Insight</span>
+                <div className="flex items-center mb-1 ml-2">
+                  <span className="text-[10px] font-semibold text-[var(--text-3)]">Gendhis</span>
                 </div>
-              )}
               
               <div 
                 style={{ 
@@ -687,10 +684,10 @@ export default function GendhisWidget() {
                   boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                 }}
                 className={cn(
-                  "max-w-[85%] px-4 py-2.5 text-xs leading-5 border transition-all duration-200",
+                  "max-w-[85%] px-4 py-2.5 text-xs leading-5 transition-all duration-200",
                   msg.sender === 'user' 
-                    ? "bg-[var(--accent)] border-[var(--accent)] text-white" 
-                    : "bg-[var(--bg-surface)] border-[var(--border)] text-[var(--text-1)]"
+                    ? "bg-[var(--accent)] text-white" 
+                    : "chat-bubble-bot"
                 )}
               >
                 {msg.sender === 'user' ? (
@@ -705,13 +702,12 @@ export default function GendhisWidget() {
           {/* Streaming AI chunk text */}
           {streamingMessage && (
             <div className="flex w-full flex-col items-start">
-              <div className="flex items-center gap-1 mb-1 ml-1">
-                <Sparkles className="w-3 h-3 text-amber-500 animate-spin" />
-                <span className="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest">AI Insight</span>
+              <div className="flex items-center mb-1 ml-2">
+                <span className="text-[10px] font-semibold text-[var(--text-3)]">Gendhis</span>
               </div>
               <div 
                 style={{ borderRadius: '16px 16px 16px 4px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
-                className="max-w-[85%] px-4 py-2.5 text-xs leading-5 border bg-[var(--bg-surface)] border-[var(--border)] text-[var(--text-1)]"
+                className="max-w-[85%] px-4 py-2.5 text-xs leading-5 chat-bubble-bot"
               >
                 <div className="text-xs leading-5 font-sans font-medium">
                   {renderMarkdown(streamingMessage)}
@@ -726,7 +722,7 @@ export default function GendhisWidget() {
             <div className="flex w-full justify-start items-center gap-2">
               <div 
                 style={{ borderRadius: '16px 16px 16px 4px' }}
-                className="bg-[var(--bg-surface)] border border-[var(--border)] px-4 py-2.5 shadow-sm flex items-center gap-1"
+                className="chat-bubble-bot px-4 py-2.5 shadow-sm flex items-center gap-1"
               >
                 <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce"></span>
                 <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
@@ -746,7 +742,7 @@ export default function GendhisWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Tanya Gendhis..."
-              className="flex-1 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-1)] text-xs rounded-full pl-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all placeholder-slate-400 outline-none"
+              className="flex-1 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-1)] text-[16px] md:text-sm rounded-full pl-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all placeholder-slate-400 outline-none"
             />
             <button 
               type="submit"

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
+import { toast } from '../store/toastStore'
 
 const getBaseUrl = () => {
   if (import.meta.env.DEV) {
@@ -94,7 +95,8 @@ async function doSilentRefresh() {
     // Refresh cookie also expired — graceful logout
     useAuthStore.getState().logout();
     // Show brief message then redirect
-    setTimeout(() => { window.location.href = '/login'; }, 100);
+    toast.error('Sesi Anda telah berakhir. Silakan masuk kembali.');
+    setTimeout(() => { window.location.href = '/login'; }, 800);
   }
 }
 
@@ -201,7 +203,8 @@ axiosInstance.interceptors.response.use(
         if (localStorage.getItem('access_token') === tokenBeforeInterceptor) {
           localStorage.removeItem('access_token')
           useAuthStore.getState().logout()
-          window.location.href = '/login'
+          toast.error('Sesi Anda telah berakhir. Silakan masuk kembali.');
+          setTimeout(() => { window.location.href = '/login' }, 800);
         }
         return Promise.reject(refreshError)
 

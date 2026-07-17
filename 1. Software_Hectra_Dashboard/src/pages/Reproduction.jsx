@@ -19,6 +19,7 @@ import {
 import axiosInstance from '@/lib/axios';
 import { cn } from '@/lib/utils';
 import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
 import useConfirmStore from '@/store/confirmStore';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
@@ -118,7 +119,7 @@ export default function Reproduction() {
       fetchData();
       toast.success(t.repro_toast_delete_success);
     } catch (err) {
-      toast.error((lang === 'id' ? "Gagal menghapus data: " : "Failed to delete record: ") + (err.response?.data?.detail || err.message));
+      handleError(err, 'hapus data reproduksi');
     }
   };
 
@@ -157,7 +158,7 @@ export default function Reproduction() {
       setShowAddModal(false);
       fetchData();
     } catch (err) {
-      toast.error((lang === 'id' ? "Gagal menyimpan data: " : "Failed to save record: ") + (err.response?.data?.detail || err.message));
+      handleError(err, 'simpan data reproduksi');
     }
   };
 
@@ -184,7 +185,7 @@ export default function Reproduction() {
       fetchData();
       toast.success(lang === 'id' ? "Hasil reproduksi berhasil dikonfirmasi." : "Reproduction result successfully confirmed.");
     } catch (err) {
-      toast.error((lang === 'id' ? "Gagal mengonfirmasi hasil: " : "Failed to confirm result: ") + (err.response?.data?.detail || err.message));
+      handleError(err, 'konfirmasi hasil reproduksi');
     }
   };
 

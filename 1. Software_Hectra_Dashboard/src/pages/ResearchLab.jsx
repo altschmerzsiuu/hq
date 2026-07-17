@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
 
 /* ═══════════════════════════════════════════════════════════
  * HOOK: useDeviceMonitor
@@ -138,7 +139,7 @@ function useConfigUpdate(logs) {
     } catch (err) {
       setStatuses((prev) => ({ ...prev, [key]: 'error' }));
       pendingRef.current[key] = 'error';
-      toast.error(err.response?.data?.detail || `Gagal update ${key}`);
+      handleError(err, `update config ${key}`);
       setTimeout(() => {
         pendingRef.current[key] = 'idle';
         setStatuses((prev) => ({ ...prev, [key]: 'idle' }));
@@ -339,7 +340,7 @@ export default function ResearchLab() {
       toast.success(`Observasi ${activityType} berhasil disimpan!`);
       setNotes('');
       fetchObservations();
-    } catch (err) { toast.error(err.response?.data?.detail || 'Gagal menyimpan observasi.'); }
+    } catch (err) { handleError(err, 'simpan observasi'); }
     finally { setSubmitting(false); }
   };
 
@@ -353,7 +354,7 @@ export default function ResearchLab() {
       setCountdown(180);
       resetOta();
       setShowOtaOverlay(true);
-    } catch (err) { toast.error(err.response?.data?.detail || 'Gagal mengirim perintah OTA.'); }
+    } catch (err) { handleError(err, 'kirim perintah OTA'); }
     finally { setOtaLoading(false); }
   };
 

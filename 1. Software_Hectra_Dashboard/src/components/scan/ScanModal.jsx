@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Search, Loader2, AlertCircle, PlusCircle, Wifi, WifiOff, Smartphone, CheckCircle2, HeartPulse, FileText, Calendar, Syringe, Baby, Heart, Activity } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
 import herdLogo from '@/assets/logo/herd.jpeg';
 
 // ─────────────────────────────────────────────
@@ -79,7 +80,11 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
           videoRef.current.srcObject = stream;
         }
       } catch (err) {
-        console.error("Camera error:", err);
+        if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+          toast.error('Akses kamera ditolak. Izinkan akses kamera di pengaturan browser Anda.');
+        } else {
+          handleError(err, 'akses kamera');
+        }
       }
     };
     startCamera();
