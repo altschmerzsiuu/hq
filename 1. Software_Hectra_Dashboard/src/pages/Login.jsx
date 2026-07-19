@@ -419,18 +419,20 @@ export default function Login() {
             >
               {/* DESKTOP LEFT PANEL (Hidden on Mobile, now Orange to blend with image) */}
               <div className="hidden lg:flex w-1/2 bg-[#FF7B1C] flex-col relative items-center justify-center p-12 overflow-hidden">
-                {/* Decorative circles - softened for orange background */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-white/20 pointer-events-none"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full border border-white/20 pointer-events-none"></div>
+                {/* Z-10: DECORATIVE CIRCLES (Tengah layer) */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-white/30 pointer-events-none z-10"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full border border-white/40 pointer-events-none z-10"></div>
                 
-                <h1 className="text-white text-5xl font-extrabold mb-8 text-center leading-[1.1] z-10 drop-shadow-md">
+                {/* Z-20: TEXT (Paling atas layernya, posisinya di atas foto) */}
+                <h1 className="text-white text-5xl font-extrabold mb-8 text-center leading-[1.1] relative z-20 drop-shadow-md">
                   Manage your<br/>farm smarter
                 </h1>
                 
+                {/* Z-0: PHOTO (Paling bawah layernya, tapi di bawah teks secara visual) */}
                 <motion.img 
                   src={cowFeatureImg} 
                   alt="HERD Feature Desktop" 
-                  className="w-[450px] h-[450px] object-contain z-10" 
+                  className="w-[450px] h-[450px] object-contain relative z-0" 
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, delay: 0.2 }}

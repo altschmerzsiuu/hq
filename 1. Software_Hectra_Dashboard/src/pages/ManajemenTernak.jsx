@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, Plus, Filter, Link, Unlink, ChevronRight, Edit2, Trash2, Activity, MapPin, X, Calendar, ClipboardList, Beef, Loader2, CheckCircle, XCircle, Baby, Pencil, Save, Tractor, PawPrint, SlidersHorizontal, ChevronLeft, Camera, ImagePlus, LineChart, Sparkles, Edit3 } from 'lucide-react';
+import { Search, Plus, Filter, Link, Unlink, ChevronRight, Edit2, Trash2, Activity, MapPin, X, Calendar, ClipboardList, Beef, Loader2, CheckCircle, XCircle, Baby, Pencil, Save, Tractor, PawPrint, SlidersHorizontal, ChevronLeft, Camera, ImagePlus, LineChart, Sparkles, Edit3, Dna } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { useTernakStore } from '../store/useTernakStore';
 import axiosInstance from '../lib/axios';
@@ -446,23 +447,57 @@ export default function ManajemenTernak() {
         </div>
       </div>
 
-      {/* Mobile Header (Like Screenshot) */}
-      <div className="md:hidden flex items-center justify-between pt-2 pb-2">
-        <div className="flex items-center gap-3">
-          <div style={{ color: 'var(--accent)' }}>
-            <Tractor size={32} strokeWidth={2} />
+      {/* ── MOBILE HEADER (Brand Orange with DNA accent) ── */}
+      <div 
+        className="md:hidden -mx-4 md:-mx-[22px] px-6 pt-[76px] pb-[68px] shadow-lg relative overflow-hidden mb-0 text-white flex flex-col justify-between rounded-t-none"
+        style={{ 
+          background: 'linear-gradient(135deg, #FF7B1C 0%, #E65C00 100%)',
+          borderBottomLeftRadius: '32px',
+          borderBottomRightRadius: '32px'
+        }}
+      >
+        {/* Subtle DNA / Fingerprint Accent */}
+        <Dna 
+          size={240} 
+          strokeWidth={0.8} 
+          className="absolute -top-12 -right-12 text-white opacity-[0.12] rotate-12 pointer-events-none" 
+        />
+
+        <div className="flex justify-between items-start relative z-10">
+          <div className="w-full">
+            <p className="text-[10px] font-black opacity-90 mb-1 uppercase tracking-widest text-[#FFD8B5]">KELOLA DATA PROFIL DAN RIWAYAT REPRODUKSI SAPI.</p>
+            <h1 className="text-[32px] font-black tracking-tight leading-none mb-6">Ternak Anda</h1>
+            
+            <div className="flex items-center gap-3 w-full">
+              {/* Cards (Sapi, Bunting, Sehat) */}
+              <button 
+                onClick={() => setFilters(prev => ({...prev, kesehatan: 'all'}))}
+                className="bg-white/20 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-2xl p-3 flex flex-col items-center justify-center flex-1 aspect-square relative overflow-hidden group transition-all duration-300 border border-white/30 hover:bg-white/25 active:scale-95"
+              >
+                <Beef size={28} className="text-white mb-1.5 opacity-90" strokeWidth={1.5} />
+                <span className="text-[22px] font-black leading-none mb-1">{sapiList.length}</span>
+                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide">Total<br/>Sapi</span>
+              </button>
+              
+              <button 
+                onClick={() => setFilters(prev => ({...prev, kesehatan: 'Hamil'}))}
+                className="bg-white/20 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-2xl p-3 flex flex-col items-center justify-center flex-1 aspect-square relative overflow-hidden group transition-all duration-300 border border-white/30 hover:bg-white/25 active:scale-95"
+              >
+                <Baby size={28} className="text-white mb-1.5 opacity-90" strokeWidth={1.5} />
+                <span className="text-[22px] font-black leading-none mb-1">{sapiList.filter(s => s.status_kesehatan === 'Hamil').length}</span>
+                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide">Bunting</span>
+              </button>
+              
+              <button 
+                onClick={() => setFilters(prev => ({...prev, kesehatan: 'Sehat'}))}
+                className="bg-white/20 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-2xl p-3 flex flex-col items-center justify-center flex-1 aspect-square relative overflow-hidden group transition-all duration-300 border border-white/30 hover:bg-white/25 active:scale-95"
+              >
+                <CheckCircle size={28} className="text-white mb-1.5 opacity-90" strokeWidth={1.5} />
+                <span className="text-[22px] font-black leading-none mb-1">{sapiList.filter(s => s.status_kesehatan === 'Sehat').length}</span>
+                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide">Sehat</span>
+              </button>
+            </div>
           </div>
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text-1)', lineHeight: 1.1, margin: 0, letterSpacing: '-0.5px' }}>
-              Ternak
-            </h1>
-            <p style={{ fontSize: '10px', fontWeight: 800, color: 'var(--accent)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Manajemen Populasi
-            </p>
-          </div>
-        </div>
-        <div style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--accent)', padding: '6px 12px', borderRadius: '100px', fontSize: '13px', fontWeight: 800 }}>
-          {sapiList.length} Sapi
         </div>
       </div>
 
@@ -567,10 +602,10 @@ export default function ManajemenTernak() {
       </div>
 
       {/* ── MOBILE CONTENT ── */}
-      <div className="md:hidden flex flex-col gap-4 mt-2">
-        {/* Search and Filter Row */}
+      <div className="md:hidden flex flex-col gap-4 -mt-[32px] relative z-20 px-4">
+        {/* Search and Filter Row (Floating) */}
         <div className="flex items-center gap-2 w-full">
-          <div style={{ flex: 1, position: 'relative', background: 'var(--bg-surface)', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: '0 2px 12px rgba(0,0,0,0.03)' }}>
+          <div style={{ flex: 1, position: 'relative', background: 'var(--bg-surface)', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
             <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
             <input 
               type="text" 
@@ -589,22 +624,31 @@ export default function ManajemenTernak() {
         </div>
 
         {/* Filter Chips Row */}
-        <div className="py-3 -mx-4 px-4 bg-[var(--bg-base)] border-b border-gray-100 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide items-center">
-          {['Semua', 'Perlu IB', 'Bunting', 'Sehat'].map((f, i) => (
-            <button 
-              key={f}
-              onClick={() => setFilters(prev => ({...prev, kesehatan: f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f)}))}
-              className="shrink-0 transition-all font-bold"
-              style={{
-                padding: '6px 14px', borderRadius: '100px', fontSize: '13px',
-                background: (filters.kesehatan === (f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f))) ? 'var(--bg-card)' : 'transparent',
-                color: (filters.kesehatan === (f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f))) ? 'var(--text-1)' : 'var(--text-3)',
-                border: (filters.kesehatan === (f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f))) ? '1px solid var(--border)' : '1px solid transparent',
-              }}
-            >
-              {f}
-            </button>
-          ))}
+        <div className="py-2 -mx-4 px-4 bg-[var(--bg-base)] flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide items-center justify-center relative">
+          {['Semua', 'Perlu IB', 'Bunting', 'Sehat'].map((f) => {
+            const mappedVal = f === 'Semua' ? 'all' : (f === 'Bunting' ? 'Hamil' : f);
+            const isActive = filters.kesehatan === mappedVal;
+            return (
+              <button 
+                key={f}
+                onClick={() => setFilters(prev => ({...prev, kesehatan: mappedVal}))}
+                className={cn(
+                  "shrink-0 transition-colors font-bold px-4 py-2 rounded-full text-[13px] relative z-10",
+                  isActive ? "text-[#FF7B1C]" : "text-[var(--text-3)] hover:text-[var(--text-2)]"
+                )}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeFilterBgCattle"
+                    className="absolute inset-0 bg-[#FF7B1C]/10 border border-[#FF7B1C]/20 rounded-full -z-10"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{f}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Advanced Filter Panel Mobile (Bottom Sheet Modal) */}

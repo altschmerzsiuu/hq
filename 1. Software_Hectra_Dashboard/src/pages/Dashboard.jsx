@@ -4,9 +4,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Scan, Plus, Cpu, FileText,
+  Scan, Plus, Cpu, FileText, Bell,
   Thermometer, AlertTriangle, BatteryWarning, CheckCircle2,
-  Sparkles, Wifi, Zap, Calendar, X, Check, ChevronRight, Activity, Syringe, ClipboardList, ThermometerSun, Target
+  Sparkles, Wifi, Zap, Calendar, X, Check, ChevronRight, Activity, Syringe, ClipboardList, ThermometerSun, Target, Sun
 } from 'lucide-react';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
@@ -823,33 +823,41 @@ export default function Dashboard() {
     <>
       <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-        {/* ─── 0. GREETING ─────────────────────────────────────── */}
-        <div className="mb-2">
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-[22px] md:text-[26px] font-black text-gray-900 tracking-tight leading-tight">
-              {greetingText}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2f7d31] to-emerald-500">{userName.split(' ')[0]}</span>
-            </h1>
-          </div>
-          <p className="text-[13px] font-medium text-gray-500 mt-1 mb-3">
-            {lang === 'id' ? 'Berikut ringkasan kondisi peternakanmu.' : "Here is your herd's summary today."}
-          </p>
+        {/* ─── 0. GREETING (GRADIENT DESIGN) ────────────────────────── */}
+        <div 
+          className="rounded-t-none rounded-b-[40px] p-6 pt-[76px] shadow-lg relative overflow-hidden mb-2 text-white flex flex-col justify-between -mx-4 md:-mx-[22px]" 
+          style={{ 
+            minHeight: '260px',
+            background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)'
+          }}
+        >
+          {/* Subtle Sun Accent */}
+          <Sun 
+            size={180} 
+            strokeWidth={1} 
+            className="absolute -top-10 -right-10 text-white opacity-5 rotate-12 pointer-events-none" 
+          />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50/80 border border-green-100 text-[#2f7d31] rounded-full text-[11px] font-bold">
-              <span className="w-2 h-2 rounded-full bg-[#2f7d31] animate-pulse"></span>
-              {stats.collars} {lang === 'id' ? 'Ternak Dipantau' : 'Cows Monitored'}
+          <div className="flex justify-between items-start relative z-10">
+            <div>
+              <p className="text-[14px] font-medium opacity-90 mb-0.5">{greetingText}</p>
+              <h1 className="text-[26px] md:text-[30px] font-black tracking-tight leading-none mb-2">{userName}</h1>
+              <p className="text-[13px] font-medium opacity-80 max-w-[80%]">
+                {lang === 'id' ? 'Ini ringkasan kondisi peternakanmu hari ini' : 'Here is your herd condition summary today'}
+              </p>
             </div>
-            {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length > 0 ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50/80 border border-red-100 text-red-600 rounded-full text-[11px] font-bold">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length} {lang === 'id' ? 'Perlu Tindakan' : 'Action Needed'}
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50/80 border border-gray-200 text-gray-500 rounded-full text-[11px] font-bold">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
-                {lang === 'id' ? '0 Perlu Tindakan' : '0 Action Needed'}
-              </div>
-            )}
+          </div>
+          
+          <div className="flex items-center mt-8">
+            <div className="flex-1">
+              <div className="text-[40px] font-black leading-none">{stats.collars}</div>
+              <div className="text-[13px] font-medium mt-1 opacity-90">{lang === 'id' ? 'Ternak dipantau' : 'Cows monitored'}</div>
+            </div>
+            <div className="w-px h-14 bg-white/30 mx-4 md:mx-6"></div>
+            <div className="flex-1">
+              <div className="text-[40px] font-black leading-none">{intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length}</div>
+              <div className="text-[13px] font-medium mt-1 opacity-90">{lang === 'id' ? 'Perlu tindakan' : 'Action needed'}</div>
+            </div>
           </div>
         </div>
 
@@ -893,7 +901,7 @@ export default function Dashboard() {
         <div>
           <p className="eyebrow" style={{ marginBottom: '12px' }}>AKSI CEPAT</p>
           <div className="flex flex-row gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2">
-            <SquareQAButton icon={Plus} label="Tambah Ternak" onClick={() => navigate('/ternak?action=add')} />
+            <SquareQAButton icon={Plus} label="Tambah Ternak" onClick={() => setIsAddCowModalOpen(true)} />
             <SquareQAButton icon={Syringe} label="Tambah Data IB" onClick={() => {
               fetchSapiList();
               setIsReproModalOpen(true);
@@ -1249,6 +1257,16 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      {/* ── ADD COW MODAL ── */}
+      <AddCowModal
+        isOpen={isAddCowModalOpen}
+        onClose={() => setIsAddCowModalOpen(false)}
+        onSuccess={() => {
+          setIsAddCowModalOpen(false);
+          // Optional: refresh dashboard data if needed
+          fetchDashboardData();
+        }}
+      />
     </>
   );
 }

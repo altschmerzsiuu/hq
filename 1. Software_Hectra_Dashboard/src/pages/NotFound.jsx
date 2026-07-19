@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import image404 from '@/assets/logo/404.webp';
 // --------------------------
 
 export default function NotFound() {

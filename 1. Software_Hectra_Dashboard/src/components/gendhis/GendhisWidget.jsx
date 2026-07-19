@@ -28,7 +28,7 @@ export default function GendhisWidget() {
   const ask = useConfirmStore(state => state.ask);
   const [viewState, setViewState] = useState('minimized'); // 'minimized' | 'compact' | 'fullscreen'
   const [messages, setMessages] = useState([
-    { id: 1, sender: 'gendhis', text: 'Halo! Saya Gendhis, asisten AI Estrus. Ada yang bisa saya bantu hari ini terkait kondisi sapi-sapi di kandang?', isInsight: true }
+    { id: 1, sender: 'gendhis', text: 'Halo! Saya Gendhis, asisten peternakanmu. Ada yang bisa saya bantu hari ini terkait kondisi sapi-sapi di kandang?', isInsight: true }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -173,7 +173,7 @@ export default function GendhisWidget() {
           text: m.content
         }));
         setMessages(mapped.length > 0 ? mapped : [
-          { id: Date.now(), sender: 'gendhis', text: 'Halo! Saya Gendhis, asisten AI Estrus. Ada yang bisa saya bantu hari ini terkait kondisi sapi-sapi di kandang?', isInsight: true }
+          { id: Date.now(), sender: 'gendhis', text: 'Halo! Saya Gendhis, asisten peternakanmu. Ada yang bisa saya bantu hari ini terkait kondisi sapi-sapi di kandang?', isInsight: true }
         ]);
         setCurrentSessionId(sessionId);
         toast.success('Percakapan dimuat!');
@@ -286,10 +286,10 @@ export default function GendhisWidget() {
   const startNewChat = () => {
     setCurrentSessionId(`session_widget_${Date.now()}`);
     setMessages([
-      { id: Date.now(), sender: 'gendhis', text: 'Halo! Saya Gendhis, asisten AI Estrus. Ada yang bisa saya bantu hari ini terkait kondisi sapi-sapi di kandang?', isInsight: true }
+      { id: Date.now(), sender: 'gendhis', text: 'Halo! Saya Gendhis, asisten peternakanmu. Ada yang bisa saya bantu hari ini terkait kondisi sapi-sapi di kandang?', isInsight: true }
     ]);
     setStreamingMessage('');
-    toast.success('Sesi percakapan baru dimulai!');
+    toast.success('Percakapan baru dimulai!');
   };
 
   const isFullscreen = viewState === 'fullscreen';
@@ -300,12 +300,17 @@ export default function GendhisWidget() {
   if (viewState === 'minimized') {
     return (
       <button 
-        onClick={() => setViewState('compact')}
+        onClick={() => {
+          if (typeof window !== 'undefined' && window.innerWidth < 768) {
+            setViewState('fullscreen');
+          } else {
+            setViewState('compact');
+          }
+        }}
         className="fixed bottom-[130px] md:bottom-6 right-4 md:right-6 w-14 h-14 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-[60] group active:scale-95"
         title="Tanya Gendhis"
       >
-        <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform animate-pulse" />
-        <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 border-2 border-white rounded-full animate-ping"></span>
+        <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
       </button>
     );
   }
@@ -320,21 +325,20 @@ export default function GendhisWidget() {
         {/* SIDEBAR (Responsive Collapsible matching system theme!) */}
         <aside 
           className={cn(
-            "h-full bg-[var(--bg-surface)] border-r border-[var(--border)] flex flex-col p-4 shrink-0 transition-all duration-300 absolute md:relative z-20",
-            isSidebarCollapsed ? "w-0 p-0 border-r-0 overflow-hidden" : "w-[280px]"
+            "h-full bg-[var(--bg-surface)] border-r border-[var(--border)] shrink-0 transition-all duration-300 absolute md:relative z-20 overflow-hidden",
+            isSidebarCollapsed ? "w-0 border-r-0" : "w-[280px]"
           )}
         >
-          {!isSidebarCollapsed && (
-            <>
+          <div className="w-[280px] h-full flex flex-col p-4">
               {/* Logo & Elegant Minimize Button inside the Sidebar Header next to Logo */}
               <div className="flex items-center justify-between px-2 py-3 mb-6 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[var(--accent)] flex items-center justify-center">
-                    <Bot className="w-4.5 h-4.5 text-white" />
+                  <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-sm">
+                    <img src="/herd.jpeg" alt="Herd Logo" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <h2 className="font-bold text-sm text-[var(--text-1)]">Gendhis AI Session</h2>
-                    <span className="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest leading-none">Powered by HERD</span>
+                    <h2 className="font-bold text-sm text-[var(--text-1)]">Gendhis</h2>
+                    <span className="text-[9px] font-bold text-[var(--accent)] uppercase tracking-widest leading-none">POWERED BY HERD</span>
                   </div>
                 </div>
                 
@@ -354,7 +358,7 @@ export default function GendhisWidget() {
                 className="flex items-center gap-2.5 px-4 py-3 bg-[var(--bg-base)] hover:bg-[var(--bg-hover)] border border-[var(--border)] rounded-xl text-xs font-bold text-[var(--text-1)] transition-all shadow-sm w-full mb-6 active:scale-95 shrink-0"
               >
                 <Plus className="w-4 h-4 text-[var(--accent)]" />
-                New Chat Session
+                Percakapan Baru
               </button>
 
               {/* History List */}
@@ -433,8 +437,7 @@ export default function GendhisWidget() {
                   <p className="text-[10px] text-[var(--text-3)] truncate">{userEmail}</p>
                 </div>
               </div>
-            </>
-          )}
+          </div>
         </aside>
 
         {/* MAIN CHAT AREA */}
@@ -453,14 +456,12 @@ export default function GendhisWidget() {
                   <ChevronRight className="w-4 h-4" />
                 </button>
               )}
-              <span className="text-lg font-black text-[var(--accent)] tracking-tight">Gendhis</span>
-              <span className="px-2 py-0.5 bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] text-[8px] font-bold rounded-full uppercase tracking-wider">Premium Session</span>
             </div>
 
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => setViewState('compact')}
-                className="p-2 text-[var(--text-2)] hover:text-[var(--text-1)] bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] border border-[var(--border)] rounded-xl transition-all shadow-sm"
+                className="hidden md:block p-2 text-[var(--text-2)] hover:text-[var(--text-1)] bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] border border-[var(--border)] rounded-xl transition-all shadow-sm"
                 title="Kembali ke Compact"
               >
                 <Minimize2 className="w-4 h-4" />
@@ -526,7 +527,7 @@ export default function GendhisWidget() {
 
                     <div className={cn("flex flex-col max-w-[80%]", msg.sender === 'user' ? "items-end" : "items-start")}>
                       <span className="text-[9px] font-bold text-[var(--text-3)] uppercase tracking-widest mb-1.5 block">
-                        {msg.sender === 'user' ? userName : 'Gendhis AI'}
+                        {msg.sender === 'user' ? userName : 'Gendhis'}
                       </span>
                       <div className={cn(
                         "px-4 py-3 text-xs leading-6 border rounded-2xl font-medium shadow-sm transition-all duration-200",
@@ -558,7 +559,7 @@ export default function GendhisWidget() {
                       <Bot className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex flex-col max-w-[80%] items-start">
-                      <span className="text-[9px] font-bold text-[var(--text-3)] uppercase tracking-widest mb-1.5">Gendhis AI</span>
+                      <span className="text-[9px] font-bold text-[var(--text-3)] uppercase tracking-widest mb-1.5">Gendhis</span>
                       <div className="px-4 py-3 text-xs leading-6 border bg-[var(--bg-surface)] border-[var(--border)] text-[var(--text-1)] rounded-2xl font-medium shadow-sm">
                         {renderMarkdown(streamingMessage)}
                         <span className="inline-block w-1.5 h-3.5 bg-[var(--accent)] rounded-sm animate-pulse ml-0.5 shrink-0"></span>
@@ -594,7 +595,7 @@ export default function GendhisWidget() {
                   type="text" 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask Gendhis..."
+                  placeholder="Tanya Gendhis..."
                   className="w-full bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] border border-[var(--border)] text-[var(--text-1)] text-xs rounded-2xl pl-5 pr-14 py-4 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/10 transition-all placeholder-slate-400 outline-none shadow-sm"
                 />
                 <button 
@@ -606,7 +607,7 @@ export default function GendhisWidget() {
                 </button>
               </form>
               <p className="text-[9.5px] text-center text-[var(--text-3)] mt-2.5 font-medium tracking-wide">
-                Gendhis AI dapat membuat kesalahan. Harap verifikasi info medis.
+                Gendhis dapat membuat kesalahan. Harap verifikasi info medis.
               </p>
             </div>
           </div>
@@ -647,7 +648,7 @@ export default function GendhisWidget() {
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-emerald-600 rounded-full animate-pulse"></span>
             </div>
             <div>
-              <h3 className="font-display font-bold text-sm leading-none">Gendhis AI</h3>
+              <h3 className="font-display font-bold text-sm leading-none">Gendhis</h3>
               <p className="text-[9px] text-emerald-100 font-semibold tracking-wide flex items-center gap-1 mt-1 opacity-90">
                 Asisten Kesehatan & Reproduksi Ternak
               </p>
@@ -656,7 +657,7 @@ export default function GendhisWidget() {
           
           <button 
             onClick={() => setViewState('fullscreen')}
-            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+            className="hidden md:block p-1.5 hover:bg-white/20 rounded-lg transition-colors"
             title="FullScreen Session"
           >
             <Maximize2 className="w-3.5 h-3.5 text-white" />
@@ -752,9 +753,11 @@ export default function GendhisWidget() {
               <Send className="w-3.5 h-3.5 ml-0.5 text-white" />
             </button>
           </form>
-          <p className="text-[9px] text-center text-[var(--text-3)] mt-2 font-semibold">
-            Gendhis AI dapat membuat kesalahan. Harap verifikasi info medis.
-          </p>
+          <div className="mt-2 text-center pb-2 md:pb-0">
+            <span className="text-[9px] font-semibold text-[var(--text-3)] opacity-70">
+            Gendhis dapat membuat kesalahan. Harap verifikasi info medis.
+            </span>
+          </div>
         </div>
 
       </div>

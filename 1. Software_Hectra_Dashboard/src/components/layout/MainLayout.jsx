@@ -14,6 +14,7 @@ export default function MainLayout() {
   const isResearchLab = location.pathname.includes('/research-lab');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const addNotification = useNotificationStore(state => state.addNotification);
   useEffect(() => {
     let wsUrl = '';
@@ -79,6 +80,12 @@ export default function MainLayout() {
     };
   }, [addNotification]);
 
+  const handleScroll = (e) => {
+    const scrollTop = e.target.scrollTop;
+    // Only turn solid white when scrolled past most of the green card
+    setIsScrolled(scrollTop > 180);
+  };
+
   return (
     <div style={{
       display: 'flex',
@@ -104,12 +111,18 @@ export default function MainLayout() {
         position: 'relative',
       }}>
         {/* Topbar — hamburger is now inside Topbar */}
-        <Topbar onMenuClick={() => setSidebarOpen(true)} />
+        <Topbar onMenuClick={() => setSidebarOpen(true)} isScrolled={isScrolled} />
 
         {/* Scrollable Content */}
         <main
-          style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}
-          className="px-4 py-4 md:px-[22px] md:py-5"
+          onScroll={handleScroll}
+          style={{ 
+            flex: 1, 
+            overflowY: 'auto', 
+            overflowX: 'hidden',
+            paddingTop: (location.pathname === '/dashboard' || location.pathname === '/ternak' || location.pathname === '/sensor-data') ? '0px' : 'calc(56px + 16px)'
+          }}
+          className="px-4 pb-4 md:px-[22px] md:pb-5"
         >
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <ScrollToTop />

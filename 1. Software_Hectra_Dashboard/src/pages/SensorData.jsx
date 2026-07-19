@@ -16,7 +16,9 @@ import {
   AlertTriangle,
   ChevronDown,
   ShieldAlert,
-  HeartPulse
+  HeartPulse,
+  Settings2,
+  X
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -93,6 +95,15 @@ export default function SensorData() {
   const [collarStats, setCollarStats] = useState([]);
   const [popHistory, setPopHistory] = useState([]);
   const [pregHistory, setPregHistory] = useState([]);
+  const [showWidgetModal, setShowWidgetModal] = useState(false);
+  const [selectedWidgets, setSelectedWidgets] = useState(() => {
+    const saved = localStorage.getItem('hectra_sensor_widgets');
+    return saved ? JSON.parse(saved) : ['collar_aktif', 'rata_suhu', 'sapi_bunting'];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('hectra_sensor_widgets', JSON.stringify(selectedWidgets));
+  }, [selectedWidgets]);
 
   const fetchAllData = async (showMainLoader = false) => {
     if (showMainLoader) setLoading(true);
@@ -275,6 +286,20 @@ export default function SensorData() {
     return matchSearch;
   });
 
+  const avgTemp = tableData.length ? (tableData.reduce((acc, curr) => acc + (curr.temp || 0), 0) / tableData.length).toFixed(1) : '--';
+  const avgBattery = tableData.length ? Math.round(tableData.reduce((acc, curr) => acc + (curr.battery || 0), 0) / tableData.length) : '--';
+  const activeCollars = tableData.filter(d => d.lastSyncRaw).length;
+  const pregnantCount = populationStats.pregnant;
+  const sickCount = tableData.filter(d => d.status === 'critical' || d.status === 'warning').length;
+  
+  const widgetOptions = {
+    collar_aktif: { id: 'collar_aktif', label: 'Collar Aktif', icon: Activity, value: activeCollars, subValue: `/ ${tableData.length || 0}`, unit: '' },
+    rata_suhu: { id: 'rata_suhu', label: 'Rata Suhu', icon: Thermometer, value: avgTemp, unit: '°C' },
+    rata_baterai: { id: 'rata_baterai', label: 'Baterai', icon: Battery, value: avgBattery, unit: '%' },
+    sapi_bunting: { id: 'sapi_bunting', label: 'Bunting', icon: HeartPulse, value: pregnantCount, unit: 'Ekor' },
+    perlu_cek: { id: 'perlu_cek', label: 'Perlu Cek', icon: ShieldAlert, value: sickCount, unit: 'Ekor' },
+  };
+
   if (loading) {
     return (
       <div className="animate-pulse space-y-6">
@@ -288,19 +313,59 @@ export default function SensorData() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
-      {/* ── Header ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div style={{ color: 'var(--accent)' }}>
-            <Activity size={32} strokeWidth={2} />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-black text-[var(--text-1)] leading-tight tracking-tight">
-              {t.sensor_title}
+      {/* ── 0. HEADER (PINE GREEN CYBER DESIGN) ── */}
+      <div 
+        className="rounded-t-none rounded-b-[40px] p-6 pt-[86px] shadow-lg relative overflow-hidden text-white flex flex-col justify-between -mx-4 md:-mx-[22px] mb-6" 
+        style={{ 
+          minHeight: '270px',
+          background: 'linear-gradient(180deg, #115e59 0%, #022c22 100%)'
+        }}
+      >
+        {/* Subtle Cyber/Pulse Accent */}
+        <Activity 
+          size={180} 
+          strokeWidth={1.5} 
+          className="absolute -top-10 -right-10 text-[#34d399] opacity-[0.08] pointer-events-none" 
+        />
+
+        <div className="flex justify-between items-start relative z-10">
+          <div className="w-full">
+            <div className="flex justify-between items-start mb-1">
+              <p className="text-[10px] md:text-[11px] font-extrabold text-[#34d399] uppercase tracking-wider">
+                {t.sensor_sub || 'PANTAU SUHU, AKTIVITAS, DAN STATUS BATERAI IOT COLLAR'}
+              </p>
+              <button 
+                onClick={() => setShowWidgetModal(true)}
+                className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+              >
+                <Settings2 size={16} />
+              </button>
+            </div>
+            <h1 className="text-[32px] md:text-[38px] font-black tracking-tight leading-none mb-6">
+              {t.sensor_title || 'Data Sensor'}
             </h1>
-            <p className="text-[10px] md:text-sm font-extrabold text-[var(--accent)] uppercase tracking-wider mt-0.5">
-              {t.sensor_sub}
-            </p>
+            
+            {/* Quick Stats (Customizable Grid) */}
+            <div className="grid grid-cols-3 gap-2 w-full">
+              {selectedWidgets.map(widgetId => {
+                const w = widgetOptions[widgetId];
+                if (!w) return null;
+                const Icon = w.icon;
+                return (
+                  <div key={widgetId} className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 md:p-3 flex flex-col gap-1.5 md:gap-2">
+                    <div className="flex items-center gap-1.5 md:gap-2 text-white/80 overflow-hidden">
+                      <Icon size={14} className="flex-shrink-0" />
+                      <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider truncate">{w.label}</span>
+                    </div>
+                    <div className="flex items-baseline gap-0.5 md:gap-1">
+                      <span className="text-lg md:text-xl font-black">{w.value}</span>
+                      {w.subValue && <span className="text-[10px] md:text-xs font-medium text-white/60">{w.subValue}</span>}
+                      {w.unit && <span className="text-[10px] md:text-xs font-medium text-white/60">{w.unit}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -682,8 +747,79 @@ export default function SensorData() {
           </div>
         </div>
       </div>
-      {/* End of grid */}
       </div>
+
+
+      {/* Widget Settings Modal */}
+      {showWidgetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="font-bold text-gray-900">Atur Widget Data</h3>
+              <button 
+                onClick={() => setShowWidgetModal(false)}
+                className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-4 max-h-[60vh] overflow-y-auto">
+              <p className="text-xs text-gray-500 mb-4">Pilih 3 metrik utama untuk ditampilkan di bagian atas (Data Sensor). Anda telah memilih <span className="font-bold text-[var(--accent)]">{selectedWidgets.length}/3</span>.</p>
+              
+              <div className="space-y-2">
+                {Object.values(widgetOptions).map(w => {
+                  const isSelected = selectedWidgets.includes(w.id);
+                  const Icon = w.icon;
+                  return (
+                    <label 
+                      key={w.id} 
+                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    >
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded text-[var(--accent)] focus:ring-[var(--accent)]"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (selectedWidgets.length >= 3) {
+                              toast.error('Maksimal 3 widget yang dapat dipilih');
+                              return;
+                            }
+                            setSelectedWidgets([...selectedWidgets, w.id]);
+                          } else {
+                            if (selectedWidgets.length <= 1) {
+                              toast.error('Minimal 1 widget harus dipilih');
+                              return;
+                            }
+                            setSelectedWidgets(selectedWidgets.filter(id => id !== w.id));
+                          }
+                        }}
+                      />
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isSelected ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : 'bg-gray-100 text-gray-500'}`}>
+                        <Icon size={16} />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>{w.label}</p>
+                        <p className="text-xs text-gray-500">{w.value} {w.unit}</p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-gray-100">
+              <button 
+                onClick={() => setShowWidgetModal(false)}
+                className="w-full py-3 bg-[var(--accent)] text-white rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all"
+              >
+                Simpan Pengaturan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

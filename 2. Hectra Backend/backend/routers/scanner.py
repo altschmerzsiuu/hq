@@ -129,6 +129,7 @@ async def get_all_profil(request: Request, skip: int = 0, limit: int = 50, curre
             rows = await conn.fetch(
                 """
                 SELECT h.*,
+                  (SELECT MIN(tanggal_ib) FROM reproduksi_ternak rt WHERE rt.rfid = h.id) as first_activity_date,
                   EXTRACT(YEAR FROM AGE(NOW(), 
                     CASE 
                       WHEN h.bulan_tahun_lahir LIKE '%-%' THEN TO_DATE(h.bulan_tahun_lahir, 'YYYY-MM-DD')

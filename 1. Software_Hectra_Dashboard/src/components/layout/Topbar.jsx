@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Bell, Globe, Menu, X, CheckCheck, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import useSettingsStore from '@/store/settingsStore';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -15,10 +15,13 @@ const TYPE_COLORS = {
   info: { dot: 'var(--blue)', bg: 'var(--blue-dim)' },
 };
 
-export default function Topbar({ onMenuClick }) {
+export default function Topbar({ onMenuClick, isScrolled }) {
   const { lang, setLang } = useSettingsStore();
   const t = translations[lang];
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isMergedHeader = location.pathname === '/dashboard' || location.pathname === '/ternak' || location.pathname === '/sensor-data';
 
   const { notifications: notifs, unreadCount: unread, markAllAsRead, markAsRead, fetchNotifications } = useNotificationStore();
   const [notifOpen, setNotifOpen] = useState(false);
@@ -47,19 +50,24 @@ export default function Topbar({ onMenuClick }) {
 
   return (
     <header
+      id="main-topbar"
       style={{
         height: '56px',
-        background: 'var(--bg-surface)',
-        borderBottom: '0.5px solid var(--border)',
+        background: isMergedHeader ? (isScrolled ? 'var(--bg-surface)' : 'transparent') : 'var(--bg-surface)',
+        borderBottom: isMergedHeader ? (isScrolled ? '0.5px solid var(--border)' : 'none') : '0.5px solid var(--border)',
+        boxShadow: (isMergedHeader && isScrolled) ? '0 4px 20px rgba(0,0,0,0.03)' : 'none',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexShrink: 0,
-        position: 'sticky',
+        position: 'absolute',
         top: 0,
+        left: 0,
+        right: 0,
         zIndex: 30,
         paddingLeft: '16px',
         paddingRight: '22px',
+        transition: 'background-color 0.3s ease, border-bottom 0.3s ease, box-shadow 0.3s ease',
       }}
     >
       {/* Left: Hamburger (mobile ONLY) + Date */}
@@ -72,7 +80,12 @@ export default function Topbar({ onMenuClick }) {
         {/* Date — hidden on small mobile, visible md+ */}
         <span
           className="hidden md:block"
-          style={{ fontSize: '12px', color: 'var(--text-3)', fontFamily: 'Inter, sans-serif' }}
+          style={{ 
+            fontSize: '12px', 
+            color: (isMergedHeader && !isScrolled) ? 'rgba(255,255,255,0.9)' : 'var(--text-3)', 
+            fontFamily: 'Inter, sans-serif',
+            transition: 'color 0.3s ease'
+          }}
         >
           {today}
         </span>
@@ -89,9 +102,9 @@ export default function Topbar({ onMenuClick }) {
               position: 'relative', background: 'none', border: 'none',
               cursor: 'pointer', padding: '6px', display: 'flex',
               alignItems: 'center', justifyContent: 'center',
-              color: notifOpen ? 'var(--accent)' : 'var(--text-2)',
+              color: notifOpen ? 'var(--accent)' : ((isMergedHeader && !isScrolled) ? '#fff' : 'var(--text-2)'),
               borderRadius: '8px',
-              transition: 'color 0.15s, background 0.15s',
+              transition: 'color 0.3s ease, background 0.15s',
               background: notifOpen ? 'var(--accent-dim)' : 'transparent',
             }}
             aria-label="Notifikasi"

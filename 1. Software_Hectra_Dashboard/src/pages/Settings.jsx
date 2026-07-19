@@ -1,6 +1,6 @@
 // src/pages/Settings.jsx
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LogOut, User, Bell, Key, Users, Settings as SettingsIcon, Trash2, Camera, ChevronLeft, ChevronDown, Monitor, HelpCircle, Globe, Sun, Moon, Send, Save, Loader2, UserPlus } from 'lucide-react';
 import { FAQ } from '@/components/shared/FAQ';
 import FeedbackModal from '@/components/shared/FeedbackModal';
@@ -23,6 +23,26 @@ export default function Settings() {
 
   const [activeTab, setActiveTab] = useState('main');
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      toast.success(lang === 'id' ? 'Foto profil siap diupload!' : 'Profile picture ready to upload!');
+      // TODO: Actual upload logic
+    }
+  };
+
+  // Toggle Topbar visibility based on active tab
+  useEffect(() => {
+    const topbar = document.getElementById('main-topbar');
+    if (topbar) {
+      topbar.style.display = activeTab === 'main' ? 'flex' : 'none';
+    }
+    return () => {
+      if (topbar) topbar.style.display = 'flex';
+    };
+  }, [activeTab]);
 
   // Tab 1: Profile
   const [fullName, setFullName] = useState('');
@@ -90,7 +110,6 @@ export default function Settings() {
         setFarmName(f.farm_name || '');
         if (f.province_id) setSelectedProv(f.province_id);
         if (f.city_id) setSelectedCity(f.city_id);
-        if (f.kecamatan) setKecamatan(f.kecamatan);
         profileLoaded = true;
       }
     } catch (err) {
@@ -236,7 +255,7 @@ export default function Settings() {
       {/* No more standard header or tabs */}
 
       {/* Content Area */}
-      <div className="relative mt-2">
+      <div className="relative mt-0">
         {loading && (
           <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-30 flex items-center justify-center rounded-3xl">
             <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
@@ -251,21 +270,41 @@ export default function Settings() {
           {activeTab === 'main' && (
             <div className="space-y-8 animate-in fade-in duration-300">
               
-              {/* ── Avatar + Name (centered) ── */}
-              <div className="flex flex-col items-center gap-2 pt-2">
-                <div className="relative w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-black bg-[#2f7d31] overflow-hidden shadow-md ring-2 ring-[#2f7d31]/20">
-                  {fullName ? fullName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : '--'}
-                </div>
-                <div className="text-center">
-                  <h2 className="text-xl font-extrabold" style={{ background: 'linear-gradient(135deg, #2f7d31, #43a047)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                    {fullName || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}
-                  </h2>
-                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-[#2f7d31]/10 rounded-full border border-[#2f7d31]/20">
-                    <span className="text-[10px] font-black tracking-wider text-[#2f7d31] uppercase">
-                      {user?.role === 'owner' ? t.settings_role_owner : user?.role === 'admin' ? t.settings_role_admin : t.settings_role_worker}
-                    </span>
+              {/* ── Avatar + Name (CLEAN WHITE DESIGN WITH ACCENT) ── */}
+              <div 
+                className="bg-gradient-to-b from-[#2f7d31]/10 to-white border border-gray-200 rounded-3xl p-6 shadow-sm relative overflow-hidden mb-6 flex flex-col items-center justify-center text-gray-900" 
+                style={{ 
+                  minHeight: '280px',
+                }}
+              >
+                  <div className="relative z-10 mb-5 mt-2">
+                    <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center text-[#2f7d31] text-[36px] font-medium bg-white border-[3px] border-[#2f7d31]/20 shadow-sm">
+                        {fullName ? fullName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : '--'}
+                    </div>
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 w-8 h-8 bg-[var(--accent)] text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      ref={fileInputRef} 
+                      onChange={handleAvatarChange} 
+                    />
                   </div>
-                </div>
+                  <div className="text-center">
+                      <h2 className="text-[22px] font-black tracking-tight leading-none mb-1.5 text-gray-900">
+                          {fullName || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}
+                      </h2>
+                      <div className="text-[14px] font-medium text-gray-500 flex items-center justify-center gap-2">
+                          <span>{email || (lang === 'id' ? 'Tidak ada email' : 'No email')}</span>
+                          <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                          <span>{phoneNumber ? phoneNumber : (farmName || (lang === 'id' ? 'Belum ada peternakan' : 'No farm name'))}</span>
+                      </div>
+                  </div>
               </div>
 
               {/* ── Menu List ── */}
@@ -367,7 +406,7 @@ export default function Settings() {
               TAB 1 — GENERAL: Profile + Farm Details
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'profile' && (
-            <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300">
+            <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6">
               
               {/* Header: Back Button & Title & Save Button */}
               <div className="flex items-center justify-between mb-2">
@@ -440,7 +479,6 @@ export default function Settings() {
               </div>
 
               {/* ── Section: Farm Details ── */}
-              {/* ── Section: Farm Details ── */}
               <div className="bg-white border border-gray-200 rounded-3xl shadow-sm relative overflow-hidden mt-6">
                 <Globe className="absolute -right-4 -bottom-4 w-32 h-32 md:w-40 md:h-40 text-[#2f7d31] opacity-5 pointer-events-none" />
                 
@@ -496,10 +534,6 @@ export default function Settings() {
                   </div>
                 </div>
               </div>
-
-              {/* Save button moved to header */}
-
-              {/* End of General Content */}
             </form>
           )}
 
@@ -508,7 +542,7 @@ export default function Settings() {
               TAB 2 — NOTIFICATIONS
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'notifications' && (
-            <div className="space-y-4 animate-in fade-in duration-300">
+            <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6">
               <div className="flex items-center relative mb-4">
                 <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -588,7 +622,7 @@ export default function Settings() {
               TAB 3 — SECURITY
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6">
               <div className="w-full max-w-lg mb-4 flex items-center justify-between">
                 <button type="button" onClick={() => setActiveTab('main')} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -644,7 +678,7 @@ export default function Settings() {
               TAB 4 — TEAM MANAGEMENT
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'team' && (
-            <div className="space-y-4 animate-in fade-in duration-300">
+            <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6">
               <div className="flex items-center relative mb-4">
                 <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -720,7 +754,7 @@ export default function Settings() {
               TAB 5 — APPEARANCE
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'appearance' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6">
               <div className="w-full max-w-lg mb-4 relative flex items-center">
                 <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
