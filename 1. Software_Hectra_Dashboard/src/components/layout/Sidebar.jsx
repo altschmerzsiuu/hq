@@ -2,7 +2,7 @@
 // HERD Sidebar — Neo Bio-Tech Intelligence UI
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Home,
   Database,
@@ -43,7 +43,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
 
   const [dataMgmtOpen, setDataMgmtOpen] = useState(
     location.pathname.includes('/ternak') ||
-    location.pathname.includes('/reproduction') ||
     location.pathname.includes('/sensor-data')
   );
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -87,7 +86,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
           toggle: () => setDataMgmtOpen(!dataMgmtOpen),
           subItems: [
             { name: t.nav_livestock, path: '/ternak', icon: Beef },
-            { name: t.nav_repro_records, path: '/reproduction', icon: Heart },
             { name: t.nav_live_signals, path: '/sensor-data', icon: Cpu },
           ]
         }
@@ -180,7 +178,8 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
           }}
         >
           {/* Logo */}
-          <img
+          <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+            <img
             src={herdLogo}
             alt="HERD Logo"
             style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
@@ -194,6 +193,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
               letterSpacing: '-0.02em', whiteSpace: 'nowrap',
             }}>HERD</span>
           )}
+          </Link>
 
           {/* ✅ Close button mobile — ml-auto dorong ke kanan, hidden di desktop */}
           {!isCollapsed && (

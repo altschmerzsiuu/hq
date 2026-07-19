@@ -4,6 +4,7 @@ import { useTernakStore } from '@/store/useTernakStore';
 import { toast } from '@/store/toastStore';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import ScanModal from '@/components/scan/ScanModal';
 
 const hitungUsia = (lahir, lang) => {
@@ -37,6 +38,7 @@ const hitungUsia = (lahir, lang) => {
 };
 
 export default function AddCowModal({ isOpen, onClose }) {
+  useBodyScrollLock(isOpen);
   const { lang } = useSettingsStore();
   const t = translations[lang];
   const { tambahSapi, loading } = useTernakStore();
@@ -81,7 +83,7 @@ export default function AddCowModal({ isOpen, onClose }) {
             {/* 2. Tanggal Lahir */}
             <div>
               <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_birthdate}</label>
-              <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full h-[52px] px-4 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none" value={tambahForm.lahir} onChange={e => setTambahForm({...tambahForm, lahir: e.target.value})} required />
+              <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }} className="w-full h-[52px] px-4 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none appearance-none min-w-0" value={tambahForm.lahir} onChange={e => setTambahForm({...tambahForm, lahir: e.target.value})} required />
               {tambahForm.lahir && (
                 <p className="text-xs text-[var(--color-primary)] mt-2 font-medium flex items-center gap-1">
                   <Activity size={12}/> {t.livestock_add_current_age} {hitungUsia(tambahForm.lahir, lang)}

@@ -2,6 +2,7 @@
 // HERD Dashboard — Neo Bio-Tech Intelligence UI (MP-3 §4, §7-9)
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Scan, Plus, Cpu, FileText, Bell,
@@ -259,12 +260,34 @@ function StatusBadge({ status, t }) {
   );
 }
 // ── RECOMMENDATION CARD ──────────────────────────────────────
-function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, message }) {
+function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, message, cow_id }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate();
   const actionName = title.split('—')[1]?.trim() || title;
-  const displayTitle = `${name} | ${id}`;
+  const displayTitle = id ? `${name} | ${id}` : name;
+
+  const handleAction = (e) => {
+    e.stopPropagation();
+    toast.success('Melanjutkan tindakan rekomendasi sistem...');
+    
+    if (cow_id) {
+      navigate('/ternak', { state: { selectedCowId: cow_id, fromDashboard: true } });
+    } else {
+      navigate('/ternak');
+    }
+  };
+
+  const handleFinish = (e) => {
+    e.stopPropagation();
+    toast.success('Tugas ditandai selesai!');
+    setIsExpanded(false);
+  };
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:border-[#2f7d31]/30 transition-all cursor-pointer relative">
+    <div 
+      onClick={() => setIsExpanded(!isExpanded)}
+      className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col shadow-sm hover:border-[#2f7d31]/30 transition-all cursor-pointer relative overflow-hidden"
+    >
       <span className="absolute top-4 right-4 text-[10px] font-bold text-blue-600 border border-blue-200 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
         {badgeText}
       </span>
@@ -276,26 +299,43 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h4 className="text-sm font-bold text-gray-900 font-display truncate">{displayTitle}</h4>
           </div>
-          <p className="text-xs text-gray-600 font-medium mb-1.5">
+          <p className="text-xs text-gray-600 font-medium mb-1.5 flex items-center gap-1">
             {actionName} • Dalam {daysLeft} hari
           </p>
-          {message && (
-            <p className="text-[11px] text-gray-700 leading-snug">
-              {message}
+          {!isExpanded && (
+            <p className="text-[10px] text-[var(--color-primary)] font-semibold mt-1 opacity-80 flex items-center gap-1">
+              Ketuk untuk detail <ChevronRight size={10} />
             </p>
           )}
         </div>
       </div>
 
-      <div className="h-px w-full bg-gray-100 my-1" />
-
-      <div className="flex items-center justify-between gap-2">
-        <button className="flex items-center gap-2 bg-[#2f7d31] hover:bg-[#007b46] text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">
-          <Check size={14} /> Selesai
-        </button>
-        <button className="flex items-center justify-center w-8 h-8 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 rounded-xl transition-colors">
-          <ChevronRight size={16} />
-        </button>
+      <div 
+        className="grid transition-all duration-300 ease-in-out"
+        style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr', opacity: isExpanded ? 1 : 0 }}
+      >
+        <div className="overflow-hidden">
+          {message && (
+            <div className="mt-3 text-[11px] text-gray-700 leading-snug">
+              {message}
+            </div>
+          )}
+          <div className="h-px w-full bg-gray-100 my-3" />
+          <div className="flex items-center justify-between gap-2">
+            <button 
+              onClick={handleFinish}
+              className="flex items-center gap-2 bg-[#2f7d31] hover:bg-[#007b46] text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors"
+            >
+              <Check size={14} /> Selesai
+            </button>
+            <button 
+              onClick={handleAction}
+              className="flex items-center justify-center w-8 h-8 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 rounded-xl transition-colors"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -510,6 +550,8 @@ export default function Dashboard() {
   });
   const [herd, setHerd] = useState([]);
   const [intel, setIntel] = useState([]);
+  
+  const [activePopover, setActivePopover] = useState(null);
   const [activeEstrusPredictions, setActiveEstrusPredictions] = useState([]);
   const [selectedInsight, setSelectedInsight] = useState(null);
   const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
@@ -524,6 +566,33 @@ export default function Dashboard() {
     tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
     bunting: '', hpl: '', catatan: ''
   });
+
+  useEffect(() => {
+    const mainContainer = document.getElementById('main-scroll-container');
+    const isAnyModalOpen = isInsightModalOpen || isPairModalOpen || isReproModalOpen || isEstrusModalOpen || isAddCowModalOpen;
+    
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+      if (mainContainer) {
+        mainContainer.style.overflow = 'hidden';
+        mainContainer.style.touchAction = 'none';
+      }
+    } else {
+      document.body.style.overflow = 'auto';
+      if (mainContainer) {
+        mainContainer.style.overflow = 'auto';
+        mainContainer.style.touchAction = '';
+      }
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+      if (mainContainer) {
+        mainContainer.style.overflow = 'auto';
+        mainContainer.style.touchAction = '';
+      }
+    };
+  }, [isInsightModalOpen, isPairModalOpen, isReproModalOpen, isEstrusModalOpen, isAddCowModalOpen]);
 
   const handleTanggalIBChange = (e) => {
     const val = e.target.value;
@@ -644,10 +713,11 @@ export default function Dashboard() {
             id: cow.cow_id,
             name: cow.nama || 'Sapi',
             status: cowStatus,
+            rawStatus: cow.status || '',
             temp: cow.temp !== null && cow.temp !== undefined ? cow.temp : null,
             battery: cow.battery !== null && cow.battery !== undefined ? cow.battery : null
           };
-        }).slice(0, 5);
+        });
         setHerd(mappedHerd);
 
         // 3. Process reproductive intelligence stream (intel)
@@ -737,6 +807,8 @@ export default function Dashboard() {
               recommendation,
               conf: 100, // standard severity
               time: formatRelativeTime(item.timestamp, lang),
+              cow_id: item.cow_id,
+              cow_name: item.cow_name || item.title?.split('—')[0]?.trim() || '',
             };
           });
           setIntel(mappedIntel);
@@ -821,22 +893,24 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div onClick={() => setActivePopover(null)} className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
         {/* ─── 0. GREETING (GRADIENT DESIGN) ────────────────────────── */}
         <div 
-          className="rounded-t-none rounded-b-[40px] p-6 pt-[76px] shadow-lg relative overflow-hidden mb-2 text-white flex flex-col justify-between -mx-4 md:-mx-[22px]" 
+          className="rounded-t-none rounded-b-[40px] p-6 pt-[76px] shadow-lg relative mb-2 text-white flex flex-col justify-between -mx-4 md:-mx-[22px]" 
           style={{ 
             minHeight: '260px',
             background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)'
           }}
         >
           {/* Subtle Sun Accent */}
-          <Sun 
-            size={180} 
-            strokeWidth={1} 
-            className="absolute -top-10 -right-10 text-white opacity-5 rotate-12 pointer-events-none" 
-          />
+          <div className="absolute inset-0 overflow-hidden rounded-b-[40px] pointer-events-none">
+            <Sun 
+              size={180} 
+              strokeWidth={1} 
+              className="absolute -top-10 -right-10 text-white opacity-5 rotate-12" 
+            />
+          </div>
 
           <div className="flex justify-between items-start relative z-10">
             <div>
@@ -848,15 +922,119 @@ export default function Dashboard() {
             </div>
           </div>
           
-          <div className="flex items-center mt-8">
-            <div className="flex-1">
-              <div className="text-[40px] font-black leading-none">{stats.collars}</div>
-              <div className="text-[13px] font-medium mt-1 opacity-90">{lang === 'id' ? 'Ternak dipantau' : 'Cows monitored'}</div>
+          <div className="flex items-center gap-3 mt-8 relative z-20">
+            <div className="flex-1 relative">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (stats.collars === 0) {
+                    toast.error("Waduh, belum ada ternak yang dipantau nih! Yuk pasang kalungnya dulu");
+                    return;
+                  }
+                  setActivePopover(activePopover === 'pantau' ? null : 'pantau');
+                }}
+                className="w-full text-left p-3.5 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md rounded-2xl transition-all cursor-pointer focus:outline-none shadow-sm flex flex-col"
+              >
+                <div className="text-[34px] font-black leading-none">{stats.collars}</div>
+                <div className="text-[12px] font-medium text-white/90 mt-1">{lang === 'id' ? 'Ternak dipantau' : 'Monitored cows'}</div>
+              </button>
+              {activePopover === 'pantau' && (
+                <div 
+                  className="absolute top-full left-0 mt-2 w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl z-50 overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="max-h-64 overflow-y-auto p-3 flex flex-col gap-2">
+                    {herd.map((c, i) => {
+                      let statusText = 'Sehat';
+                      let colorClass = 'text-[var(--accent)]';
+                      
+                      if (c.status === 'estrus') {
+                        statusText = 'Birahi';
+                        colorClass = 'text-[var(--red)]';
+                      } else if (c.status === 'monitor') {
+                        statusText = c.rawStatus ? c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase() : 'Perhatian';
+                        colorClass = 'text-[var(--amber)]';
+                      } else if (c.rawStatus && c.rawStatus.toLowerCase() !== 'sehat' && c.rawStatus.toLowerCase() !== 'normal') {
+                        statusText = c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase();
+                      }
+                      
+                      const shortId = c.id ? (c.id.length > 5 ? c.id.slice(0, 5).toUpperCase() + '...' : c.id.toUpperCase()) : 'N/A';
+                      
+                      return (
+                        <div key={i} onClick={() => navigate('/ternak', { state: { selectedCowId: c.id, fromDashboard: true } })} className="flex items-center justify-between p-2 rounded-xl hover:bg-[var(--bg-card)] cursor-pointer text-left">
+                          <div>
+                            <p className="text-sm font-bold text-[var(--text-1)] m-0">{c.name || `Sapi #${shortId}`}</p>
+                            <p className={`text-[12px] font-semibold m-0 mt-0.5 ${colorClass}`}>
+                              {shortId} <span className="text-[var(--text-3)] font-normal mx-1">|</span> {statusText}
+                            </p>
+                          </div>
+                          <ChevronRight size={16} className="text-[var(--text-3)]" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="border-t border-[var(--border)] p-2">
+                    <button 
+                      onClick={() => navigate('/ternak')}
+                      className="w-full py-2.5 text-[13px] font-bold text-[var(--text-1)] bg-[var(--bg-card)] rounded-[14px] hover:bg-[var(--border)] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      Lihat Lebih Lanjut <ChevronRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="w-px h-14 bg-white/30 mx-4 md:mx-6"></div>
-            <div className="flex-1">
-              <div className="text-[40px] font-black leading-none">{intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length}</div>
-              <div className="text-[13px] font-medium mt-1 opacity-90">{lang === 'id' ? 'Perlu tindakan' : 'Action needed'}</div>
+
+            <div className="flex-1 relative">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const actionCount = intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length;
+                  if (actionCount === 0) {
+                    toast.success("Aman sentosa bosku! Tidak ada ternak yang butuh tindakan mendesak");
+                    return;
+                  }
+                  setActivePopover(activePopover === 'action' ? null : 'action');
+                }}
+                className="w-full text-left p-3.5 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md rounded-2xl transition-all cursor-pointer focus:outline-none shadow-sm flex flex-col"
+              >
+                <div className="text-[34px] font-black leading-none">{intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length}</div>
+                <div className="text-[12px] font-medium text-white/90 mt-1">{lang === 'id' ? 'Perlu tindakan' : 'Action needed'}</div>
+              </button>
+              {activePopover === 'action' && (
+                <div 
+                  className="absolute top-full left-0 mt-2 w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl z-50 overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="max-h-64 overflow-y-auto p-3 flex flex-col gap-2">
+                    {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').map((c, i) => {
+                      const shortId = c.cow_id ? (c.cow_id.length > 5 ? c.cow_id.slice(0, 5).toUpperCase() + '...' : c.cow_id.toUpperCase()) : 'N/A';
+                      const statusText = c.urgency === 'critical' ? 'Kritis' : 'Perhatian';
+                      const colorClass = c.urgency === 'critical' ? 'text-[var(--red)]' : 'text-[var(--amber)]';
+                      
+                      return (
+                        <div key={i} onClick={() => navigate('/ternak', { state: { selectedCowId: c.cow_id, fromDashboard: true } })} className="flex items-center justify-between p-2 rounded-xl hover:bg-[var(--bg-card)] cursor-pointer text-left">
+                          <div>
+                            <p className="text-sm font-bold text-[var(--text-1)] m-0">{c.cow_name || (c.cow_id ? `Sapi #${shortId}` : c.title.split('—')[0].trim())}</p>
+                            <p className={`text-[12px] font-semibold m-0 mt-0.5 ${colorClass}`}>
+                              {shortId} <span className="text-[var(--text-3)] font-normal mx-1">|</span> {statusText}
+                            </p>
+                          </div>
+                          <ChevronRight size={16} className="text-[var(--text-3)]" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="border-t border-[var(--border)] p-2">
+                    <button 
+                      onClick={() => navigate('/ternak')}
+                      className="w-full py-2.5 text-[13px] font-bold text-[var(--text-1)] bg-[var(--bg-card)] rounded-[14px] hover:bg-[var(--border)] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      Lihat Lebih Lanjut <ChevronRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -926,24 +1104,12 @@ export default function Dashboard() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
             <p className="eyebrow" style={{ marginBottom: 0 }}>REKOMENDASI LAINNYA</p>
-            {intel.filter(card => card.urgency === 'scheduled').length > 2 && (
-              <button 
-                onClick={() => setShowAllRecommendations(!showAllRecommendations)}
-                className="text-xs font-bold text-[var(--color-primary)] hover:underline bg-transparent border-none cursor-pointer px-2 py-1 rounded-md hover:bg-[var(--color-primary)]/10 transition-colors"
-              >
-                {showAllRecommendations 
-                  ? (lang === 'id' ? 'Tampilkan Lebih Sedikit' : 'View Less')
-                  : (lang === 'id' ? 'Lihat Semua' : 'View All')}
-              </button>
-            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {intel.filter(card => card.urgency === 'scheduled').length > 0 ? (
               <>
-                {/* 2 Item Pertama Selalu Ditampilkan */}
                 {intel.filter(card => card.urgency === 'scheduled')
-                  .slice(0, 2)
                   .map((card, i) => {
                   const cowName = card.title.split('—')[0].trim() || 'Ternak';
                   let friendlyMsg = '';
@@ -961,51 +1127,15 @@ export default function Dashboard() {
                       key={i}
                       title={card.title}
                       badgeText="SEDANG"
-                      id={`C${Math.floor(Math.random() * 9000) + 1000}A`}
+                      id={card.cow_id ? `C${card.cow_id.slice(0,4).toUpperCase()}A` : `C${Math.floor(Math.random() * 9000) + 1000}A`}
                       name={cowName}
                       daysLeft={Math.floor(Math.random() * 10) + 1}
                       icon={card.icon}
                       message={friendlyMsg}
+                      cow_id={card.cow_id}
                     />
                   );
                 })}
-
-                {/* Sisa Item dengan Transisi Smooth */}
-                {intel.filter(card => card.urgency === 'scheduled').length > 2 && (
-                  <div style={{ display: 'grid', gridTemplateRows: showAllRecommendations ? '1fr' : '0fr', transition: 'grid-template-rows 400ms cubic-bezier(0.4, 0, 0.2, 1)' }}>
-                    <div style={{ overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: showAllRecommendations ? '10px' : '0px', transition: 'padding-top 400ms cubic-bezier(0.4, 0, 0.2, 1)' }}>
-                        {intel.filter(card => card.urgency === 'scheduled')
-                          .slice(2)
-                          .map((card, i) => {
-                          const cowName = card.title.split('—')[0].trim() || 'Ternak';
-                          let friendlyMsg = '';
-                          if (card.title.toLowerCase().includes('kebuntingan')) {
-                            friendlyMsg = `Update kebuntingan ${cowName} perlu dicatat. Sebaiknya diperbarui sekarang agar data kehamilan tetap akurat dan bisa diprediksi dengan baik.`;
-                          } else if (card.title.toLowerCase().includes('inseminasi')) {
-                            friendlyMsg = `Jadwal inseminasi ${cowName} sudah tiba. Pastikan persiapan sudah matang agar peluang kebuntingan maksimal.`;
-                          } else if (card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')) {
-                            friendlyMsg = `${cowName} menunjukkan tanda birahi. Waktu terbaik untuk inseminasi adalah 12–18 jam ke depan, jangan sampai terlewat.`;
-                          } else {
-                            friendlyMsg = `Ada hal yang perlu kamu tindak lanjuti untuk ${cowName}. Sebaiknya segera dicek agar tidak terlewat.`;
-                          }
-                          return (
-                            <RecommendationCard
-                              key={i + 2}
-                              title={card.title}
-                              badgeText="SEDANG"
-                              id={`C${Math.floor(Math.random() * 9000) + 1000}A`}
-                              name={cowName}
-                              daysLeft={Math.floor(Math.random() * 10) + 1}
-                              icon={card.icon}
-                              message={friendlyMsg}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </>
             ) : (
               <div style={{
@@ -1020,8 +1150,11 @@ export default function Dashboard() {
 
       </div>
 
-      {/* MODAL: Tambah Reproduksi */}
-      {isReproModalOpen && (
+      {/* MODALS PORTAL */}
+      {createPortal(
+        <>
+          {/* MODAL: Tambah Reproduksi */}
+          {isReproModalOpen && (
         <div className="fixed inset-0 z-[999] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in overflow-hidden touch-none">
           <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
             <div className="flex justify-between items-center mb-6">
@@ -1230,7 +1363,7 @@ export default function Dashboard() {
                       key={pred.id} 
                       onClick={() => {
                         setIsEstrusModalOpen(false);
-                        navigate('/ternak', { state: { selectedCowId: pred.cow_id } });
+                        navigate('/ternak', { state: { selectedCowId: pred.cow_id, fromDashboard: true } });
                       }}
                       className="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
                     >
@@ -1267,6 +1400,9 @@ export default function Dashboard() {
           fetchDashboardData();
         }}
       />
+        </>,
+        document.body
+      )}
     </>
   );
 }

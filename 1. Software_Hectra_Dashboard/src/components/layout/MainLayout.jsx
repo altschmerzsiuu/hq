@@ -115,12 +115,13 @@ export default function MainLayout() {
 
         {/* Scrollable Content */}
         <main
+          id="main-scroll-container"
           onScroll={handleScroll}
           style={{ 
             flex: 1, 
             overflowY: 'auto', 
             overflowX: 'hidden',
-            paddingTop: (location.pathname === '/dashboard' || location.pathname === '/ternak' || location.pathname === '/sensor-data') ? '0px' : 'calc(56px + 16px)'
+            paddingTop: (location.pathname === '/dashboard' || location.pathname === '/ternak' || location.pathname === '/sensor-data' || location.pathname === '/settings') ? '0px' : 'calc(56px + 16px)'
           }}
           className="px-4 pb-4 md:px-[22px] md:pb-5"
         >

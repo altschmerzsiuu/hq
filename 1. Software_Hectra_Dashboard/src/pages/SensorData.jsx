@@ -38,6 +38,7 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import axiosInstance from '@/lib/axios';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import { toast } from '@/store/toastStore';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
@@ -88,6 +89,7 @@ export default function SensorData() {
   const [search, setSearch] = useState('');
   const [tableData, setTableData] = useState([]);
   const [chartData, setChartData] = useState([]);
+
   const [timeFilter, setTimeFilter] = useState('1wk');
   const [showMoreReports, setShowMoreReports] = useState(false);
   const [populationStats, setPopulationStats] = useState({ total: 0, pregnant: 0 });
@@ -96,6 +98,8 @@ export default function SensorData() {
   const [popHistory, setPopHistory] = useState([]);
   const [pregHistory, setPregHistory] = useState([]);
   const [showWidgetModal, setShowWidgetModal] = useState(false);
+  useBodyScrollLock(showWidgetModal);
+  
   const [selectedWidgets, setSelectedWidgets] = useState(() => {
     const saved = localStorage.getItem('hectra_sensor_widgets');
     return saved ? JSON.parse(saved) : ['collar_aktif', 'rata_suhu', 'sapi_bunting'];

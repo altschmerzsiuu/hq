@@ -4,6 +4,7 @@
 import { useEffect } from 'react';
 import { X, Beef, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import { useTernakStore } from '@/store/useTernakStore';
 import { toast } from '@/store/toastStore';
 
@@ -23,6 +24,8 @@ export default function PairCollarModal({
     pairCollar,
     loading,
   } = useTernakStore();
+
+  useBodyScrollLock(isOpen);
 
   // Ensure fresh data every time modal opens
   useEffect(() => {

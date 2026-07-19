@@ -341,7 +341,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#F2F2F7] lg:bg-white flex justify-center items-center font-sans sm:p-4 lg:p-0">
-      <div className="w-full max-w-[420px] lg:max-w-none h-[100dvh] sm:h-[850px] sm:max-h-[90vh] lg:h-screen lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row">
+      <div className="w-full max-w-[420px] lg:max-w-none h-full min-h-screen sm:min-h-0 sm:h-[850px] sm:max-h-[90vh] lg:h-screen lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row">
         
         <AnimatePresence mode="wait">
           
@@ -632,25 +632,25 @@ export default function Login() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-white px-6 py-6 flex flex-col items-center overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              className="fixed inset-0 h-[100dvh] bg-white px-6 py-6 flex flex-col items-center justify-start overflow-hidden"
             >
-              <div className="flex-1 flex flex-col items-center justify-center w-full max-w-[320px]">
+              <div className="w-full flex flex-col items-center max-w-[320px] pt-[2vh] pb-4">
                 <motion.img 
                   src={farmerPinImg} 
                   alt="Unlock HERD" 
-                  className="w-[200px] h-[200px] object-contain mb-2"
+                  className="w-[200px] h-[200px] shrink-0 object-contain mb-2"
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                 />
                 <h1 className="text-2xl font-bold text-[#111118] mb-1">Welcome Back!</h1>
-                <p className="text-[#62627A] text-[14px] mb-8 text-center px-4">
+                <p className="text-[#62627A] text-[14px] mb-4 text-center px-4 shrink-0">
                   Hi <span className="font-bold text-[#111118]">{localStorage.getItem('herd_user_name') || 'User'}</span>, enter your 6-digit PIN.
                 </p>
 
                 {/* PIN Indicator Dots */}
                 <motion.div 
-                  className="flex gap-4 mb-6"
+                  className="flex gap-4 mb-4 shrink-0"
                   animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
                   transition={{ duration: 0.4 }}
                 >
@@ -662,10 +662,10 @@ export default function Login() {
                   ))}
                 </motion.div>
 
-                {pinError && <p className="text-red-500 text-sm font-bold mb-4">{pinError}</p>}
+                {pinError && <p className="text-red-500 text-sm font-bold mb-4 shrink-0">{pinError}</p>}
 
                 {/* Custom Numpad */}
-                <div className="grid grid-cols-3 gap-y-2 gap-x-8 w-full mt-4">
+                <div className="grid grid-cols-3 gap-y-1 gap-x-8 w-full mt-2 shrink-0">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                     <button
                       key={num}
@@ -696,7 +696,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="flex w-full justify-between mt-6 px-2 pb-4">
+              <div className="flex w-full justify-between mt-auto px-2 pb-6 shrink-0">
                 <button type="button" className="text-[#FF7B1C] font-bold text-[14px] hover:underline">Forgot PIN?</button>
                 <button type="button" onClick={() => {
                   localStorage.removeItem('herd_user_id');
@@ -715,34 +715,35 @@ export default function Login() {
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-white px-6 py-6 flex flex-col items-center overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              className="fixed inset-0 h-[100dvh] bg-white px-6 py-6 flex flex-col items-center justify-start overflow-hidden"
             >
-              <div className="flex-1 flex flex-col items-center justify-center w-full max-w-[320px]">
+              <div className="w-full flex flex-col items-center max-w-[320px] pt-[2vh] pb-4">
                 <motion.img 
                   src={farmerPinImg} 
-                  alt="Secure HERD" 
-                  className="w-[200px] h-[200px] object-contain mb-2"
+                  alt="Setup PIN" 
+                  className="w-[200px] h-[200px] shrink-0 object-contain mb-2"
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
                 />
                 <h1 className="text-2xl font-bold text-[#111118] mb-1">Secure your account</h1>
-                <p className="text-[#62627A] text-[14px] mb-8 text-center px-4">
-                  Create a 6-digit PIN for faster and more secure login next time.
+                <p className="text-[#62627A] text-[14px] mb-4 text-center px-4 shrink-0">
+                  {setupStep === 1 ? 'Create a 6-digit PIN to secure your HERD account.' : 'Please re-enter your 6-digit PIN to confirm.'}
                 </p>
 
                 {/* PIN Indicator Dots */}
-                <div className="flex gap-4 mb-8">
+                <motion.div 
+                  className="flex gap-4 mb-4 shrink-0">
                   {setupPinDigits.map((digit, i) => (
                     <div 
                       key={i} 
                       className={`w-4 h-4 rounded-full transition-all duration-300 ${digit !== '' ? 'bg-[#FF7B1C] scale-110 shadow-[0_2px_8px_rgba(255,123,28,0.4)]' : 'bg-[#E5E5EA]'}`}
                     ></div>
                   ))}
-                </div>
+                </motion.div>
 
                 {/* Custom Numpad */}
-                <div className="grid grid-cols-3 gap-y-2 gap-x-8 w-full mt-4">
+                <div className="grid grid-cols-3 gap-y-1 gap-x-8 w-full mt-2 shrink-0">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                     <button
                       key={num}
@@ -773,7 +774,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="flex w-full justify-center mt-6 px-2 pb-4">
+              <div className="flex w-full justify-center mt-auto px-2 pb-6 shrink-0">
                 <button 
                   onClick={handleSkipPinSetup}
                   className="w-full max-w-[280px] h-[52px] bg-[#F8F8F9] hover:bg-gray-100 text-[#62627A] hover:text-[#111118] rounded-[16px] font-bold text-[15px] transition-colors"

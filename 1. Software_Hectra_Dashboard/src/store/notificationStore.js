@@ -48,39 +48,43 @@ export const useNotificationStore = create((set, get) => ({
           type = 'warning';
         }
 
-        // Determine title
-        const prefix = n.cow_name ? `${n.cow_name} — ` : '';
+        // Determine title without dash
         let title = 'Notifikasi';
         switch (n.type?.toLowerCase()) {
           case 'estrus':
-            title = prefix + (lang === 'id' ? 'Indikasi Estrus' : 'Estrus Detected');
+            title = lang === 'id' ? 'Indikasi Estrus' : 'Estrus Detected';
             type = 'critical';
             break;
           case 'insemination':
-            title = prefix + (lang === 'id' ? 'Inseminasi Buatan (IB)' : 'Artificial Insemination');
+            title = lang === 'id' ? 'Inseminasi Buatan (IB)' : 'Artificial Insemination';
             break;
           case 'pregnancy':
-            title = prefix + (lang === 'id' ? 'Status Reproduksi' : 'Reproduction Status');
+            title = lang === 'id' ? 'Status Reproduksi' : 'Reproduction Status';
             break;
           case 'anomaly':
           case 'anomal':
-            title = prefix + (lang === 'id' ? 'Anomali Sensor' : 'Sensor Anomaly');
+            title = lang === 'id' ? 'Anomali Sensor' : 'Sensor Anomaly';
             type = 'warning';
             break;
           case 'battery':
-            title = prefix + (lang === 'id' ? 'Baterai Lemah' : 'Battery Low');
+            title = lang === 'id' ? 'Baterai Lemah' : 'Battery Low';
             type = 'warning';
             break;
           default:
-            title = prefix + (n.type ? n.type.charAt(0).toUpperCase() + n.type.slice(1) : (lang === 'id' ? 'Sistem' : 'System'));
+            title = n.type ? n.type.charAt(0).toUpperCase() + n.type.slice(1) : (lang === 'id' ? 'Sistem' : 'System');
         }
+
+        // Clean emojis from description
+        const cleanDesc = (n.message || '').replace(/[^\p{L}\p{N}\p{P}\p{Z}]/gu, '').replace(/\s+/g, ' ').trim();
 
         return {
           id: n.id,
+          cow_id: n.cow_id,
+          cow_name: n.cow_name,
           type,
           read: readIds.includes(n.id),
           title,
-          desc: n.message,
+          desc: cleanDesc,
           timestamp: n.timestamp,
           time: formatRelativeTime(n.timestamp, lang),
         };

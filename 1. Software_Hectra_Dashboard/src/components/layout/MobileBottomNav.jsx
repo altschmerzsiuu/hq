@@ -79,7 +79,13 @@ export default function MobileBottomNav() {
             return (
               <button
                 key={item.path || i}
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  navigate(item.path);
+                  const scrollContainer = document.getElementById('main-scroll-container');
+                  if (scrollContainer) {
+                    scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
                   background: 'none', border: 'none', cursor: 'pointer',

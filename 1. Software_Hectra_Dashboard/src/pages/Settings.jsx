@@ -1,7 +1,7 @@
 // src/pages/Settings.jsx
 
 import { useState, useEffect, useRef } from 'react';
-import { LogOut, User, Bell, Key, Users, Settings as SettingsIcon, Trash2, Camera, ChevronLeft, ChevronDown, Monitor, HelpCircle, Globe, Sun, Moon, Send, Save, Loader2, UserPlus } from 'lucide-react';
+import { LogOut, User, Bell, Key, Users, Settings as SettingsIcon, Trash2, Camera, ChevronLeft, ChevronDown, Monitor, HelpCircle, Globe, Sun, Moon, Send, Save, Loader2, UserPlus, CheckCheck, Check, Edit2 } from 'lucide-react';
 import { FAQ } from '@/components/shared/FAQ';
 import FeedbackModal from '@/components/shared/FeedbackModal';
 import ContactView from '@/components/shared/ContactView';
@@ -25,11 +25,14 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
 
+  const [avatarPreviewSrc, setAvatarPreviewSrc] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
+
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      toast.success(lang === 'id' ? 'Foto profil siap diupload!' : 'Profile picture ready to upload!');
-      // TODO: Actual upload logic
+      setAvatarFile(file);
+      setAvatarPreviewSrc(URL.createObjectURL(file));
     }
   };
 
@@ -57,6 +60,11 @@ export default function Settings() {
   const [farmName, setFarmName] = useState('');
   const [selectedProv, setSelectedProv] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
+  const [origProv, setOrigProv] = useState('');
+  const [origCity, setOrigCity] = useState('');
+  const [origFullName, setOrigFullName] = useState('');
+  const [origPhoneNumber, setOrigPhoneNumber] = useState('');
+  const [origFarmName, setOrigFarmName] = useState('');
 
   // Tab 2: Notifications — master toggle + channel toggles (local state / mock)
   const [notifEnabled, setNotifEnabled] = useState(true);
@@ -80,6 +88,8 @@ export default function Settings() {
   const [inviteRole, setInviteRole] = useState('worker');
   const [teamLoading, setTeamLoading] = useState(false);
 
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+
   const inputClass = "w-full min-h-[46px] px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2f7d31]/20 focus:border-[#2f7d31] transition-all shadow-sm";
   const labelClass = "block text-[11px] font-black text-gray-500 mb-2 uppercase tracking-wider";
 
@@ -100,26 +110,50 @@ export default function Settings() {
       if (data) {
         const u = data.user || {};
         setFullName(u.full_name || '');
+        setOrigFullName(u.full_name || '');
         setEmail(u.email || '');
         setPhoneNumber(u.phone_number || '');
+        setOrigPhoneNumber(u.phone_number || '');
+        setFarmName(data.peternakan?.nama_peternakan || '');
+        setOrigFarmName(data.peternakan?.nama_peternakan || '');
+        setSelectedProv(data.peternakan?.provinsi_id?.toString() || '');
+        setSelectedCity(data.peternakan?.kabupaten_id?.toString() || '');
+        setOrigProv(data.peternakan?.provinsi_id?.toString() || '');
+        setOrigCity(data.peternakan?.kabupaten_id?.toString() || '');
         // Determine login method from API: if user has a phone_number, they logged in via WA OTP
         setLoginMethod(u.phone_number ? 'phone' : 'google');
         setCreatedAt(u.created_at ? new Date(u.created_at).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { dateStyle: 'long' }) : '--');
 
         const f = data.farm || {};
-        setFarmName(f.farm_name || '');
-        if (f.province_id) setSelectedProv(f.province_id);
-        if (f.city_id) setSelectedCity(f.city_id);
+        if (f.farm_name) { 
+          setFarmName(f.farm_name); 
+          setOrigFarmName(f.farm_name); 
+        }
+        if (f.province_id) { 
+          setSelectedProv(f.province_id.toString()); 
+          setOrigProv(f.province_id.toString()); 
+        }
+        if (f.city_id) { 
+          setSelectedCity(f.city_id.toString()); 
+          setOrigCity(f.city_id.toString()); 
+        }
         profileLoaded = true;
       }
     } catch (err) {
       console.warn('Profile fetch failed, loading offline defaults', err);
       setFullName(user?.full_name || '');
+      setOrigFullName(user?.full_name || '');
       setEmail(user?.email || '');
       setLoginMethod(user?.phone_number ? 'phone' : 'google');
       setPhoneNumber(user?.phone_number || '');
+      setOrigPhoneNumber(user?.phone_number || '');
       setCreatedAt(new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { dateStyle: 'long' }));
       setFarmName('');
+      setOrigFarmName('');
+      setSelectedProv('');
+      setOrigProv('');
+      setSelectedCity('');
+      setOrigCity('');
     }
 
     // 2. Load Team Members (Owners/Admins only)
@@ -240,6 +274,24 @@ export default function Settings() {
     }
   };
 
+  const isGeneralChanged = selectedProv !== origProv || selectedCity !== origCity || fullName !== origFullName || phoneNumber !== origPhoneNumber || farmName !== origFarmName;
+  const isSecurityChanged = pinNewDigits.length > 0 || pinConfirmDigits.length > 0;
+  
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [pendingTab, setPendingTab] = useState(null);
+
+  const handleBackNavigation = (targetTab) => {
+    if (activeTab === 'profile' && isGeneralChanged) {
+      setPendingTab(targetTab);
+      setShowDiscardModal(true);
+    } else if (activeTab === 'security' && isSecurityChanged) {
+      setPendingTab(targetTab);
+      setShowDiscardModal(true);
+    } else {
+      setActiveTab(targetTab);
+    }
+  };
+
   // ─── Reusable Toggle component ────────────────────────────────────────────────
   const Toggle = ({ checked, onChange }) => (
     <label className="relative inline-flex items-center cursor-pointer select-none">
@@ -268,7 +320,7 @@ export default function Settings() {
               MAIN MENU (WhatsApp Style)
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'main' && (
-            <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="space-y-8 animate-in fade-in duration-300 pt-[72px]">
               
               {/* ── Avatar + Name (CLEAN WHITE DESIGN WITH ACCENT) ── */}
               <div 
@@ -277,23 +329,10 @@ export default function Settings() {
                   minHeight: '280px',
                 }}
               >
-                  <div className="relative z-10 mb-5 mt-2">
-                    <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center text-[#2f7d31] text-[36px] font-medium bg-white border-[3px] border-[#2f7d31]/20 shadow-sm">
-                        {fullName ? fullName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : '--'}
+                  <div className="relative z-10 mb-5 mt-2 cursor-pointer group" onClick={() => setActiveTab('profile')}>
+                    <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center bg-gray-100 border-[3px] border-[#2f7d31]/20 shadow-sm group-hover:scale-105 group-active:scale-95 transition-all overflow-hidden">
+                        <img src="/photoprofile_default.jpeg" alt="Profile" className="w-full h-full object-cover" />
                     </div>
-                    <button 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-0 right-0 w-8 h-8 bg-[var(--accent)] text-white rounded-full flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all"
-                    >
-                      <Camera className="w-4 h-4" />
-                    </button>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      ref={fileInputRef} 
-                      onChange={handleAvatarChange} 
-                    />
                   </div>
                   <div className="text-center">
                       <h2 className="text-[22px] font-black tracking-tight leading-none mb-1.5 text-gray-900">
@@ -302,7 +341,7 @@ export default function Settings() {
                       <div className="text-[14px] font-medium text-gray-500 flex items-center justify-center gap-2">
                           <span>{email || (lang === 'id' ? 'Tidak ada email' : 'No email')}</span>
                           <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                          <span>{phoneNumber ? phoneNumber : (farmName || (lang === 'id' ? 'Belum ada peternakan' : 'No farm name'))}</span>
+                          <span>{farmName || (lang === 'id' ? 'Belum ada peternakan' : 'No farm name')}</span>
                       </div>
                   </div>
               </div>
@@ -409,26 +448,25 @@ export default function Settings() {
             <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6">
               
               {/* Header: Back Button & Title & Save Button */}
-              <div className="flex items-center justify-between mb-2">
-                <button type="button" onClick={() => setActiveTab('main')} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+              <div className="relative flex items-center justify-center mb-6 h-10 w-full">
+                <button type="button" onClick={() => handleBackNavigation('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_general || 'Profile'}</h2>
-                <button type="submit" disabled={loading} className="text-xs font-bold text-[#2f7d31] bg-[#2f7d31]/10 border border-[#2f7d31]/20 backdrop-blur-md px-5 py-2 rounded-full shadow-sm hover:bg-[#2f7d31]/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                  {loading ? (lang === 'id' ? 'Menyimpan...' : 'Saving...') : (lang === 'id' ? 'Simpan' : 'Save')}
-                </button>
+                <div className="absolute right-0 flex items-center justify-center">
+                  <button type="submit" disabled={!isGeneralChanged || loading} className={`p-2.5 text-white rounded-full shadow-sm transition-all ${isGeneralChanged ? 'bg-[#2f7d31] hover:bg-[#2f7d31]/90 active:scale-95' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
 
               {/* Avatar section */}
               <div className="flex flex-col items-center gap-2 mb-4">
-                <div className="relative w-28 h-28 rounded-full flex items-center justify-center text-white text-4xl font-black bg-[#2f7d31] cursor-pointer overflow-hidden group shadow-lg ring-4 ring-[#2f7d31]/20">
-                  {fullName ? fullName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : '--'}
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="w-7 h-7 text-white" />
-                  </div>
+                <div onClick={() => setIsAvatarModalOpen(true)} className="relative w-28 h-28 rounded-full flex items-center justify-center bg-gray-100 cursor-pointer overflow-hidden group shadow-lg ring-4 ring-[#2f7d31]/20 hover:scale-105 transition-transform">
+                  <img src="/photoprofile_default.jpeg" alt="Profile" className="w-full h-full object-cover" />
                 </div>
-                <button type="button" className="text-[#2f7d31] text-sm font-bold mt-1 hover:underline">
-                  {lang === 'id' ? 'Edit' : 'Edit'}
+                <button type="button" onClick={() => setIsAvatarModalOpen(true)} className="text-[#2f7d31] text-sm font-bold mt-1 hover:underline">
+                  {lang === 'id' ? 'Lihat Foto' : 'View Photo'}
                 </button>
               </div>
 
@@ -440,9 +478,9 @@ export default function Settings() {
                     {lang === 'id' ? 'INFORMASI PERSONAL' : 'PERSONAL INFORMATION'}
                   </h3>
                 </div>
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 transition-colors focus-within:bg-gray-50">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 transition-colors focus-within:bg-gray-50 group">
                   <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{t.settings_full_name || 'Name'}</label>
-                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full bg-transparent text-sm font-medium text-gray-600 text-right outline-none placeholder-gray-400" placeholder={lang === 'id' ? 'Nama Lengkap Anda' : 'Your Full Name'} />
+                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full bg-transparent text-sm font-medium text-gray-600 text-right outline-none placeholder-gray-400 group-hover:bg-gray-100 focus:bg-white border border-transparent focus:border-gray-300 rounded-lg px-3 py-1.5 transition-all" placeholder={lang === 'id' ? 'Nama Lengkap Anda' : 'Your Full Name'} />
                 </div>
 
                 {/* Identity login */}
@@ -450,7 +488,7 @@ export default function Settings() {
                   <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50">
                     <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{lang === 'id' ? 'No. WhatsApp' : 'WhatsApp No.'}</label>
                     <div className="flex items-center justify-end w-full gap-2">
-                      <span className="text-sm font-medium text-gray-500">{phoneNumber || '—'}</span>
+                      <span className="text-sm font-medium text-gray-500">{phoneNumber ? (phoneNumber.length > 7 ? phoneNumber.slice(0, 4) + '***' + phoneNumber.slice(-3) : phoneNumber) : '—'}</span>
                       <button type="button" className="text-[10px] font-bold text-[#2f7d31] hover:text-[#007b46] underline underline-offset-2 ml-2 transition-colors">
                         {lang === 'id' ? 'Ganti' : 'Change'}
                       </button>
@@ -462,14 +500,14 @@ export default function Settings() {
                       <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">Email</label>
                       <span className="text-sm font-medium text-gray-500 truncate text-right w-full">{email || '—'}</span>
                     </div>
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 transition-colors focus-within:bg-gray-50">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 transition-colors focus-within:bg-gray-50 group">
                       <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{lang === 'id' ? 'Nomor HP' : 'Phone Number'}</label>
                       <input
                         type="tel"
                         inputMode="numeric"
                         value={phoneNumber}
                         onChange={e => { const v = e.target.value.replace(/\D/g, ''); setPhoneNumber(v); }}
-                        className="w-full bg-transparent text-sm font-medium text-gray-600 text-right outline-none placeholder-gray-400"
+                        className="w-full bg-transparent text-sm font-medium text-gray-600 text-right outline-none placeholder-gray-400 group-hover:bg-gray-100 focus:bg-white border border-transparent focus:border-gray-300 rounded-lg px-3 py-1.5 transition-all"
                         placeholder="081234567890"
                         maxLength={15}
                       />
@@ -490,10 +528,9 @@ export default function Settings() {
                 </div>
 
                 <div className="relative z-10">
-                  {/* Nama Peternakan */}
-                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 transition-colors focus-within:bg-gray-50">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 transition-colors focus-within:bg-gray-50 group">
                     <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{t.settings_farm_name || 'Farm Name'}</label>
-                    <input type="text" value={farmName} onChange={e => setFarmName(e.target.value)} className="w-full bg-transparent text-sm font-medium text-gray-600 text-right outline-none placeholder-gray-400" placeholder={lang === 'id' ? 'Peternakan Jaya Abadi' : 'Jaya Abadi Farm'} />
+                    <input type="text" value={farmName} onChange={e => setFarmName(e.target.value)} className="w-full bg-transparent text-sm font-medium text-gray-600 text-right outline-none placeholder-gray-400 group-hover:bg-gray-100 focus:bg-white border border-transparent focus:border-gray-300 rounded-lg px-3 py-1.5 transition-all" placeholder={lang === 'id' ? 'Peternakan Jaya Abadi' : 'Jaya Abadi Farm'} />
                   </div>
 
                   {/* Provinsi */}
@@ -623,14 +660,16 @@ export default function Settings() {
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
             <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6">
-              <div className="w-full max-w-lg mb-4 flex items-center justify-between">
-                <button type="button" onClick={() => setActiveTab('main')} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+              <div className="relative flex items-center justify-center mb-6 h-10 w-full max-w-lg">
+                <button type="button" onClick={() => handleBackNavigation('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_security || 'Security'}</h2>
-                <button type="submit" form="pin-form" disabled={pinLoading || pinNewDigits.length !== 6 || pinConfirmDigits.length !== 6} className="text-xs font-bold text-[#2f7d31] bg-[#2f7d31]/10 border border-[#2f7d31]/20 backdrop-blur-md px-5 py-2 rounded-full shadow-sm hover:bg-[#2f7d31]/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                  {pinLoading ? (lang === 'id' ? 'Menyimpan...' : 'Saving...') : (lang === 'id' ? 'Simpan' : 'Save')}
-                </button>
+                <div className="absolute right-0 flex items-center justify-center">
+                  <button type="submit" form="pin-form" disabled={!isSecurityChanged || pinLoading || pinNewDigits.length !== 6 || pinConfirmDigits.length !== 6} className={`p-2.5 text-white rounded-full shadow-sm transition-all ${isSecurityChanged ? 'bg-[#2f7d31] hover:bg-[#2f7d31]/90 active:scale-95' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+                    {pinLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
               <div className="w-full max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
@@ -903,6 +942,87 @@ export default function Settings() {
         onClose={() => setIsFeedbackModalOpen(false)} 
         lang={lang} 
       />
+      {/* Avatar Preview Modal (Centered Modal) */}
+      {isAvatarModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => { setIsAvatarModalOpen(false); setAvatarPreviewSrc(null); setAvatarFile(null); }}>
+          <div className="relative w-full max-w-sm rounded-[32px] shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden bg-white" onClick={e => e.stopPropagation()}>
+            
+            {/* The 1:1 image view */}
+            <div className="relative w-full aspect-square bg-gray-100">
+               <img src={avatarPreviewSrc || "/photoprofile_default.jpeg"} alt="Profile" className="w-full h-full object-cover" />
+               
+               {/* Overlay gradient for buttons visibility */}
+               <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none"></div>
+
+               {/* Buttons */}
+               <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-auto">
+                 <button onClick={() => { setIsAvatarModalOpen(false); setAvatarPreviewSrc(null); setAvatarFile(null); }} className="p-2 bg-white/20 rounded-full text-white hover:bg-white/30 active:bg-white/40 active:scale-95 transition-all backdrop-blur-md">
+                   <ChevronLeft className="w-6 h-6" />
+                 </button>
+                 <div className="flex gap-2">
+                   {avatarFile && (
+                     <button 
+                       onClick={() => {
+                         toast.success(lang === 'id' ? 'Foto profil berhasil diperbarui!' : 'Profile picture updated successfully!');
+                         setIsAvatarModalOpen(false);
+                         setAvatarPreviewSrc(null);
+                         setAvatarFile(null);
+                         // TODO: Actual upload logic here
+                       }} 
+                       className="p-2 bg-[#2f7d31] rounded-full text-white hover:bg-[#2f7d31]/90 active:scale-95 transition-all shadow-md"
+                     >
+                       <Check className="w-5 h-5" />
+                     </button>
+                   )}
+                   <button onClick={() => fileInputRef.current?.click()} className="p-2 bg-white/20 rounded-full text-white hover:bg-white/30 active:bg-white/40 active:scale-95 transition-all backdrop-blur-md">
+                     <Edit2 className="w-5 h-5" />
+                   </button>
+                 </div>
+               </div>
+            </div>
+            
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleAvatarChange} 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Unsaved Changes Discard Modal */}
+      {showDiscardModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[24px] p-6 w-full max-w-[320px] shadow-2xl animate-in zoom-in-95 duration-200 text-center">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{lang === 'id' ? 'Batalkan Perubahan?' : 'Discard Changes?'}</h3>
+            <p className="text-sm text-gray-600 mb-6">{lang === 'id' ? 'Anda memiliki perubahan yang belum disimpan. Yakin ingin membuangnya?' : 'You have unsaved changes. Are you sure you want to discard them?'}</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDiscardModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors">
+                {lang === 'id' ? 'Batal' : 'Cancel'}
+              </button>
+              <button onClick={() => {
+                setShowDiscardModal(false);
+                if (activeTab === 'profile') {
+                  setFullName(origFullName);
+                  setPhoneNumber(origPhoneNumber);
+                  setFarmName(origFarmName);
+                  setSelectedProv(origProv);
+                  setSelectedCity(origCity);
+                } else if (activeTab === 'security') {
+                  setPinNewDigits('');
+                  setPinConfirmDigits('');
+                  setPinError('');
+                }
+                setActiveTab(pendingTab);
+              }} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors">
+                {lang === 'id' ? 'Buang' : 'Discard'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

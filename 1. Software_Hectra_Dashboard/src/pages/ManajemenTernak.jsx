@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, Plus, Filter, Link, Unlink, ChevronRight, Edit2, Trash2, Activity, MapPin, X, Calendar, ClipboardList, Beef, Loader2, CheckCircle, XCircle, Baby, Pencil, Save, Tractor, PawPrint, SlidersHorizontal, ChevronLeft, Camera, ImagePlus, LineChart, Sparkles, Edit3, Dna } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
@@ -58,6 +58,17 @@ export default function ManajemenTernak() {
   const t = translations[lang];
   const ask = useConfirmStore((state) => state.ask);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (location.state?.from) {
+      navigate(location.state.from);
+    } else if (location.state?.fromDashboard) {
+      navigate('/');
+    } else {
+      setSelectedSapi(null);
+    }
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({ kesehatan: 'all', jenis: 'all' });
@@ -112,7 +123,7 @@ export default function ManajemenTernak() {
       // If we need to pass initial rfid, we could pass it as a prop.
       // For now we just open it.
       setIsTambahModalOpen(true);
-      window.history.replaceState({}, document.title);
+      navigate(location.pathname, { replace: true, state: {} });
     } else if (location.state?.selectedCowId) {
       // Find the cow in the herd and select it
       // We will do it in another useEffect after data is loaded
@@ -123,7 +134,11 @@ export default function ManajemenTernak() {
     if (params.get('action') === 'add') {
       setIsTambahModalOpen(true);
       // Clean up URL so it doesn't pop up again on manual refresh
-      window.history.replaceState({}, document.title, location.pathname);
+      navigate(location.pathname, { replace: true, state: location.state });
+    } else if (params.get('filter')) {
+      setFilters(prev => ({ ...prev, kesehatan: params.get('filter') }));
+      // Clean up URL
+      navigate(location.pathname, { replace: true, state: location.state });
     }
   }, [location.state, location.search]);
 
@@ -133,7 +148,11 @@ export default function ManajemenTernak() {
       const cow = sapiList.find(h => h.id === location.state.selectedCowId || h.cow_id === location.state.selectedCowId);
       if (cow) {
         setSelectedSapi(cow);
-        window.history.replaceState({}, document.title);
+        // Clear selectedCowId from state but keep 'from' so back button works
+        navigate(location.pathname, { 
+          replace: true, 
+          state: { ...location.state, selectedCowId: undefined } 
+        });
       }
     }
   }, [location.state, sapiList]);
@@ -155,7 +174,7 @@ export default function ManajemenTernak() {
   useEffect(() => {
     const handlePopState = (e) => {
       if (selectedSapi) {
-        setSelectedSapi(null);
+        handleBack();
       }
     };
     window.addEventListener('popstate', handlePopState);
@@ -195,7 +214,11 @@ export default function ManajemenTernak() {
     return sapiList.filter(s => {
       const matchSearch = s.nama?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.id?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchKesehatan = filters.kesehatan === 'all' || s.status_kesehatan === filters.kesehatan;
+      const matchKesehatan = 
+        filters.kesehatan === 'all' ? true :
+        filters.kesehatan === 'pantau' ? !!s.collar_id :
+        filters.kesehatan === 'action' ? (s.status_kesehatan === 'Sakit' || s.status_kesehatan === 'Butuh Perawatan' || s.status_kesehatan === 'Perlu IB') :
+        s.status_kesehatan === filters.kesehatan;
       const matchJenis = filters.jenis === 'all' || s.jenis === filters.jenis;
       return matchSearch && matchKesehatan && matchJenis;
     });
@@ -892,11 +915,11 @@ export default function ManajemenTernak() {
       {selectedSapi && (
         <>
         {/* ── DESKTOP MODAL ── */}
-        <div className="hidden md:flex fixed inset-0 z-[900] justify-end bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setSelectedSapi(null)}>
+        <div className="hidden md:flex fixed inset-0 z-[900] justify-end bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={handleBack}>
           <div style={{ background: 'var(--bg-surface)', borderLeft: '0.5px solid var(--border)' }} className="w-full max-w-md h-full shadow-2xl overflow-hidden animate-in slide-in-from-right duration-300 flex flex-col" onClick={e => e.stopPropagation()}>
             <div style={{ background: 'var(--bg-surface)', borderBottom: '0.5px solid var(--border)' }} className="px-6 py-4 flex justify-between items-center">
               <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">{t.livestock_detail_title}</h2>
-              <button onClick={() => setSelectedSapi(null)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)] text-[var(--color-text-secondary)]">
+              <button onClick={handleBack} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)] text-[var(--color-text-secondary)]">
                 <X size={20} />
               </button>
             </div>
@@ -958,7 +981,7 @@ export default function ManajemenTernak() {
                       if (confirmed) {
                         hapusSapi(selectedSapi.id).then((res) => {
                           if (res.success) {
-                            setSelectedSapi(null);
+                            handleBack();
                             toast.success(t.livestock_toast_delete_success);
                           } else {
                             toast.error(res.message || t.livestock_toast_delete_failed);
@@ -1311,7 +1334,7 @@ export default function ManajemenTernak() {
             
             {/* Top Bar / Back Button */}
             <div className="absolute top-0 left-0 right-0 p-4 pt-6 flex justify-between items-start z-30">
-              <button onClick={() => setSelectedSapi(null)} className="p-2 bg-white/80 backdrop-blur-md rounded-full text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.1)] flex items-center justify-center border border-white/50 active:scale-95 transition-transform">
+              <button onClick={handleBack} className="p-2 bg-white/80 backdrop-blur-md rounded-full text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.1)] flex items-center justify-center border border-white/50 active:scale-95 transition-transform">
                 <ChevronLeft size={24} />
               </button>
               {/* Optional top right buttons */}

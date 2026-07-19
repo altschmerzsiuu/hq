@@ -12,7 +12,6 @@ const Recommendations = lazy(() => import('@/pages/Recommendations'));
 const Notifications = lazy(() => import('@/pages/Notifications'));
 const Settings = lazy(() => import('@/pages/Settings'));
 const ManajemenTernak = lazy(() => import('@/pages/ManajemenTernak'));
-const Reproduction = lazy(() => import('@/pages/Reproduction'));
 const ActivityTimeline = lazy(() => import('@/pages/ActivityTimeline'));
 const GendhisEye = lazy(() => import('@/pages/GendhisEye'));
 const IotManager = lazy(() => import('@/pages/IotManager'));
@@ -79,10 +78,6 @@ export const router = createBrowserRouter([
       {
         path: 'ternak',
         element: withSuspense(ManajemenTernak),
-      },
-      {
-        path: 'reproduction',
-        element: withSuspense(Reproduction),
       },
       {
         path: 'kandang',

@@ -12,6 +12,13 @@ const Toaster = ({ ...props }) => {
     <>
       {/* Inject global CSS for glass effect */}
       <style>{`
+        [data-sonner-toaster] {
+          left: 0 !important;
+          right: 0 !important;
+          display: flex !important;
+          justify-content: center !important;
+          width: 100% !important;
+        }
         [data-sonner-toaster] [data-sonner-toast] {
           backdrop-filter: blur(20px) saturate(180%) !important;
           -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
@@ -27,6 +34,7 @@ const Toaster = ({ ...props }) => {
           padding: 14px 18px !important;
           min-width: 280px !important;
           max-width: 360px !important;
+          margin: 0 auto !important;
         }
         [data-sonner-toaster] [data-sonner-toast] [data-title] {
           font-weight: 600 !important;
