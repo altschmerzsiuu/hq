@@ -621,7 +621,16 @@ export default function Dashboard() {
       toast.error(lang === 'id' ? 'Silakan pilih sapi terlebih dahulu.' : 'Please select a cow first.');
       return;
     }
-    const res = await tambahReproduksi(reproForm);
+
+    let formattedInseminator = reproForm.pemberi_ib
+      ? reproForm.pemberi_ib
+          .toLowerCase()
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ')
+      : '';
+
+    const res = await tambahReproduksi({ ...reproForm, pemberi_ib: formattedInseminator });
     if (res.success) {
       setIsReproModalOpen(false);
       setReproForm({
@@ -710,12 +719,13 @@ export default function Dashboard() {
             cowStatus = 'monitor';
           }
           return {
-            id: cow.cow_id,
+            id: cow.cow_id || cow.id, // Handle fallback
             name: cow.nama || 'Sapi',
             status: cowStatus,
-            rawStatus: cow.status || '',
+            rawStatus: cow.status_kesehatan || cow.status || '',
             temp: cow.temp !== null && cow.temp !== undefined ? cow.temp : null,
-            battery: cow.battery !== null && cow.battery !== undefined ? cow.battery : null
+            battery: cow.battery !== null && cow.battery !== undefined ? cow.battery : null,
+            collar_id: cow.collar_id || null
           };
         });
         setHerd(mappedHerd);
@@ -1169,14 +1179,22 @@ export default function Dashboard() {
             <form className="space-y-4" onSubmit={onTambahReproduksi}>
               <div>
                 <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
-                  {t.repro_select_cow}
+                  {t.repro_select_cow} <span className="text-red-500">*</span>
                 </label>
                 <select
                   style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
                   className="w-full px-3 h-[42px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
                   required
                   value={reproForm.rfid}
-                  onChange={e => setReproForm({ ...reproForm, rfid: e.target.value })}
+                  onChange={e => {
+                    setReproForm({ ...reproForm, rfid: e.target.value });
+                    // auto set countIB when cow changes
+                    if (e.target.value) {
+                      const cowHistory = herd.find(c => c.id === e.target.value)?.reproduksi || [];
+                      const countIB = cowHistory.filter(h => !h.metode || h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
+                      setReproForm(prev => ({ ...prev, rfid: e.target.value, jumlah_ib: countIB }));
+                    }
+                  }}
                 >
                   <option value="">-- {t.repro_choose_cow} --</option>
                   {sapiList.map(s => (
@@ -1185,9 +1203,11 @@ export default function Dashboard() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="w-full min-w-0">
-                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_ib_date}</label>
+                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
+                    {t.repro_ib_date} <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="date"
                     style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
@@ -1197,19 +1217,20 @@ export default function Dashboard() {
                     onChange={handleTanggalIBChange}
                   />
                 </div>
-                <div className="w-full min-w-0">
-                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_ib_count}</label>
-                  <input type="number" min="1" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }} className="w-full px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]" value={reproForm.jumlah_ib} onChange={e => setReproForm({ ...reproForm, jumlah_ib: e.target.value })} />
-                </div>
+                {/* jumlah_ib is automatically calculated, hidden from user */}
+                <input type="hidden" value={reproForm.jumlah_ib} />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_inseminator}</label>
+                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
+                  {t.repro_inseminator} <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   placeholder={t.repro_inseminator_placeholder}
                   style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
                   className="w-full min-w-0 px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
+                  required
                   value={reproForm.pemberi_ib}
                   onChange={e => setReproForm({ ...reproForm, pemberi_ib: e.target.value })}
                 />
@@ -1220,45 +1241,6 @@ export default function Dashboard() {
                 <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }} className="w-full min-w-0 px-4 py-3 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({ ...reproForm, catatan: e.target.value })} />
               </div>
 
-              <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-xl p-4">
-                <h4 className="text-sm font-bold text-[var(--color-primary)] flex items-center gap-2 mb-4 uppercase tracking-wide">
-                  <Calendar size={16} /> ESTIMASI JADWAL (AUTO)
-                </h4>
-                
-                {(() => {
-                  const ibDate = reproForm.tanggal_ib ? new Date(reproForm.tanggal_ib) : null;
-                  const formatDate = (date) => {
-                    if (!date || isNaN(date.getTime())) return '—';
-                    return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-                  };
-
-                  const estrusReturn = ibDate ? new Date(ibDate.getTime() + 21 * 24 * 60 * 60 * 1000) : null;
-                  const pregCheck = ibDate ? new Date(ibDate.getTime() + 60 * 24 * 60 * 60 * 1000) : null;
-                  const hpl = ibDate ? new Date(ibDate.getTime() + 283 * 24 * 60 * 60 * 1000) : null;
-                  const weaning = hpl ? new Date(hpl.getTime() + 180 * 24 * 60 * 60 * 1000) : null;
-
-                  return (
-                    <div className="grid grid-cols-2 gap-y-5 gap-x-4">
-                      <div>
-                        <p className="text-[13px] font-medium text-[var(--color-text-secondary)] mb-1">Deteksi Birahi Kembali</p>
-                        <p className="text-sm font-bold text-[var(--color-text-primary)]">{formatDate(estrusReturn)}</p>
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-medium text-[var(--color-text-secondary)] mb-1">Pemeriksaan Kebuntingan</p>
-                        <p className="text-sm font-bold text-[var(--color-text-primary)]">{formatDate(pregCheck)}</p>
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-medium text-[var(--color-text-secondary)] mb-1">Perkiraan Melahirkan (HPL)</p>
-                        <p className="text-sm font-bold text-[var(--color-primary)]">{formatDate(hpl)}</p>
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-medium text-[var(--color-text-secondary)] mb-1">Estimasi Lepas Sapih</p>
-                        <p className="text-sm font-bold text-[var(--color-text-primary)]">{formatDate(weaning)}</p>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
 
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} className="w-1/2 py-3 text-center">{t.btn_cancel}</button>

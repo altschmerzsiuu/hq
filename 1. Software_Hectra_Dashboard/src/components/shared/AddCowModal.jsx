@@ -45,7 +45,7 @@ export default function AddCowModal({ isOpen, onClose }) {
   
   const [scanOpen, setScanOpen] = useState(false);
   const [tambahForm, setTambahForm] = useState({
-    nama: '', rfid: '', jenis: 'Simmental', lahir: '', kesehatan: 'Sehat'
+    nama: '', rfid: '', jenis: '', lahir: '', kesehatan: ''
   });
 
   if (!isOpen) return null;
@@ -69,7 +69,7 @@ export default function AddCowModal({ isOpen, onClose }) {
     const payload = { ...tambahForm, nama: formattedName, rfid: finalRfid };
     const res = await tambahSapi(payload);
     if (res.success) {
-      setTambahForm({ nama: '', rfid: '', jenis: 'Simmental', lahir: '', kesehatan: 'Sehat' });
+      setTambahForm({ nama: '', rfid: '', jenis: '', lahir: '', kesehatan: '' });
       onClose();
       toast.success(t.livestock_toast_add_success);
     } else {
@@ -91,13 +91,17 @@ export default function AddCowModal({ isOpen, onClose }) {
           <form className="space-y-5 flex flex-col" onSubmit={onSubmit}>
             {/* 1. Nama Sapi */}
             <div>
-              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_name}</label>
+              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">
+                {t.livestock_add_name.replace('*', '')} <span className="text-red-500">*</span>
+              </label>
               <input type="text" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full h-[52px] px-4 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none" placeholder={t.livestock_add_name_placeholder} value={tambahForm.nama} onChange={e => setTambahForm({...tambahForm, nama: e.target.value})} required />
             </div>
 
             {/* 2. Tanggal Lahir */}
             <div>
-              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_birthdate}</label>
+              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">
+                {t.livestock_add_birthdate.replace('*', '')} <span className="text-red-500">*</span>
+              </label>
               <input type="date" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }} className="w-full h-[52px] px-4 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none appearance-none min-w-0" value={tambahForm.lahir} onChange={e => setTambahForm({...tambahForm, lahir: e.target.value})} required />
               {tambahForm.lahir && (
                 <p className="text-xs text-[var(--color-primary)] mt-2 font-medium flex items-center gap-1">
@@ -108,9 +112,12 @@ export default function AddCowModal({ isOpen, onClose }) {
 
             {/* 3. Jenis Sapi */}
             <div>
-              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_breed}</label>
+              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">
+                {t.livestock_add_breed.replace('*', '')} <span className="text-red-500">*</span>
+              </label>
               <div className="relative">
-                <select style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full h-[52px] pl-4 pr-10 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none appearance-none cursor-pointer" value={tambahForm.jenis} onChange={e => setTambahForm({...tambahForm, jenis: e.target.value})}>
+                <select required style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full h-[52px] pl-4 pr-10 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none appearance-none cursor-pointer" value={tambahForm.jenis} onChange={e => setTambahForm({...tambahForm, jenis: e.target.value})}>
+                  <option value="" disabled hidden>-- Pilih --</option>
                   <option value="Simmental">{t.breed_simmental}</option>
                   <option value="Brahman">{t.breed_brahman}</option>
                   <option value="Limosin">{t.breed_limousin}</option>
@@ -124,9 +131,12 @@ export default function AddCowModal({ isOpen, onClose }) {
 
             {/* 4. Status Kesehatan */}
             <div>
-              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">{t.livestock_add_health}</label>
+              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">
+                {t.livestock_add_health.replace('*', '')} <span className="text-red-500">*</span>
+              </label>
               <div className="relative">
-                <select style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full h-[52px] pl-4 pr-10 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none appearance-none cursor-pointer" value={tambahForm.kesehatan} onChange={e => setTambahForm({...tambahForm, kesehatan: e.target.value})}>
+                <select required style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full h-[52px] pl-4 pr-10 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none appearance-none cursor-pointer" value={tambahForm.kesehatan} onChange={e => setTambahForm({...tambahForm, kesehatan: e.target.value})}>
+                  <option value="" disabled hidden>-- Pilih --</option>
                   <option value="Sehat">{t.livestock_filter_sehat}</option>
                   <option value="Sakit">{t.livestock_filter_sakit}</option>
                   <option value="Butuh Perawatan">{t.livestock_filter_care}</option>
