@@ -16,9 +16,18 @@ function App() {
     localStorage.removeItem('session_expiry');
     sessionStorage.removeItem('session_expiry');
 
+    // Check if splash has been shown in this session
+    const hasSeenSplash = sessionStorage.getItem('herd_splash_shown');
+    
+    if (hasSeenSplash) {
+      setShowSplash(false);
+      return;
+    }
+
     // Simulate loading time for splash screen
     const timer = setTimeout(() => {
       setShowSplash(false);
+      sessionStorage.setItem('herd_splash_shown', 'true');
     }, 2500); // 2.5 seconds splash screen
     
     return () => clearTimeout(timer);

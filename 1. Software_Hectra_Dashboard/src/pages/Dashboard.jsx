@@ -944,7 +944,7 @@ export default function Dashboard() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="max-h-64 overflow-y-auto p-3 flex flex-col gap-2">
-                    {herd.map((c, i) => {
+                    {herd.filter(c => !!c.collar_id).map((c, i) => {
                       let statusText = 'Sehat';
                       let colorClass = 'text-[var(--accent)]';
                       

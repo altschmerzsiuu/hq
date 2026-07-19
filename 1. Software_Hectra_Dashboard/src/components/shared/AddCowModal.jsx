@@ -52,7 +52,22 @@ export default function AddCowModal({ isOpen, onClose }) {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    const res = await tambahSapi(tambahForm);
+    
+    // Auto-capitalize name (Title Case)
+    let formattedName = tambahForm.nama
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+    // Generate simple ID if RFID is empty
+    let finalRfid = tambahForm.rfid;
+    if (!finalRfid || finalRfid.trim() === '') {
+      finalRfid = 'HRD-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+    }
+
+    const payload = { ...tambahForm, nama: formattedName, rfid: finalRfid };
+    const res = await tambahSapi(payload);
     if (res.success) {
       setTambahForm({ nama: '', rfid: '', jenis: 'Simmental', lahir: '', kesehatan: 'Sehat' });
       onClose();

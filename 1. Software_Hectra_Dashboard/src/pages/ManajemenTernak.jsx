@@ -73,7 +73,8 @@ export default function ManajemenTernak() {
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({ kesehatan: 'all', jenis: 'all' });
   const [scanOpen, setScanOpen] = useState(false);
-  
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState([]);
   // Zustand Store
   const { 
     sapiList, unpairedCollars, fetchSapiList, fetchUnpairedCollars, 
@@ -114,6 +115,28 @@ export default function ManajemenTernak() {
     tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
     birahi: '', bunting: '', hpl: '', sapih: '', catatan: ''
   });
+
+  const handleBulkDelete = async () => {
+    if (selectedForDelete.length === 0) return;
+    const confirmed = await ask({
+      title: "Hapus Banyak Ternak",
+      message: `Apakah Anda yakin ingin menghapus ${selectedForDelete.length} sapi? Data yang dihapus tidak bisa dikembalikan.`,
+      confirmText: 'Hapus Semua',
+      cancelText: 'Batal',
+      isDanger: true
+    });
+    if (!confirmed) return;
+    
+    try {
+      await Promise.all(selectedForDelete.map(id => axiosInstance.delete(`/sapi/${id}`)));
+      toast.success(`${selectedForDelete.length} sapi berhasil dihapus`);
+      setIsSelectMode(false);
+      setSelectedForDelete([]);
+      fetchSapiList();
+    } catch(err) {
+      handleError(err, 'hapus banyak sapi');
+    }
+  };
 
   // Handle redirect from scan bottom sheet
   useEffect(() => {
@@ -198,6 +221,11 @@ export default function ManajemenTernak() {
   useEffect(() => {
     if (selectedSapi) {
       reloadReproHistory(selectedSapi.id);
+      // Reset form when opening a cow to avoid lingering template data
+      setReproForm({
+        tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
+        birahi: '', bunting: '', hpl: '', sapih: '', catatan: ''
+      });
     } else {
       setReproHistory([]);
       setEditReproItem(null);
@@ -431,6 +459,10 @@ export default function ManajemenTernak() {
         notes: item.catatan || item.notes || '',
         is_pregnant: isPregnant ? 'true' : 'false',
       });
+      
+      // Update cow status automatically
+      await editSapi(selectedSapi.id, { status_kesehatan: isPregnant ? 'Hamil' : 'Sehat' });
+      
       toast.success(lang === 'id' ? `Status IB dikonfirmasi: ${label}` : `AI status confirmed: ${label}`);
       reloadReproHistory(selectedSapi.id);
       fetchSapiList(); // refresh status kesehatan
@@ -443,6 +475,43 @@ export default function ManajemenTernak() {
 
   return (
     <>
+      {isSelectMode && (
+        <div className="fixed top-0 left-0 w-full h-[60px] bg-white z-[9999] flex items-center justify-between px-4 border-b border-gray-200 shadow-sm animate-in fade-in duration-200">
+          <button 
+            onClick={() => { setIsSelectMode(false); setSelectedForDelete([]); }}
+            className="text-[var(--text-2)] font-bold text-sm px-2 py-2"
+          >
+            Batal
+          </button>
+          
+          <div className="text-[15px] font-bold text-[var(--text-1)]">
+            {selectedForDelete.length > 0 ? `${selectedForDelete.length} Dipilih` : 'Pilih Ternak'}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => {
+                if (selectedForDelete.length === filteredSapi.length) {
+                  setSelectedForDelete([]);
+                } else {
+                  setSelectedForDelete(filteredSapi.map(s => s.id));
+                }
+              }}
+              className="text-[var(--accent)] font-bold text-sm"
+            >
+              {selectedForDelete.length === filteredSapi.length ? 'Batal Semua' : 'Semua'}
+            </button>
+            <button 
+              onClick={handleBulkDelete}
+              disabled={selectedForDelete.length === 0}
+              className={`flex items-center justify-center p-2 rounded-full ${selectedForDelete.length > 0 ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-200 text-gray-400'}`}
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-6 pb-6">
         {/* Header */}
       {/* ── Header ── */}
@@ -544,6 +613,13 @@ export default function ManajemenTernak() {
             <Filter size={16} />
             {t.btn_filter}
           </button>
+          <button 
+            onClick={() => setIsSelectMode(!isSelectMode)}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', border: `0.5px solid ${isSelectMode ? 'var(--accent)' : 'var(--border)'}`, color: isSelectMode ? 'var(--accent)' : 'var(--text-2)', borderRadius: '10px', background: isSelectMode ? 'var(--accent-dim)' : 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 500, transition: 'all 0.15s' }}
+          >
+            <ClipboardList size={16} />
+            Pilih
+          </button>
         </div>
  
         {/* Filter Panel */}
@@ -574,18 +650,41 @@ export default function ManajemenTernak() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
+                {isSelectMode && <th className="py-3 px-4 font-medium w-10"></th>}
                 <th className="py-3 px-4 font-medium">{t.livestock_table_name}</th>
                 <th className="py-3 px-4 font-medium">{t.livestock_table_rfid}</th>
                 <th className="py-3 px-4 font-medium">{t.livestock_table_breed}</th>
                 <th className="py-3 px-4 font-medium">{t.livestock_table_age}</th>
                 <th className="py-3 px-4 font-medium">{t.livestock_table_health}</th>
                 <th className="py-3 px-4 font-medium">{t.livestock_table_collar}</th>
-                <th className="py-3 px-4 font-medium text-right">{t.livestock_table_action}</th>
+                {!isSelectMode && <th className="py-3 px-4 font-medium text-right">{t.livestock_table_action}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
               {filteredSapi.map((sapi) => (
-                <tr key={sapi.id} className="hover:bg-[var(--color-bg-surface)] transition-colors">
+                <tr 
+                  key={sapi.id} 
+                  className="hover:bg-[var(--color-bg-surface)] transition-colors cursor-pointer"
+                  onClick={() => {
+                    if (isSelectMode) {
+                      setSelectedForDelete(prev => 
+                        prev.includes(sapi.id) ? prev.filter(id => id !== sapi.id) : [...prev, sapi.id]
+                      );
+                    } else {
+                      setSelectedSapi(sapi);
+                    }
+                  }}
+                >
+                  {isSelectMode && (
+                    <td className="py-3 px-4">
+                      <input 
+                        type="checkbox" 
+                        className="w-5 h-5 rounded-md text-[var(--accent)] border-gray-300 focus:ring-[var(--accent)]"
+                        checked={selectedForDelete.includes(sapi.id)}
+                        readOnly
+                      />
+                    </td>
+                  )}
                   <td className="py-3 px-4 font-bold text-[var(--color-primary)]">{sapi.nama}</td>
                   <td className="py-3 px-4 text-sm text-[var(--color-text-secondary)]">{sapi.id}</td>
                   <td className="py-3 px-4 text-sm">{sapi.jenis}</td>
@@ -604,14 +703,15 @@ export default function ManajemenTernak() {
                     </span>
                   </td>
                   <td className="py-3 px-4 text-sm text-[var(--color-text-muted)]">{sapi.collar_id || '-'}</td>
-                  <td className="py-3 px-4 text-right">
-                    <button 
-                      onClick={() => setSelectedSapi(sapi)}
-                      className="p-1 text-[var(--color-accent)] hover:text-[var(--color-primary)] transition-colors"
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                  </td>
+                  {!isSelectMode && (
+                    <td className="py-3 px-4 text-right">
+                      <button 
+                        className="p-1 text-[var(--color-accent)] hover:text-[var(--color-primary)] transition-colors pointer-events-none"
+                      >
+                        <ChevronRight size={20} />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
               {filteredSapi.length === 0 && (
@@ -643,6 +743,12 @@ export default function ManajemenTernak() {
             style={{ width: '50px', height: '50px', borderRadius: '16px', background: showFilter ? 'var(--accent-dim)' : 'var(--bg-surface)', border: `1px solid ${showFilter ? 'var(--accent)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: showFilter ? 'var(--accent)' : 'var(--text-2)', boxShadow: '0 2px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s' }}
           >
             <SlidersHorizontal size={20} />
+          </button>
+          <button 
+            onClick={() => setIsSelectMode(!isSelectMode)}
+            style={{ width: '50px', height: '50px', borderRadius: '16px', background: isSelectMode ? 'var(--accent-dim)' : 'var(--bg-surface)', border: `1px solid ${isSelectMode ? 'var(--accent)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isSelectMode ? 'var(--accent)' : 'var(--text-2)', boxShadow: '0 2px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s' }}
+          >
+            <ClipboardList size={20} />
           </button>
         </div>
 
@@ -753,11 +859,28 @@ export default function ManajemenTernak() {
               key={sapi.id} 
               style={{ 
                 padding: '16px', borderRadius: '24px', background: 'var(--bg-surface)', 
-                boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid var(--border)',
-                display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: isSelectMode && selectedForDelete.includes(sapi.id) ? '2px solid var(--accent)' : '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer',
+                transform: isSelectMode && selectedForDelete.includes(sapi.id) ? 'scale(0.98)' : 'scale(1)',
+                transition: 'all 0.15s ease'
               }}
-              onClick={() => setSelectedSapi(sapi)}
+              onClick={() => {
+                if (isSelectMode) {
+                  setSelectedForDelete(prev => 
+                    prev.includes(sapi.id) ? prev.filter(id => id !== sapi.id) : [...prev, sapi.id]
+                  );
+                } else {
+                  setSelectedSapi(sapi);
+                }
+              }}
             >
+              {isSelectMode && (
+                <div className="flex-shrink-0">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${selectedForDelete.includes(sapi.id) ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-gray-300'}`}>
+                    {selectedForDelete.includes(sapi.id) && <CheckCircle size={14} color="white" />}
+                  </div>
+                </div>
+              )}
               {/* Cow Icon / Image */}
               <div style={{ width: '72px', height: '72px', borderRadius: '16px', background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
                 {sapi.foto ? (
