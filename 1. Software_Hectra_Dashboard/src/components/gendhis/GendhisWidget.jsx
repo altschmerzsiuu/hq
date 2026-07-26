@@ -14,7 +14,8 @@ import {
   Thermometer,
   Shield,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/store/toastStore';
@@ -419,7 +420,7 @@ export default function GendhisWidget() {
                           className="p-2 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all text-[var(--text-3)] mr-1 shrink-0"
                           title="Hapus Percakapan"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ))
@@ -655,13 +656,22 @@ export default function GendhisWidget() {
             </div>
           </div>
           
-          <button 
-            onClick={() => setViewState('fullscreen')}
-            className="hidden md:block p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-            title="FullScreen Session"
-          >
-            <Maximize2 className="w-3.5 h-3.5 text-white" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={startNewChat}
+              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+              title="Hapus Percakapan"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-white" />
+            </button>
+            <button 
+              onClick={() => setViewState('fullscreen')}
+              className="hidden md:block p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+              title="FullScreen Session"
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-white" />
+            </button>
+          </div>
         </div>
 
         {/* CHAT BODY AREA */}

@@ -340,8 +340,8 @@ export default function Login() {
   if (isCheckingUser) return <div className="min-h-screen bg-[#F2F2F7] flex items-center justify-center" />;
 
   return (
-    <div className="min-h-screen bg-[#F2F2F7] lg:bg-white flex justify-center items-center font-sans sm:p-4 lg:p-0">
-      <div className="w-full max-w-[420px] lg:max-w-none h-full min-h-screen sm:min-h-0 sm:h-[850px] sm:max-h-[90vh] lg:h-screen lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row">
+    <div className="min-h-[100dvh] bg-[#F2F2F7] lg:bg-white flex justify-center items-center font-sans sm:p-4 lg:p-0">
+      <div className={`w-full max-w-[420px] lg:max-w-none h-[100dvh] sm:h-[850px] sm:max-h-[90vh] lg:h-screen lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row ${(!isLoginMode && step === 'auth') ? 'overflow-y-auto' : ''}`}>
         
         <AnimatePresence mode="wait">
           
@@ -367,7 +367,7 @@ export default function Login() {
                 <motion.img 
                   src={cowFeatureImg} 
                   alt="HERD Feature" 
-                  className="w-[320px] h-[320px] object-contain mt-8 z-10 drop-shadow-none"
+                  className="w-[240px] h-[240px] sm:w-[280px] sm:h-[280px] object-contain mt-8 z-10 drop-shadow-none"
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -383,7 +383,7 @@ export default function Login() {
                   Pantau kesehatan, reproduksi, dan aktivitas ternak dalam satu aplikasi pintar.
                 </p>
 
-                <div className="w-full flex flex-col gap-3 mt-auto">
+                <div className="w-full flex flex-col gap-2.5 mt-auto">
                   <button 
                     onClick={() => {
                       setIsLoginMode(false);
@@ -471,7 +471,7 @@ export default function Login() {
                 </div>
 
                 {/* Form Content - Made more compact */}
-                <div className="px-6 lg:px-[12%] pb-10 flex flex-col flex-1 mt-2 lg:mt-28 lg:justify-center">
+                <div className="px-6 lg:px-[12%] pb-6 flex flex-col flex-1 mt-2 lg:mt-28 lg:justify-center">
                   <h1 className="text-[28px] lg:text-[40px] lg:tracking-tight font-bold text-[#111118] mb-2">{isLoginMode ? 'Sign In' : 'Sign up'}</h1>
                   <p className="text-[13px] lg:text-[14px] text-[#62627A] mb-6 lg:mb-8">
                     By continuing, you agree to our <a href="#" className="font-bold text-[#FF7B1C]">Terms of Use</a>.

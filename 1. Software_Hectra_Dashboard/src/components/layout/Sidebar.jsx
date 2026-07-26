@@ -76,28 +76,25 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
       ]
     },
     {
-      label: 'DATA',
+      label: 'MANAJEMEN',
       items: [
-        {
-          name: t.nav_data_mgmt,
-          isDropdown: true,
-          icon: Database,
-          isOpen: dataMgmtOpen,
-          toggle: () => setDataMgmtOpen(!dataMgmtOpen),
-          subItems: [
-            { name: t.nav_livestock, path: '/ternak', icon: Beef },
-            { name: t.nav_live_signals, path: '/sensor-data', icon: Cpu },
-          ]
-        }
+        { name: t.nav_livestock, path: '/ternak', icon: Beef },
+        { name: t.iot_title || 'Perangkat IoT', path: '/sensor-data', icon: Cpu },
       ]
     },
     {
       label: 'INTELLIGENCE',
       items: [
         { name: t.nav_estrus_intel, path: '/estrus-prediction', icon: Zap },
-
         { name: t.nav_activity_timeline, path: '/activity-timeline', icon: Clock },
         { name: t.nav_recommendations, path: '/recommendations', icon: Lightbulb },
+      ]
+    },
+    {
+      label: 'SISTEM',
+      items: [
+        { name: t.notif_page_title || 'Notifikasi', path: '/notifications', icon: Bell },
+        { name: t.nav_settings || 'Pengaturan', path: '/settings', icon: Settings },
       ]
     }
   ];
@@ -244,7 +241,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
                           width: '100%', padding: '7px 10px', borderRadius: '8px', border: 'none',
                           background: item.isOpen ? 'var(--accent-dim)' : 'transparent',
                           cursor: 'pointer', transition: 'background 0.15s',
-                          color: item.isOpen ? 'var(--accent)' : 'var(--text-2)',
+                          color: item.isOpen ? 'var(--accent)' : 'var(--text-1)',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
@@ -275,7 +272,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
                                 fontSize: '12px', fontWeight: isActive ? 500 : 400,
                                 fontFamily: 'Inter, sans-serif',
                                 background: isActive ? 'var(--accent-dim)' : 'transparent',
-                                color: isActive ? 'var(--accent)' : 'var(--text-2)',
+                                color: isActive ? 'var(--accent)' : 'var(--text-1)',
                                 transition: 'all 0.15s',
                                 position: 'relative',
                               })}
@@ -313,7 +310,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
                         fontFamily: 'Inter, sans-serif',
                         background: reallyActive ? 'var(--accent-dim)' : 'transparent',
                         border: reallyActive ? '0.5px solid var(--accent-border)' : '0.5px solid transparent',
-                        color: reallyActive ? 'var(--accent)' : 'var(--text-2)',
+                        color: reallyActive ? 'var(--accent)' : 'var(--text-1)',
                         transition: 'all 0.15s',
                         position: 'relative',
                       };

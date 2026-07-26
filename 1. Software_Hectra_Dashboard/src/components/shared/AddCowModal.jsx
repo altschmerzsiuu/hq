@@ -6,6 +6,7 @@ import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import ScanModal from '@/components/scan/ScanModal';
+import { useNavigate } from 'react-router-dom';
 
 const hitungUsia = (lahir, lang) => {
   if(!lahir) return '';
@@ -42,10 +43,11 @@ export default function AddCowModal({ isOpen, onClose }) {
   const { lang } = useSettingsStore();
   const t = translations[lang];
   const { tambahSapi, loading } = useTernakStore();
+  const navigate = useNavigate();
   
   const [scanOpen, setScanOpen] = useState(false);
   const [tambahForm, setTambahForm] = useState({
-    nama: '', rfid: '', jenis: '', lahir: '', kesehatan: ''
+    nama: '', rfid: '', jenis: '', lahir: '', kesehatan: '', kelamin: 'betina'
   });
 
   if (!isOpen) return null;
@@ -69,9 +71,10 @@ export default function AddCowModal({ isOpen, onClose }) {
     const payload = { ...tambahForm, nama: formattedName, rfid: finalRfid };
     const res = await tambahSapi(payload);
     if (res.success) {
-      setTambahForm({ nama: '', rfid: '', jenis: '', lahir: '', kesehatan: '' });
+      setTambahForm({ nama: '', rfid: '', jenis: '', lahir: '', kesehatan: '', kelamin: 'betina' });
       onClose();
       toast.success(t.livestock_toast_add_success);
+      navigate('/ternak', { state: { selectedCowId: res.id || finalRfid, from: '/' } });
     } else {
       toast.error(res.message || t.livestock_toast_add_failed);
     }
@@ -124,6 +127,20 @@ export default function AddCowModal({ isOpen, onClose }) {
                   <option value="Bali">{t.breed_bali}</option>
                   <option value="Angus">{t.breed_angus}</option>
                   <option value="Friesian Holstein">{t.breed_friesholstein}</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={18} />
+              </div>
+            </div>
+
+            {/* 3.5 Jenis Kelamin */}
+            <div>
+              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">
+                {lang === 'id' ? 'Jenis Kelamin' : 'Gender'} <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <select required style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full h-[52px] pl-4 pr-10 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none appearance-none cursor-pointer" value={tambahForm.kelamin} onChange={e => setTambahForm({...tambahForm, kelamin: e.target.value})}>
+                  <option value="betina">{lang === 'id' ? 'Betina' : 'Female'}</option>
+                  <option value="jantan">{lang === 'id' ? 'Jantan' : 'Male'}</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={18} />
               </div>

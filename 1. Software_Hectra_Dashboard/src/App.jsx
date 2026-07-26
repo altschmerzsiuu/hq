@@ -2,16 +2,20 @@ import { useEffect, useState } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 import { Toaster } from './components/ui/sonner';
+import { toast } from 'sonner';
 import ConfirmDialog from './components/ui/ConfirmDialog';
 import { useAuthStore } from './store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import splashScreenImg from './assets/onboarding/cow_featuree.png';
+import { setupForegroundMessaging } from './firebase-config';
 
 function App() {
   const { isAuthenticated, logout } = useAuthStore();
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
+    // Setup foreground messaging
+    setupForegroundMessaging(toast);
     // Clear any legacy session_expiry keys to avoid interference
     localStorage.removeItem('session_expiry');
     sessionStorage.removeItem('session_expiry');

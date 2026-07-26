@@ -13,6 +13,7 @@ import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 import regionData from '@/data/indonesia-region.json';
 import { useAuthStore } from '@/store/authStore';
+import { requestFirebaseNotificationPermission } from '@/firebase-config';
 
 
 
@@ -68,7 +69,9 @@ export default function Settings() {
 
   // Tab 2: Notifications — master toggle + channel toggles (local state / mock)
   const [notifEnabled, setNotifEnabled] = useState(true);
-  const [notifChannels, setNotifChannels] = useState({ whatsapp: true, telegram: false, email: false });
+  const [notifChannels, setNotifChannels] = useState({ push: false, telegram: false, email: false });
+  const [telegramChatId, setTelegramChatId] = useState('');
+  const [emailAddress, setEmailAddress] = useState(user?.email || '');
 
   // Help Centre States
   const [helpView, setHelpView] = useState('menu'); // 'menu' | 'faq' | 'contact'
@@ -204,9 +207,43 @@ export default function Settings() {
   };
 
   // --- Notification Toggle (local mock) ---
-  const handleToggleNotif = () => {
-    setNotifEnabled(prev => !prev);
-    toast.success(lang === 'id' ? 'Preferensi notifikasi diperbarui!' : 'Notification preference updated!');
+  const handleToggleNotif = async () => {
+    const newState = !notifEnabled;
+    setNotifEnabled(newState);
+    
+    if (newState) {
+      // Always request Web Push when master toggle is enabled
+      const tid = toast.loading(lang === 'id' ? 'Mengaktifkan notifikasi...' : 'Enabling notifications...');
+      const token = await requestFirebaseNotificationPermission();
+      if (token) {
+        try {
+          await axiosInstance.post('/profile/fcm-token', { token, device_info: navigator.userAgent });
+          toast.success(lang === 'id' ? 'Notifikasi berhasil diaktifkan!' : 'Notifications enabled successfully!', { id: tid });
+        } catch (err) {
+          console.error('Failed to save FCM token', err);
+          toast.error(lang === 'id' ? 'Gagal menyimpan konfigurasi notifikasi' : 'Failed to save notification config', { id: tid });
+        }
+      } else {
+        toast.error(lang === 'id' ? 'Gagal mendapatkan akses Push Notification' : 'Failed to get Push Notification access', { id: tid });
+      }
+    } else {
+      toast.success(lang === 'id' ? 'Notifikasi dinonaktifkan' : 'Notifications disabled');
+    }
+  };
+
+  const handleTestTelegram = async () => {
+    if (!telegramChatId) {
+      toast.error(lang === 'id' ? 'Masukkan Chat ID terlebih dahulu' : 'Please enter Chat ID first');
+      return;
+    }
+    const tid = toast.loading(lang === 'id' ? 'Mengirim pesan tes...' : 'Sending test message...');
+    try {
+      await axiosInstance.post('/profile/test-telegram', { chat_id: telegramChatId });
+      toast.success(lang === 'id' ? 'Pesan tes terkirim ke Telegram!' : 'Test message sent to Telegram!', { id: tid });
+    } catch (err) {
+      handleError(err, 'Test Telegram');
+      toast.dismiss(tid);
+    }
   };
 
   const handleSavePIN = async (e) => {
@@ -320,7 +357,7 @@ export default function Settings() {
               MAIN MENU (WhatsApp Style)
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'main' && (
-            <div className="space-y-8 animate-in fade-in duration-300 pt-[72px]">
+            <div className="space-y-8 animate-in fade-in duration-300 pt-4">
               
               {/* ── Avatar + Name (CLEAN WHITE DESIGN WITH ACCENT) ── */}
               <div 
@@ -365,7 +402,7 @@ export default function Settings() {
                     <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Bell size={18} /></div>
                     <div className="text-left">
                       <p className="text-sm font-bold text-gray-900">{lang === 'id' ? 'Notifikasi' : 'Notifications'}</p>
-                      <p className="text-[11px] text-gray-500 mt-0.5">{lang === 'id' ? 'Pengaturan pesan WA/Telegram' : 'WA/Telegram message settings'}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{lang === 'id' ? 'Pengaturan Pesan' : 'Message Settings'}</p>
                     </div>
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400 -rotate-90" />
@@ -610,47 +647,56 @@ export default function Settings() {
               {/* Channel toggles */}
               <div className="p-4 bg-white border border-gray-200 rounded-3xl shadow-sm space-y-1">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">
-                  {lang === 'id' ? 'Kirim Ke' : 'Send Via'}
+                  {lang === 'id' ? 'Opsional' : 'Optional'}
                 </p>
 
-                {/* WhatsApp */}
-                <div className={`flex items-center justify-between py-2.5 px-1 border-b border-gray-100 transition-opacity ${!notifEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#25D366' }}>
-                      <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.558 4.121 1.535 5.849L.057 23.617a.75.75 0 0 0 .92.92l5.799-1.487A11.944 11.944 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.956 9.956 0 0 1-5.143-1.427l-.369-.214-3.797.974.997-3.704-.235-.38A9.953 9.953 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">WhatsApp</p>
-                    </div>
-                  </div>
-                  <Toggle checked={notifChannels.whatsapp} onChange={() => setNotifChannels(p => ({ ...p, whatsapp: !p.whatsapp }))} />
-                </div>
-
                 {/* Telegram */}
-                <div className={`flex items-center justify-between py-2.5 px-1 border-b border-gray-100 transition-opacity ${!notifEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#229ED9' }}>
-                      <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                <div className={`flex flex-col py-2.5 px-1 border-b border-gray-100 transition-opacity ${!notifEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm" style={{ background: '#229ED9' }}>
+                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">Telegram</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">Telegram</p>
-                    </div>
+                    <Toggle checked={notifChannels.telegram} onChange={() => setNotifChannels(p => ({ ...p, telegram: !p.telegram }))} />
                   </div>
-                  <Toggle checked={notifChannels.telegram} onChange={() => setNotifChannels(p => ({ ...p, telegram: !p.telegram }))} />
+                  {notifChannels.telegram && (
+                    <div className="mt-3 ml-11">
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          value={telegramChatId} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (/^-?\d*$/.test(val)) {
+                              setTelegramChatId(val);
+                            }
+                          }}
+                          placeholder={lang === 'id' ? 'Masukkan Chat ID Telegram...' : 'Enter Telegram Chat ID...'} 
+                          className="w-full bg-gray-50 text-sm py-2.5 pl-3 pr-10 rounded-lg border border-gray-200 outline-none focus:border-[var(--accent)] transition-colors"
+                        />
+                        <button 
+                          type="button"
+                          title="Tes Koneksi"
+                          onClick={handleTestTelegram}
+                          className="absolute right-1 top-1 bottom-1 px-2.5 flex items-center justify-center text-gray-400 hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-md transition-colors"
+                        >
+                          <Send size={16} />
+                        </button>
+                      </div>
+                      <p className="text-[9px] text-gray-400 mt-1">
+                        {lang === 'id' ? 'Dapatkan dari bot ' : 'Get from bot '}
+                        <a href="https://t.me/HerdAssistantBot" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">
+                          @HerdAssistantBot
+                        </a>
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {/* Email */}
-                <div className={`flex items-center justify-between py-2.5 px-1 transition-opacity ${!notifEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#EA4335' }}>
-                      <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">Email</p>
-                    </div>
-                  </div>
-                  <Toggle checked={notifChannels.email} onChange={() => setNotifChannels(p => ({ ...p, email: !p.email }))} />
-                </div>
               </div>
             </div>
           )}
@@ -863,7 +909,7 @@ export default function Settings() {
               TAB 6 — HELP CENTRE
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'help' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6">
               <div className="w-full max-w-3xl mb-4 relative flex items-center">
                 <button type="button" onClick={() => {
                   if (helpView !== 'menu') setHelpView('menu');

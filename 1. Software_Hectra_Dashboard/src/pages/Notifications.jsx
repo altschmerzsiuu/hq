@@ -16,6 +16,21 @@ import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
 import { toast } from '@/store/toastStore';
 
+const formatTimeAgo = (dateStr, lang) => {
+  if (!dateStr) return lang === 'id' ? 'Hari ini' : 'Today';
+  const date = new Date(dateStr);
+  if (isNaN(date)) return lang === 'id' ? 'Hari ini' : 'Today';
+  
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  
+  if (diffInSeconds < 60) return lang === 'id' ? 'Baru saja' : 'Just now';
+  if (diffInSeconds < 3600) return lang === 'id' ? `${Math.floor(diffInSeconds / 60)} mnt lalu` : `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return lang === 'id' ? `${Math.floor(diffInSeconds / 3600)} jam lalu` : `${Math.floor(diffInSeconds / 3600)}h ago`;
+  return lang === 'id' ? `${Math.floor(diffInSeconds / 86400)} hari lalu` : `${Math.floor(diffInSeconds / 86400)}d ago`;
+};
+
+
 const ICON_MAP = {
   critical: AlertTriangle,
   warning: BatteryWarning,
@@ -122,9 +137,12 @@ export default function Notifications() {
                     </div>
                   </div>
 
-                  <div className="mt-3 ml-14">
+                  <div className="mt-3 ml-14 flex items-center justify-between">
                     <span className="text-[12px] font-semibold text-[#2f7d31] flex items-center gap-1.5">
                       Ketuk untuk detail <span className="text-[9px] mt-[1px]">❯</span>
+                    </span>
+                    <span className="text-[11px] text-gray-400 font-medium">
+                      {formatTimeAgo(n.created_at || n.timestamp, lang)}
                     </span>
                   </div>
                 </div>

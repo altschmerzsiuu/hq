@@ -299,7 +299,6 @@ export default function SensorData() {
   const widgetOptions = {
     collar_aktif: { id: 'collar_aktif', label: 'Collar Aktif', icon: Activity, value: activeCollars, subValue: `/ ${tableData.length || 0}`, unit: '' },
     rata_suhu: { id: 'rata_suhu', label: 'Rata Suhu', icon: Thermometer, value: avgTemp, unit: '°C' },
-    rata_baterai: { id: 'rata_baterai', label: 'Baterai', icon: Battery, value: avgBattery, unit: '%' },
     sapi_bunting: { id: 'sapi_bunting', label: 'Bunting', icon: HeartPulse, value: pregnantCount, unit: 'Ekor' },
     perlu_cek: { id: 'perlu_cek', label: 'Perlu Cek', icon: ShieldAlert, value: sickCount, unit: 'Ekor' },
   };
@@ -335,7 +334,7 @@ export default function SensorData() {
         <div className="flex justify-between items-start relative z-10">
           <div className="w-full">
             <div className="flex justify-between items-start mb-1">
-              <p className="text-[10px] md:text-[11px] font-extrabold text-[#34d399] uppercase tracking-wider">
+              <p className="text-[10px] md:text-[11px] font-extrabold text-white uppercase tracking-wider">
                 {t.sensor_sub || 'PANTAU SUHU, AKTIVITAS, DAN STATUS BATERAI IOT COLLAR'}
               </p>
               <button 
@@ -405,7 +404,7 @@ export default function SensorData() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.5} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} dy={5} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} />
-                  <Tooltip cursor={{ fill: 'rgba(0,146,84,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                  <Tooltip cursor={{ fill: 'rgba(0,146,84,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} formatter={(value) => [value, lang === 'id' ? 'Jumlah' : 'Amount']} />
                   <Bar dataKey="val" fill="#2f7d31" radius={[4, 4, 0, 0]} fillOpacity={0.8} barSize={30} />
                 </BarChart>
               </ResponsiveContainer>
@@ -442,7 +441,7 @@ export default function SensorData() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.5} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} dy={5} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B7280' }} />
-                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} formatter={(value) => [value, lang === 'id' ? 'Jumlah' : 'Amount']} />
                   <Area type="monotone" dataKey="val" stroke="#F59E0B" strokeWidth={3} fillOpacity={1} fill="url(#colorPreg)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -756,7 +755,7 @@ export default function SensorData() {
 
       {/* Widget Settings Modal */}
       {showWidgetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl animate-in zoom-in-95 duration-200">
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h3 className="font-bold text-gray-900">Atur Widget Data</h3>

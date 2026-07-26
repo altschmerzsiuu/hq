@@ -110,8 +110,10 @@ export default function MainLayout() {
         overflow: 'hidden',
         position: 'relative',
       }}>
-        {/* Topbar — hamburger is now inside Topbar */}
-        <Topbar onMenuClick={() => setSidebarOpen(true)} isScrolled={isScrolled} />
+        {/* Topbar */}
+        {location.pathname !== '/settings' && (
+          <Topbar onMenuClick={() => setSidebarOpen(true)} isScrolled={isScrolled} />
+        )}
 
         {/* Scrollable Content */}
         <main
@@ -131,7 +133,7 @@ export default function MainLayout() {
           </div>
 
           {/* Mobile bottom spacer */}
-          {!isResearchLab && <div className="md:hidden" style={{ height: '140px' }} />}
+          {!isResearchLab && <div className="md:hidden flex-shrink-0" style={{ height: '180px' }} />}
         </main>
 
         {/* Mobile Nav */}

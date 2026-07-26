@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Scan, Plus, Cpu, FileText, Bell,
   Thermometer, AlertTriangle, BatteryWarning, CheckCircle2,
-  Sparkles, Wifi, Zap, Calendar, X, Check, ChevronRight, Activity, Syringe, ClipboardList, ThermometerSun, Target, Sun
+  Sparkles, Wifi, Zap, Calendar, X, Check, ChevronRight, Activity, Syringe, ClipboardList, ThermometerSun, Target, Sun, Settings2, Database, ShieldAlert
 } from 'lucide-react';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
@@ -239,6 +239,8 @@ function IntelCard({ urgency, icon: Icon, title, sub, conf, time, recommendation
           </div>
         )}
       </div>
+
+
     </div>
   );
 }
@@ -264,14 +266,14 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const actionName = title.split('—')[1]?.trim() || title;
-  const displayTitle = id ? `${name} | ${id}` : name;
+  const displayTitle = name;
 
   const handleAction = (e) => {
     e.stopPropagation();
     toast.success('Melanjutkan tindakan rekomendasi sistem...');
     
-    if (cow_id) {
-      navigate('/ternak', { state: { selectedCowId: cow_id, fromDashboard: true } });
+    if (name || cow_id || id) {
+      navigate('/ternak', { state: { selectedCowId: name || cow_id || id, fromDashboard: true } });
     } else {
       navigate('/ternak');
     }
@@ -297,10 +299,10 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
         </div>
         <div className="flex flex-col flex-1 min-w-0 pr-16">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h4 className="text-sm font-bold text-gray-900 font-display truncate">{displayTitle}</h4>
+            <h4 className="text-sm font-bold text-gray-900 font-display truncate capitalize">{displayTitle}</h4>
           </div>
           <p className="text-xs text-gray-600 font-medium mb-1.5 flex items-center gap-1">
-            {actionName} • Dalam {daysLeft} hari
+            {actionName} | Dalam {daysLeft} hari
           </p>
           {!isExpanded && (
             <p className="text-[10px] text-[var(--color-primary)] font-semibold mt-1 opacity-80 flex items-center gap-1">
@@ -532,6 +534,111 @@ function formatRelativeTime(isoString, lang) {
   }
 }
 
+// ── DASHBOARD SLOT CARD ──────────────────────────────────────
+function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats, herd, intel, sapiList, navigate, lang, t, ChevronRight }) {
+  let count = 0;
+  let label = '';
+  let popoverData = [];
+  let Icon = Database;
+
+  const actionable = intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor');
+  const monitored = herd.filter(c => !!c.collar_id);
+  
+  if (slotType === 'total') {
+    count = sapiList.length;
+    label = lang === 'id' ? 'Total ternak' : 'Total cows';
+    popoverData = sapiList;
+    Icon = Database;
+  } else if (slotType === 'pantau') {
+    count = stats.collars;
+    label = lang === 'id' ? 'Ternak dipantau' : 'Monitored cows';
+    popoverData = monitored;
+    Icon = Activity;
+  } else if (slotType === 'tindakan') {
+    count = actionable.length;
+    label = lang === 'id' ? 'Perlu tindakan' : 'Action needed';
+    popoverData = actionable;
+    Icon = ShieldAlert;
+  }
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (count === 0) {
+      if (slotType === 'pantau') toast.error("Waduh, belum ada ternak yang dipantau nih! Yuk pasang kalungnya dulu");
+      if (slotType === 'tindakan') toast.success("Semua ternak dalam kondisi baik. Tidak ada tindakan mendesak.");
+      if (slotType === 'total' && count === 0) toast.error("Belum ada data ternak.");
+      return;
+    }
+    setActivePopover(activePopover === slotId ? null : slotId);
+  };
+
+  return (
+    <div className="flex-1 relative">
+      <div 
+        onClick={handleClick}
+        className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 md:p-3 flex flex-col gap-1.5 md:gap-2 relative cursor-pointer hover:bg-white/20 transition-colors shadow-sm"
+      >
+        <div className="flex items-center gap-1.5 md:gap-2 text-white/80 overflow-hidden">
+          <Icon size={14} className="flex-shrink-0" />
+          <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider truncate">{label}</span>
+        </div>
+        <div className="flex items-baseline gap-0.5 md:gap-1">
+          <span className="text-lg md:text-xl font-black">{count}</span>
+        </div>
+      </div>
+      
+      {activePopover === slotId && (
+        <div 
+          className="absolute top-full left-0 mt-2 w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl z-50 overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="max-h-64 overflow-y-auto p-3 flex flex-col gap-2">
+            {popoverData.map((c, i) => {
+              let statusText = 'Sehat';
+              let colorClass = 'text-[var(--accent)]';
+              
+              const cowId = c.cow_id || c.id || c.rfid;
+              const cowName = c.cow_name || c.name || c.nama || (cowId ? `Sapi #${cowId.slice(0,5)}` : (c.title ? c.title.split('—')[0].trim() : 'Unknown'));
+              
+              if (c.status === 'estrus' || c.urgency === 'critical') {
+                statusText = c.status === 'estrus' ? 'Birahi' : 'Kritis';
+                colorClass = 'text-[var(--red)]';
+              } else if (c.status === 'monitor' || c.urgency === 'monitor') {
+                statusText = c.rawStatus ? c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase() : 'Butuh Perawatan';
+                colorClass = 'text-[var(--amber)]';
+              } else if (c.rawStatus && c.rawStatus.toLowerCase() !== 'sehat' && c.rawStatus.toLowerCase() !== 'normal') {
+                statusText = c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase();
+              }
+              
+              const shortId = cowId ? (cowId.length > 5 ? cowId.slice(0, 5).toUpperCase() + '...' : cowId.toUpperCase()) : 'N/A';
+              
+              return (
+                <div key={i} onClick={() => navigate('/ternak', { state: { selectedCowId: cowId, fromDashboard: true } })} className="flex items-center justify-between p-2 rounded-xl hover:bg-[var(--bg-card)] cursor-pointer text-left">
+                  <div>
+                    <p className="text-sm font-bold text-[var(--text-1)] m-0">{cowName}</p>
+                    <p className={`text-[12px] font-semibold m-0 mt-0.5 ${colorClass}`}>
+                      {shortId} <span className="text-[var(--text-3)] font-normal mx-1">|</span> {statusText}
+                    </p>
+                  </div>
+                  <ChevronRight size={16} className="text-[var(--text-3)]" />
+                </div>
+              );
+            })}
+          </div>
+          <div className="border-t border-[var(--border)] p-2">
+            <button 
+              onClick={() => navigate('/ternak')}
+              className="w-full py-2.5 text-[13px] font-bold text-[var(--text-1)] bg-[var(--bg-card)] rounded-[14px] hover:bg-[var(--border)] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              Lihat Lebih Lanjut <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── MAIN COMPONENT ───────────────────────────────────────────
 export default function Dashboard() {
   const { lang } = useSettingsStore();
@@ -566,6 +673,19 @@ export default function Dashboard() {
     tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
     bunting: '', hpl: '', catatan: ''
   });
+
+  const [selectedWidgets, setSelectedWidgets] = useState(() => {
+    return [
+      localStorage.getItem('dash_slot1') || 'pantau',
+      localStorage.getItem('dash_slot2') || 'total'
+    ];
+  });
+  const [showWidgetModal, setShowWidgetModal] = useState(false);
+
+  useEffect(() => {
+    if (selectedWidgets[0]) localStorage.setItem('dash_slot1', selectedWidgets[0]);
+    if (selectedWidgets[1]) localStorage.setItem('dash_slot2', selectedWidgets[1]);
+  }, [selectedWidgets]);
 
   useEffect(() => {
     const mainContainer = document.getElementById('main-scroll-container');
@@ -639,6 +759,7 @@ export default function Dashboard() {
         bunting: '', hpl: '', catatan: ''
       });
       toast.success(lang === 'id' ? "Riwayat reproduksi berhasil disimpan!" : "Reproduction record saved successfully!");
+      navigate('/ternak', { state: { selectedCowId: reproForm.rfid, from: '/' } });
     } else {
       toast.error(res.message || (lang === 'id' ? 'Gagal menambah riwayat reproduksi.' : 'Failed to add reproduction record.'));
     }
@@ -824,18 +945,7 @@ export default function Dashboard() {
           setIntel(mappedIntel);
         } else {
           // Fallback if no predictions in DB yet
-          setIntel([
-            {
-              urgency: 'scheduled',
-              icon: CheckCircle2,
-              title: lang === 'id' ? 'Registri Sistem Aktif' : 'System Registry Active',
-              sub: lang === 'id'
-                ? 'Semua sensor kalung memantau aktivitas ternak secara normal. Tidak ada estrus terdeteksi.'
-                : 'All collar sensors are monitoring herd activity normally. No estrus detected.',
-              conf: 100,
-              time: lang === 'id' ? 'Baru saja' : 'Just now',
-            }
-          ]);
+          setIntel([]);
         }
       } catch (err) {
         console.error('[HERD Dashboard] Error fetching real-time data:', err);
@@ -923,129 +1033,38 @@ export default function Dashboard() {
           </div>
 
           <div className="flex justify-between items-start relative z-10">
-            <div>
-              <p className="text-[14px] font-medium opacity-90 mb-0.5">{greetingText}</p>
-              <h1 className="text-[26px] md:text-[30px] font-black tracking-tight leading-none mb-2">{userName}</h1>
-              <p className="text-[13px] font-medium opacity-80 max-w-[80%]">
-                {lang === 'id' ? 'Ini ringkasan kondisi peternakanmu hari ini' : 'Here is your herd condition summary today'}
-              </p>
+            <div className="w-full">
+              <div className="flex justify-between items-start w-full">
+                <div>
+                  <p className="text-[14px] font-medium opacity-90 mb-0.5">{greetingText}</p>
+                  <h1 className="text-[26px] md:text-[30px] font-black tracking-tight leading-none mb-2">{userName}</h1>
+                  <p className="text-[13px] font-medium opacity-80 max-w-[80%]">
+                    {lang === 'id' ? 'Ini ringkasan kondisi peternakanmu hari ini' : 'Here is your herd condition summary today'}
+                  </p>
+                </div>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setShowWidgetModal(true); }}
+                  className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                >
+                  <Settings2 size={16} />
+                </button>
+              </div>
             </div>
           </div>
           
           <div className="flex items-center gap-3 mt-8 relative z-20">
-            <div className="flex-1 relative">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (stats.collars === 0) {
-                    toast.error("Waduh, belum ada ternak yang dipantau nih! Yuk pasang kalungnya dulu");
-                    return;
-                  }
-                  setActivePopover(activePopover === 'pantau' ? null : 'pantau');
-                }}
-                className="w-full text-left p-3.5 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md rounded-2xl transition-all cursor-pointer focus:outline-none shadow-sm flex flex-col"
-              >
-                <div className="text-[34px] font-black leading-none">{stats.collars}</div>
-                <div className="text-[12px] font-medium text-white/90 mt-1">{lang === 'id' ? 'Ternak dipantau' : 'Monitored cows'}</div>
-              </button>
-              {activePopover === 'pantau' && (
-                <div 
-                  className="absolute top-full left-0 mt-2 w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl z-50 overflow-hidden"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="max-h-64 overflow-y-auto p-3 flex flex-col gap-2">
-                    {herd.filter(c => !!c.collar_id).map((c, i) => {
-                      let statusText = 'Sehat';
-                      let colorClass = 'text-[var(--accent)]';
-                      
-                      if (c.status === 'estrus') {
-                        statusText = 'Birahi';
-                        colorClass = 'text-[var(--red)]';
-                      } else if (c.status === 'monitor') {
-                        statusText = c.rawStatus ? c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase() : 'Perhatian';
-                        colorClass = 'text-[var(--amber)]';
-                      } else if (c.rawStatus && c.rawStatus.toLowerCase() !== 'sehat' && c.rawStatus.toLowerCase() !== 'normal') {
-                        statusText = c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase();
-                      }
-                      
-                      const shortId = c.id ? (c.id.length > 5 ? c.id.slice(0, 5).toUpperCase() + '...' : c.id.toUpperCase()) : 'N/A';
-                      
-                      return (
-                        <div key={i} onClick={() => navigate('/ternak', { state: { selectedCowId: c.id, fromDashboard: true } })} className="flex items-center justify-between p-2 rounded-xl hover:bg-[var(--bg-card)] cursor-pointer text-left">
-                          <div>
-                            <p className="text-sm font-bold text-[var(--text-1)] m-0">{c.name || `Sapi #${shortId}`}</p>
-                            <p className={`text-[12px] font-semibold m-0 mt-0.5 ${colorClass}`}>
-                              {shortId} <span className="text-[var(--text-3)] font-normal mx-1">|</span> {statusText}
-                            </p>
-                          </div>
-                          <ChevronRight size={16} className="text-[var(--text-3)]" />
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="border-t border-[var(--border)] p-2">
-                    <button 
-                      onClick={() => navigate('/ternak')}
-                      className="w-full py-2.5 text-[13px] font-bold text-[var(--text-1)] bg-[var(--bg-card)] rounded-[14px] hover:bg-[var(--border)] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-                    >
-                      Lihat Lebih Lanjut <ChevronRight size={14} />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex-1 relative">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const actionCount = intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length;
-                  if (actionCount === 0) {
-                    toast.success("Aman sentosa bosku! Tidak ada ternak yang butuh tindakan mendesak");
-                    return;
-                  }
-                  setActivePopover(activePopover === 'action' ? null : 'action');
-                }}
-                className="w-full text-left p-3.5 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md rounded-2xl transition-all cursor-pointer focus:outline-none shadow-sm flex flex-col"
-              >
-                <div className="text-[34px] font-black leading-none">{intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length}</div>
-                <div className="text-[12px] font-medium text-white/90 mt-1">{lang === 'id' ? 'Perlu tindakan' : 'Action needed'}</div>
-              </button>
-              {activePopover === 'action' && (
-                <div 
-                  className="absolute top-full left-0 mt-2 w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl z-50 overflow-hidden"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="max-h-64 overflow-y-auto p-3 flex flex-col gap-2">
-                    {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').map((c, i) => {
-                      const shortId = c.cow_id ? (c.cow_id.length > 5 ? c.cow_id.slice(0, 5).toUpperCase() + '...' : c.cow_id.toUpperCase()) : 'N/A';
-                      const statusText = c.urgency === 'critical' ? 'Kritis' : 'Perhatian';
-                      const colorClass = c.urgency === 'critical' ? 'text-[var(--red)]' : 'text-[var(--amber)]';
-                      
-                      return (
-                        <div key={i} onClick={() => navigate('/ternak', { state: { selectedCowId: c.cow_id, fromDashboard: true } })} className="flex items-center justify-between p-2 rounded-xl hover:bg-[var(--bg-card)] cursor-pointer text-left">
-                          <div>
-                            <p className="text-sm font-bold text-[var(--text-1)] m-0">{c.cow_name || (c.cow_id ? `Sapi #${shortId}` : c.title.split('—')[0].trim())}</p>
-                            <p className={`text-[12px] font-semibold m-0 mt-0.5 ${colorClass}`}>
-                              {shortId} <span className="text-[var(--text-3)] font-normal mx-1">|</span> {statusText}
-                            </p>
-                          </div>
-                          <ChevronRight size={16} className="text-[var(--text-3)]" />
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="border-t border-[var(--border)] p-2">
-                    <button 
-                      onClick={() => navigate('/ternak')}
-                      className="w-full py-2.5 text-[13px] font-bold text-[var(--text-1)] bg-[var(--bg-card)] rounded-[14px] hover:bg-[var(--border)] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-                    >
-                      Lihat Lebih Lanjut <ChevronRight size={14} />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <DashSlotCard 
+              slotType={selectedWidgets[0] || 'pantau'}
+              activePopover={activePopover} setActivePopover={setActivePopover} 
+              slotId="slot1" stats={stats} herd={herd} intel={intel} 
+              sapiList={sapiList} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
+            />
+            <DashSlotCard 
+              slotType={selectedWidgets[1] || 'total'}
+              activePopover={activePopover} setActivePopover={setActivePopover} 
+              slotId="slot2" stats={stats} herd={herd} intel={intel} 
+              sapiList={sapiList} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
+            />
           </div>
         </div>
 
@@ -1111,6 +1130,7 @@ export default function Dashboard() {
           border: '0.5px solid var(--border)',
           borderRadius: '12px',
           padding: '18px 22px',
+          marginBottom: '24px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
             <p className="eyebrow" style={{ marginBottom: 0 }}>REKOMENDASI LAINNYA</p>
@@ -1130,7 +1150,7 @@ export default function Dashboard() {
                   } else if (card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')) {
                     friendlyMsg = `${cowName} menunjukkan tanda birahi. Waktu terbaik untuk inseminasi adalah 12–18 jam ke depan, jangan sampai terlewat.`;
                   } else {
-                    friendlyMsg = `Ada hal yang perlu kamu tindak lanjuti untuk ${cowName}. Sebaiknya segera dicek agar tidak terlewat.`;
+                    friendlyMsg = card.sub || card.recommendation || `Ada hal yang perlu kamu tindak lanjuti untuk ${cowName}. Sebaiknya segera dicek agar tidak terlewat.`;
                   }
                   return (
                     <RecommendationCard
@@ -1372,6 +1392,81 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      {/* Widget Settings Modal for Dashboard */}
+      {showWidgetModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="font-bold text-gray-900">Atur Widget Beranda</h3>
+              <button 
+                onClick={() => setShowWidgetModal(false)}
+                className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-4 max-h-[60vh] overflow-y-auto">
+              <p className="text-xs text-gray-500 mb-4">Pilih 2 metrik utama untuk ditampilkan di beranda. Anda telah memilih <span className="font-bold text-[var(--accent)]">{selectedWidgets.length}/2</span>.</p>
+              
+              <div className="space-y-2">
+                {[
+                  { id: 'pantau', label: 'Ternak Dipantau', icon: Activity, value: stats.collars, unit: '' },
+                  { id: 'total', label: 'Total Ternak', icon: Database, value: sapiList.length, unit: '' },
+                  { id: 'tindakan', label: 'Perlu Tindakan', icon: ShieldAlert, value: intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length, unit: '' }
+                ].map(w => {
+                  const isSelected = selectedWidgets.includes(w.id);
+                  const Icon = w.icon;
+                  return (
+                    <label 
+                      key={w.id} 
+                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    >
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded text-[var(--accent)] focus:ring-[var(--accent)]"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (selectedWidgets.length >= 2) {
+                              setSelectedWidgets([selectedWidgets[1], w.id]);
+                            } else {
+                              setSelectedWidgets([...selectedWidgets, w.id]);
+                            }
+                          } else {
+                            if (selectedWidgets.length <= 1) {
+                              toast.error('Minimal 1 widget harus dipilih');
+                              return;
+                            }
+                            setSelectedWidgets(selectedWidgets.filter(id => id !== w.id));
+                          }
+                        }}
+                      />
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isSelected ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : 'bg-gray-100 text-gray-500'}`}>
+                        <Icon size={16} />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>{w.label}</p>
+                        <p className="text-xs text-gray-500">{w.value} {w.unit}</p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-gray-100">
+              <button 
+                onClick={() => setShowWidgetModal(false)}
+                className="w-full py-3 bg-[var(--accent)] text-white rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all"
+              >
+                Simpan Pengaturan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── ADD COW MODAL ── */}
       <AddCowModal
         isOpen={isAddCowModalOpen}

@@ -109,7 +109,7 @@ export default function ManajemenTernak() {
   }, [reproHistory, reproSortOrder]);
 
   const [editForm, setEditForm] = useState({
-    nama: '', jenis: 'Simmental', lahir: '', kesehatan: 'Sehat'
+    nama: '', jenis: 'Simmental', lahir: '', kesehatan: 'Sehat', kelamin: 'betina'
   });
   const [reproForm, setReproForm] = useState({
     tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
@@ -168,10 +168,20 @@ export default function ManajemenTernak() {
   // Handle auto-selecting cow after data is loaded
   useEffect(() => {
     if (location.state?.selectedCowId && sapiList.length > 0) {
-      const cow = sapiList.find(h => h.id === location.state.selectedCowId || h.cow_id === location.state.selectedCowId);
+      const cow = sapiList.find(h => 
+        h.id === location.state.selectedCowId || 
+        h.cow_id === location.state.selectedCowId ||
+        h.nama?.toLowerCase() === location.state.selectedCowId?.toLowerCase()
+      );
       if (cow) {
         setSelectedSapi(cow);
         // Clear selectedCowId from state but keep 'from' so back button works
+        navigate(location.pathname, { 
+          replace: true, 
+          state: { ...location.state, selectedCowId: undefined } 
+        });
+      } else {
+        toast.error(`Sapi "${location.state.selectedCowId}" tidak ditemukan di daftar ternak.`);
         navigate(location.pathname, { 
           replace: true, 
           state: { ...location.state, selectedCowId: undefined } 
@@ -292,7 +302,8 @@ export default function ManajemenTernak() {
       nama: formattedName,
       jenis: editForm.jenis,
       bulan_tahun_lahir: editForm.lahir,
-      kesehatan: editForm.kesehatan
+      kesehatan: editForm.kesehatan,
+      kelamin: editForm.kelamin
     });
     if (res.success) {
       setSelectedSapi({
@@ -982,8 +993,9 @@ export default function ManajemenTernak() {
                     <option value="Angus">{t.breed_angus}</option>
                     <option value="Friesian Holstein">{t.breed_friesholstein}</option>
                   </select>
+                  <ChevronDown className="absolute right-4 top-[42px] text-gray-500 pointer-events-none" size={18} />
                 </div>
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">
                     {t.livestock_add_health.replace('*', '')} <span className="text-red-500">*</span>
                   </label>
@@ -995,6 +1007,18 @@ export default function ManajemenTernak() {
                     <option value="Hamil">{t.livestock_filter_hamil}</option>
                   </select>
                 </div>
+              </div>
+              
+              {/* Jenis Kelamin */}
+              <div className="relative">
+                <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">
+                  {lang === 'id' ? 'Jenis Kelamin' : 'Gender'} <span className="text-red-500">*</span>
+                </label>
+                <select required style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-4 h-[48px] rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none appearance-none cursor-pointer" value={editForm.kelamin} onChange={e => setEditForm({...editForm, kelamin: e.target.value})}>
+                  <option value="betina">{lang === 'id' ? 'Betina' : 'Female'}</option>
+                  <option value="jantan">{lang === 'id' ? 'Jantan' : 'Male'}</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-[42px] text-gray-500 pointer-events-none" size={18} />
               </div>
 
               <div>
@@ -1084,7 +1108,8 @@ export default function ManajemenTernak() {
                           nama: selectedSapi.nama || '',
                           jenis: selectedSapi.jenis || 'Simmental',
                           lahir: formattedLahir,
-                          kesehatan: selectedSapi.status_kesehatan || 'Sehat'
+                          kesehatan: selectedSapi.status_kesehatan || 'Sehat',
+                          kelamin: selectedSapi.kelamin || 'betina'
                         });
                         setIsEditModalOpen(true);
                       }}
@@ -1352,10 +1377,10 @@ export default function ManajemenTernak() {
                                   <p className="text-[var(--color-text-muted)]">{t.livestock_repro_inseminator}</p>
                                   <p className="font-semibold text-[var(--color-text-secondary)]">{item.pemberi_ib || item.petugas || item.technician || '—'}</p>
                                 </div>
-                                {item.catatan && (
+                                {(item.catatan || item.notes) && (
                                   <div>
                                     <p className="text-[var(--color-text-muted)]">{t.repro_notes}</p>
-                                    <p className="text-[10px] text-[var(--color-text-secondary)] italic line-clamp-2" title={item.catatan}>{item.catatan}</p>
+                                    <p className="text-[10px] text-[var(--color-text-secondary)] italic line-clamp-2" title={item.catatan || item.notes}>{item.catatan || item.notes}</p>
                                   </div>
                                 )}
                               </div>
@@ -1489,7 +1514,8 @@ export default function ManajemenTernak() {
                       nama: selectedSapi.nama || '',
                       jenis: selectedSapi.jenis || 'Simmental',
                       lahir: formattedLahir,
-                      kesehatan: selectedSapi.status_kesehatan || 'Sehat'
+                      kesehatan: selectedSapi.status_kesehatan || 'Sehat',
+                      kelamin: selectedSapi.kelamin || 'betina'
                     });
                     setIsEditModalOpen(true);
                   }}
@@ -1641,7 +1667,7 @@ export default function ManajemenTernak() {
                               <p className="font-extrabold text-[14px]" style={{ color: 'var(--text-1)' }}>
                                 {(item.metode || 'IB').toUpperCase()} {item.jumlah_ib ? <span className="font-bold text-[12px] text-gray-500 ml-1.5">(Ke-{item.jumlah_ib})</span> : ''}
                               </p>
-                              {item.catatan && <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-3)' }}>{item.catatan}</p>}
+                              {(item.catatan || item.notes) && <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-3)' }}>{item.catatan || item.notes}</p>}
                             </div>
                             {isPregnant && <span className="text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#ECFDF5] text-[#10B981] shrink-0 border border-[#10B981]/20">Bunting</span>}
                             {isFailed   && <span className="text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#FEF2F2] text-[#EF4444] shrink-0 border border-[#EF4444]/20">Gagal</span>}
