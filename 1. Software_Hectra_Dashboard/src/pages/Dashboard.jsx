@@ -772,10 +772,13 @@ export default function Dashboard() {
   });
 
   const [selectedWidgets, setSelectedWidgets] = useState(() => {
-    return [
-      localStorage.getItem('dash_slot1') || 'pantau',
-      localStorage.getItem('dash_slot2') || 'total'
-    ];
+    const valid = ['total', 'sehat', 'estrus', 'tindakan'];
+    let s1 = localStorage.getItem('dash_slot1');
+    let s2 = localStorage.getItem('dash_slot2');
+    if (!valid.includes(s1)) s1 = 'total';
+    if (!valid.includes(s2)) s2 = 'sehat';
+    if (s1 === s2) { s1 = 'total'; s2 = 'sehat'; }
+    return [s1, s2];
   });
   const [showWidgetModal, setShowWidgetModal] = useState(false);
 
