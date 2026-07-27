@@ -162,29 +162,35 @@ export default function EstrusPrediction() {
     <div className="space-y-8 animate-in fade-in duration-500">
 
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-[var(--text-1)]">
-            {t.prediction_title}
-          </h1>
-          <p className="text-[var(--text-2)] mt-1 text-sm">
-            {t.prediction_sub}
-          </p>
+      <div 
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
+        style={{ background: 'linear-gradient(135deg, #E11D48 0%, #881337 100%)' }}
+      >
+        {/* Subtle Background Accent */}
+        <Target 
+          size={240} 
+          strokeWidth={1} 
+          className="absolute -top-10 -right-10 text-white opacity-[0.08] rotate-12 pointer-events-none" 
+        />
+
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
+          <div>
+            <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-rose-200">
+              PREDIKSI MASA SUBUR & REPRODUKSI
+            </p>
+            <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
+              {t.prediction_title}
+            </h1>
+            <p className="text-rose-100 mt-2 font-medium">{t.prediction_sub}</p>
+          </div>
+          <button 
+            onClick={fetchPredictions}
+            className="flex items-center gap-2 px-5 py-2.5 bg-white/20 border border-white/30 text-white font-bold rounded-xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md self-start sm:self-auto"
+          >
+            <RefreshCw size={18} />
+            <span>{t.btn_refresh}</span>
+          </button>
         </div>
-        <button
-          onClick={() => fetchPredictions()}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '8px 16px', border: '0.5px solid var(--border)',
-            borderRadius: '10px', background: 'var(--bg-surface)',
-            color: 'var(--text-2)', cursor: 'pointer',
-            fontSize: '13px', fontWeight: 500, fontFamily: 'Inter, sans-serif',
-            transition: 'background 0.15s',
-          }}
-        >
-          <RefreshCw className="w-4 h-4" />
-          {t.btn_refresh}
-        </button>
       </div>
 
       {/* ── STAT SUMMARY CARDS ────────────────────────────────────────────── */}

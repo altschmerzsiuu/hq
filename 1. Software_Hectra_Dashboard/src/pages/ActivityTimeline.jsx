@@ -141,20 +141,36 @@ export default function ActivityTimeline() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)]">{t.timeline_title}</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">{t.timeline_sub}</p>
+      {/* ── HEADER ── */}
+      <div 
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
+        style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%)' }}
+      >
+        {/* Subtle Background Accent (Activity) */}
+        <Activity 
+          size={240} 
+          strokeWidth={1} 
+          className="absolute -top-10 -right-10 text-white opacity-[0.08] rotate-12 pointer-events-none" 
+        />
+
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
+          <div>
+            <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-blue-200">
+              RIWAYAT DAN AKTIVITAS KANDANG
+            </p>
+            <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
+              {t.timeline_title}
+            </h1>
+            <p className="text-blue-100 mt-2 font-medium">{t.timeline_sub}</p>
+          </div>
+          <button 
+            onClick={fetchEvents}
+            className="flex items-center gap-2 px-5 py-2.5 bg-white/20 border border-white/30 text-white font-bold rounded-xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md self-start sm:self-auto"
+          >
+            <RefreshCw size={18} />
+            <span>{t.btn_refresh}</span>
+          </button>
         </div>
-        <button 
-          onClick={fetchEvents}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'var(--bg-card)', color: 'var(--text-1)', outline: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}
-          className="shadow-sm self-start sm:self-auto"
-        >
-          <RefreshCw className="w-4 h-4" />
-          {t.btn_refresh}
-        </button>
       </div>
 
       {/* FILTER & SEARCH */}

@@ -1017,7 +1017,7 @@ export default function Dashboard() {
 
         {/* ─── 0. GREETING (GRADIENT DESIGN) ────────────────────────── */}
         <div 
-          className="rounded-t-none rounded-b-[40px] p-6 pt-[76px] shadow-lg relative mb-2 text-white flex flex-col justify-between -mx-4 md:-mx-[22px]" 
+          className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden text-white flex flex-col justify-between -mx-4 md:mx-0 mb-6" 
           style={{ 
             minHeight: '260px',
             background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)'

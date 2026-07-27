@@ -140,15 +140,32 @@ export default function Recommendations() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)]">{t.recs_title}</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">{t.recs_sub}</p>
-        </div>
-        <div className="bg-[var(--color-forest)]/10 text-[var(--color-forest)] px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-          <Lightbulb className="w-4 h-4" />
-          {recs.length} {t.recs_pending}
+      {/* ── HEADER ── */}
+      <div 
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
+        style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)' }}
+      >
+        {/* Subtle Background Accent */}
+        <Lightbulb 
+          size={240} 
+          strokeWidth={1} 
+          className="absolute -top-10 -right-10 text-white opacity-[0.08] rotate-12 pointer-events-none" 
+        />
+
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
+          <div>
+            <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-amber-200">
+              OPTIMASI KESEHATAN & PRODUKSI
+            </p>
+            <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
+              {t.recs_title}
+            </h1>
+            <p className="text-amber-100 mt-2 font-medium">{t.recs_sub}</p>
+          </div>
+          <div className="bg-white/20 border border-white/30 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm backdrop-blur-md self-start sm:self-auto">
+            <Lightbulb size={18} />
+            {recs.length} {t.recs_pending}
+          </div>
         </div>
       </div>
 

@@ -513,52 +513,48 @@ export default function ManajemenTernak() {
       )}
 
       <div className="space-y-6 pb-6">
-        {/* Header */}
-      {/* ── Header ── */}
-      {/* Desktop Header */}
-      <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-[var(--color-text-primary)]">{t.livestock_title}</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">{t.livestock_sub}</p>
-        </div>
-        <div className="flex gap-2">
-           <button 
-            onClick={() => setIsPairModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-primary)] text-[var(--color-primary)] font-bold rounded-xl hover:bg-[var(--color-primary)] hover:text-white transition-all shadow-sm"
-          >
-            <Link size={18} />
-            <span className="hidden sm:inline">{t.qa_pair_collar}</span>
-          </button>
-          <button 
-            onClick={() => setIsTambahModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] transition-all shadow-md"
-          >
-            <Plus size={20} />
-            <span>{t.livestock_btn_add}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── MOBILE HEADER (Brand Orange with DNA accent) ── */}
+      {/* ── UNIFIED HEADER (Brand Orange with DNA accent) ── */}
       <div 
-        className="md:hidden -mx-4 md:-mx-[22px] px-6 pt-[76px] pb-[68px] shadow-lg relative overflow-hidden mb-0 text-white flex flex-col justify-between rounded-t-none"
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 px-6 pt-[86px] md:pt-8 pb-[40px] md:pb-[48px] shadow-lg relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
         style={{ 
-          background: 'linear-gradient(135deg, #FF7B1C 0%, #E65C00 100%)',
-          borderBottomLeftRadius: '32px',
-          borderBottomRightRadius: '32px'
+          background: 'linear-gradient(135deg, #FF7B1C 0%, #E65C00 100%)'
         }}
       >
         {/* Subtle DNA / Fingerprint Accent */}
         <Dna 
-          size={240} 
+          size={320} 
           strokeWidth={0.8} 
           className="absolute -top-12 -right-12 text-white opacity-[0.12] rotate-12 pointer-events-none" 
         />
 
         <div className="flex justify-between items-start relative z-10">
           <div className="w-full">
-            <p className="text-[10px] font-black opacity-90 mb-1 uppercase tracking-widest text-[#FFD8B5]">KELOLA DATA PROFIL DAN RIWAYAT REPRODUKSI SAPI.</p>
-            <h1 className="text-[32px] font-black tracking-tight leading-none mb-6">Ternak Anda</h1>
+            <div className="flex flex-col md:flex-row md:items-end justify-between w-full mb-6 gap-4">
+              <div>
+                <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 md:mb-2 uppercase tracking-widest text-[#FFD8B5]">
+                  KELOLA DATA PROFIL DAN RIWAYAT REPRODUKSI SAPI.
+                </p>
+                <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
+                  Ternak Anda
+                </h1>
+              </div>
+              <div className="hidden md:flex gap-3">
+                 <button 
+                  onClick={() => setIsPairModalOpen(true)}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 border border-white/30 text-white font-bold rounded-xl hover:bg-white/20 transition-all shadow-sm backdrop-blur-md"
+                >
+                  <Link size={18} />
+                  <span>{t.qa_pair_collar}</span>
+                </button>
+                <button 
+                  onClick={() => setIsTambahModalOpen(true)}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-[#E65C00] font-bold rounded-xl hover:bg-white/90 transition-all shadow-md"
+                >
+                  <Plus size={20} />
+                  <span>{t.livestock_btn_add}</span>
+                </button>
+              </div>
+            </div>
             
             <div className="flex items-center gap-3 w-full">
               {/* Cards (Sapi, Bunting, Sehat) */}

@@ -318,7 +318,7 @@ export default function SensorData() {
       
       {/* ── 0. HEADER (PINE GREEN CYBER DESIGN) ── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] p-6 pt-[86px] shadow-lg relative overflow-hidden text-white flex flex-col justify-between -mx-4 md:-mx-[22px] mb-6" 
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden text-white flex flex-col justify-between -mx-4 md:mx-0 mb-6" 
         style={{ 
           minHeight: '270px',
           background: 'linear-gradient(180deg, #115e59 0%, #022c22 100%)'

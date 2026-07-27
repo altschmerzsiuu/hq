@@ -1,6 +1,7 @@
 // src/pages/Settings.jsx
 
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { LogOut, User, Bell, Key, Users, Settings as SettingsIcon, Trash2, Camera, ChevronLeft, ChevronDown, Monitor, HelpCircle, Globe, Sun, Moon, Send, Save, Loader2, UserPlus, CheckCheck, Check, Edit2 } from 'lucide-react';
 import { FAQ } from '@/components/shared/FAQ';
 import FeedbackModal from '@/components/shared/FeedbackModal';
@@ -21,8 +22,20 @@ export default function Settings() {
   const { lang, setLang } = useSettingsStore();
   const t = translations[lang];
   const user = useAuthStore(state => state.user);
+  const location = useLocation();
 
   const [activeTab, setActiveTab] = useState('main');
+
+  // Sync tab with URL query params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    } else {
+      setActiveTab('main');
+    }
+  }, [location.search]);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
 

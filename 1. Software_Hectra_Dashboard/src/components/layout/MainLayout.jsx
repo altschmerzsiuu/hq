@@ -8,12 +8,13 @@ import MobileBottomNav from './MobileBottomNav';
 import { useNotificationStore } from '@/store/notificationStore';
 import { toast } from '@/store/toastStore';
 import ScrollToTop from './ScrollToTop';
+import { cn } from '@/lib/utils';
 
 export default function MainLayout() {
   const location = useLocation();
   const isResearchLab = location.pathname.includes('/research-lab');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Hover-to-expand defaults to true
   const [isScrolled, setIsScrolled] = useState(false);
   const addNotification = useNotificationStore(state => state.addNotification);
   useEffect(() => {
@@ -90,7 +91,7 @@ export default function MainLayout() {
     <div style={{
       display: 'flex',
       height: '100vh',
-      background: 'var(--bg-base)',
+      background: '#F8F9FA', // Clean grayish background to contrast floating cards
       overflow: 'hidden',
     }}>
       {/* Sidebar */}
@@ -111,9 +112,7 @@ export default function MainLayout() {
         position: 'relative',
       }}>
         {/* Topbar */}
-        {location.pathname !== '/settings' && (
-          <Topbar onMenuClick={() => setSidebarOpen(true)} isScrolled={isScrolled} />
-        )}
+        <Topbar onMenuClick={() => setSidebarOpen(true)} isScrolled={isScrolled} />
 
         {/* Scrollable Content */}
         <main
@@ -122,10 +121,12 @@ export default function MainLayout() {
           style={{ 
             flex: 1, 
             overflowY: 'auto', 
-            overflowX: 'hidden',
-            paddingTop: (location.pathname === '/dashboard' || location.pathname === '/ternak' || location.pathname === '/sensor-data' || location.pathname === '/settings') ? '0px' : 'calc(56px + 16px)'
+            overflowX: 'hidden'
           }}
-          className="px-4 pb-4 md:px-[22px] md:pb-5"
+          className={cn(
+            "px-4 pb-4 md:px-[22px] md:pb-5 lg:pt-0",
+            (location.pathname === '/dashboard' || location.pathname === '/ternak' || location.pathname === '/sensor-data') ? "pt-0" : "pt-[72px]"
+          )}
         >
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <ScrollToTop />
