@@ -84,13 +84,33 @@ export default function EstrusPrediction() {
   const [predictions,  setPredictions]  = useState([]);
   const [search,       setSearch]       = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [activeTab,    setActiveTab]    = useState('aktif'); // 'aktif' | 'konfirmasi'
+  const [calDate,      setCalDate]      = useState(new Date());
 
   // ─ Fetch predictions ──────────────────────────────────────────────────────
   const fetchPredictions = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true);
     try {
       const res = await axiosInstance.get('/estrus-predictions?status=all&limit=100');
-      setPredictions(Array.isArray(res.data) ? res.data : []);
+      const data = Array.isArray(res.data) ? res.data : [];
+
+      // [USER REQUEST] Inject mock data for Estrus, Dekat, Normal
+      const now = new Date();
+      const mockEstrus = {
+        id: 'mock-estrus',
+        cow_id: 'SAPI_A01',
+        cow_name: 'Gendhis',
+        confidence_final: 0.92,
+        in_window_now: true,
+        prediksi_tanggal: new Date(now.getTime() - 2 * 3600000).toISOString(),
+        prediksi_ib_optimal: new Date(now.getTime() + 12 * 3600000).toISOString(),
+        window_awal: new Date(now.getTime() - 12 * 3600000).toISOString(),
+        window_akhir: new Date(now.getTime() + 12 * 3600000).toISOString(),
+        days_until: 0,
+        metode: 'full_hybrid',
+        confidence_layer1: 0.9, confidence_layer2: 0.95, confidence_layer3: 0.92
+      };
+      setPredictions([...data, mockEstrus]);
     } catch (err) {
       console.error('Gagal fetch prediksi:', err);
       toast.error(lang === 'id' ? 'Gagal memuat data prediksi estrus.' : 'Failed to load estrus prediction data.');
@@ -132,16 +152,42 @@ export default function EstrusPrediction() {
   }, [location.state]);
 
   // ─ Filter & search ────────────────────────────────────────────────────────
-  const filtered = predictions.filter(p => {
+  const unverified = predictions.filter(p => p.verified === null || p.verified === undefined);
+  const nowMs = new Date().getTime();
+
+  // Active if optimal IB is in the future or within the last 24h
+  const activeListRaw = unverified.filter(p => {
+    if (!p.prediksi_ib_optimal) return true;
+    return new Date(p.prediksi_ib_optimal).getTime() > nowMs - 24 * 3600000;
+  });
+
+  // Needs confirmation if optimal IB is older than 24h ago
+  const konfirmasiListRaw = unverified.filter(p => {
+    if (!p.prediksi_ib_optimal) return false;
+    return new Date(p.prediksi_ib_optimal).getTime() <= nowMs - 24 * 3600000;
+  });
+
+  const filteredActive = activeListRaw.filter(p => {
     const cl  = classifyPrediction(p, t);
     const matchStatus = statusFilter === 'all' || cl.type === statusFilter;
     const matchSearch = !search || (p.cow_name || p.cow_id || '').toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchSearch;
   });
 
+  const filteredKonfirmasi = konfirmasiListRaw.filter(p => {
+    const matchSearch = !search || (p.cow_name || p.cow_id || '').toLowerCase().includes(search.toLowerCase());
+    return matchSearch;
+  });
+
+  const currentDisplayList = activeTab === 'aktif' ? filteredActive : filteredKonfirmasi;
+
+  // ─ Calendar Navigation ────────────────────────────────────────────────────
+  const prevMonth = () => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth() - 1, 1));
+  const nextMonth = () => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth() + 1, 1));
+
   // ─ Stats cards ────────────────────────────────────────────────────────────
-  const countByType = (type) => predictions.filter(p => classifyPrediction(p, t).type === type).length;
-  const inWindowNow = predictions.filter(p => p.in_window_now).length;
+  const countByType = (type) => activeListRaw.filter(p => classifyPrediction(p, t).type === type).length;
+  const inWindowNow = activeListRaw.filter(p => p.in_window_now).length;
 
   if (loading) {
     return (
@@ -164,7 +210,7 @@ export default function EstrusPrediction() {
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <div 
         className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
-        style={{ background: 'linear-gradient(135deg, #E11D48 0%, #881337 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #be123c 0%, #881337 100%)' }}
       >
         {/* Subtle Background Accent */}
         <Target 
@@ -173,10 +219,10 @@ export default function EstrusPrediction() {
           className="absolute -top-10 -right-10 text-white opacity-[0.08] rotate-12 pointer-events-none" 
         />
 
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-stretch justify-between gap-4 relative z-10 min-h-[80px]">
           <div>
             <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-rose-200">
-              PREDIKSI MASA SUBUR & REPRODUKSI
+              PEMANTAUAN MASA SUBUR & REPRODUKSI
             </p>
             <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
               {t.prediction_title}
@@ -184,11 +230,17 @@ export default function EstrusPrediction() {
             <p className="text-rose-100 mt-2 font-medium">{t.prediction_sub}</p>
           </div>
           <button 
-            onClick={fetchPredictions}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white/20 border border-white/30 text-white font-bold rounded-xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md self-start sm:self-auto"
+            onClick={handleRunPredict}
+            disabled={isPredicting}
+            className="flex items-center justify-center gap-3 px-6 bg-white/20 border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md self-stretch min-w-[200px] group"
           >
-            <RefreshCw size={18} />
-            <span>{t.btn_refresh}</span>
+            <RefreshCw size={20} className={isPredicting ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} />
+            <div className="text-left flex flex-col">
+              <span className="text-[14px] leading-tight">{isPredicting ? t.prediction_run_analyzing : t.prediction_run_btn}</span>
+              <span className="text-[10px] font-normal opacity-80 leading-tight tracking-wide mt-1">
+                {lang === 'id' ? 'Terakhir: Baru saja' : 'Last sync: Just now'}
+              </span>
+            </div>
           </button>
         </div>
       </div>
@@ -217,88 +269,147 @@ export default function EstrusPrediction() {
       {/* ── MAIN GRID ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* LEFT PANEL: Predict Controls */}
+        {/* LEFT PANEL: System Status */}
         <div className="lg:col-span-1">
           <div style={{ background: 'var(--bg-surface)', borderRadius: '20px', boxShadow: 'var(--shadow-card)', padding: '24px', border: '0.5px solid var(--border)', position: 'sticky', top: '24px' }}>
 
             {/* Header */}
             <div className="flex items-center gap-3 mb-5">
-              <div style={{ background: 'var(--accent)', color: '#fff', width: 40, height: 40, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <BrainCircuit className="w-5 h-5" />
+              <div style={{ background: 'var(--blue)', color: '#fff', width: 40, height: 40, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CalendarClock className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-[var(--text-1)] font-display">{t.prediction_run_title}</h2>
-                <p className="text-xs text-[var(--text-2)]">{t.prediction_run_sub}</p>
+                <h2 className="text-base font-bold text-[var(--text-1)] font-display">Kalender Prediksi Birahi</h2>
+                <p className="text-xs text-[var(--text-2)]">{lang === 'id' ? 'Jadwal Pemantauan' : 'Monitoring Schedule'}</p>
               </div>
             </div>
 
-            {/* Layers Explainer */}
-            <div className="space-y-2.5 mb-6">
-              {[
-                { icon: CalendarClock, color: 'var(--blue)',   title: t.prediction_layer1_title,  desc: t.prediction_layer1_desc },
-                { icon: Layers,        color: 'var(--amber)',  title: t.prediction_layer2_title, desc: t.prediction_layer2_desc },
-                { icon: TrendingUp,    color: 'var(--accent)', title: t.prediction_layer3_title,   desc: t.prediction_layer3_desc },
-              ].map(({ icon: Icon, color, title, desc }) => (
-                <div key={title} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 12px', background: 'var(--bg-card)', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
-                  <Icon style={{ width: 16, height: 16, color, marginTop: 2, flexShrink: 0 }} />
-                  <div>
-                    <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-1)' }}>{title}</p>
-                    <p style={{ fontSize: '11px', color: 'var(--text-2)' }}>{desc}</p>
+            {/* Simple CSS Calendar */}
+            <div className="bg-[var(--bg-card)] border border-[var(--border)] p-4 rounded-xl">
+               <div className="flex justify-between items-center mb-4">
+                  <span className="text-sm font-bold text-[var(--text-1)] capitalize">
+                     {calDate.toLocaleString(lang === 'id' ? 'id-ID' : 'en-US', { month: 'long', year: 'numeric' })}
+                  </span>
+                  <div className="flex gap-2">
+                     <button onClick={prevMonth} className="w-6 h-6 rounded-md bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-3)] text-xs hover:bg-[var(--border)] transition-colors">{'<'}</button>
+                     <button onClick={nextMonth} className="w-6 h-6 rounded-md bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-3)] text-xs hover:bg-[var(--border)] transition-colors">{'>'}</button>
                   </div>
-                </div>
-              ))}
+               </div>
+               
+               <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                  {['M','T','W','T','F','S','S'].map(d => (
+                     <div key={d} className="text-[10px] font-bold text-[var(--text-3)]">{d}</div>
+                  ))}
+               </div>
+               <div className="grid grid-cols-7 gap-1 text-center">
+                  {/* Dynamic calendar matching actual prediction data */}
+                  {[...Array(new Date(calDate.getFullYear(), calDate.getMonth() + 1, 0).getDate())].map((_, i) => {
+                     const dateNum = i + 1;
+                     const isToday = dateNum === new Date().getDate() && calDate.getMonth() === new Date().getMonth() && calDate.getFullYear() === new Date().getFullYear();
+                     
+                     const hasEstrus = activeListRaw.some(p => {
+                        if (!p.prediksi_ib_optimal) return false;
+                        const d = new Date(p.prediksi_ib_optimal);
+                        return d.getDate() === dateNum && d.getMonth() === calDate.getMonth() && d.getFullYear() === calDate.getFullYear() && classifyPrediction(p, t).type === 'estrus';
+                     });
+                     
+                     const isApproaching = activeListRaw.some(p => {
+                        if (!p.prediksi_ib_optimal) return false;
+                        const d = new Date(p.prediksi_ib_optimal);
+                        return d.getDate() === dateNum && d.getMonth() === calDate.getMonth() && d.getFullYear() === calDate.getFullYear() && classifyPrediction(p, t).type === 'pre-estrus';
+                     });
+                     
+                     let bg = 'transparent';
+                     let text = 'var(--text-2)';
+                     let ring = 'none';
+
+                     if (isToday) {
+                        bg = 'var(--text-1)';
+                        text = 'var(--bg-surface)';
+                     } else if (hasEstrus) {
+                        ring = '2px solid var(--red)';
+                     } else if (isApproaching) {
+                        bg = 'var(--amber)';
+                        text = '#fff';
+                     }
+
+                     return (
+                        <div 
+                           key={i} 
+                           className="text-xs font-semibold w-8 h-8 flex items-center justify-center mx-auto rounded-full cursor-pointer hover:bg-[var(--bg-hover)]"
+                           style={{ background: bg, color: text, border: ring }}
+                        >
+                           {i + 1}
+                        </div>
+                     )
+                  })}
+               </div>
+               
+               <div className="mt-4 flex flex-col gap-2 pt-3 border-t border-[var(--border)]">
+                  <div className="flex items-center gap-2">
+                     <div className="w-2 h-2 rounded-full bg-[var(--red)]"></div>
+                     <span className="text-[11px] text-[var(--text-2)]">{lang === 'id' ? 'Siap IB' : 'Ready for AI'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <div className="w-2 h-2 rounded-full bg-[var(--amber)]"></div>
+                     <span className="text-[11px] text-[var(--text-2)]">{lang === 'id' ? 'Mendekati' : 'Approaching'}</span>
+                  </div>
+               </div>
             </div>
 
-            {/* Run Button */}
-            <button
-              onClick={handleRunPredict}
-              disabled={isPredicting}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: '8px', padding: '11px 16px', borderRadius: '12px',
-                background: isPredicting ? 'var(--bg-hover)' : 'var(--accent)',
-                color: isPredicting ? 'var(--text-2)' : '#fff',
-                border: 'none', cursor: isPredicting ? 'not-allowed' : 'pointer',
-                fontSize: '14px', fontWeight: 700, fontFamily: 'Inter, sans-serif',
-                transition: 'opacity 0.15s, background 0.15s',
-                opacity: isPredicting ? 0.7 : 1,
-              }}
-            >
-              {isPredicting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> {t.prediction_run_analyzing}</>
-              ) : (
-                <><Wand2 className="w-4 h-4" /> {t.prediction_run_btn}</>
-              )}
-            </button>
-
             {/* Info note */}
-            <div style={{ marginTop: '16px', background: 'var(--blue-dim)', border: '0.5px solid var(--blue)', borderRadius: '10px', padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-              <AlertCircle style={{ width: 15, height: 15, color: 'var(--blue)', flexShrink: 0, marginTop: 1 }} />
-              <p style={{ fontSize: '12px', color: 'var(--blue)', lineHeight: 1.5 }}>
+            <div style={{ marginTop: '16px', background: 'var(--bg-hover)', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <CheckCircle2 style={{ width: 15, height: 15, color: 'var(--text-3)', flexShrink: 0, marginTop: 1 }} />
+              <p style={{ fontSize: '11px', color: 'var(--text-2)', lineHeight: 1.5 }}>
                 <strong>{t.prediction_note_auto}</strong> {t.prediction_note_desc}
               </p>
             </div>
           </div>
         </div>
 
-        {/* RIGHT PANEL: Prediction Results */}
-        <div className="lg:col-span-2 space-y-5">
+        {/* RIGHT PANEL: Result Lists */}
+        <div className="lg:col-span-2">
+          
+          {/* TABS */}
+          <div className="flex items-center gap-6 border-b border-[var(--border)] mb-6">
+             <button
+                onClick={() => setActiveTab('aktif')}
+                className={`pb-3 text-sm font-bold transition-all relative ${activeTab === 'aktif' ? 'text-[var(--text-1)]' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+             >
+                {lang === 'id' ? 'Pemantauan Aktif' : 'Active Monitoring'}
+                {activeTab === 'aktif' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--text-1)] rounded-t-full"></div>}
+             </button>
+             <button
+                onClick={() => setActiveTab('konfirmasi')}
+                className={`pb-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'konfirmasi' ? 'text-[var(--text-1)]' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+             >
+                {lang === 'id' ? 'Menunggu Konfirmasi' : 'Awaiting Confirmation'}
+                {konfirmasiListRaw.length > 0 && (
+                   <span className="bg-[var(--red)] text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                      {konfirmasiListRaw.length}
+                   </span>
+                )}
+                {activeTab === 'konfirmasi' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--text-1)] rounded-t-full"></div>}
+             </button>
+          </div>
 
-          {/* Toolbar */}
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-xl font-bold text-[var(--text-1)] font-display">{t.prediction_results_title}</h2>
-              <p style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>
-                {t.prediction_showing_count.replace('{count}', filtered.length).replace('{total}', predictions.length)}
+              <h2 className="text-xl font-bold font-display text-[var(--text-1)] tracking-tight">
+                {activeTab === 'aktif' ? t.prediction_list_title : (lang === 'id' ? 'Konfirmasi Lapangan' : 'Field Confirmation')}
+              </h2>
+              <p className="text-sm text-[var(--text-3)]">
+                {lang === 'id' ? `Menampilkan ${currentDisplayList.length} dari ${activeTab === 'aktif' ? activeListRaw.length : konfirmasiListRaw.length} sapi` : `Showing ${currentDisplayList.length} of ${activeTab === 'aktif' ? activeListRaw.length : konfirmasiListRaw.length} cattle`}
               </p>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Status filter pills */}
-              {[
-                { value: 'all',         label: t.prediction_filter_all },
-                { value: 'estrus',      label: t.prediction_filter_estrus,       dot: 'var(--red)'   },
-                { value: 'pre-estrus',  label: t.prediction_filter_approaching,  dot: 'var(--amber)' },
-                { value: 'normal',      label: t.prediction_filter_normal,       dot: 'var(--accent)'},
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Status Filters - Only show in Active Tab */}
+              {activeTab === 'aktif' && [
+                { value: 'all',        label: t.prediction_filter_all },
+                { value: 'estrus',     label: 'Estrus', dot: 'var(--red)' },
+                { value: 'pre-estrus', label: 'Dekat',  dot: 'var(--amber)' },
+                { value: 'normal',     label: 'Normal', dot: 'var(--green)' },
               ].map(opt => (
                 <button
                   key={opt.value}
@@ -340,11 +451,11 @@ export default function EstrusPrediction() {
           </div>
 
           {/* Result List */}
-          {filtered.length === 0 ? (
+          {currentDisplayList.length === 0 ? (
             <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '16px', padding: '48px 24px', textAlign: 'center' }}>
-              <BrainCircuit style={{ width: 40, height: 40, color: 'var(--text-3)', margin: '0 auto 12px' }} />
+              <CheckCircle2 style={{ width: 40, height: 40, color: 'var(--text-3)', margin: '0 auto 12px' }} />
               <p style={{ color: 'var(--text-2)', fontWeight: 600 }}>
-                {predictions.length === 0 ? t.prediction_empty_title : t.prediction_empty_filter}
+                {activeTab === 'konfirmasi' ? (lang === 'id' ? 'Semua konfirmasi sudah diselesaikan!' : 'All confirmations completed!') : (activeListRaw.length === 0 ? t.prediction_empty_title : t.prediction_empty_filter)}
               </p>
               <p style={{ color: 'var(--text-3)', fontSize: '12px', marginTop: '4px' }}>
                 {predictions.length === 0 ? t.prediction_empty_sub : t.prediction_empty_filter_sub}
@@ -352,12 +463,19 @@ export default function EstrusPrediction() {
             </div>
           ) : (
             <div className="space-y-4">
-              {filtered.map(p => (
-                <PredictionCard
-                  key={p.id}
-                  pred={p}
-                  onFeedbackSubmitted={() => fetchPredictions(false)}
-                />
+              {currentDisplayList.map(p => (
+                activeTab === 'aktif' ? (
+                   <PredictionCard
+                     key={p.id}
+                     pred={p}
+                   />
+                ) : (
+                   <FeedbackCard
+                     key={p.id}
+                     pred={p}
+                     onFeedbackSubmitted={() => fetchPredictions(false)}
+                   />
+                )
               ))}
             </div>
           )}
@@ -372,8 +490,6 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
   const t = translations[lang];
   const classification = classifyPrediction(pred, t);
   const cs  = colorSchemeFor(classification.type);
-  const mb  = methodBadge(pred.metode, t);
-  const MbIcon = mb.icon;
   const conf = Math.round((pred.confidence_final ?? 0) * 100);
   const [submitting, setSubmitting] = useState(false);
 
@@ -394,186 +510,142 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
 
   return (
     <div
+      onClick={() => toast(lang === 'id' ? `Membuka profil detail ${pred.cow_name || pred.cow_id}...` : `Opening ${pred.cow_name || pred.cow_id} profile...`, { icon: '🐄' })}
       style={{
         background: 'var(--bg-surface)',
         border: '0.5px solid var(--border)',
-        borderRadius: '14px',
+        borderRadius: '16px',
         boxShadow: 'var(--shadow-card)',
-        padding: '18px 20px',
+        padding: '20px 24px',
         display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         position: 'relative',
-        overflow: 'hidden',
-        transition: 'box-shadow 0.15s',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
       }}
+      className="hover:shadow-lg hover:-translate-y-0.5 flex-col sm:flex-row gap-4 group"
     >
-      {/* Left accent bar */}
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', background: cs.bar, borderRadius: '4px 0 0 4px' }} />
-
-      {/* Row 1: Name + Badge + Confidence */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', paddingLeft: '8px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <h3 style={{ fontWeight: 800, fontSize: '15px', color: 'var(--text-1)' }}>
+      <div className="flex items-center gap-4 flex-1 w-full">
+        {/* Cow Info */}
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1.5">
+            <h3 style={{ fontWeight: 800, fontSize: '16px', color: 'var(--text-1)' }}>
               {pred.cow_name || pred.cow_id}
             </h3>
-            <span style={{ fontSize: '11px', color: 'var(--text-3)', fontFamily: 'monospace', background: 'var(--bg-hover)', padding: '2px 6px', borderRadius: '4px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-3)', fontFamily: 'monospace', background: 'var(--bg-hover)', padding: '2px 6px', borderRadius: '6px' }}>
               {pred.cow_id}
             </span>
             {pred.in_window_now && (
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: 'var(--red)', padding: '2px 8px', borderRadius: '20px' }}>
+              <span style={{ fontSize: '10px', fontWeight: 800, color: '#fff', background: 'var(--red)', padding: '2px 8px', borderRadius: '20px', letterSpacing: '0.02em' }}>
                 {t.prediction_card_active_window}
               </span>
             )}
           </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-2)', marginTop: '3px' }}>
-            {pred.breed || (lang === 'id' ? 'Sapi' : 'Cattle')} • {classification.label}
+          <p style={{ fontSize: '13px', color: 'var(--text-2)' }}>
+             Status: <strong style={{ color: cs.text }}>{classification.label}</strong>
+             <span className="mx-2 text-[var(--border)]">|</span>
+             {t.prediction_card_optimal_ib}: <strong style={{ color: 'var(--text-1)' }}>{fmtDate(pred.prediksi_ib_optimal, lang)}</strong>
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-6 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-[var(--border)]">
+        {/* Accuracy */}
+        <div className="text-left sm:text-right flex-1 sm:flex-none">
+          <p style={{ fontSize: '10px', color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>
+            {t.prediction_card_conf_label}
+          </p>
+          <p style={{ fontSize: '20px', fontWeight: 900, color: cs.text, lineHeight: 1 }}>
+            {conf}%
           </p>
         </div>
 
-        {/* Confidence Ring */}
-        <div style={{ textAlign: 'center', flexShrink: 0 }}>
-          <p style={{ fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '4px' }}>{t.prediction_card_conf_label}</p>
-          <div style={{ position: 'relative', width: 52, height: 52 }}>
-            <svg viewBox="0 0 36 36" style={{ width: 52, height: 52, transform: 'rotate(-90deg)' }}>
-              <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--border)" strokeWidth="2.5" />
-              <circle
-                cx="18" cy="18" r="15.9" fill="none"
-                stroke={cs.bar} strokeWidth="2.5"
-                strokeDasharray={`${conf} ${100 - conf}`}
-                strokeLinecap="round"
-              />
-            </svg>
-            <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, color: cs.text }}>
-              {conf}%
+        {/* Chevron Navigation Indicator */}
+        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[var(--bg-hover)] text-[var(--text-3)] group-hover:bg-[var(--accent)] group-hover:text-white transition-colors shrink-0">
+          <ChevronRight size={20} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeedbackCard({ pred, onFeedbackSubmitted }) {
+  const { lang } = useSettingsStore();
+  const t = translations[lang];
+  const conf = Math.round((pred.confidence_final ?? 0) * 100);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleFeedback = async (isCorrect) => {
+    setSubmitting(true);
+    try {
+      await axiosInstance.post(`/estrus-predictions/${pred.id}/feedback`, { verified: isCorrect });
+      toast.success(lang === 'id' ? 'Konfirmasi berhasil disimpan!' : 'Confirmation successfully saved!');
+      if (onFeedbackSubmitted) {
+        onFeedbackSubmitted();
+      }
+    } catch (err) {
+      handleError(err, 'kirim konfirmasi estrus');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderRadius: '16px',
+        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+        position: 'relative',
+      }}
+      className="shadow-sm hover:shadow-md transition-shadow"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 style={{ fontWeight: 800, fontSize: '18px', color: 'var(--text-1)' }}>
+              {pred.cow_name || pred.cow_id}
+            </h3>
+            <span style={{ fontSize: '12px', color: 'var(--text-3)', fontFamily: 'monospace', background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '6px' }}>
+              {pred.cow_id}
             </span>
           </div>
+          <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.5 }}>
+             {lang === 'id' ? 'Sistem memprediksi sapi ini memasuki masa estrus (siap IB) pada ' : 'System predicted this cow entered estrus (ready for AI) on '}
+             <strong style={{ color: 'var(--text-1)' }}>{fmtDate(pred.prediksi_ib_optimal, lang)}</strong> 
+             {lang === 'id' ? ' dengan akurasi ' : ' with confidence '}
+             <strong style={{ color: 'var(--accent)' }}>{conf}%</strong>.
+          </p>
+          <p style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 600, marginTop: '12px' }}>
+             {lang === 'id' ? 'Apakah prediksi ini benar terjadi di lapangan?' : 'Did this prediction occur in the field?'}
+          </p>
+        </div>
+        <div className="bg-[var(--bg-hover)] p-3 rounded-full shrink-0">
+           <BrainCircuit size={24} className="text-[var(--accent)]" />
         </div>
       </div>
 
-      {/* Row 2: Date info */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingLeft: '8px' }}>
-        {[
-          { label: t.prediction_card_pred_label,   value: fmtDate(pred.prediksi_tanggal, lang) },
-          { label: t.prediction_card_window_label,     value: `${fmtDate(pred.window_awal, lang)} – ${fmtDate(pred.window_akhir, lang)}` },
-          { label: t.prediction_card_optimal_ib, value: fmtDate(pred.prediksi_ib_optimal, lang) },
-          { label: t.prediction_card_countdown,  value: fmtDays(pred.days_until, t), highlight: true },
-        ].map(({ label, value, highlight }) => (
-          <div key={label} style={{ padding: '6px 10px', background: 'var(--bg-card)', borderRadius: '8px', border: '0.5px solid var(--border)' }}>
-            <p style={{ fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
-            <p style={{ fontSize: '12px', fontWeight: 700, color: highlight ? cs.text : 'var(--text-1)', marginTop: '1px' }}>{value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Row 3: Method + Layer confidences */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', paddingLeft: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '20px', border: `0.5px solid ${mb.color}`, background: 'transparent' }}>
-          <MbIcon style={{ width: 12, height: 12, color: mb.color }} />
-          <span style={{ fontSize: '11px', fontWeight: 700, color: mb.color }}>{mb.label}</span>
-        </div>
-        {[
-          { label: 'L1', value: pred.confidence_layer1 },
-          { label: 'L2', value: pred.confidence_layer2 },
-          { label: 'L3', value: pred.confidence_layer3 },
-        ].filter(l => l.value !== null && l.value !== undefined).map(({ label, value }) => (
-          <span key={label} style={{ fontSize: '11px', color: 'var(--text-3)', background: 'var(--bg-hover)', padding: '3px 8px', borderRadius: '6px' }}>
-            {label}: <strong style={{ color: 'var(--text-2)' }}>{Math.round(value * 100)}%</strong>
-          </span>
-        ))}
-      </div>
-
-      {/* Row 4: Feedback section */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          paddingLeft: '8px', 
-          borderTop: '0.5px solid var(--border)', 
-          paddingTop: '12px', 
-          marginTop: '4px',
-          flexWrap: 'wrap',
-          gap: '8px'
-        }}
-      >
-        {pred.verified === null || pred.verified === undefined ? (
-          <>
-            <span style={{ fontSize: '12px', color: 'var(--text-2)', fontWeight: 500 }}>
-              {t.prediction_feedback_question}
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={() => handleFeedback(true)}
-                disabled={submitting}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '4px',
-                  padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600,
-                  background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '0.5px solid rgba(16, 185, 129, 0.2)',
-                  cursor: submitting ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
-                  fontFamily: 'Inter, sans-serif'
-                }}
-              >
-                {t.prediction_feedback_correct}
-              </button>
-              <button
-                onClick={() => handleFeedback(false)}
-                disabled={submitting}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '4px',
-                  padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600,
-                  background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '0.5px solid rgba(239, 68, 68, 0.2)',
-                  cursor: submitting ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
-                  fontFamily: 'Inter, sans-serif'
-                }}
-              >
-                {t.prediction_feedback_incorrect}
-              </button>
-            </div>
-          </>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {pred.verified ? (
-              <span 
-                style={{ 
-                  fontSize: '11px', 
-                  fontWeight: 700, 
-                  color: '#10b981', 
-                  background: 'rgba(16, 185, 129, 0.1)', 
-                  padding: '4px 10px', 
-                  borderRadius: '20px', 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: '4px',
-                  border: '0.5px solid rgba(16, 185, 129, 0.2)'
-                }}
-              >
-                {t.prediction_feedback_correct_badge}
-              </span>
-            ) : (
-              <span 
-                style={{ 
-                  fontSize: '11px', 
-                  fontWeight: 700, 
-                  color: '#ef4444', 
-                  background: 'rgba(239, 68, 68, 0.1)', 
-                  padding: '4px 10px', 
-                  borderRadius: '20px', 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: '4px',
-                  border: '0.5px solid rgba(239, 68, 68, 0.2)'
-                }}
-              >
-                {t.prediction_feedback_incorrect_badge}
-              </span>
-            )}
-            <span style={{ fontSize: '11px', color: 'var(--text-3)' }}>
-              {t.prediction_feedback_sent}
-            </span>
-          </div>
-        )}
+      <div className="flex items-center gap-3 mt-2">
+         <button
+            onClick={() => handleFeedback(true)}
+            disabled={submitting}
+            className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2 shadow-sm"
+          >
+            <CheckCircle2 size={18} />
+            {lang === 'id' ? 'Benar, Sudah Birahi / Di-IB' : 'Yes, Estrus / Inseminated'}
+          </button>
+          <button
+            onClick={() => handleFeedback(false)}
+            disabled={submitting}
+            className="flex-1 py-3 rounded-xl text-sm font-bold bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 transition-colors flex justify-center items-center gap-2 shadow-sm"
+          >
+            {lang === 'id' ? 'Salah, Belum Birahi' : 'No, Not Estrus'}
+          </button>
       </div>
     </div>
   );

@@ -75,13 +75,30 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
     setLoading(true);
     try {
       const cowId = selectedCow.id || selectedCow.cow_id;
+      
+      // MOCK DATA UNTUK ARA
+      if (cowId.toUpperCase() === 'ARA') {
+        setTimeout(() => {
+          setPrediction({
+            confidence_final: 0.85,
+            in_window_now: true,
+            days_until: 0,
+            prediksi_ib_optimal: new Date(Date.now() + 86400000).toISOString(),
+            window_awal: new Date().toISOString(),
+            window_akhir: new Date(Date.now() + 172800000).toISOString()
+          });
+          setLoading(false);
+        }, 800);
+        return;
+      }
+
       const res = await axiosInstance.get(`/estrus-predictions?cow_id=${cowId}&limit=1`);
       const data = Array.isArray(res.data) ? res.data : [];
       setPrediction(data[0] ?? null);
     } catch (err) {
       console.error('Gagal fetch estrus prediction:', err);
     } finally {
-      setLoading(false);
+      if (selectedCow.id?.toUpperCase() !== 'ARA') setLoading(false);
     }
   }, [selectedCow]);
 
@@ -153,48 +170,57 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
     <div className="space-y-4 animate-in fade-in duration-300">
 
       {/* Run button card */}
-      <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '16px', padding: '16px 18px', boxShadow: 'var(--shadow-card)' }} className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>
-            {lang === 'id' ? 'Analisis AI Estrus' : 'AI Estrus Analysis'}
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>
-            {lang === 'id' ? `Siklus estrus ${selectedCow?.nama || 'sapi'}` : `${selectedCow?.nama || 'Cow'}'s estrus cycle`}
-          </p>
+      {prediction && (
+        <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '16px', padding: '16px 18px', boxShadow: 'var(--shadow-card)' }} className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>
+              {lang === 'id' ? 'Analisis AI Estrus' : 'AI Estrus Analysis'}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>
+              {lang === 'id' ? `Siklus estrus ${selectedCow?.nama || 'sapi'}` : `${selectedCow?.nama || 'Cow'}'s estrus cycle`}
+            </p>
+          </div>
+          <button
+            onClick={handleRunPredict}
+            disabled={isPredicting}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 16px', borderRadius: '10px',
+              background: isPredicting ? 'var(--bg-hover)' : 'var(--color-primary)', color: isPredicting ? 'var(--text-2)' : 'white'}}
+          >
+            {isPredicting
+              ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {lang === 'id' ? 'Proses...' : 'Processing...'}</>
+              : <><RefreshCw className="w-3.5 h-3.5" /> {lang === 'id' ? 'Prediksi Ulang' : 'Repredict'}</>
+            }
+          </button>
         </div>
-        <button
-          onClick={handleRunPredict}
-          disabled={isPredicting}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '8px 16px', borderRadius: '10px',
-            background: isPredicting ? 'var(--bg-hover)' : 'linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%)',
-            backdropFilter: 'blur(8px)',
-            color: isPredicting ? 'var(--text-2)' : 'var(--accent)',
-            border: isPredicting ? 'none' : '1px solid rgba(255,255,255,0.5)',
-            boxShadow: isPredicting ? 'none' : '0 4px 12px rgba(0,0,0,0.05), inset 0 2px 4px rgba(255,255,255,0.5)',
-            cursor: isPredicting ? 'not-allowed' : 'pointer',
-            fontSize: '12px', fontWeight: 800,
-            opacity: isPredicting ? 0.6 : 1, flexShrink: 0,
-          }}
-        >
-          {isPredicting
-            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {lang === 'id' ? 'Proses...' : 'Processing...'}</>
-            : <><RefreshCw className="w-3.5 h-3.5" /> {lang === 'id' ? 'Prediksi' : 'Predict'}</>
-          }
-        </button>
-      </div>
+      )}
 
       {/* No data yet */}
       {!prediction ? (
-        <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '16px', padding: '40px 24px', textAlign: 'center', boxShadow: 'var(--shadow-card)' }}>
-          <BrainCircuit style={{ width: 36, height: 36, color: 'var(--text-3)', margin: '0 auto 12px' }} />
-          <p style={{ fontWeight: 600, color: 'var(--text-2)', fontSize: '14px' }}>
-            {lang === 'id' ? 'Belum ada prediksi' : 'No predictions yet'}
+        <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white rounded-[24px] border border-gray-100 shadow-sm">
+          <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
+            <BrainCircuit size={40} className="text-blue-500" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {lang === 'id' ? 'Belum Ada Prediksi Estrus' : 'No Estrus Prediction Yet'}
+          </h3>
+          <p className="text-gray-500 max-w-sm mb-8 leading-relaxed">
+            {lang === 'id' ? 'Jalankan AI untuk menganalisis siklus estrus sapi ini berdasarkan data historis dan sensor.' : 'Run AI to analyze this cow\'s estrus cycle based on historical and sensor data.'}
           </p>
-          <p style={{ color: 'var(--text-3)', fontSize: '12px', marginTop: '4px' }}>
-            {lang === 'id' ? 'Tekan tombol Prediksi di atas untuk menganalisis siklus estrus.' : 'Tap Predict above to analyze the estrus cycle.'}
-          </p>
+          <button
+            onClick={handleRunPredict}
+            disabled={isPredicting}
+            className="group relative flex items-center gap-4 bg-white pr-6 pl-2 py-2 rounded-full border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-500/30 transition-all duration-300 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-md group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500 relative z-10">
+              {isPredicting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
+            </div>
+            <span className="text-[15px] font-bold text-gray-700 group-hover:text-blue-600 transition-colors duration-300 relative z-10">
+              {isPredicting ? (lang === 'id' ? 'Memproses AI...' : 'Processing AI...') : (lang === 'id' ? 'Jalankan Prediksi AI' : 'Run AI Prediction')}
+            </span>
+          </button>
         </div>
       ) : (
         <div style={{

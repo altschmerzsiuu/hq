@@ -25,6 +25,7 @@ export default function Recommendations() {
   const [loading, setLoading] = useState(true);
   const [recs, setRecs] = useState([]);
   const [ignoredHealthAlerts, setIgnoredHealthAlerts] = useState([]);
+  const [filterUrgency, setFilterUrgency] = useState(null);
 
   const fetchRecommendations = async (showLoader = false) => {
     if (showLoader) setLoading(true);
@@ -46,10 +47,27 @@ export default function Recommendations() {
           id: `health-${cow.id}`,
           type: 'health',
           raw: cow
-        }))
-        .filter(alert => !ignoredHealthAlerts.includes(alert.id));
+        }));
 
-      setRecs([...activeEstrus, ...healthAlerts]);
+      // [USER REQUEST] Injecting mock data to preview Recommendations UI
+      const mockRecs = [
+        {
+          id: 'estrus-mock-1',
+          type: 'estrus',
+          raw: {
+            id: 'mock-1',
+            cow_id: 'SAPI_A01',
+            cow_name: 'Gendhis',
+            confidence_final: 0.92,
+            in_window_now: true,
+            prediksi_tanggal: new Date().toISOString(),
+            prediksi_ib_optimal: new Date().toISOString()
+          }
+        }
+      ];
+
+      const allRecs = [...activeEstrus, ...healthAlerts, ...mockRecs];
+      setRecs(allRecs.filter(alert => !ignoredHealthAlerts.includes(alert.id)));
     } catch (err) {
       console.error('Gagal mengambil rekomendasi:', err);
       toast.error(lang === 'id' ? 'Gagal mengambil rekomendasi.' : 'Failed to fetch recommendations.');
@@ -105,7 +123,7 @@ export default function Recommendations() {
         isHealth: false,
         rawId: pred.id
       };
-    } else {
+    } else if (rec.type === 'health') {
       const cow = rec.raw;
       return {
         id: rec.id,
@@ -120,6 +138,21 @@ export default function Recommendations() {
           : `Abnormal body temperature detected (${cow.temp}°C). Potential indication of illness or infection.`,
         iconType: 'health',
         isHealth: true
+      };
+    } else {
+      return {
+        id: rec.id,
+        cowId: rec.raw.cow_id,
+        cowName: rec.raw.cow_name || (lang === 'id' ? 'Sapi' : 'Cattle'),
+        action: lang === 'id' ? 'Perawatan Baterai' : 'Battery Maintenance',
+        urgency: lang === 'id' ? 'Rendah' : 'Low',
+        urgencyVal: 'low',
+        timeframe: lang === 'id' ? 'Dalam 7 Hari' : 'Within 7 Days',
+        reason: lang === 'id'
+          ? `Tegangan baterai collar rendah (${rec.raw.battery}V). Harap jadwalkan penggantian minggu ini.`
+          : `Collar battery voltage is low (${rec.raw.battery}V). Please schedule replacement this week.`,
+        iconType: 'maintenance',
+        isHealth: false
       };
     }
   };
@@ -136,13 +169,20 @@ export default function Recommendations() {
   }
 
   const processedRecs = recs.map(getRecDetails);
+  
+  const counts = { high: 0, medium: 0, low: 0 };
+  processedRecs.forEach(r => {
+    if (counts[r.urgencyVal] !== undefined) counts[r.urgencyVal]++;
+  });
+
+  const displayRecs = filterUrgency ? processedRecs.filter(r => r.urgencyVal === filterUrgency) : processedRecs;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 min-h-screen" onClick={() => setFilterUrgency(null)}>
       
       {/* ── HEADER ── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 shadow-lg relative overflow-hidden mb-6 text-white flex flex-col sm:flex-row justify-between -mx-4 md:mx-0 transition-all"
         style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)' }}
       >
         {/* Subtle Background Accent */}
@@ -152,24 +192,53 @@ export default function Recommendations() {
           className="absolute -top-10 -right-10 text-white opacity-[0.08] rotate-12 pointer-events-none" 
         />
 
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
-          <div>
-            <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-amber-200">
-              OPTIMASI KESEHATAN & PRODUKSI
-            </p>
-            <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
-              {t.recs_title}
-            </h1>
-            <p className="text-amber-100 mt-2 font-medium">{t.recs_sub}</p>
-          </div>
-          <div className="bg-white/20 border border-white/30 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm backdrop-blur-md self-start sm:self-auto">
-            <Lightbulb size={18} />
-            {recs.length} {t.recs_pending}
-          </div>
+        <div className="p-6 pt-[86px] md:p-8 relative z-10 flex-1 flex flex-col justify-center">
+          <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-amber-200">
+            OPTIMASI KESEHATAN & PRODUKSI
+          </p>
+          <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
+            {t.recs_title}
+          </h1>
+          <p className="text-amber-100 mt-2 font-medium">{t.recs_sub}</p>
+        </div>
+
+        <div className="flex flex-row items-stretch relative z-10 sm:min-w-[320px] p-2 sm:pr-4">
+          {['high', 'medium', 'low'].map(urgency => {
+            if (counts[urgency] === 0) return null;
+            const isActive = filterUrgency === urgency;
+            const label = urgency === 'high' ? (lang === 'id' ? 'Tinggi' : 'High') :
+                          urgency === 'medium' ? (lang === 'id' ? 'Sedang' : 'Medium') :
+                          (lang === 'id' ? 'Rendah' : 'Low');
+            const bgColorClass = urgency === 'high' ? 'bg-[var(--color-danger)]' :
+                                 urgency === 'medium' ? 'bg-yellow-400' : 'bg-[var(--color-info)]';
+            
+            return (
+              <button
+                key={urgency}
+                onClick={(e) => { e.stopPropagation(); setFilterUrgency(isActive ? null : urgency); }}
+                className={cn(
+                  "flex-1 flex flex-col items-center justify-center gap-1.5 p-4 sm:px-6 transition-all m-2 sm:my-3 sm:mx-1 rounded-xl",
+                  isActive ? "bg-white shadow-xl scale-105 z-20" : "opacity-90 hover:opacity-100 hover:bg-white/10"
+                )}
+              >
+                <span className={cn(
+                  "text-3xl font-black leading-none",
+                  isActive ? "text-amber-600" : "text-white drop-shadow-sm"
+                )}>{counts[urgency]}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className={cn("w-2 h-2 rounded-full shadow-sm", bgColorClass)}></span>
+                  <span className={cn(
+                    "text-[10px] sm:text-xs font-bold uppercase tracking-widest",
+                    isActive ? "text-amber-700" : "text-white opacity-90"
+                  )}>{label}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {processedRecs.length === 0 ? (
+      {displayRecs.length === 0 ? (
         <div style={{ background: 'var(--bg-surface)', border: '0.5px dashed var(--border)', borderRadius: '16px' }} className="text-center py-20">
           <Check className="w-12 h-12 text-[var(--color-sage)] mx-auto mb-3 opacity-50" />
           <h3 className="text-lg font-medium text-[var(--color-text-primary)] font-display">{t.recs_empty_title}</h3>
@@ -177,7 +246,7 @@ export default function Recommendations() {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {processedRecs.map((recDetails) => (
+          {displayRecs.map((recDetails) => (
             <RecommendationRow key={recDetails.id} recDetails={recDetails} onMarkDone={() => handleMarkDone(recDetails)} />
           ))}
         </div>
@@ -189,11 +258,20 @@ export default function Recommendations() {
 
 function RecommendationRow({ recDetails, onMarkDone }) {
   const isHighUrgency = recDetails.urgencyVal === 'high';
+  const isMediumUrgency = recDetails.urgencyVal === 'medium';
   
-  const IconProps = { className: cn("w-5 h-5", isHighUrgency ? "text-[var(--color-danger)]" : "text-[var(--color-warning)]") };
+  let colorTheme = { text: 'text-[var(--color-info)]', bg: 'bg-[var(--color-info-bg)]', border: 'border-[var(--color-info)]/30', borderContainer: '0.5px solid var(--border)' };
+  if (isHighUrgency) {
+    colorTheme = { text: 'text-[var(--color-danger)]', bg: 'bg-[var(--color-danger-bg)]', border: 'border-[var(--color-danger-border)]', borderContainer: '0.5px solid var(--red-border)' };
+  } else if (isMediumUrgency) {
+    colorTheme = { text: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', borderContainer: '0.5px solid var(--border)' };
+  }
+  
+  const IconProps = { className: cn("w-5 h-5", colorTheme.text) };
   
   const Icon = recDetails.iconType === 'inseminate' ? <Syringe {...IconProps} /> : 
                recDetails.iconType === 'health' ? <Stethoscope {...IconProps} /> : 
+               recDetails.iconType === 'maintenance' ? <Clock {...IconProps} /> : 
                <ShieldAlert {...IconProps} />;
 
   const { lang } = useSettingsStore();
@@ -201,7 +279,7 @@ function RecommendationRow({ recDetails, onMarkDone }) {
 
   return (
     <div 
-      style={{ background: 'var(--bg-surface)', border: isHighUrgency ? '0.5px solid var(--red-border)' : '0.5px solid var(--border)' }}
+      style={{ background: 'var(--bg-surface)', border: colorTheme.borderContainer }}
       className="rounded-2xl p-4 md:p-5 shadow-sm transition-all hover:shadow-md"
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -209,7 +287,7 @@ function RecommendationRow({ recDetails, onMarkDone }) {
         <div className="flex items-center gap-4 flex-1">
           <div className={cn(
             "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
-            isHighUrgency ? "bg-[var(--color-danger-bg)] text-[var(--color-danger)]" : "bg-[var(--color-warning-bg)] text-[var(--color-warning)]"
+            colorTheme.bg, colorTheme.text
           )}>
             {Icon}
           </div>
@@ -218,7 +296,7 @@ function RecommendationRow({ recDetails, onMarkDone }) {
               <h3 className="font-bold text-[var(--color-text-primary)] truncate">{recDetails.action}</h3>
               <span className={cn(
                 "px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border shrink-0",
-                isHighUrgency ? "bg-[var(--color-danger-bg)] text-[var(--color-danger)] border-[var(--color-danger-border)]" : "bg-[var(--color-warning-bg)] text-[var(--color-warning)] border-[var(--color-warning-border)]"
+                colorTheme.bg, colorTheme.text, colorTheme.border
               )}>
                 {recDetails.urgency}
               </span>
@@ -240,9 +318,9 @@ function RecommendationRow({ recDetails, onMarkDone }) {
         <div className="flex items-center gap-2 shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
           <button 
             onClick={onMarkDone}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+            className="flex items-center justify-center gap-1.5 px-4 py-2 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold rounded-xl transition-all shadow-sm"
           >
-            <Check size={14} /> {t.btn_done}
+            <Check size={16} strokeWidth={3} /> {t.btn_done}
           </button>
           <button style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', color: 'var(--text-2)' }} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-all">
             <ChevronRight size={16} />

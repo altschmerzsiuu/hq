@@ -89,6 +89,7 @@ export default function SensorData() {
   const [search, setSearch] = useState('');
   const [tableData, setTableData] = useState([]);
   const [chartData, setChartData] = useState([]);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   const [timeFilter, setTimeFilter] = useState('1wk');
   const [showMoreReports, setShowMoreReports] = useState(false);
@@ -318,9 +319,8 @@ export default function SensorData() {
       
       {/* ── 0. HEADER (PINE GREEN CYBER DESIGN) ── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden text-white flex flex-col justify-between -mx-4 md:mx-0 mb-6" 
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 md:pb-8 shadow-lg relative overflow-hidden text-white flex flex-col justify-between -mx-4 md:mx-0 mb-4" 
         style={{ 
-          minHeight: '270px',
           background: 'linear-gradient(180deg, #115e59 0%, #022c22 100%)'
         }}
       >
@@ -521,27 +521,70 @@ export default function SensorData() {
           <ShieldAlert className="absolute right-[-20px] bottom-[-20px] w-40 h-40 text-gray-50 pointer-events-none z-0" />
         </div>
 
-        {/* Container 5: Status Perangkat IoT Collar */}
+        {/* Container 5 (REPLACED): Tren Suhu & Aktivitas */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden mb-4">
-          {/* Grafik Collar */}
-          <div className="p-5 md:p-6 h-full flex flex-col">
-             <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-2">{lang === 'id' ? 'Status Perangkat IoT Collar' : 'IoT Collar Device Status'}</h3>
-             
-             <div className="grid grid-cols-3 gap-3 mt-4">
-                {collarStats.map((item, idx) => (
-                  <div key={idx} className="bg-[var(--color-cream)]/20 border border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center text-center hover:shadow-sm transition-all">
-                    <span className="w-2 h-2 rounded-full mb-2" style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}80` }}></span>
-                    <span className="text-2xl font-black text-gray-900 leading-none mb-1">{item.value}</span>
-                    <span className="text-[10px] text-gray-500 font-bold leading-tight">{item.name}</span>
-                  </div>
-                ))}
+          <div className="p-5 md:p-6 border-b border-gray-100 flex justify-between items-center">
+             <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display">{lang === 'id' ? 'Tren Suhu & Aktivitas' : 'Temperature & Activity Trend'}</h3>
+             <div className="flex bg-gray-100 rounded-lg p-1">
+               {['24h', '1wk', '30d'].map((t) => (
+                 <button
+                   key={t}
+                   onClick={() => setTimeFilter(t)}
+                   className={cn(
+                     "px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer",
+                     timeFilter === t ? "bg-white text-[var(--accent)] shadow-sm" : "text-gray-500 hover:text-gray-700"
+                   )}
+                 >
+                   {t === '24h' ? '24 Jam' : t === '1wk' ? '7 Hari' : '30 Hari'}
+                 </button>
+               ))}
              </div>
           </div>
-          
-          <div className="border-t border-gray-100 w-full"></div>
-          
-          {/* List Perangkat */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="p-5 md:p-6 flex-1 w-full min-h-[300px]">
+             {chartData.length === 0 ? (
+               <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                 <Activity size={32} className="mb-2 opacity-30" />
+                 <p className="text-sm font-medium">{t.sensor_empty || 'Belum ada data telemetri yang tersedia.'}</p>
+               </div>
+             ) : (
+               <ResponsiveContainer width="100%" height="100%">
+                 <LineChart data={timeFilter === '24h' ? chartData.slice(-12) : timeFilter === '1wk' ? chartData.slice(-30) : chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.6} />
+                   <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} dy={10} minTickGap={30} />
+                   <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                   <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                   <Tooltip 
+                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                     formatter={(value, name) => [value, name === 'temp' ? 'Suhu (°C)' : 'Aktivitas']}
+                   />
+                   <Line yAxisId="left" type="monotone" dataKey="temp" name="temp" stroke="#EF4444" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#EF4444' }} />
+                   <Line yAxisId="right" type="monotone" dataKey="activity" name="activity" stroke="#3B82F6" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#3B82F6' }} />
+                 </LineChart>
+               </ResponsiveContainer>
+             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Container 7: Status Perangkat IoT Collar & List Perangkat */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col mb-4">
+        {/* Status Perangkat Summary */}
+        <div className="p-5 md:p-6 border-b border-gray-100 bg-gray-50/30">
+           <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-4">{lang === 'id' ? 'Status Perangkat IoT Collar' : 'IoT Collar Device Status'}</h3>
+           
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {collarStats.map((item, idx) => (
+                <div key={idx} className="bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center text-center shadow-sm">
+                  <span className="w-2.5 h-2.5 rounded-full mb-3" style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}80` }}></span>
+                  <span className="text-3xl font-black text-gray-900 leading-none mb-1">{item.value}</span>
+                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">{item.name}</span>
+                </div>
+              ))}
+           </div>
+        </div>
+
+        {/* List Perangkat Table */}
+        <div className="hidden md:block overflow-visible">
           {filteredTableData.length === 0 ? (
             <div className="text-center p-8 text-[var(--color-text-secondary)]">
               {t.sensor_empty}
@@ -622,10 +665,30 @@ export default function SensorData() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-secondary)]">
                         {lastSyncLabel}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button className="text-[var(--color-text-muted)] hover:text-[var(--color-forest)] transition-colors p-1 rounded-md hover:bg-[var(--color-sage-light)]/20 opacity-0 group-hover:opacity-100 focus:opacity-100">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative">
+                        <button 
+                          onClick={() => setOpenDropdownId(openDropdownId === row.id ? null : row.id)}
+                          className="text-[var(--color-text-muted)] hover:text-[var(--color-forest)] transition-colors p-1 rounded-md hover:bg-[var(--color-sage-light)]/20 focus:opacity-100"
+                        >
                           <MoreVertical className="w-5 h-5" />
                         </button>
+                        
+                        {openDropdownId === row.id && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setOpenDropdownId(null)}></div>
+                            <div className="absolute right-8 top-10 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-[100] text-left">
+                              <button onClick={() => { toast.info('Membuka histori untuk ' + row.cowName); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                                <Activity className="w-4 h-4" /> {lang === 'id' ? 'Lihat Histori' : 'View History'}
+                              </button>
+                              <button onClick={() => { toast.info('Membuka pengaturan untuk ' + row.id); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                                <Settings2 className="w-4 h-4" /> {lang === 'id' ? 'Atur Perangkat' : 'Device Settings'}
+                              </button>
+                              <button onClick={() => { toast.error('Memutus koneksi dengan ' + row.id); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-50 mt-1">
+                                <X className="w-4 h-4" /> {lang === 'id' ? 'Putus Koneksi' : 'Disconnect'}
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );
@@ -750,8 +813,6 @@ export default function SensorData() {
           </div>
         </div>
       </div>
-      </div>
-
 
       {/* Widget Settings Modal */}
       {showWidgetModal && (

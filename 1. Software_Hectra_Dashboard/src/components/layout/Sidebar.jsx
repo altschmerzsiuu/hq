@@ -92,7 +92,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
       label: 'INTELLIGENCE',
       items: [
         { name: t.nav_estrus_intel, path: '/estrus-prediction', icon: Zap },
-        { name: t.nav_activity_timeline, path: '/activity-timeline', icon: Clock },
         { name: t.nav_recommendations, path: '/recommendations', icon: Lightbulb },
       ]
     },
@@ -109,7 +108,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
   const desktopMenu = [
     { name: t.nav_dashboard || 'Dashboard', path: '/dashboard', icon: Home },
     { name: t.nav_livestock || 'Ternak', path: '/ternak', icon: Beef },
-    { name: t.nav_activity_timeline || 'Aktivitas', path: '/activity-timeline', icon: Clock },
     { name: t.nav_estrus_intel || 'Prediksi', path: '/estrus-prediction', icon: Zap },
     { name: t.nav_recommendations || 'Rekomendasi', path: '/recommendations', icon: Lightbulb },
     { name: t.iot_title || 'Perangkat IoT', path: '/sensor-data', icon: Cpu },
