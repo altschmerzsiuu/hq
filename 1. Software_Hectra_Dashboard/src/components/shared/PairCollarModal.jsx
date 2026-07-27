@@ -51,16 +51,17 @@ export default function PairCollarModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-      <div
-        style={{
-          background: 'var(--bg-surface)',
-          border: '0.5px solid var(--border)',
-          borderRadius: '24px',
-          boxShadow: 'var(--shadow-modal)',
-        }}
-        className="p-6 w-full max-w-4xl animate-in zoom-in-95 duration-200"
-      >
+    <>
+      <div className="fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none">
+        <div className="absolute inset-0 z-0 pointer-events-auto md:pointer-events-auto" onClick={onClose} />
+        <div
+          style={{
+            background: 'var(--bg-surface)',
+            border: '0.5px solid var(--border)',
+            boxShadow: 'var(--shadow-modal)',
+          }}
+          className="relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto"
+        >
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -242,6 +243,7 @@ export default function PairCollarModal({
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

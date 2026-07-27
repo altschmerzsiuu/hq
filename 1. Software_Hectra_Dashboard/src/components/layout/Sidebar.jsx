@@ -447,30 +447,30 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
         
         {/* Top Branding (Logo) */}
         <div className={cn(
-          "flex items-center pt-8 pb-6 transition-all", 
+          "flex items-center pt-8 pb-6 transition-all",
           isCollapsed ? "flex-col gap-5 px-4" : "justify-between px-6 xl:px-8"
         )}>
-          <div className={cn("flex items-center gap-3 w-full", isCollapsed ? "justify-center" : "")}>
+          <Link to="/dashboard" className={cn("flex items-center gap-3 w-full", isCollapsed ? "justify-center" : "")}>
             <img
               src={herdLogo}
               alt="HERD Logo"
-              className={cn("object-cover rounded-xl shadow-sm transition-all", isCollapsed ? "w-11 h-11" : "w-9 h-9")}
+              className={cn("object-cover rounded-xl shadow-sm transition-all duration-300", isCollapsed ? "w-11 h-11" : "w-9 h-9")}
             />
             {!isCollapsed && (
-              <span className="font-['DM_Sans'] font-bold text-2xl text-[#0F172A] tracking-tight whitespace-nowrap">
+              <span className="font-['DM_Sans'] font-bold text-2xl text-[#0F172A] tracking-tight whitespace-nowrap transition-opacity duration-300">
                 HERD
               </span>
             )}
-          </div>
+          </Link>
         </div>
 
         {/* Scrollable Navigation */}
         <div className={cn("flex-1 overflow-y-auto pb-6 flex flex-col gap-6 no-scrollbar z-40", isCollapsed ? "px-4 mt-2" : "px-6")}>
           
           {/* MENU Section */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             {!isCollapsed && (
-              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest px-2 mb-1 font-['Inter'] transition-opacity">
+              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest px-2 mb-1 font-['Inter'] transition-opacity duration-300">
                 MENU
               </span>
             )}
@@ -480,10 +480,10 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
                 to={item.path}
                 title={isCollapsed ? item.name : undefined}
                 className={({ isActive }) => cn(
-                  "relative flex items-center rounded-xl transition-all duration-200 group font-['Inter']",
-                  isActive 
-                    ? "text-[#0F172A] font-semibold" 
-                    : "text-gray-500 font-medium hover:text-gray-800 hover:bg-gray-50/80",
+                  "relative flex items-center rounded-xl transition-all duration-300 ease-in-out group font-['Inter']",
+                  isActive
+                    ? "text-[#0F172A] font-semibold bg-gray-50"
+                    : "text-gray-500 font-medium hover:text-gray-800 hover:bg-gray-50",
                   isCollapsed ? "justify-center p-3" : "gap-3.5 px-4 py-3"
                 )}
               >
@@ -492,20 +492,20 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
                     {/* The Green Pill Indicator */}
                     {isActive && (
                       <div className={cn(
-                        "absolute bg-[#16A34A] transition-all", 
+                        "absolute bg-[#16A34A] transition-all duration-300",
                         isCollapsed ? "-left-4 top-1/2 -translate-y-1/2 w-1.5 h-8 rounded-r-full" : "-left-6 top-1/2 -translate-y-1/2 w-1.5 h-8 rounded-r-full"
                       )} />
                     )}
-                    <item.icon 
-                      size={isCollapsed ? 24 : 20} 
+                    <item.icon
+                      size={isCollapsed ? 24 : 20}
                       strokeWidth={isActive ? 2.5 : 2}
                       className={cn(
-                        "transition-colors duration-200 shrink-0",
+                        "transition-colors duration-300 shrink-0",
                         isActive ? "text-[#16A34A]" : "text-gray-400 group-hover:text-gray-600"
-                      )} 
+                      )}
                     />
                     {!isCollapsed && (
-                      <span className="text-[14px] leading-snug whitespace-normal break-words pr-2">{item.name}</span>
+                      <span className="text-[14px] leading-snug whitespace-normal break-words pr-2 transition-all duration-300">{item.name}</span>
                     )}
                   </>
                 )}

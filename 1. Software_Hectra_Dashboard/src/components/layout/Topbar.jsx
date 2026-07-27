@@ -63,9 +63,9 @@ export default function Topbar({ onMenuClick, isScrolled }) {
     navigate('/login');
   };
 
-  const NotifPopover = () => (
+  const NotifPopover = ({ className = "" }) => (
     <div
-      className="absolute top-[52px] lg:top-[60px] left-1/2 lg:left-auto lg:right-0 lg:-translate-x-0 -translate-x-1/2 w-[90vw] lg:w-[360px] max-w-[360px] max-h-[55vh] lg:max-h-[60vh] bg-white border border-gray-200/60 rounded-[24px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+      className={cn("w-[90vw] lg:w-[360px] max-w-[360px] max-h-[55vh] lg:max-h-[60vh] bg-white border border-gray-200/60 rounded-[24px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200", className)}
       onClick={e => e.stopPropagation()}
     >
       {/* Popover Header */}
@@ -231,7 +231,7 @@ export default function Topbar({ onMenuClick, isScrolled }) {
             {/* Notification Popover (Mobile uses fixed inset + top-centered) */}
             {notifOpen && location.pathname !== '/notifications' && (
               <div className="fixed inset-0 z-[100] bg-transparent" onClick={() => setNotifOpen(false)}>
-                <NotifPopover />
+                <NotifPopover className="absolute top-[60px] left-1/2 -translate-x-1/2" />
               </div>
             )}
           </div>
@@ -244,19 +244,33 @@ export default function Topbar({ onMenuClick, isScrolled }) {
           ========================================================================= */}
       <header className="hidden lg:flex items-center justify-between shrink-0 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E5E7EB] rounded-[24px] mx-4 mt-4 mb-2 px-5 py-3 relative z-30">
         
-        {/* Left: Search Bar */}
-        <div className="flex-1">
-          <div className="flex items-center bg-[#F8F9FA] border border-transparent hover:border-gray-200 rounded-[16px] px-4 py-3 w-[420px] transition-all focus-within:w-[480px] focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:border-emerald-500/30 group">
-            <Search size={18} className="text-gray-400 mr-3 group-focus-within:text-emerald-500 transition-colors shrink-0" />
-            <input 
-              type="text" 
-              placeholder="Search task..." 
+        {/* Left: Greeting */}
+        <div className="w-[220px] shrink-0">
+          <div className="flex flex-col">
+            <span className="text-[12px] font-normal text-gray-400">
+              {(() => {
+                const h = new Date().getHours();
+                if (h < 11) return 'Selamat Pagi,';
+                if (h < 15) return 'Selamat Siang,';
+                if (h < 18) return 'Selamat Sore,';
+                return 'Selamat Malam,';
+              })()}
+            </span>
+            <span className="text-[16px] font-bold text-gray-800 leading-tight truncate">
+              {user?.full_name?.split(' ')[0] || user?.name?.split(' ')[0] || 'Peternak'}
+            </span>
+          </div>
+        </div>
+
+        {/* Center: Search Bar */}
+        <div className="flex-1 flex justify-center">
+          <div className="flex items-center bg-[#F8F9FA] border border-transparent hover:border-gray-200 rounded-[16px] px-4 py-2.5 w-[380px] transition-all focus-within:w-[440px] focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:border-emerald-500/30 group">
+            <Search size={16} className="text-gray-400 mr-3 group-focus-within:text-emerald-500 transition-colors shrink-0" />
+            <input
+              type="text"
+              placeholder="Cari..."
               className="bg-transparent border-none outline-none flex-1 text-[14px] font-medium text-gray-700 placeholder-gray-400"
             />
-            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-md px-2 py-1 shadow-sm shrink-0">
-              <Command size={12} className="text-gray-400" />
-              <span className="text-[11px] font-bold text-gray-400">F</span>
-            </div>
           </div>
         </div>
 
@@ -288,10 +302,10 @@ export default function Topbar({ onMenuClick, isScrolled }) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute z-[100]"
+                  className="absolute top-full right-0 mt-2 z-[100] origin-top-right"
                 >
                   <div className="fixed inset-0 z-0 bg-transparent" onClick={() => setNotifOpen(false)} />
-                  <div className="relative z-10 -right-4">
+                  <div className="relative z-10">
                     <NotifPopover />
                   </div>
                 </motion.div>

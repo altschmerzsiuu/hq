@@ -1,7 +1,7 @@
 // src/pages/Dashboard.jsx
 // HERD Dashboard — Neo Bio-Tech Intelligence UI (MP-3 §4, §7-9)
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -146,17 +146,109 @@ function SquareQAButton({ icon: Icon, label, color = "var(--accent)", onClick })
         cursor: 'pointer'
       }}
     >
-      <Icon size={24} style={{ color }} className="mb-1" />
-      <span style={{
-        fontSize: '11px', color: 'var(--text-1)',
-        fontFamily: 'DM Sans, sans-serif', fontWeight: 700, textAlign: 'center',
-        lineHeight: 1.2
-      }}>
+      <div className="w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: `${color}15`, color }}>
+        <Icon size={20} />
+      </div>
+      <span className="text-[11px] font-bold text-[var(--text-1)] text-center group-hover:text-[var(--color-primary)] transition-colors">{label}</span>
+    </button>
+  );
+}
+
+// ── ANIMATED QUICK ACTION BUTTON (DESKTOP) — Kontak-style expand ─
+function AnimatedQAButton({ icon: Icon, label, onClick }) {
+  const spanRef = React.useRef(null);
+  return (
+    <button
+      onClick={onClick}
+      className="group inline-flex items-center rounded-full bg-white border border-gray-200 shadow-sm cursor-pointer transition-all duration-300 hover:border-[var(--color-primary)] hover:shadow-md hover:bg-[var(--color-primary-dim)]"
+      style={{ padding: '11px', gap: 0 }}
+      onMouseEnter={e => {
+        e.currentTarget.style.paddingLeft = '18px';
+        e.currentTarget.style.paddingRight = '18px';
+        e.currentTarget.style.gap = '8px';
+        e.currentTarget.style.background = 'var(--color-primary)';
+        e.currentTarget.style.borderColor = 'var(--color-primary)';
+        if (spanRef.current) { spanRef.current.style.fontSize = '13px'; spanRef.current.style.color = '#fff'; }
+        const icon = e.currentTarget.querySelector('svg');
+        if (icon) icon.style.color = '#fff';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.paddingLeft = '11px';
+        e.currentTarget.style.paddingRight = '11px';
+        e.currentTarget.style.gap = '0';
+        e.currentTarget.style.background = '';
+        e.currentTarget.style.borderColor = '';
+        if (spanRef.current) { spanRef.current.style.fontSize = '0'; spanRef.current.style.color = ''; }
+        const icon = e.currentTarget.querySelector('svg');
+        if (icon) icon.style.color = '';
+      }}
+    >
+      <Icon size={20} className="text-gray-600 group-hover:text-[var(--color-primary)] flex-shrink-0 transition-colors duration-200" />
+      <span
+        ref={spanRef}
+        className="font-bold text-[var(--color-primary)] whitespace-nowrap overflow-hidden transition-all duration-300"
+        style={{ fontSize: 0 }}
+      >
         {label}
       </span>
     </button>
   );
 }
+
+// ── TREN AKTIVITAS CHART ─────────────────────────────────────
+const CHART_DATA = {
+  Hari: {
+    bars: [30, 55, 70, 45, 80, 60, 40, 90, 50, 65, 75, 35],
+    labels: ['06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17'],
+  },
+  Minggu: {
+    bars: [40, 70, 45, 90, 60, 80, 50],
+    labels: ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'],
+  },
+  Bulan: {
+    bars: [55, 70, 60, 80, 50, 65, 75, 45, 85, 70, 55, 90],
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
+  },
+};
+
+function TrenAktivitasChart() {
+  const [activeFilter, setActiveFilter] = useState('Minggu');
+  const data = CHART_DATA[activeFilter];
+  return (
+    <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm min-h-[300px] flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="font-bold text-[var(--text-1)] text-lg">Tren Aktivitas Kawanan</h3>
+        <div className="flex items-center gap-1">
+          {['Hari', 'Minggu', 'Bulan'].map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+                activeFilter === filter
+                  ? 'bg-[var(--color-primary-dim)] text-[var(--color-primary)]'
+                  : 'text-[var(--text-2)] hover:text-[var(--text-1)]'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex-1 flex items-end justify-between gap-1.5 px-2 pb-2 h-full mt-4">
+        {data.bars.map((h, i) => (
+          <div key={i} className="flex flex-col items-center gap-2 flex-1 group cursor-pointer">
+            <div className="w-full flex justify-center items-end h-[180px] bg-[var(--bg-surface)] rounded-t-xl relative">
+              <div className="w-full bg-[var(--color-primary)] rounded-t-xl transition-all duration-500 group-hover:opacity-70" style={{ height: `${h}%` }}></div>
+            </div>
+            <span className="text-[10px] text-[var(--text-3)] font-bold uppercase">{data.labels[i]}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 
 // ── INTELLIGENCE CARD ────────────────────────────────────────
 function IntelCard({ urgency, icon: Icon, title, sub, conf, time, recommendation, t }) {
@@ -271,7 +363,7 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
   const handleAction = (e) => {
     e.stopPropagation();
     toast.success('Melanjutkan tindakan rekomendasi sistem...');
-    
+
     if (name || cow_id || id) {
       navigate('/ternak', { state: { selectedCowId: name || cow_id || id, fromDashboard: true } });
     } else {
@@ -286,7 +378,7 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
   };
 
   return (
-    <div 
+    <div
       onClick={() => setIsExpanded(!isExpanded)}
       className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col shadow-sm hover:border-[#2f7d31]/30 transition-all cursor-pointer relative overflow-hidden"
     >
@@ -312,7 +404,7 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
         </div>
       </div>
 
-      <div 
+      <div
         className="grid transition-all duration-300 ease-in-out"
         style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr', opacity: isExpanded ? 1 : 0 }}
       >
@@ -324,13 +416,13 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
           )}
           <div className="h-px w-full bg-gray-100 my-3" />
           <div className="flex items-center justify-between gap-2">
-            <button 
+            <button
               onClick={handleFinish}
               className="flex items-center gap-2 bg-[#2f7d31] hover:bg-[#007b46] text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors"
             >
               <Check size={14} /> Selesai
             </button>
-            <button 
+            <button
               onClick={handleAction}
               className="flex items-center justify-center w-8 h-8 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 rounded-xl transition-colors"
             >
@@ -543,17 +635,22 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
 
   const actionable = intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor');
   const monitored = herd.filter(c => !!c.collar_id);
-  
+
   if (slotType === 'total') {
     count = sapiList.length;
     label = lang === 'id' ? 'Total ternak' : 'Total cows';
     popoverData = sapiList;
     Icon = Database;
-  } else if (slotType === 'pantau') {
-    count = stats.collars;
-    label = lang === 'id' ? 'Ternak dipantau' : 'Monitored cows';
-    popoverData = monitored;
-    Icon = Activity;
+  } else if (slotType === 'sehat') {
+    count = sapiList.length;
+    label = lang === 'id' ? 'Kondisi sehat' : 'Healthy';
+    popoverData = sapiList;
+    Icon = CheckCircle2;
+  } else if (slotType === 'estrus') {
+    count = stats.estrus ?? 0;
+    label = lang === 'id' ? 'Sedang estrus' : 'In estrus';
+    popoverData = [];
+    Icon = Zap;
   } else if (slotType === 'tindakan') {
     count = actionable.length;
     label = lang === 'id' ? 'Perlu tindakan' : 'Action needed';
@@ -574,7 +671,7 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
 
   return (
     <div className="flex-1 relative">
-      <div 
+      <div
         onClick={handleClick}
         className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 md:p-3 flex flex-col gap-1.5 md:gap-2 relative cursor-pointer hover:bg-white/20 transition-colors shadow-sm"
       >
@@ -586,9 +683,9 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
           <span className="text-lg md:text-xl font-black">{count}</span>
         </div>
       </div>
-      
+
       {activePopover === slotId && (
-        <div 
+        <div
           className="absolute top-full left-0 mt-2 w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl z-50 overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
@@ -596,10 +693,10 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
             {popoverData.map((c, i) => {
               let statusText = 'Sehat';
               let colorClass = 'text-[var(--accent)]';
-              
+
               const cowId = c.cow_id || c.id || c.rfid;
-              const cowName = c.cow_name || c.name || c.nama || (cowId ? `Sapi #${cowId.slice(0,5)}` : (c.title ? c.title.split('—')[0].trim() : 'Unknown'));
-              
+              const cowName = c.cow_name || c.name || c.nama || (cowId ? `Sapi #${cowId.slice(0, 5)}` : (c.title ? c.title.split('—')[0].trim() : 'Unknown'));
+
               if (c.status === 'estrus' || c.urgency === 'critical') {
                 statusText = c.status === 'estrus' ? 'Birahi' : 'Kritis';
                 colorClass = 'text-[var(--red)]';
@@ -609,9 +706,9 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
               } else if (c.rawStatus && c.rawStatus.toLowerCase() !== 'sehat' && c.rawStatus.toLowerCase() !== 'normal') {
                 statusText = c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase();
               }
-              
+
               const shortId = cowId ? (cowId.length > 5 ? cowId.slice(0, 5).toUpperCase() + '...' : cowId.toUpperCase()) : 'N/A';
-              
+
               return (
                 <div key={i} onClick={() => navigate('/ternak', { state: { selectedCowId: cowId, fromDashboard: true } })} className="flex items-center justify-between p-2 rounded-xl hover:bg-[var(--bg-card)] cursor-pointer text-left">
                   <div>
@@ -626,7 +723,7 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
             })}
           </div>
           <div className="border-t border-[var(--border)] p-2">
-            <button 
+            <button
               onClick={() => navigate('/ternak')}
               className="w-full py-2.5 text-[13px] font-bold text-[var(--text-1)] bg-[var(--bg-card)] rounded-[14px] hover:bg-[var(--border)] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
             >
@@ -657,7 +754,7 @@ export default function Dashboard() {
   });
   const [herd, setHerd] = useState([]);
   const [intel, setIntel] = useState([]);
-  
+
   const [activePopover, setActivePopover] = useState(null);
   const [activeEstrusPredictions, setActiveEstrusPredictions] = useState([]);
   const [selectedInsight, setSelectedInsight] = useState(null);
@@ -690,7 +787,7 @@ export default function Dashboard() {
   useEffect(() => {
     const mainContainer = document.getElementById('main-scroll-container');
     const isAnyModalOpen = isInsightModalOpen || isPairModalOpen || isReproModalOpen || isEstrusModalOpen || isAddCowModalOpen;
-    
+
     if (isAnyModalOpen) {
       document.body.style.overflow = 'hidden';
       if (mainContainer) {
@@ -704,7 +801,7 @@ export default function Dashboard() {
         mainContainer.style.touchAction = '';
       }
     }
-    
+
     return () => {
       document.body.style.overflow = 'auto';
       if (mainContainer) {
@@ -744,10 +841,10 @@ export default function Dashboard() {
 
     let formattedInseminator = reproForm.pemberi_ib
       ? reproForm.pemberi_ib
-          .toLowerCase()
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ')
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
       : '';
 
     const res = await tambahReproduksi({ ...reproForm, pemberi_ib: formattedInseminator });
@@ -818,7 +915,7 @@ export default function Dashboard() {
         const herdData = herdRes.data;
         const intelData = intelRes.data?.logs || [];
         const estrusData = estrusRes.data || [];
-        
+
         setActiveEstrusPredictions(Array.isArray(estrusData) ? estrusData : []);
 
         // 1. Process stats
@@ -1015,168 +1112,556 @@ export default function Dashboard() {
     <>
       <div onClick={() => setActivePopover(null)} className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-        {/* ─── 0. GREETING (GRADIENT DESIGN) ────────────────────────── */}
-        <div 
-          className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden text-white flex flex-col justify-between -mx-4 md:mx-0 mb-6" 
-          style={{ 
-            minHeight: '260px',
-            background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)'
-          }}
-        >
-          {/* Subtle Sun Accent */}
-          <div className="absolute inset-0 overflow-hidden rounded-b-[40px] pointer-events-none">
-            <Sun 
-              size={180} 
-              strokeWidth={1} 
-              className="absolute -top-10 -right-10 text-white opacity-5 rotate-12" 
-            />
+        {/* ─── MOBILE VIEW (OLD DESIGN) ─── */}
+        <div className="flex md:hidden flex-col gap-4">
+          {/* ─── 0. GREETING (GRADIENT DESIGN) ─── */}
+          <div
+            className="rounded-t-none rounded-b-[40px] p-6 pt-[86px] shadow-lg relative overflow-hidden text-white flex flex-col justify-between -mx-4 mb-2"
+            style={{
+              minHeight: '260px',
+              background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)'
+            }}
+          >
+            {/* Subtle Sun Accent */}
+            <div className="absolute inset-0 overflow-hidden rounded-b-[40px] pointer-events-none">
+              <Sun
+                size={180}
+                strokeWidth={1}
+                className="absolute -top-10 -right-10 text-white opacity-5 rotate-12"
+              />
+            </div>
+
+            <div className="flex justify-between items-start relative z-10">
+              <div className="w-full">
+                <div className="flex justify-between items-start w-full">
+                  <div>
+                    <p className="text-[14px] font-medium opacity-90 mb-0.5">{greetingText}</p>
+                    <h1 className="text-[26px] font-black tracking-tight leading-none mb-2">{userName}</h1>
+                    <p className="text-[13px] font-medium opacity-80 max-w-[80%]">
+                      {lang === 'id' ? 'Ini ringkasan kondisi peternakanmu hari ini' : 'Here is your herd condition summary today'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowWidgetModal(true); }}
+                    className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                  >
+                    <Settings2 size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 mt-8 relative z-20">
+              <DashSlotCard
+                slotType={selectedWidgets[0] || 'total'}
+                activePopover={activePopover} setActivePopover={setActivePopover}
+                slotId="slot1" stats={stats} herd={herd} intel={intel}
+                sapiList={sapiList} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
+              />
+              <DashSlotCard
+                slotType={selectedWidgets[1] || 'sehat'}
+                activePopover={activePopover} setActivePopover={setActivePopover}
+                slotId="slot2" stats={stats} herd={herd} intel={intel}
+                sapiList={sapiList} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
+              />
+            </div>
           </div>
 
-          <div className="flex justify-between items-start relative z-10">
-            <div className="w-full">
-              <div className="flex justify-between items-start w-full">
-                <div>
-                  <p className="text-[14px] font-medium opacity-90 mb-0.5">{greetingText}</p>
-                  <h1 className="text-[26px] md:text-[30px] font-black tracking-tight leading-none mb-2">{userName}</h1>
-                  <p className="text-[13px] font-medium opacity-80 max-w-[80%]">
-                    {lang === 'id' ? 'Ini ringkasan kondisi peternakanmu hari ini' : 'Here is your herd condition summary today'}
-                  </p>
+          {/* ─── 2. URGENT ACTIONS CONTAINER ─── */}
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '0.5px solid var(--border)',
+            borderRadius: '12px',
+            padding: '20px 22px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+          }}>
+            {/* Subheader */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+              <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
+              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-1)', fontFamily: 'DM Sans, sans-serif' }}>
+                Ada hal yang perlu kamu perhatikan hari ini
+              </span>
+            </div>
+
+            {/* Urgent Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').length > 0 ? (
+                intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').map((card, i) => (
+                  <IntelCard key={i} {...card} t={t} />
+                ))
+              ) : (
+                <div style={{
+                  padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
+                  borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
+                }}>
+                  Kondisi semua ternak terpantau aman. Tidak ada tindakan mendesak yang perlu dilakukan sekarang.
                 </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setShowWidgetModal(true); }}
-                  className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+              )}
+            </div>
+          </div>
+
+          {/* ─── 3. QUICK ACTIONS ─── */}
+          <div>
+            <p className="eyebrow" style={{ marginBottom: '12px' }}>AKSI CEPAT</p>
+            <div className="flex flex-row gap-3 overflow-x-auto no-scrollbar pb-2">
+              <SquareQAButton icon={Plus} label="Tambah Ternak" onClick={() => setIsAddCowModalOpen(true)} />
+              <SquareQAButton icon={Syringe} label="Tambah Data IB" onClick={() => {
+                fetchSapiList();
+                setIsReproModalOpen(true);
+              }} />
+              <SquareQAButton icon={Cpu} label="Pasang Kalung" onClick={() => setIsPairModalOpen(true)} />
+              <SquareQAButton icon={Zap} label="Prediksi Estrus" onClick={() => setIsEstrusModalOpen(true)} />
+            </div>
+          </div>
+
+          {/* ─── 5. REKOMENDASI LAINNYA ─── */}
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '0.5px solid var(--border)',
+            borderRadius: '12px',
+            padding: '18px 22px',
+            marginBottom: '24px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <p className="eyebrow" style={{ marginBottom: 0 }}>REKOMENDASI LAINNYA</p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {intel.filter(card => card.urgency === 'scheduled').length > 0 ? (
+                <>
+                  {intel.filter(card => card.urgency === 'scheduled')
+                    .map((card, i) => {
+                      const cowName = card.title.split('—')[0].trim() || 'Ternak';
+                      let friendlyMsg = '';
+                      if (card.title.toLowerCase().includes('kebuntingan')) {
+                        friendlyMsg = `Update kebuntingan ${cowName} perlu dicatat. Sebaiknya diperbarui sekarang agar data kehamilan tetap akurat dan bisa diprediksi dengan baik.`;
+                      } else if (card.title.toLowerCase().includes('inseminasi')) {
+                        friendlyMsg = `Jadwal inseminasi ${cowName} sudah tiba. Pastikan persiapan sudah matang agar peluang kebuntingan maksimal.`;
+                      } else if (card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')) {
+                        friendlyMsg = `${cowName} menunjukkan tanda birahi. Waktu terbaik untuk inseminasi adalah 12–18 jam ke depan, jangan sampai terlewat.`;
+                      } else {
+                        friendlyMsg = card.sub || card.recommendation || `Ada hal yang perlu kamu tindak lanjuti untuk ${cowName}. Sebaiknya segera dicek agar tidak terlewat.`;
+                      }
+                      return (
+                        <RecommendationCard
+                          key={i}
+                          title={card.title}
+                          badgeText="SEDANG"
+                          id={card.cow_id ? `C${card.cow_id.slice(0, 4).toUpperCase()}A` : `C${Math.floor(Math.random() * 9000) + 1000}A`}
+                          name={cowName}
+                          daysLeft={Math.floor(Math.random() * 10) + 1}
+                          icon={card.icon}
+                          message={friendlyMsg}
+                          cow_id={card.cow_id}
+                        />
+                      );
+                    })}
+                </>
+              ) : (
+                <div style={{
+                  padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
+                  borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
+                }}>
+                  Semua kondisi ternak hari ini dalam keadaan baik. Tidak ada rekomendasi tambahan untuk saat ini.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ─── 6. TREN AKTIVITAS KAWANAN ─── */}
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '0.5px solid var(--border)',
+            borderRadius: '12px',
+            padding: '18px 16px',
+          }}>
+            <p className="eyebrow" style={{ marginBottom: '14px' }}>TREN AKTIVITAS KAWANAN</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              {['Hari', 'Minggu', 'Bulan'].map((f, fi) => (
+                <span key={f} style={{
+                  fontSize: '12px', fontWeight: 700,
+                  color: fi === 1 ? 'var(--color-primary)' : 'var(--text-3)',
+                  padding: '4px 12px',
+                  borderRadius: '999px',
+                  background: fi === 1 ? 'var(--color-primary-dim)' : 'transparent',
+                  cursor: 'pointer',
+                }}>{f}</span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '80px' }}>
+              {[40, 70, 45, 90, 60, 80, 50].map((h, i) => (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                  <div style={{
+                    width: '100%', borderRadius: '4px 4px 0 0',
+                    background: 'var(--color-primary)',
+                    height: `${h * 0.64}px`,
+                    opacity: 0.85,
+                  }} />
+                  <span style={{ fontSize: '9px', color: 'var(--text-3)', fontWeight: 700 }}>
+                    {['Min','Sen','Sel','Rab','Kam','Jum','Sab'][i]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ─── 7. AKTIVITAS TERKINI ─── */}
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '0.5px solid var(--border)',
+            borderRadius: '12px',
+            padding: '18px 16px',
+          }}>
+            <p className="eyebrow" style={{ marginBottom: '14px' }}>AKTIVITAS TERKINI</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {[
+                { title: 'Inseminasi Sapi C432A', status: 'Selesai', color: 'var(--color-primary)', time: '2 jam lalu' },
+                { title: 'Pemeriksaan Kesehatan', status: 'Proses', color: 'var(--amber)', time: '4 jam lalu' },
+                { title: 'Anomali Suhu Terdeteksi', status: 'Tertunda', color: 'var(--red)', time: '5 jam lalu' },
+              ].map((act, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '36px', height: '36px', borderRadius: '50%',
+                    background: 'var(--bg-card)', border: '0.5px solid var(--border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, color: 'var(--text-3)',
+                  }}>
+                    <Activity size={15} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-1)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{act.title}</p>
+                    <p style={{ fontSize: '11px', color: 'var(--text-3)', margin: '2px 0 0 0' }}>{act.time}</p>
+                  </div>
+                  <span style={{
+                    fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+                    padding: '3px 8px', borderRadius: '6px',
+                    color: act.color, background: `${act.color}1A`,
+                  }}>{act.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ─── 8. STATUS POPULASI + KONDISI IoT ─── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
+            {/* Status Populasi */}
+            <div style={{
+              background: 'var(--bg-surface)',
+              border: '0.5px solid var(--border)',
+              borderRadius: '12px',
+              padding: '16px 14px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '10px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-1)', margin: 0 }}>Status Populasi</p>
+                <button
+                  onClick={() => navigate('/sensor-data')}
+                  style={{
+                    width: '24px', height: '24px', borderRadius: '50%',
+                    background: 'var(--color-primary-dim)', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
                 >
-                  <Settings2 size={16} />
+                  <ChevronRight size={13} style={{ color: 'var(--color-primary)' }} />
                 </button>
+              </div>
+              <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+                <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-card)" strokeWidth="16" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset="50" strokeLinecap="round" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset="200" strokeLinecap="round" />
+                </svg>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '16px', fontWeight: 900, color: 'var(--text-1)', lineHeight: 1 }}>80%</span>
+                  <span style={{ fontSize: '8px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginTop: '2px' }}>Sehat</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--color-primary)', display: 'inline-block' }} />Sehat
+                </span>
+                <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--amber)', display: 'inline-block' }} />Monitor
+                </span>
+              </div>
+            </div>
+
+            {/* Kondisi IoT */}
+            <div style={{
+              borderRadius: '12px',
+              padding: '16px 14px',
+              background: 'linear-gradient(145deg, #022C22 0%, #064E3B 100%)',
+              display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+              position: 'relative', overflow: 'hidden',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div>
+                  <p style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(167,243,208,0.8)', margin: 0 }}>Kondisi Kandang</p>
+                  <p style={{ fontSize: '8px', color: 'rgba(167,243,208,0.5)', margin: '2px 0 0 0' }}>IoT · Baru saja</p>
+                </div>
+                <button
+                  onClick={() => navigate('/sensor-data')}
+                  style={{
+                    width: '24px', height: '24px', borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <ChevronRight size={13} style={{ color: '#fff' }} />
+                </button>
+              </div>
+              <div style={{ fontSize: '30px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>
+                28.4<span style={{ fontSize: '14px', color: '#6ee7b7', marginLeft: '2px' }}>°C</span>
+              </div>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                background: 'rgba(0,0,0,0.3)', borderRadius: '8px',
+                padding: '4px 10px', marginTop: '8px', width: 'fit-content',
+              }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }} />
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#d1fae5' }}>RH 65%</span>
               </div>
             </div>
           </div>
-          
-          <div className="flex items-center gap-3 mt-8 relative z-20">
-            <DashSlotCard 
-              slotType={selectedWidgets[0] || 'pantau'}
-              activePopover={activePopover} setActivePopover={setActivePopover} 
-              slotId="slot1" stats={stats} herd={herd} intel={intel} 
-              sapiList={sapiList} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
-            />
-            <DashSlotCard 
-              slotType={selectedWidgets[1] || 'total'}
-              activePopover={activePopover} setActivePopover={setActivePopover} 
-              slotId="slot2" stats={stats} herd={herd} intel={intel} 
-              sapiList={sapiList} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
-            />
-          </div>
+
         </div>
 
+        {/* ─── DESKTOP BENTO GRID DASHBOARD ─── */}
+        <div className="hidden md:flex md:flex-col md:gap-0">
 
-        {/* ─── 2. URGENT ACTIONS CONTAINER ─────────────────────── */}
-        <div style={{
-          background: 'var(--bg-surface)',
-          border: '0.5px solid var(--border)',
-          borderRadius: '12px',
-          padding: '20px 22px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-        }}>
-          {/* Subheader */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-            <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
-            <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-1)', fontFamily: 'DM Sans, sans-serif' }}>
-              Ada hal yang perlu kamu perhatikan hari ini
-            </span>
+          {/* HEADER */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2 mt-2 md:mt-4">
+            <div>
+              <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none text-[var(--text-1)]">
+                Dashboard
+              </h1>
+              <p className="text-[13px] font-medium text-[var(--text-2)] mt-2">
+                {lang === 'id' ? 'Ringkasan kondisi peternakanmu hari ini' : 'Here is your herd condition summary today'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <AnimatedQAButton icon={Plus} label="Tambah Ternak" onClick={() => setIsAddCowModalOpen(true)} />
+              <AnimatedQAButton icon={Syringe} label="Tambah Data IB" onClick={() => { fetchSapiList(); setIsReproModalOpen(true); }} />
+              <AnimatedQAButton icon={Cpu} label="Pasang Kalung" onClick={() => setIsPairModalOpen(true)} />
+              <AnimatedQAButton icon={Zap} label="Prediksi Estrus" onClick={() => setIsEstrusModalOpen(true)} />
+            </div>
           </div>
 
-          {/* Urgent Cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').length > 0 ? (
-              intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').map((card, i) => (
-                <IntelCard key={i} {...card} t={t} />
-              ))
-            ) : (
-              <div style={{
-                padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
-                borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
-              }}>
-                Kondisi semua ternak terpantau aman. Tidak ada tindakan mendesak yang perlu dilakukan sekarang.
+          {/* ROW 1: 4 STAT CARDS */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Total */}
+            <div className="bg-[var(--color-primary)] text-white p-5 rounded-2xl flex flex-col justify-between shadow-lg relative overflow-hidden h-[140px]">
+              <div className="flex justify-between items-start relative z-10">
+                <span className="font-semibold text-sm">Total Ternak</span>
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                  <Database size={16} />
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* ─── 3. QUICK ACTIONS ──────────────────────────────── */}
-        <div>
-          <p className="eyebrow" style={{ marginBottom: '12px' }}>AKSI CEPAT</p>
-          <div className="flex flex-row gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-2">
-            <SquareQAButton icon={Plus} label="Tambah Ternak" onClick={() => setIsAddCowModalOpen(true)} />
-            <SquareQAButton icon={Syringe} label="Tambah Data IB" onClick={() => {
-              fetchSapiList();
-              setIsReproModalOpen(true);
-            }} />
-            <SquareQAButton icon={Cpu} label="Pasang Kalung" onClick={() => setIsPairModalOpen(true)} />
-            <SquareQAButton icon={Zap} label="Prediksi Estrus" onClick={() => setIsEstrusModalOpen(true)} />
-          </div>
-        </div>
-
-        {/* ─── 4. CARD SOROTAN (WEEKLY INSIGHT) ──────────────── */}
-        <InsightSlideshow onOpenDetail={(insight) => {
-          setSelectedInsight(insight);
-          setIsInsightModalOpen(true);
-        }} />
-
-        {/* ─── 4. REKOMENDASI LAINNYA ────────────────────────── */}
-        <div style={{
-          background: 'var(--bg-surface)',
-          border: '0.5px solid var(--border)',
-          borderRadius: '12px',
-          padding: '18px 22px',
-          marginBottom: '24px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <p className="eyebrow" style={{ marginBottom: 0 }}>REKOMENDASI LAINNYA</p>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {intel.filter(card => card.urgency === 'scheduled').length > 0 ? (
-              <>
-                {intel.filter(card => card.urgency === 'scheduled')
-                  .map((card, i) => {
-                  const cowName = card.title.split('—')[0].trim() || 'Ternak';
-                  let friendlyMsg = '';
-                  if (card.title.toLowerCase().includes('kebuntingan')) {
-                    friendlyMsg = `Update kebuntingan ${cowName} perlu dicatat. Sebaiknya diperbarui sekarang agar data kehamilan tetap akurat dan bisa diprediksi dengan baik.`;
-                  } else if (card.title.toLowerCase().includes('inseminasi')) {
-                    friendlyMsg = `Jadwal inseminasi ${cowName} sudah tiba. Pastikan persiapan sudah matang agar peluang kebuntingan maksimal.`;
-                  } else if (card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')) {
-                    friendlyMsg = `${cowName} menunjukkan tanda birahi. Waktu terbaik untuk inseminasi adalah 12–18 jam ke depan, jangan sampai terlewat.`;
-                  } else {
-                    friendlyMsg = card.sub || card.recommendation || `Ada hal yang perlu kamu tindak lanjuti untuk ${cowName}. Sebaiknya segera dicek agar tidak terlewat.`;
-                  }
-                  return (
-                    <RecommendationCard
-                      key={i}
-                      title={card.title}
-                      badgeText="SEDANG"
-                      id={card.cow_id ? `C${card.cow_id.slice(0,4).toUpperCase()}A` : `C${Math.floor(Math.random() * 9000) + 1000}A`}
-                      name={cowName}
-                      daysLeft={Math.floor(Math.random() * 10) + 1}
-                      icon={card.icon}
-                      message={friendlyMsg}
-                      cow_id={card.cow_id}
-                    />
-                  );
-                })}
-              </>
-            ) : (
-              <div style={{
-                padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
-                borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
-              }}>
-                Semua kondisi ternak hari ini dalam keadaan baik. Tidak ada rekomendasi tambahan untuk saat ini.
+              <div className="relative z-10">
+                <div className="text-[40px] font-black leading-none mb-1">{sapiList.length}</div>
+                <div className="text-xs text-emerald-100 flex items-center gap-1">
+                  <CheckCircle2 size={12} /> Kondisi terpantau
+                </div>
               </div>
-            )}
+              <Sun size={140} strokeWidth={1} className="absolute -bottom-10 -right-10 text-white opacity-10 rotate-12" />
+            </div>
+
+            {/* Card 2: Sehat */}
+            <div className="bg-white border border-[var(--border)] p-5 rounded-2xl flex flex-col justify-between shadow-sm h-[140px]">
+              <div className="flex justify-between items-start">
+                <span className="font-semibold text-sm text-[var(--text-2)]">Kondisi Sehat</span>
+                <div className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg-surface)] cursor-pointer">
+                  <ChevronRight size={16} />
+                </div>
+              </div>
+              <div>
+                <div className="text-[32px] font-black leading-none mb-1 text-[var(--text-1)]">
+                  {sapiList.filter(s => s.status_kesehatan === 'Sehat').length}
+                </div>
+                <div className="text-xs text-[var(--color-primary)] flex items-center gap-1 font-semibold bg-[var(--color-primary-dim)] w-fit px-2 py-0.5 rounded-md">
+                  <Activity size={12} /> Stabil & Aktif
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Estrus */}
+            <div className="bg-white border border-[var(--border)] p-5 rounded-2xl flex flex-col justify-between shadow-sm h-[140px]">
+              <div className="flex justify-between items-start">
+                <span className="font-semibold text-sm text-[var(--text-2)]">Sedang Estrus</span>
+                <div className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg-surface)] cursor-pointer" onClick={() => setIsEstrusModalOpen(true)}>
+                  <ChevronRight size={16} />
+                </div>
+              </div>
+              <div>
+                <div className="text-[32px] font-black leading-none mb-1 text-[var(--text-1)]">
+                  {intel.filter(card => card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')).length}
+                </div>
+                <div className="text-xs text-amber-600 flex items-center gap-1 font-semibold bg-amber-50 w-fit px-2 py-0.5 rounded-md">
+                  <Zap size={12} /> Siap IB
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Butuh Perhatian */}
+            <div className="bg-white border border-[var(--border)] p-5 rounded-2xl flex flex-col justify-between shadow-sm h-[140px]">
+              <div className="flex justify-between items-start">
+                <span className="font-semibold text-sm text-[var(--text-2)]">Perlu Tindakan</span>
+                <div className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg-surface)] cursor-pointer">
+                  <ChevronRight size={16} />
+                </div>
+              </div>
+              <div>
+                <div className="text-[32px] font-black leading-none mb-1 text-[var(--text-1)]">
+                  {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length}
+                </div>
+                <div className="text-xs text-red-600 flex items-center gap-1 font-semibold bg-red-50 w-fit px-2 py-0.5 rounded-md">
+                  <ShieldAlert size={12} /> Cek Sekarang
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+
+          {/* ROW 2: PERHATIAN + REKOMENDASI side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+            {/* PERHATIAN HARI INI */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={16} className="text-red-500 flex-shrink-0" />
+                <span className="font-bold text-[var(--text-1)] text-[14px]">Perhatian yang harus dilakukan hari ini</span>
+              </div>
+              <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar" style={{ maxHeight: '200px' }}>
+                {intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').length > 0 ? (
+                  intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').map((card, i) => (
+                    <IntelCard key={i} {...card} t={t} />
+                  ))
+                ) : (
+                  <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text-2)] text-center">
+                    Kondisi semua ternak terpantau aman.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* REKOMENDASI LAINNYA */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
+              <span className="font-bold text-[var(--text-1)] text-[14px]">Rekomendasi Lainnya</span>
+              <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar" style={{ maxHeight: '200px' }}>
+                {intel.filter(card => card.urgency === 'scheduled').length > 0 ? (
+                  intel.filter(card => card.urgency === 'scheduled').map((card, i) => {
+                    let cowName = card.cow_name || "Sapi";
+                    let friendlyMsg = card.title.toLowerCase().includes('vaksin')
+                      ? (card.recommendation || `Jadwal vaksinasi rutin untuk ${cowName} akan segera tiba.`)
+                      : (card.sub || card.recommendation || `Ada hal yang perlu ditindak lanjuti untuk ${cowName}.`);
+                    return (
+                      <RecommendationCard
+                        key={i}
+                        title={card.title}
+                        badgeText="SEDANG"
+                        id={card.cow_id ? `C${card.cow_id.slice(0, 4).toUpperCase()}A` : `C${Math.floor(Math.random() * 9000) + 1000}A`}
+                        name={cowName}
+                        daysLeft={Math.floor(Math.random() * 10) + 1}
+                        icon={card.icon}
+                        message={friendlyMsg}
+                        cow_id={card.cow_id}
+                      />
+                    );
+                  })
+                ) : (
+                  <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text-2)] text-center">
+                    Tidak ada rekomendasi tambahan untuk saat ini.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ROW 3: TREN AKTIVITAS — full width */}
+          <div className="grid grid-cols-1 gap-4 mt-4" style={{ gridTemplateColumns: '1fr' }}>
+            <TrenAktivitasChart />
+          </div>
+
+          {/* ROW 3: COLLAB, PROGRESS, IOT */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 mb-8">
+            {/* Timeline / Collaboration */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-[var(--text-1)] text-lg">Aktivitas Terkini</h3>
+                <button className="text-xs font-bold text-[var(--color-primary)] px-3 py-1.5 bg-[var(--color-primary-dim)] rounded-full hover:bg-[var(--color-primary)] hover:text-white transition-all">Lihat Semua</button>
+              </div>
+              <div className="flex flex-col gap-5 flex-1 justify-center">
+                {[
+                  { title: 'Inseminasi Sapi C432A', status: 'Selesai', color: 'var(--color-primary)', time: '2 jam lalu' },
+                  { title: 'Pemeriksaan Kesehatan', status: 'Proses', color: 'var(--amber)', time: '4 jam lalu' },
+                  { title: 'Anomali Suhu Terdeteksi', status: 'Tertunda', color: 'var(--red)', time: '5 jam lalu' },
+                ].map((act, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 text-gray-400 shadow-sm">
+                      <Activity size={16} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-[var(--text-1)] truncate">{act.title}</p>
+                      <p className="text-[11px] font-medium text-[var(--text-3)] mt-0.5">{act.time}</p>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md" style={{ color: act.color, background: `${act.color}1A`, fontWeight: 800 }}>
+                      {act.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Progress / Doughnut */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col items-center">
+              <h3 className="font-bold text-[var(--text-1)] text-lg mb-6 self-start w-full">Status Populasi</h3>
+              <div className="relative w-44 h-44 flex items-center justify-center">
+                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="14" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="50" strokeLinecap="round" className="opacity-90" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="200" strokeLinecap="round" />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center mt-2">
+                  <span className="text-3xl font-black leading-none text-[var(--text-1)]">80%</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">Sehat</span>
+                </div>
+              </div>
+              <div className="flex gap-4 mt-auto w-full justify-center pb-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]"></div> Sehat</div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--amber)]"></div> Monitor</div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--border)]"></div> Sakit</div>
+              </div>
+            </div>
+
+            {/* Time Tracker / Environment Widget */}
+            <div className="rounded-2xl p-6 shadow-lg relative overflow-hidden flex flex-col min-h-[260px]" style={{ background: 'linear-gradient(145deg, #022C22 0%, #064E3B 100%)' }}>
+              <div className="absolute top-0 right-0 p-5">
+                <ThermometerSun size={28} className="text-emerald-400 opacity-80" />
+              </div>
+              <h3 className="font-semibold text-emerald-100 mb-1 text-sm z-10 opacity-90">Kondisi Kandang (IoT)</h3>
+              <p className="text-xs text-emerald-200/70 mb-auto z-10 font-medium">Terakhir diperbarui: Baru saja</p>
+
+              <div className="mt-8 z-10 relative">
+                <div className="text-[48px] font-black text-white leading-none tracking-tight flex items-start gap-1">
+                  28.4<span className="text-2xl mt-1 text-emerald-200">°C</span>
+                </div>
+                <div className="flex gap-3 mt-4">
+                  <div className="bg-black/30 backdrop-blur-md rounded-xl px-4 py-2.5 flex items-center gap-2 border border-white/10 shadow-sm">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <span className="text-xs font-bold tracking-wide text-emerald-50">RH 65%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Abstract green waves in background */}
+              <svg className="absolute bottom-0 left-0 right-0 w-full opacity-40 text-emerald-500 pointer-events-none" viewBox="0 0 100 40" preserveAspectRatio="none" style={{ height: '60%' }}>
+                <path fill="currentColor" d="M0 40 C 20 20, 40 40, 60 20 C 80 0, 100 20, 100 40 Z" />
+                <path fill="currentColor" d="M0 40 C 30 10, 60 30, 100 10 L 100 40 Z" className="opacity-50" />
+              </svg>
+            </div>
+          </div>
+
+        </div> {/* End of Desktop Bento Grid */}
 
       </div>
 
@@ -1185,298 +1670,308 @@ export default function Dashboard() {
         <>
           {/* MODAL: Tambah Reproduksi */}
           {isReproModalOpen && (
-        <div className="fixed inset-0 z-[999] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in overflow-hidden touch-none">
-          <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-lg animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">
-                {t.repro_record_new}
-              </h2>
-              <button onClick={() => setIsReproModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form className="space-y-4" onSubmit={onTambahReproduksi}>
-              <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
-                  {t.repro_select_cow} <span className="text-red-500">*</span>
-                </label>
-                <select
-                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
-                  className="w-full px-3 h-[42px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
-                  required
-                  value={reproForm.rfid}
-                  onChange={e => {
-                    setReproForm({ ...reproForm, rfid: e.target.value });
-                    // auto set countIB when cow changes
-                    if (e.target.value) {
-                      const cowHistory = herd.find(c => c.id === e.target.value)?.reproduksi || [];
-                      const countIB = cowHistory.filter(h => !h.metode || h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
-                      setReproForm(prev => ({ ...prev, rfid: e.target.value, jumlah_ib: countIB }));
-                    }
-                  }}
-                >
-                  <option value="">-- {t.repro_choose_cow} --</option>
-                  {sapiList.map(s => (
-                    <option key={s.id} value={s.id}>{s.nama} ({s.id})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                <div className="w-full min-w-0">
-                  <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
-                    {t.repro_ib_date} <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
-                    className="w-full px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
-                    required
-                    value={reproForm.tanggal_ib}
-                    onChange={handleTanggalIBChange}
-                  />
+            <>
+            <div className="fixed inset-0 z-[999] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none">
+              <div className="absolute inset-0 z-0 pointer-events-auto md:pointer-events-auto" onClick={() => setIsReproModalOpen(false)} />
+              <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto max-h-[90vh] md:max-h-full overflow-x-hidden no-scrollbar">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">
+                    {t.repro_record_new}
+                  </h2>
+                  <button onClick={() => setIsReproModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]">
+                    <X size={20} />
+                  </button>
                 </div>
-                {/* jumlah_ib is automatically calculated, hidden from user */}
-                <input type="hidden" value={reproForm.jumlah_ib} />
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
-                  {t.repro_inseminator} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder={t.repro_inseminator_placeholder}
-                  style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
-                  className="w-full min-w-0 px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
-                  required
-                  value={reproForm.pemberi_ib}
-                  onChange={e => setReproForm({ ...reproForm, pemberi_ib: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_notes}</label>
-                <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }} className="w-full min-w-0 px-4 py-3 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({ ...reproForm, catatan: e.target.value })} />
-              </div>
-
-
-              <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} className="w-1/2 py-3 text-center">{t.btn_cancel}</button>
-                <button type="submit" className="w-1/2 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg text-center" disabled={reproLoading}>
-                  {reproLoading ? t.repro_saving : t.repro_save}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <PairCollarModal
-        isOpen={isPairModalOpen}
-        onClose={() => {
-          setPairSelectedSapi(null);
-          setPairSelectedCollar(null);
-          setIsPairModalOpen(false);
-        }}
-        pairSelectedSapi={pairSelectedSapi}
-        setPairSelectedSapi={setPairSelectedSapi}
-        pairSelectedCollar={pairSelectedCollar}
-        setPairSelectedCollar={setPairSelectedCollar}
-      />
-
-      {/* MODAL: Insight Detail */}
-      {isInsightModalOpen && selectedInsight && (
-        <div className="fixed inset-0 z-[999] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-md animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3">
-                <div style={{
-                  width: '40px', height: '40px', borderRadius: '12px',
-                  background: `${selectedInsight.color}1A`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                  <selectedInsight.icon size={20} style={{ color: selectedInsight.color }} />
-                </div>
-                <h2 className="text-lg font-heading font-bold text-[var(--color-primary)]">
-                  {selectedInsight.title}
-                </h2>
-              </div>
-              <button onClick={() => setIsInsightModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]">
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <p style={{ fontSize: '15px', color: 'var(--text-1)', fontWeight: 600, lineHeight: 1.5 }}>
-                {selectedInsight.summary}
-              </p>
-              <div style={{ padding: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-2)', borderRadius: '12px' }}>
-                <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6 }}>
-                  {selectedInsight.detail}
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-6">
-              <button
-                onClick={() => setIsInsightModalOpen(false)}
-                className="w-full py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isEstrusModalOpen && (
-        <div className="fixed inset-0 z-[999] flex justify-center items-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-[var(--bg-card)] w-full max-w-md rounded-[24px] shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-[var(--border)] flex items-center justify-between">
-              <h2 className="text-xl font-heading font-bold text-[var(--color-primary)] flex items-center gap-2">
-                <Zap size={22} className="text-[var(--color-accent)]" /> 
-                Prediksi Estrus AI
-              </h2>
-              <button onClick={() => setIsEstrusModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--border)] transition-colors">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-6">
-              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-4 mb-6">
-                <div className="bg-white p-3 rounded-xl shadow-sm text-blue-500 h-fit flex-shrink-0">
-                  <Activity size={24} />
-                </div>
-                <div>
-                  <h4 className="font-bold text-blue-900 mb-1">Analisis Berhasil</h4>
-                  <p className="text-sm text-blue-800 leading-relaxed">
-                    Sistem mendeteksi sapi dengan probabilitas tinggi mengalami estrus hari ini berdasarkan pola aktivitas pergerakan.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3 mb-6">
-                {activeEstrusPredictions.slice(0, 5).map((pred, idx) => {
-                  const prob = Math.round((pred.confidence_final || 0) * 100);
-                  return (
-                    <div 
-                      key={pred.id} 
-                      onClick={() => {
-                        setIsEstrusModalOpen(false);
-                        navigate('/ternak', { state: { selectedCowId: pred.cow_id, fromDashboard: true } });
-                      }}
-                      className="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full bg-[var(--color-accent)] ${idx === 0 ? 'animate-pulse' : ''}`} />
-                        <div>
-                          <p className="font-bold text-gray-900">{pred.cow_name || 'Sapi'} | {pred.cow_id}</p>
-                          <p className="text-xs text-gray-500">Probabilitas: {prob}%</p>
-                        </div>
-                      </div>
-                      <ChevronRight size={16} className="text-gray-400" />
-                    </div>
-                  );
-                })}
-                {activeEstrusPredictions.length === 0 && (
-                  <p className="text-sm text-center text-gray-500 py-4">Belum ada sapi terdeteksi estrus saat ini.</p>
-                )}
-              </div>
-
-              <div className="flex">
-                <button type="button" onClick={() => setIsEstrusModalOpen(false)} style={{ padding: '12px 24px', color: 'var(--color-primary)', fontWeight: 700, borderRadius: '12px', background: 'var(--color-primary-dim)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>Tutup</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Widget Settings Modal for Dashboard */}
-      {showWidgetModal && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={(e) => e.stopPropagation()}>
-          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="font-bold text-gray-900">Atur Widget Beranda</h3>
-              <button 
-                onClick={() => setShowWidgetModal(false)}
-                className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-4 max-h-[60vh] overflow-y-auto">
-              <p className="text-xs text-gray-500 mb-4">Pilih 2 metrik utama untuk ditampilkan di beranda. Anda telah memilih <span className="font-bold text-[var(--accent)]">{selectedWidgets.length}/2</span>.</p>
-              
-              <div className="space-y-2">
-                {[
-                  { id: 'pantau', label: 'Ternak Dipantau', icon: Activity, value: stats.collars, unit: '' },
-                  { id: 'total', label: 'Total Ternak', icon: Database, value: sapiList.length, unit: '' },
-                  { id: 'tindakan', label: 'Perlu Tindakan', icon: ShieldAlert, value: intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length, unit: '' }
-                ].map(w => {
-                  const isSelected = selectedWidgets.includes(w.id);
-                  const Icon = w.icon;
-                  return (
-                    <label 
-                      key={w.id} 
-                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                    >
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 rounded text-[var(--accent)] focus:ring-[var(--accent)]"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            if (selectedWidgets.length >= 2) {
-                              setSelectedWidgets([selectedWidgets[1], w.id]);
-                            } else {
-                              setSelectedWidgets([...selectedWidgets, w.id]);
-                            }
-                          } else {
-                            if (selectedWidgets.length <= 1) {
-                              toast.error('Minimal 1 widget harus dipilih');
-                              return;
-                            }
-                            setSelectedWidgets(selectedWidgets.filter(id => id !== w.id));
-                          }
-                        }}
-                      />
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isSelected ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : 'bg-gray-100 text-gray-500'}`}>
-                        <Icon size={16} />
-                      </div>
-                      <div className="flex-1">
-                        <p className={`text-sm font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>{w.label}</p>
-                        <p className="text-xs text-gray-500">{w.value} {w.unit}</p>
-                      </div>
+                <form className="space-y-4" onSubmit={onTambahReproduksi}>
+                  <div>
+                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
+                      {t.repro_select_cow} <span className="text-red-500">*</span>
                     </label>
-                  );
-                })}
+                    <select
+                      style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
+                      className="w-full px-3 h-[42px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
+                      required
+                      value={reproForm.rfid}
+                      onChange={e => {
+                        setReproForm({ ...reproForm, rfid: e.target.value });
+                        // auto set countIB when cow changes
+                        if (e.target.value) {
+                          const cowHistory = herd.find(c => c.id === e.target.value)?.reproduksi || [];
+                          const countIB = cowHistory.filter(h => !h.metode || h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
+                          setReproForm(prev => ({ ...prev, rfid: e.target.value, jumlah_ib: countIB }));
+                        }
+                      }}
+                    >
+                      <option value="">-- {t.repro_choose_cow} --</option>
+                      {sapiList.map(s => (
+                        <option key={s.id} value={s.id}>{s.nama} ({s.id})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="w-full min-w-0">
+                      <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
+                        {t.repro_ib_date} <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
+                        className="w-full px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
+                        required
+                        value={reproForm.tanggal_ib}
+                        onChange={handleTanggalIBChange}
+                      />
+                    </div>
+                    {/* jumlah_ib is automatically calculated, hidden from user */}
+                    <input type="hidden" value={reproForm.jumlah_ib} />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
+                      {t.repro_inseminator} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={t.repro_inseminator_placeholder}
+                      style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
+                      className="w-full min-w-0 px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
+                      required
+                      value={reproForm.pemberi_ib}
+                      onChange={e => setReproForm({ ...reproForm, pemberi_ib: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_notes}</label>
+                    <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }} className="w-full min-w-0 px-4 py-3 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({ ...reproForm, catatan: e.target.value })} />
+                  </div>
+
+
+                  <div className="pt-4 flex gap-3">
+                    <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} className="w-1/2 py-3 text-center">{t.btn_cancel}</button>
+                    <button type="submit" className="w-1/2 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg text-center" disabled={reproLoading}>
+                      {reproLoading ? t.repro_saving : t.repro_save}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
-            
-            <div className="p-4 border-t border-gray-100">
-              <button 
-                onClick={() => setShowWidgetModal(false)}
-                className="w-full py-3 bg-[var(--accent)] text-white rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all"
-              >
-                Simpan Pengaturan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </>
+          )}
 
-      {/* ── ADD COW MODAL ── */}
-      <AddCowModal
-        isOpen={isAddCowModalOpen}
-        onClose={() => setIsAddCowModalOpen(false)}
-        onSuccess={() => {
-          setIsAddCowModalOpen(false);
-          // Optional: refresh dashboard data if needed
-          fetchDashboardData();
-        }}
-      />
+          <PairCollarModal
+            isOpen={isPairModalOpen}
+            onClose={() => {
+              setPairSelectedSapi(null);
+              setPairSelectedCollar(null);
+              setIsPairModalOpen(false);
+            }}
+            pairSelectedSapi={pairSelectedSapi}
+            setPairSelectedSapi={setPairSelectedSapi}
+            pairSelectedCollar={pairSelectedCollar}
+            setPairSelectedCollar={setPairSelectedCollar}
+          />
+
+          {/* MODAL: Insight Detail */}
+          {isInsightModalOpen && selectedInsight && (
+            <>
+            <div className="fixed inset-0 z-[999] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none">
+              <div className="absolute inset-0 z-0 pointer-events-auto md:pointer-events-auto" onClick={() => setIsInsightModalOpen(false)} />
+              <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="relative z-10 p-6 w-full max-w-md md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-3">
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '12px',
+                      background: `${selectedInsight.color}1A`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                      <selectedInsight.icon size={20} style={{ color: selectedInsight.color }} />
+                    </div>
+                    <h2 className="text-lg font-heading font-bold text-[var(--color-primary)]">
+                      {selectedInsight.title}
+                    </h2>
+                  </div>
+                  <button onClick={() => setIsInsightModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <p style={{ fontSize: '15px', color: 'var(--text-1)', fontWeight: 600, lineHeight: 1.5 }}>
+                    {selectedInsight.summary}
+                  </p>
+                  <div style={{ padding: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-2)', borderRadius: '12px' }}>
+                    <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                      {selectedInsight.detail}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  <button
+                    onClick={() => setIsInsightModalOpen(false)}
+                    className="w-full py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            </div>
+            </>
+          )}
+
+          {isEstrusModalOpen && (
+            <>
+            <div className="fixed inset-0 z-[999] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none">
+              <div className="absolute inset-0 z-0 pointer-events-auto md:pointer-events-auto" onClick={() => setIsEstrusModalOpen(false)} />
+              <div className="relative z-10 bg-[var(--bg-card)] w-full max-w-md md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto shadow-xl overflow-hidden animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto">
+                <div className="p-6 border-b border-[var(--border)] flex items-center justify-between">
+                  <h2 className="text-xl font-heading font-bold text-[var(--color-primary)] flex items-center gap-2">
+                    <Zap size={22} className="text-[var(--color-accent)]" />
+                    Prediksi Estrus AI
+                  </h2>
+                  <button onClick={() => setIsEstrusModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--border)] transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-4 mb-6">
+                    <div className="bg-white p-3 rounded-xl shadow-sm text-blue-500 h-fit flex-shrink-0">
+                      <Activity size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-blue-900 mb-1">Analisis Berhasil</h4>
+                      <p className="text-sm text-blue-800 leading-relaxed">
+                        Sistem mendeteksi sapi dengan probabilitas tinggi mengalami estrus hari ini berdasarkan pola aktivitas pergerakan.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 mb-6">
+                    {activeEstrusPredictions.slice(0, 5).map((pred, idx) => {
+                      const prob = Math.round((pred.confidence_final || 0) * 100);
+                      return (
+                        <div
+                          key={pred.id}
+                          onClick={() => {
+                            setIsEstrusModalOpen(false);
+                            navigate('/ternak', { state: { selectedCowId: pred.cow_id, fromDashboard: true } });
+                          }}
+                          className="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full bg-[var(--color-accent)] ${idx === 0 ? 'animate-pulse' : ''}`} />
+                            <div>
+                              <p className="font-bold text-gray-900">{pred.cow_name || 'Sapi'} | {pred.cow_id}</p>
+                              <p className="text-xs text-gray-500">Probabilitas: {prob}%</p>
+                            </div>
+                          </div>
+                          <ChevronRight size={16} className="text-gray-400" />
+                        </div>
+                      );
+                    })}
+                    {activeEstrusPredictions.length === 0 && (
+                      <p className="text-sm text-center text-gray-500 py-4">Belum ada sapi terdeteksi estrus saat ini.</p>
+                    )}
+                  </div>
+
+                  <div className="flex">
+                    <button type="button" onClick={() => setIsEstrusModalOpen(false)} style={{ padding: '12px 24px', color: 'var(--color-primary)', fontWeight: 700, borderRadius: '12px', background: 'var(--color-primary-dim)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>Tutup</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </>
+          )}
+          {/* Widget Settings Modal for Dashboard */}
+          {showWidgetModal && (
+            <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl animate-in zoom-in-95 duration-200">
+                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                  <h3 className="font-bold text-gray-900">Atur Widget Beranda</h3>
+                  <button
+                    onClick={() => setShowWidgetModal(false)}
+                    className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="p-4 max-h-[60vh] overflow-y-auto">
+                  <p className="text-xs text-gray-500 mb-4">Pilih 2 metrik utama untuk ditampilkan di beranda. Anda telah memilih <span className="font-bold text-[var(--accent)]">{selectedWidgets.length}/2</span>.</p>
+
+                  <div className="space-y-2">
+                    {[
+                      { id: 'total', label: 'Total Ternak', icon: Database, value: sapiList.length, unit: '' },
+                      { id: 'sehat', label: 'Kondisi Sehat', icon: CheckCircle2, value: sapiList.length, unit: '' },
+                      { id: 'estrus', label: 'Sedang Estrus', icon: Zap, value: stats.estrus ?? 0, unit: '' },
+                      { id: 'tindakan', label: 'Perlu Tindakan', icon: ShieldAlert, value: intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length, unit: '' }
+                    ].map(w => {
+                      const isSelected = selectedWidgets.includes(w.id);
+                      const Icon = w.icon;
+                      return (
+                        <label
+                          key={w.id}
+                          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded text-[var(--accent)] focus:ring-[var(--accent)]"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                if (selectedWidgets.length >= 2) {
+                                  setSelectedWidgets([selectedWidgets[1], w.id]);
+                                } else {
+                                  setSelectedWidgets([...selectedWidgets, w.id]);
+                                }
+                              } else {
+                                if (selectedWidgets.length <= 1) {
+                                  toast.error('Minimal 1 widget harus dipilih');
+                                  return;
+                                }
+                                setSelectedWidgets(selectedWidgets.filter(id => id !== w.id));
+                              }
+                            }}
+                          />
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isSelected ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : 'bg-gray-100 text-gray-500'}`}>
+                            <Icon size={16} />
+                          </div>
+                          <div className="flex-1">
+                            <p className={`text-sm font-semibold ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>{w.label}</p>
+                            <p className="text-xs text-gray-500">{w.value} {w.unit}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-gray-100">
+                  <button
+                    onClick={() => setShowWidgetModal(false)}
+                    className="w-full py-3 bg-[var(--accent)] text-white rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all"
+                  >
+                    Simpan Pengaturan
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── ADD COW MODAL ── */}
+          <AddCowModal
+            isOpen={isAddCowModalOpen}
+            onClose={() => setIsAddCowModalOpen(false)}
+            onSuccess={() => {
+              setIsAddCowModalOpen(false);
+              // Optional: refresh dashboard data if needed
+              fetchDashboardData();
+            }}
+          />
         </>,
         document.body
       )}

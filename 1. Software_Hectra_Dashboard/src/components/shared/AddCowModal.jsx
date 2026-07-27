@@ -82,8 +82,9 @@ export default function AddCowModal({ isOpen, onClose }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-[1100] flex justify-center items-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="p-6 w-full max-w-lg animate-in zoom-in-95 duration-200">
+      <div className="fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none">
+        <div className="absolute inset-0 z-0 pointer-events-auto md:pointer-events-auto" onClick={onClose} />
+        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', boxShadow: 'var(--shadow-modal)' }} className="relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">{t.livestock_add_title}</h2>
             <button onClick={onClose} className="p-2 bg-[var(--bg-surface)] rounded-full hover:bg-[var(--border)]">
@@ -197,7 +198,7 @@ export default function AddCowModal({ isOpen, onClose }) {
             </div>
 
             {/* Bottom Actions */}
-            <div className="pt-6 mt-4 border-t border-[var(--color-border)] flex gap-3 w-full">
+            <div className="pt-6 mt-4 border-t border-[var(--color-border)] flex gap-3 w-full pb-8 md:pb-0">
               <button type="button" onClick={onClose} style={{ border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '12px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} className="w-1/2 py-3 text-center">
                 {t.btn_cancel}
               </button>
