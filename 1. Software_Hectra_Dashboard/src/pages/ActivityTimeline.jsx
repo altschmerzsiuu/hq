@@ -43,7 +43,7 @@ const EVENT_CONFIG = {
   }
 };
 
-export default function ActivityTimeline() {
+export default function ActivityTimeline({ cowId = null, filter = null, embedded = false }) {
   const { lang } = useSettingsStore();
   const t = translations[lang];
   const [events, setEvents] = useState([]);
@@ -73,11 +73,33 @@ export default function ActivityTimeline() {
 
   const getFilteredEvents = () => {
     let result = [...events];
-    
-    // Apply search query
-    if (searchQuery.trim()) {
+
+    // Filter by cowId if provided (embedded mode)
+    if (cowId) {
+      result = result.filter(e => e.cow_id === cowId || e.cow_id === String(cowId));
+    }
+
+    // Apply date-range filter if provided from parent
+    if (filter && filter !== 'semua') {
+      const now = new Date();
+      const startOf = (unit) => {
+        const d = new Date(now);
+        if (unit === 'day') { d.setHours(0, 0, 0, 0); }
+        else if (unit === 'week') { const day = d.getDay(); d.setDate(d.getDate() - day); d.setHours(0, 0, 0, 0); }
+        else if (unit === 'month') { d.setDate(1); d.setHours(0, 0, 0, 0); }
+        return d;
+      };
+      let cutoff = null;
+      if (filter === 'hari_ini') cutoff = startOf('day');
+      else if (filter === 'minggu_ini') cutoff = startOf('week');
+      else if (filter === 'bulan_ini') cutoff = startOf('month');
+      if (cutoff) result = result.filter(e => new Date(e.timestamp) >= cutoff);
+    }
+
+    // Apply search query (standalone mode)
+    if (!filter && searchQuery.trim()) {
       const term = searchQuery.toLowerCase();
-      result = result.filter(e => 
+      result = result.filter(e =>
         (e.title || '').toLowerCase().includes(term) ||
         (e.description || '').toLowerCase().includes(term) ||
         (e.cow_name || '').toLowerCase().includes(term) ||
@@ -85,7 +107,7 @@ export default function ActivityTimeline() {
       );
     }
 
-    // Apply category filter
+    // Apply category filter (standalone mode)
     if (activeFilter !== 'all') {
       result = result.filter(e => e.type === activeFilter);
     }
@@ -141,60 +163,63 @@ export default function ActivityTimeline() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* ── HEADER ── */}
-      <div 
-        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
-        style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%)' }}
-      >
-        {/* Subtle Background Accent (Activity) */}
-        <Activity 
-          size={240} 
-          strokeWidth={1} 
-          className="absolute -top-10 -right-10 text-white opacity-[0.08] rotate-12 pointer-events-none" 
-        />
-
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
-          <div>
-            <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-blue-200">
-              RIWAYAT DAN AKTIVITAS KANDANG
-            </p>
-            <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
-              {t.timeline_title}
-            </h1>
-            <p className="text-blue-100 mt-2 font-medium">{t.timeline_sub}</p>
-          </div>
-          <button 
-            onClick={fetchEvents}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white/20 border border-white/30 text-white font-bold rounded-xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md self-start sm:self-auto"
-          >
-            <RefreshCw size={18} />
-            <span>{t.btn_refresh}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* FILTER & SEARCH */}
-      <div className="flex flex-col gap-4">
-        {/* Search */}
-        <div className="relative w-full sm:w-80">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-[var(--color-text-muted)]" />
-          </div>
-          <input
-            type="text"
-            placeholder={t.timeline_search_placeholder}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ width: '100%', padding: '10px 12px 10px 38px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'var(--bg-card)', color: 'var(--text-1)', outline: 'none', fontSize: '14px', fontFamily: 'Inter, sans-serif' }}
+      {/* ── HEADER — only in standalone mode ── */}
+      {!embedded && (
+        <div 
+          className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
+          style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%)' }}
+        >
+          {/* Subtle Background Accent (Activity) */}
+          <Activity 
+            size={240} 
+            strokeWidth={1} 
+            className="absolute -top-10 -right-10 text-white opacity-[0.08] rotate-12 pointer-events-none" 
           />
-        </div>
 
-        {/* Horizontal Filters */}
-        <div className="flex flex-row overflow-x-auto no-scrollbar gap-2 pb-1 flex-nowrap md:flex-wrap">
-          {filters.map((filter) => (
-            <button
-              key={filter.id}
-              onClick={() => handleFilterChange(filter.id)}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
+            <div>
+              <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-blue-200">
+                RIWAYAT DAN AKTIVITAS KANDANG
+              </p>
+              <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
+                {t.timeline_title}
+              </h1>
+              <p className="text-blue-100 mt-2 font-medium">{t.timeline_sub}</p>
+            </div>
+            <button 
+              onClick={fetchEvents}
+              className="flex items-center gap-2 px-5 py-2.5 bg-white/20 border border-white/30 text-white font-bold rounded-xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md self-start sm:self-auto"
+            >
+              <RefreshCw size={18} />
+              <span>{t.btn_refresh}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* FILTER & SEARCH — only in standalone mode */}
+      {!embedded && (
+        <div className="flex flex-col gap-4">
+          {/* Search */}
+          <div className="relative w-full sm:w-80">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-[var(--color-text-muted)]" />
+            </div>
+            <input
+              type="text"
+              placeholder={t.timeline_search_placeholder}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '10px 12px 10px 38px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'var(--bg-card)', color: 'var(--text-1)', outline: 'none', fontSize: '14px', fontFamily: 'Inter, sans-serif' }}
+            />
+          </div>
+
+          {/* Horizontal Filters */}
+          <div className="flex flex-row overflow-x-auto no-scrollbar gap-2 pb-1 flex-nowrap md:flex-wrap">
+            {filters.map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => handleFilterChange(filter.id)}
               className={cn(
                 "flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold border transition-all whitespace-nowrap shadow-sm",
                 activeFilter === filter.id
@@ -207,6 +232,7 @@ export default function ActivityTimeline() {
           ))}
         </div>
       </div>
+      )}
 
       {/* TIMELINE FEED */}
       <div className="max-w-4xl">

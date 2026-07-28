@@ -10,7 +10,8 @@ import {
   Lock,
   Target,
   Info,
-  RefreshCw
+  RefreshCw,
+  Activity
 } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
@@ -166,37 +167,16 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
   const cs   = classification ? colorSchemeFor(classification.type) : null;
   const conf = prediction ? Math.round((prediction.confidence_final ?? 0) * 100) : 0;
 
+  // ── Calculation for SVG Ring ──────────────────────────────────────────────
+  const currentDay = Math.max(0, 21 - (prediction?.days_until || 0));
+  const angle = (currentDay / 21) * 360;
+  const rad = (angle - 90) * (Math.PI / 180);
+  const cx = 100, cy = 100, r = 80;
+  const markerX = cx + r * Math.cos(rad);
+  const markerY = cy + r * Math.sin(rad);
+
   return (
-    <div className="space-y-4 animate-in fade-in duration-300">
-
-      {/* Run button card */}
-      {prediction && (
-        <div style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '16px', padding: '16px 18px', boxShadow: 'var(--shadow-card)' }} className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>
-              {lang === 'id' ? 'Analisis AI Estrus' : 'AI Estrus Analysis'}
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>
-              {lang === 'id' ? `Siklus estrus ${selectedCow?.nama || 'sapi'}` : `${selectedCow?.nama || 'Cow'}'s estrus cycle`}
-            </p>
-          </div>
-          <button
-            onClick={handleRunPredict}
-            disabled={isPredicting}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '8px 16px', borderRadius: '10px',
-              background: isPredicting ? 'var(--bg-hover)' : 'var(--color-primary)', color: isPredicting ? 'var(--text-2)' : 'white'}}
-          >
-            {isPredicting
-              ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {lang === 'id' ? 'Proses...' : 'Processing...'}</>
-              : <><RefreshCw className="w-3.5 h-3.5" /> {lang === 'id' ? 'Prediksi Ulang' : 'Repredict'}</>
-            }
-          </button>
-        </div>
-      )}
-
-      {/* No data yet */}
+    <div className="space-y-6 animate-in fade-in duration-300">
       {!prediction ? (
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white rounded-[24px] border border-gray-100 shadow-sm">
           <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
@@ -223,73 +203,143 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
           </button>
         </div>
       ) : (
-        <div style={{
-          background: 'var(--bg-card)', border: '0.5px solid var(--border)',
-          borderRadius: '16px', boxShadow: 'var(--shadow-card)',
-          padding: '20px', display: 'flex', flexDirection: 'column',
-          gap: '16px',
-        }}>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h3 style={{ fontWeight: 800, fontSize: '15px', color: 'var(--text-1)' }}>
-                  {lang === 'id' ? 'Hasil Prediksi Estrus' : 'Estrus Prediction Result'}
-                </h3>
-                {prediction.in_window_now && (
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: 'var(--red)', padding: '2px 8px', borderRadius: '20px' }}>
-                    {t.prediction_card_active_window}
-                  </span>
-                )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* LEFT COLUMN: Ring Tracker */}
+          <div className="lg:col-span-7 bg-white rounded-3xl border border-gray-100 shadow-sm p-8 flex flex-col items-center relative overflow-hidden">
+            {/* Header */}
+            <div className="w-full flex items-start justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                  <Activity className="text-blue-600 w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-gray-900 text-base md:text-lg tracking-tight">Pantau Siklus Birahi</h3>
+                  <p className="text-xs md:text-sm text-gray-500 font-medium">ID Sapi: {selectedCow?.id || selectedCow?.cow_id} - {selectedCow?.nama}</p>
+                </div>
               </div>
-              <p style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '4px', fontWeight: 500 }}>{classification.label}</p>
+              <button
+                onClick={handleRunPredict}
+                disabled={isPredicting}
+                title={lang === 'id' ? 'Refresh Prediksi' : 'Refresh Prediction'}
+                className="p-2 md:p-3 rounded-xl border transition-all duration-300 shadow-sm flex items-center justify-center shrink-0 bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-[#2E7D32] hover:border-[#2E7D32]/30 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-5 h-5 ${isPredicting ? 'animate-spin text-[#2E7D32]' : ''}`} />
+              </button>
             </div>
+
+            {/* SVG Ring Area */}
+                                    <div className="relative w-64 h-64 flex items-center justify-center my-6">
+              <svg width="100%" height="100%" viewBox="0 0 200 200" className="overflow-visible transform -rotate-90">
+                {/* Background Track */}
+                <circle cx="100" cy="100" r="80" fill="none" stroke="#F1F5F9" strokeWidth="14" />
+                
+                {/* Dynamic Progress Ring */}
+                <circle 
+                  cx="100" cy="100" r="80" fill="none" 
+                  stroke={prediction?.days_until <= 3 ? "url(#greenGradient)" : "url(#blueGradient)"} 
+                  strokeWidth="14" 
+                  strokeLinecap="round"
+                  strokeDasharray="502.65" 
+                  strokeDashoffset={502.65 - ((Math.max(0, 21 - (prediction?.days_until || 0)) / 21) * 502.65)}
+                  style={{ transition: 'stroke-dashoffset 1s ease-out, stroke 0.5s ease' }}
+                />
+
+                {/* Definitions for gradients */}
+                <defs>
+                  <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#4ADE80" />
+                    <stop offset="100%" stopColor="#22C55E" />
+                  </linearGradient>
+                  <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#60A5FA" />
+                    <stop offset="100%" stopColor="#3B82F6" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Center Text content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-4xl font-black text-gray-900 tracking-tighter">
+                  {prediction.days_until}
+                </span>
+                <span className="text-xs font-bold text-gray-800 tracking-tight uppercase mt-1">Hari Lagi</span>
+                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1.5 mb-1.5">Masa Subur Berikutnya</span>
+                <span className={`text-sm font-black px-2.5 py-1 rounded-full ${prediction.days_until <= 3 ? 'text-green-700 bg-green-50' : 'text-blue-700 bg-blue-50'}`}>
+                  {fmtDate(prediction.prediksi_ib_optimal, lang)}
+                </span>
+              </div>
+            </div>
+
+            {/* Optional badge based on status */}
             
-            {/* Simple Confidence Pill */}
-            <div 
-              onClick={() => toast(lang === 'id' ? 'Info AI' : 'AI Info', { description: lang === 'id' ? 'Tingkat keyakinan prediksi AI berdasarkan riwayat data estrus dan kawin sapi.' : 'AI prediction confidence level based on estrus and breeding history.' })}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-surface)', padding: '6px 10px', borderRadius: '12px', border: '0.5px solid var(--border)', flexShrink: 0, cursor: 'pointer' }}
-            >
-              <BrainCircuit size={14} style={{ color: cs.text }} />
-              <span style={{ fontSize: '12px', fontWeight: 800, color: cs.text }}>{conf}%</span>
-            </div>
           </div>
 
-          {/* Core Metrics */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {/* Optimal IB - Highlighted */}
-            <div style={{ padding: '16px', background: cs.bg, borderRadius: '12px', border: `0.5px solid ${cs.border}`, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ position: 'absolute', right: '-10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.1 }}>
-                <Target size={80} color={cs.text} />
-              </div>
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <p style={{ fontSize: '11px', color: cs.text, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px', opacity: 0.85 }}>{t.prediction_card_optimal_ib || 'Optimal IB'}</p>
-                <p style={{ fontSize: '24px', fontWeight: 800, color: cs.text }}>{fmtDate(prediction.prediksi_ib_optimal, lang)}</p>
+          {/* RIGHT COLUMN: Info Cards */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            
+            {/* Masa Optimal Card */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 relative overflow-hidden group">
+              <div className="absolute right-0 top-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-10 -mt-10 opacity-50"></div>
+              <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+                <CalendarClock className="w-5 h-5 text-blue-500" />
+                Masa Optimal
+              </h4>
+              <div className="flex gap-4">
+                <div className="w-1.5 h-auto bg-blue-500 rounded-full"></div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Masa Subur Berikutnya:</p>
+                  <p className="text-sm font-bold text-gray-900">{fmtDate(prediction.window_awal, lang)}</p>
+                  <p className="text-xs font-semibold text-gray-400 my-0.5">sampai dengan</p>
+                  <p className="text-sm font-bold text-gray-900">{fmtDate(prediction.window_akhir, lang)}</p>
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {/* Window */}
-              <div style={{ padding: '12px', background: 'var(--bg-surface)', borderRadius: '12px', border: '0.5px solid var(--border)' }}>
-                <p style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.prediction_card_window_label || 'Window'}</p>
-                <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-1)', marginTop: '4px', lineHeight: 1.4 }}>{fmtDate(prediction.window_awal, lang)} –<br/>{fmtDate(prediction.window_akhir, lang)}</p>
+            {/* Status Terjadwal Card */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 relative overflow-hidden group">
+              <div className="flex items-center justify-between mb-5">
+                <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-[#2E7D32]" />
+                  Status: {classification.label}
+                </h4>
+                <div className="bg-green-50 border border-green-200 px-3 py-1 rounded-full flex items-center gap-1.5 cursor-help" title="Tingkat akurasi prediksi AI">
+                  <BrainCircuit className="w-3.5 h-3.5 text-green-600" />
+                  <span className="text-xs font-bold text-green-700">{conf}% Akurasi</span>
+                </div>
               </div>
-              {/* Countdown */}
-              <div style={{ padding: '12px', background: 'var(--bg-surface)', borderRadius: '12px', border: '0.5px solid var(--border)' }}>
-                <p style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.prediction_card_countdown || 'Countdown'}</p>
-                <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-1)', marginTop: '4px' }}>{fmtDays(prediction.days_until, t)}</p>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">Siklus Berjalan (Aktif)</p>
+                    <p className="text-xs text-gray-500 font-medium mt-0.5">Sapi dalam fase {prediction.in_window_now ? 'Estrus (Subur)' : 'Diestrus (Tidak Subur)'}.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                    <Target className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">AI / Inseminasi</p>
+                    <p className="text-xs text-gray-500 font-medium mt-0.5">Rekomendasi IB pada tanggal <strong className="text-blue-600">{fmtDate(prediction.prediksi_ib_optimal, lang)}</strong>.</p>
+                  </div>
+                </div>
+
+                {/* Footnote about accuracy */}
+                <div className="mt-4 pt-4 border-t border-gray-100 flex items-start gap-2">
+                  <Info className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-gray-400 font-medium leading-relaxed">
+                    Akurasi akan terus meningkat secara otomatis setiap kali data aktivitas atau kawin sapi terbaru ditambahkan ke sistem.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Footnote */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', borderTop: '0.5px solid var(--border)', paddingTop: '14px' }}>
-            <AlertCircle style={{ width: 14, height: 14, color: 'var(--text-3)', flexShrink: 0, marginTop: 1 }} />
-            <p style={{ fontSize: '11px', color: 'var(--text-3)', lineHeight: 1.5 }}>
-              {lang === 'id'
-                ? 'Akurasi meningkat setiap kali data kawin baru ditambahkan.'
-                : 'Accuracy improves each time new breeding data is added.'}
-            </p>
           </div>
         </div>
       )}

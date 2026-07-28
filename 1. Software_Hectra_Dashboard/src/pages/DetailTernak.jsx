@@ -8,6 +8,8 @@ import translations from '@/lib/i18n';
 import CowAnalyticsView from '@/components/shared/CowAnalyticsView';
 import CowEstrusView from '@/components/shared/CowEstrusView';
 import PairCollarModal from '@/components/shared/PairCollarModal';
+import ActivityTimeline from '@/pages/ActivityTimeline';
+import { Stepper, StepperItem, StepperTitle, StepperDescription } from '@/components/ui/stepper';
 import { toast } from '@/store/toastStore';
 
 const hitungUsia = (lahir, lang) => {
@@ -255,6 +257,7 @@ export default function DetailTernak() {
 
   const [activeTab, setActiveTab] = useState('riwayat');
   const [reproFilter, setReproFilter] = useState('siklus_saat_ini');
+  const [activityFilter, setActivityFilter] = useState('hari_ini');
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [pairSelectedSapi, setPairSelectedSapi] = useState(null);
   const [pairSelectedCollar, setPairSelectedCollar] = useState(null);
@@ -586,7 +589,7 @@ export default function DetailTernak() {
               }`}
             >
                <Activity size={20} strokeWidth={2.5} />
-               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Linimasa</span>
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Catatan Harian</span>
             </button>
             {/* Tab 4: Analitik */}
             <button 
@@ -598,7 +601,7 @@ export default function DetailTernak() {
               }`}
             >
                <LineChart size={20} strokeWidth={2.5} />
-               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Analitik</span>
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Grafik Sensor</span>
             </button>
           </div>
 
@@ -738,9 +741,24 @@ export default function DetailTernak() {
             </div>
           ) : activeDetailTab === 'linimasa' ? (
             <div className="px-5 pb-12 pt-6 bg-[#F8FBF9] min-h-[500px]">
-              <div className="mb-8">
-                <h3 className="text-[20px] font-extrabold text-[#111]">Linimasa Aktivitas</h3>
-                <p className="text-[13px] text-gray-500 mt-1">Jejak rekaman aktivitas personal untuk <strong className="text-[#2E7D32]">{selectedSapi.nama}</strong></p>
+              <div className="mb-8 flex items-start justify-between gap-2">
+                <div>
+                  <h3 className="text-[20px] font-extrabold text-[#111]">Catatan Aktivitas Ternak</h3>
+                  <p className="text-[13px] text-gray-500 mt-1">Rekaman aktivitas untuk <strong className="text-[#2E7D32]">{selectedSapi.nama}</strong></p>
+                </div>
+                <div className="relative shrink-0">
+                  <select
+                    value={activityFilter}
+                    onChange={(e) => setActivityFilter(e.target.value)}
+                    className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
+                  >
+                    <option value="hari_ini">Hari Ini</option>
+                    <option value="minggu_ini">Minggu Ini</option>
+                    <option value="bulan_ini">Bulan Ini</option>
+                    <option value="semua">Semua</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                </div>
               </div>
               
               <Stepper orientation="vertical" defaultValue={2} className="w-full">
@@ -885,11 +903,11 @@ export default function DetailTernak() {
       {/* ── DESKTOP VIEW ── */}
       <div className="hidden md:block">
         {/* ── MAIN CONTENT (Profile Sidebar Layout) ── */}
-        <div className="flex flex-col lg:flex-row gap-6 pt-2">
+        <div className="flex flex-col lg:flex-row gap-6 pt-2 lg:items-stretch">
 
           {/* LEFT COLUMN: Profile Card (fixed 280px) */}
-          <div className="w-full lg:w-[280px] shrink-0 self-stretch">
-            <div className="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 flex flex-col items-center relative overflow-hidden h-full">
+          <div className="w-full lg:w-[280px] shrink-0 flex flex-col">
+            <div className="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 flex flex-col items-center relative overflow-hidden flex-1">
               {/* Top decorative gradient */}
               <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-gray-50 to-white" />
 
@@ -980,9 +998,9 @@ export default function DetailTernak() {
                     }`}
                   >
                     {tab === 'riwayat' && 'Riwayat Reproduksi'}
-                    {tab === 'estrus' && 'Deteksi Estrus'}
-                    {tab === 'linimasa' && 'Linimasa'}
-                    {tab === 'analitik' && 'Analitik & Grafik'}
+                    {tab === 'estrus' && 'Pantau Birahi'}
+                    {tab === 'linimasa' && 'Catatan Harian'}
+                    {tab === 'analitik' && 'Grafik Sensor'}
 
                     {activeTab === tab && (
                       <motion.div layoutId="detailTabIndicator" className="absolute bottom-0 left-4 right-4 h-[3px] bg-[#2E7D32] rounded-t-full" />
@@ -993,7 +1011,7 @@ export default function DetailTernak() {
             </div>
 
             {/* Tab Content */}
-            <div className="bg-white rounded-b-[20px] shadow-sm p-6 min-h-[400px]">
+            <div className="bg-white rounded-b-[20px] shadow-sm p-6 min-h-[400px] flex-1">
               {activeTab === 'riwayat' && (
                 <div className="flex flex-col gap-6 animate-in fade-in duration-300">
                   
@@ -1122,12 +1140,116 @@ export default function DetailTernak() {
 
               {activeTab === 'linimasa' && (
                  <div className="animate-in fade-in duration-300">
-                   <h3 className="text-lg font-bold text-gray-900 mb-6">Linimasa Aktivitas</h3>
-                   <div className="text-center text-sm text-gray-400 py-12 border-2 border-dashed border-gray-100 rounded-2xl">
-                     Tidak ada aktivitas terbaru di linimasa.
+                   <div className="flex items-center justify-between mb-6">
+                     <div>
+                       <h3 className="text-lg font-bold text-gray-900">Catatan Aktivitas Ternak</h3>
+                       <p className="text-sm text-gray-500 mt-0.5">Rekaman aktivitas untuk <strong className="text-[#2E7D32]">{selectedSapi?.nama}</strong></p>
+                     </div>
+                     <div className="relative">
+                       <select
+                         value={activityFilter}
+                         onChange={(e) => setActivityFilter(e.target.value)}
+                         className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
+                       >
+                         <option value="hari_ini">Hari Ini</option>
+                         <option value="minggu_ini">Minggu Ini</option>
+                         <option value="bulan_ini">Bulan Ini</option>
+                         <option value="semua">Semua</option>
+                       </select>
+                       <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                     </div>
                    </div>
+                   <Stepper orientation="vertical" defaultValue={2} className="w-full">
+                     <div className="flex flex-col gap-6 relative before:absolute before:inset-0 before:ml-[17px] before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[#2E7D32]/20 before:to-transparent">
+                       {(() => {
+                           if (!sortedReproHistory || sortedReproHistory.length === 0) {
+                               return (
+                                   <div className="w-full text-center py-10 bg-white border border-[#E8F0EA] rounded-[16px] shadow-sm">
+                                       <p className="text-[13px] text-gray-500">Belum ada data aktivitas untuk ternak ini.</p>
+                                   </div>
+                               );
+                           }
+                           const formatTglStr = (ts) => new Date(ts).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {day: 'numeric', month: 'short', year: 'numeric'});
+                           const timelineEvents = [];
+                           sortedReproHistory.forEach(item => {
+                               const isPregnant = item.results === true || item.results === 'true' || item.is_pregnant === true;
+                               const isFailed   = item.results === false || item.results === 'failed' || item.is_pregnant === false;
+                               const rawDate    = item.tanggal_ib || item.service_date;
+                               if (!rawDate) return;
+                               const baseTime = new Date(rawDate).getTime();
+                               const eventId = item.id || Math.random().toString();
+                               timelineEvents.push({
+                                   id: eventId + '-ib',
+                                   title: `Inseminasi Buatan (Ke-${item.jumlah_ib || 1})`,
+                                   dateRaw: baseTime,
+                                   dateFmt: formatTglStr(baseTime),
+                                   desc: `Metode: ${(item.metode || 'IB').toUpperCase()}${item.pemberi_ib ? `. Inseminator: ${item.pemberi_ib}` : ''}`,
+                                   status: isPregnant ? 'completed' : (isFailed ? 'failed' : 'active')
+                               });
+                               if (isPregnant) {
+                                   const pkbTime = baseTime + 60 * 24 * 60 * 60 * 1000;
+                                   timelineEvents.push({ id: eventId + '-pkb', title: 'Pemeriksaan Kebuntingan', dateRaw: pkbTime, dateFmt: formatTglStr(pkbTime), desc: 'Dinyatakan Bunting (PKB positif).', status: 'completed' });
+                                   const masaKeringTime = baseTime + 223 * 24 * 60 * 60 * 1000;
+                                   timelineEvents.push({ id: eventId + '-kering', title: 'Masa Kering', dateRaw: masaKeringTime, dateFmt: formatTglStr(masaKeringTime), desc: 'Persiapan menjelang kelahiran.', status: masaKeringTime < Date.now() ? 'completed' : 'future_active' });
+                                   const calvingTime = baseTime + 283 * 24 * 60 * 60 * 1000;
+                                   timelineEvents.push({ id: eventId + '-calving', title: 'Perkiraan Kelahiran', dateRaw: calvingTime, dateFmt: 'Est. ' + formatTglStr(calvingTime), desc: 'Pindahkan ke kandang isolasi.', status: calvingTime < Date.now() ? 'completed' : 'future' });
+                               }
+                           });
+                           timelineEvents.sort((a, b) => b.dateRaw - a.dateRaw);
+                           return timelineEvents.map((evt, idx) => {
+                               let iconEl = <CheckCircle size={18} className="text-[#2E7D32]" />;
+                               let circleClass = "bg-[#E8F5E9] border-[#2E7D32]";
+                               let cardClass = "bg-white border border-[#E8F0EA]";
+                               let opacityClass = "";
+                               let badge = null;
+                               let isCompleted = evt.status === 'completed';
+                               if (evt.status === 'failed') {
+                                   iconEl = <XCircle size={18} className="text-red-500" />;
+                                   circleClass = "bg-red-50 border-red-500 ring-4 ring-red-50";
+                                   cardClass = "bg-white border-2 border-red-500/30";
+                                   badge = <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">Gagal</div>;
+                                   isCompleted = true;
+                               } else if (evt.status === 'active') {
+                                   iconEl = <Activity size={18} className="text-[#2E7D32]" />;
+                                   circleClass = "bg-[#E8F5E9] border-[#2E7D32] ring-4 ring-[#E8F5E9]";
+                                   cardClass = "bg-white border-2 border-[#2E7D32]/30 shadow-md";
+                                   badge = <div className="absolute top-0 right-0 bg-[#2E7D32] text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">Menunggu PKB</div>;
+                                   isCompleted = false;
+                               } else if (evt.status === 'future_active') {
+                                   iconEl = <Activity size={18} className="text-amber-600" />;
+                                   circleClass = "bg-amber-100 border-amber-500 ring-4 ring-amber-50";
+                                   cardClass = "bg-white border-2 border-amber-500/30 shadow-md";
+                                   badge = <div className="absolute top-0 right-0 bg-amber-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">Mendatang</div>;
+                                   isCompleted = false;
+                               } else if (evt.status === 'future') {
+                                   iconEl = <div className="size-2.5 rounded-full bg-gray-400" />;
+                                   circleClass = "bg-gray-100 border-gray-300 opacity-60";
+                                   cardClass = "bg-white border border-gray-200";
+                                   opacityClass = "opacity-60";
+                                   isCompleted = false;
+                               }
+                               return (
+                                   <StepperItem key={evt.id} step={idx + 1} completed={isCompleted} className="relative flex items-start gap-4">
+                                     <div className={`relative z-10 flex size-9 items-center justify-center rounded-full border-2 shadow-sm shrink-0 ${circleClass}`}>
+                                       {iconEl}
+                                     </div>
+                                     <div className={`flex-1 min-w-0 pb-2 ${opacityClass}`}>
+                                       <div className={`${cardClass} rounded-[16px] p-4 w-full relative overflow-hidden`}>
+                                         {badge}
+                                         <StepperTitle className="text-[14px] font-bold text-[#111] mb-1">{evt.title}</StepperTitle>
+                                         <StepperDescription className="text-[12px] text-gray-500 leading-relaxed">
+                                           <span className="font-semibold text-gray-700">{evt.dateFmt}</span> - {evt.desc}
+                                         </StepperDescription>
+                                       </div>
+                                     </div>
+                                   </StepperItem>
+                               );
+                           });
+                       })()}
+                     </div>
+                   </Stepper>
                  </div>
-              )}
+               )}
 
               {activeTab === 'analitik' && (
                  <div className="animate-in fade-in duration-300">
