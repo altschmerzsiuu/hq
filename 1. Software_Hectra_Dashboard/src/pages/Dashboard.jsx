@@ -17,6 +17,7 @@ import { handleError } from '@/lib/errorHandler';
 import SeeAllLink from '@/components/ui/SeeAllLink';
 import PairCollarModal from '@/components/shared/PairCollarModal';
 import AddCowModal from '@/components/shared/AddCowModal';
+import ReproModal from '@/components/shared/ReproModal';
 import { useTernakStore } from '@/store/useTernakStore';
 import { useAuthStore } from '@/store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -765,11 +766,6 @@ export default function Dashboard() {
   const [isEstrusModalOpen, setIsEstrusModalOpen] = useState(false);
   const [isAddCowModalOpen, setIsAddCowModalOpen] = useState(false);
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
-  const [reproForm, setReproForm] = useState({
-    rfid: '',
-    tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
-    bunting: '', hpl: '', catatan: ''
-  });
 
   const [selectedWidgets, setSelectedWidgets] = useState(() => {
     const valid = ['total', 'sehat', 'estrus', 'tindakan'];
@@ -814,56 +810,6 @@ export default function Dashboard() {
     };
   }, [isInsightModalOpen, isPairModalOpen, isReproModalOpen, isEstrusModalOpen, isAddCowModalOpen]);
 
-  const handleTanggalIBChange = (e) => {
-    const val = e.target.value;
-    if (val) {
-      const date = new Date(val);
-      let b = '', h = '';
-      if (!isNaN(date.getTime())) {
-        const bDate = new Date(val);
-        bDate.setMonth(bDate.getMonth() + 3);
-        b = bDate.toISOString().split('T')[0];
-
-        const hDate = new Date(val);
-        hDate.setMonth(hDate.getMonth() + 9);
-        hDate.setDate(hDate.getDate() + 10);
-        h = hDate.toISOString().split('T')[0];
-      }
-      setReproForm({ ...reproForm, tanggal_ib: val, bunting: b, hpl: h });
-    } else {
-      setReproForm({ ...reproForm, tanggal_ib: val, bunting: '', hpl: '' });
-    }
-  };
-
-  const onTambahReproduksi = async (e) => {
-    e.preventDefault();
-    if (!reproForm.rfid) {
-      toast.error(lang === 'id' ? 'Silakan pilih sapi terlebih dahulu.' : 'Please select a cow first.');
-      return;
-    }
-
-    let formattedInseminator = reproForm.pemberi_ib
-      ? reproForm.pemberi_ib
-        .toLowerCase()
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
-      : '';
-
-    const res = await tambahReproduksi({ ...reproForm, pemberi_ib: formattedInseminator });
-    if (res.success) {
-      setIsReproModalOpen(false);
-      setReproForm({
-        rfid: '',
-        tanggal_ib: '', pemberi_ib: '', jumlah_ib: 1,
-        bunting: '', hpl: '', catatan: ''
-      });
-      toast.success(lang === 'id' ? "Riwayat reproduksi berhasil disimpan!" : "Reproduction record saved successfully!");
-      navigate('/ternak', { state: { selectedCowId: reproForm.rfid, from: '/' } });
-    } else {
-      toast.error(res.message || (lang === 'id' ? 'Gagal menambah riwayat reproduksi.' : 'Failed to add reproduction record.'));
-    }
-  };
 
   const [pairSelectedSapi, setPairSelectedSapi] = useState(null);
   const [pairSelectedCollar, setPairSelectedCollar] = useState(null);
@@ -1672,97 +1618,7 @@ export default function Dashboard() {
       {createPortal(
         <>
           {/* MODAL: Tambah Reproduksi */}
-          {isReproModalOpen && (
-            <>
-            <div className="fixed inset-0 z-[999] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none">
-              <div className="absolute inset-0 z-0 pointer-events-auto md:pointer-events-auto" onClick={() => setIsReproModalOpen(false)} />
-              <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow-modal)' }} className="relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto max-h-[90vh] md:max-h-full overflow-x-hidden no-scrollbar">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">
-                    {t.repro_record_new}
-                  </h2>
-                  <button onClick={() => setIsReproModalOpen(false)} className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]">
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <form className="space-y-4" onSubmit={onTambahReproduksi}>
-                  <div>
-                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
-                      {t.repro_select_cow} <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }}
-                      className="w-full px-3 h-[42px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
-                      required
-                      value={reproForm.rfid}
-                      onChange={e => {
-                        setReproForm({ ...reproForm, rfid: e.target.value });
-                        // auto set countIB when cow changes
-                        if (e.target.value) {
-                          const cowHistory = herd.find(c => c.id === e.target.value)?.reproduksi || [];
-                          const countIB = cowHistory.filter(h => !h.metode || h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
-                          setReproForm(prev => ({ ...prev, rfid: e.target.value, jumlah_ib: countIB }));
-                        }
-                      }}
-                    >
-                      <option value="">-- {t.repro_choose_cow} --</option>
-                      {sapiList.map(s => (
-                        <option key={s.id} value={s.id}>{s.nama} ({s.id})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="w-full min-w-0">
-                      <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
-                        {t.repro_ib_date} <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
-                        className="w-full px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
-                        required
-                        value={reproForm.tanggal_ib}
-                        onChange={handleTanggalIBChange}
-                      />
-                    </div>
-                    {/* jumlah_ib is automatically calculated, hidden from user */}
-                    <input type="hidden" value={reproForm.jumlah_ib} />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">
-                      {t.repro_inseminator} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={t.repro_inseminator_placeholder}
-                      style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }}
-                      className="w-full min-w-0 px-4 h-[48px] rounded-xl text-sm outline-none focus:border-[var(--color-primary)]"
-                      required
-                      value={reproForm.pemberi_ib}
-                      onChange={e => setReproForm({ ...reproForm, pemberi_ib: e.target.value })}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[var(--color-text-secondary)] mb-1">{t.repro_notes}</label>
-                    <textarea rows="2" style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)', boxSizing: 'border-box' }} className="w-full min-w-0 px-4 py-3 rounded-xl text-sm outline-none focus:border-[var(--color-primary)] resize-none" placeholder={t.repro_notes_placeholder} value={reproForm.catatan} onChange={e => setReproForm({ ...reproForm, catatan: e.target.value })} />
-                  </div>
-
-
-                  <div className="pt-4 flex gap-3">
-                    <button type="button" onClick={() => setIsReproModalOpen(false)} style={{ border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '10px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} className="w-1/2 py-3 text-center">{t.btn_cancel}</button>
-                    <button type="submit" className="w-1/2 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary-hover)] shadow-lg text-center" disabled={reproLoading}>
-                      {reproLoading ? t.repro_saving : t.repro_save}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-            </>
-          )}
+          <ReproModal isOpen={isReproModalOpen} onClose={() => setIsReproModalOpen(false)} />
 
           <PairCollarModal
             isOpen={isPairModalOpen}

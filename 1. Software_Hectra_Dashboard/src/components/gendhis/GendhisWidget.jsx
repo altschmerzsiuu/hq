@@ -15,17 +15,35 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
-  Trash2
+  Trash2,
+  Syringe,
+  Cpu,
+  LayoutGrid,
+  ArrowLeft
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from '@/store/toastStore';
 import { handleError } from '@/lib/errorHandler';
 import { useAuthStore } from '@/store/authStore';
 import useConfirmStore from '@/store/confirmStore';
+import AddCowModal from '@/components/shared/AddCowModal';
+import ReproModal from '@/components/shared/ReproModal';
+import PairCollarModal from '@/components/shared/PairCollarModal';
 
 const API_BASE = import.meta.env.DEV ? '/api' : `${import.meta.env.VITE_API_URL || ''}/api`;
 
 export default function GendhisWidget() {
+  const navigate = useNavigate();
+  const [isFabOpen, setIsFabOpen] = useState(false);
+  
+  // Modals state
+  const [isAddCowModalOpen, setIsAddCowModalOpen] = useState(false);
+  const [isReproModalOpen, setIsReproModalOpen] = useState(false);
+  const [isPairModalOpen, setIsPairModalOpen] = useState(false);
+  const [pairSelectedSapi, setPairSelectedSapi] = useState(null);
+  const [pairSelectedCollar, setPairSelectedCollar] = useState(null);
+
   const ask = useConfirmStore(state => state.ask);
   const [viewState, setViewState] = useState('minimized'); // 'minimized' | 'compact' | 'fullscreen'
   const [messages, setMessages] = useState([
@@ -298,21 +316,289 @@ export default function GendhisWidget() {
   const userEmail = user?.email || 'wan@farm.com';
   const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
-  if (viewState === 'minimized') {
-    return (
-      <button 
-        onClick={() => {
-          if (typeof window !== 'undefined' && window.innerWidth < 768) {
-            setViewState('fullscreen');
-          } else {
-            setViewState('compact');
-          }
+  const renderModals = () => (
+    <>
+      <AddCowModal 
+        isWidgetMode={true} 
+        isOpen={isAddCowModalOpen} 
+        onClose={() => setIsAddCowModalOpen(false)} 
+        onBack={() => { setIsAddCowModalOpen(false); setIsFabOpen(true); }}
+      />
+      <ReproModal 
+        isWidgetMode={true} 
+        isOpen={isReproModalOpen} 
+        onClose={() => setIsReproModalOpen(false)} 
+        onBack={() => { setIsReproModalOpen(false); setIsFabOpen(true); }}
+      />
+      <PairCollarModal
+        isWidgetMode={true}
+        isOpen={isPairModalOpen}
+        onClose={() => {
+          setPairSelectedSapi(null);
+          setPairSelectedCollar(null);
+          setIsPairModalOpen(false);
         }}
-        className="fixed bottom-[130px] md:bottom-6 right-4 md:right-6 w-14 h-14 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-[60] group active:scale-95"
-        title="Tanya Gendhis"
+        onBack={() => {
+          setPairSelectedSapi(null);
+          setPairSelectedCollar(null);
+          setIsPairModalOpen(false);
+          setIsFabOpen(true);
+        }}
+        pairSelectedSapi={pairSelectedSapi}
+        setPairSelectedSapi={setPairSelectedSapi}
+        pairSelectedCollar={pairSelectedCollar}
+        setPairSelectedCollar={setPairSelectedCollar}
+      />
+    </>
+  );
+
+  const renderChatWindow = () => {
+    const isChatOpen = viewState === 'compact';
+    return (
+      <div 
+        ref={widgetRef}
+        style={{ 
+          boxShadow: 'var(--shadow-modal)', 
+          borderRadius: '24px',
+          border: '1px solid var(--border)'
+        }}
+        className={cn(
+          "fixed bottom-[190px] md:bottom-[84px] right-4 md:right-6 w-[360px] h-[440px] max-w-[calc(100vw-32px)] z-[200] flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-1)] transition-all duration-300 ease-out origin-bottom-right",
+          isChatOpen ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 translate-y-10 pointer-events-none"
+        )}
       >
-        <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
-      </button>
+        {/* HEADER */}
+        <div className="bg-[var(--accent)] text-white px-5 py-3.5 flex items-center justify-between shrink-0 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center border border-white/10 relative">
+              <Bot className="w-4.5 h-4.5 text-white animate-bounce" />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-emerald-600 rounded-full animate-pulse"></span>
+            </div>
+            <div>
+              <h3 className="font-display font-bold text-sm leading-none">Gendhis</h3>
+              <p className="text-[9px] text-emerald-100 font-semibold tracking-wide flex items-center gap-1 mt-1 opacity-90">
+                Asisten Kesehatan & Reproduksi Ternak
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setViewState('fullscreen')}
+              className="hidden md:block p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+              title="FullScreen Session"
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-white" />
+            </button>
+            <button 
+              onClick={() => { setViewState('minimized'); setIsFabOpen(true); }}
+              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+              title="Kembali ke Menu"
+            >
+              <ArrowLeft className="w-4 h-4 text-white" />
+            </button>
+          </div>
+        </div>
+
+        {/* CHAT BODY AREA */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--bg-base)] custom-scrollbar">
+          
+          <div className="text-center my-2">
+            <span className="text-[9px] font-bold tracking-wider text-[var(--text-3)] bg-[var(--bg-hover)] px-2.5 py-1 rounded-full border border-[var(--border)]">
+              Hari ini
+            </span>
+          </div>
+
+          {messages.map((msg) => (
+            <div key={msg.id} className={cn("flex w-full flex-col", msg.sender === 'user' ? "items-end" : "items-start")}>
+                <div className="flex items-center mb-1 ml-2">
+                  <span className="text-[10px] font-semibold text-[var(--text-3)]">Gendhis</span>
+                </div>
+              
+              <div 
+                style={{ 
+                  borderRadius: msg.sender === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                }}
+                className={cn(
+                  "max-w-[85%] px-4 py-2.5 text-xs leading-5 transition-all duration-200",
+                  msg.sender === 'user' 
+                    ? "bg-[var(--accent)] text-white" 
+                    : "chat-bubble-bot"
+                )}
+              >
+                {msg.sender === 'user' ? (
+                  <p className="whitespace-pre-wrap font-sans font-medium">{msg.text}</p>
+                ) : (
+                  renderMarkdown(msg.text)
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Streaming AI chunk text */}
+          {streamingMessage && (
+            <div className="flex w-full flex-col items-start">
+              <div className="flex items-center mb-1 ml-2">
+                <span className="text-[10px] font-semibold text-[var(--text-3)]">Gendhis</span>
+              </div>
+              <div 
+                style={{ borderRadius: '16px 16px 16px 4px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+                className="max-w-[85%] px-4 py-2.5 text-xs leading-5 chat-bubble-bot"
+              >
+                <div className="text-xs leading-5 font-sans font-medium">
+                  {renderMarkdown(streamingMessage)}
+                  <span className="inline-block w-1.5 h-3.5 bg-[var(--accent)] rounded-sm animate-pulse ml-0.5 shrink-0"></span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Thinking loader */}
+          {isTyping && (
+            <div className="flex w-full justify-start items-center gap-2">
+              <div 
+                style={{ borderRadius: '16px 16px 16px 4px' }}
+                className="chat-bubble-bot px-4 py-2.5 shadow-sm flex items-center gap-1"
+              >
+                <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </div>
+            </div>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* INPUT FOOTER */}
+        <div className="p-3 bg-[var(--bg-surface)] border-t border-[var(--border)] shrink-0">
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2 relative">
+            <input 
+              type="text" 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Tanya Gendhis..."
+              className="flex-1 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-1)] text-[16px] md:text-sm rounded-full pl-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all placeholder-slate-400 outline-none"
+            />
+            <button 
+              type="submit"
+              disabled={!input.trim() || isTyping}
+              className="absolute right-1.5 top-1.5 bottom-1.5 aspect-square bg-[var(--accent)] text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            >
+              <Send className="w-3.5 h-3.5 ml-0.5 text-white" />
+            </button>
+          </form>
+          <div className="mt-2 text-center pb-2 md:pb-0">
+            <span className="text-[9px] font-semibold text-[var(--text-3)] opacity-70">
+            Gendhis dapat membuat kesalahan. Harap verifikasi info medis.
+            </span>
+          </div>
+        </div>
+
+      </div>
+    );
+  };
+
+  if (viewState === 'minimized' || viewState === 'compact') {
+    const isChatOpen = viewState === 'compact';
+    const isAnyWidgetOpen = isChatOpen || isAddCowModalOpen || isReproModalOpen || isPairModalOpen;
+
+    return (
+      <>
+        {/* Invisible overlay for click-outside to close */}
+        {isFabOpen && !isAnyWidgetOpen && (
+          <div 
+            className="fixed inset-0 z-[50]" 
+            onClick={() => setIsFabOpen(false)}
+          />
+        )}
+        <div className="fixed bottom-[130px] md:bottom-6 right-4 md:right-6 z-[60] flex flex-col items-center gap-3">
+          {/* Dropdown Options */}
+          <div 
+            className={cn(
+              "flex flex-col items-center gap-4 transition-all duration-300 origin-bottom mb-2",
+              (isFabOpen && !isAnyWidgetOpen) ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 translate-y-8 pointer-events-none"
+            )}
+          >
+            <button 
+              onClick={() => { setIsFabOpen(false); setIsAddCowModalOpen(true); }}
+              className="relative flex items-center justify-center w-12 h-12 bg-white text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(16,185,129,0.4)]"
+            >
+              <span className="absolute right-[120%] bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">
+                Tambah Ternak
+              </span>
+              <Plus className="w-5 h-5" />
+            </button>
+            
+            <button 
+              onClick={() => { setIsFabOpen(false); setIsReproModalOpen(true); }}
+              className="relative flex items-center justify-center w-12 h-12 bg-white text-sky-500 hover:bg-sky-500 hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(14,165,233,0.4)]"
+            >
+              <span className="absolute right-[120%] bg-sky-500 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">
+                Tambah Data IB
+              </span>
+              <Syringe className="w-5 h-5" />
+            </button>
+            
+            <button 
+              onClick={() => { setIsFabOpen(false); setIsPairModalOpen(true); }}
+              className="relative flex items-center justify-center w-12 h-12 bg-white text-[#f97316] hover:bg-[#f97316] hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(249,115,22,0.4)]"
+            >
+              <span className="absolute right-[120%] bg-[#f97316] text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">
+                Pasang Kalung
+              </span>
+              <Cpu className="w-5 h-5" />
+            </button>
+
+          <button 
+            onClick={() => {
+              setIsFabOpen(false);
+              if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                setViewState('fullscreen');
+              } else {
+                setViewState('compact');
+              }
+            }}
+            className="relative flex items-center justify-center w-12 h-12 bg-white text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(22,163,74,0.4)]"
+          >
+            <span className="absolute right-[120%] bg-[var(--accent)] text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">
+              Tanya Gendhis
+            </span>
+            <MessageCircle className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Main FAB Toggle */}
+        <button 
+          onClick={() => {
+            if (isAnyWidgetOpen) {
+              if (isChatOpen) setViewState('minimized');
+              setIsAddCowModalOpen(false);
+              setIsReproModalOpen(false);
+              setIsPairModalOpen(false);
+              setIsFabOpen(false);
+            } else {
+              setIsFabOpen(!isFabOpen);
+            }
+          }}
+          className={cn(
+            "relative w-14 h-14 rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-[61] group active:scale-95",
+            isAnyWidgetOpen ? "bg-slate-700 hover:bg-slate-800 text-white" : "bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white"
+          )}
+          title={isAnyWidgetOpen ? "Tutup Semua" : "Menu Cepat"}
+        >
+          <div className={cn("transition-all duration-300 absolute flex items-center justify-center", (isFabOpen || isAnyWidgetOpen) ? "rotate-90 opacity-0 scale-50" : "rotate-0 opacity-100 scale-100")}>
+            <LayoutGrid className="w-6 h-6 group-hover:scale-110 transition-transform" />
+          </div>
+          <div className={cn("transition-all duration-300 absolute flex items-center justify-center", (isFabOpen || isAnyWidgetOpen) ? "rotate-0 opacity-100 scale-100" : "-rotate-90 opacity-0 scale-50")}>
+            <X className="w-7 h-7 group-hover:scale-110 transition-transform" />
+          </div>
+        </button>
+      </div>
+      {renderChatWindow()}
+      {renderModals()}
+      </>
     );
   }
 
@@ -617,160 +903,5 @@ export default function GendhisWidget() {
     );
   }
 
-  // ═════════════════════════════════════════════════════════════
-  // ─── COMPACT FLOATING MODAL MODE ────────────────────────────
-  // ═════════════════════════════════════════════════════════════
-  return (
-    <>
-      {/* Tombol launcher silang melayang */}
-      <button 
-        onClick={() => setViewState('minimized')}
-        className="fixed bottom-[130px] md:bottom-6 right-4 md:right-6 w-14 h-14 bg-slate-700 hover:bg-slate-800 rotate-90 text-white rounded-full shadow-lg hover:shadow-2xl flex items-center justify-center transition-all duration-300 z-30 group active:scale-95"
-        title="Tutup Chat"
-      >
-        <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
-      </button>
-
-      {/* Widget Window */}
-      <div 
-        ref={widgetRef}
-        style={{ 
-          boxShadow: 'var(--shadow-modal)', 
-          borderRadius: '24px',
-          border: '1px solid var(--border)'
-        }}
-        className="fixed bottom-[190px] md:bottom-[84px] right-4 md:right-6 w-[360px] h-[440px] max-w-[calc(100vw-32px)] z-[200] animate-in slide-in-from-bottom-8 fade-in duration-300 flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-1)] transition-all duration-300 ease-out"
-      >
-        {/* HEADER (Removed Trash Button as requested!) */}
-        <div className="bg-[var(--accent)] text-white px-5 py-3.5 flex items-center justify-between shrink-0 shadow-md">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center border border-white/10 relative">
-              <Bot className="w-4.5 h-4.5 text-white animate-bounce" />
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-emerald-600 rounded-full animate-pulse"></span>
-            </div>
-            <div>
-              <h3 className="font-display font-bold text-sm leading-none">Gendhis</h3>
-              <p className="text-[9px] text-emerald-100 font-semibold tracking-wide flex items-center gap-1 mt-1 opacity-90">
-                Asisten Kesehatan & Reproduksi Ternak
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1">
-            <button 
-              onClick={startNewChat}
-              className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-              title="Hapus Percakapan"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-white" />
-            </button>
-            <button 
-              onClick={() => setViewState('fullscreen')}
-              className="hidden md:block p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-              title="FullScreen Session"
-            >
-              <Maximize2 className="w-3.5 h-3.5 text-white" />
-            </button>
-          </div>
-        </div>
-
-        {/* CHAT BODY AREA */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--bg-base)] custom-scrollbar">
-          
-          <div className="text-center my-2">
-            <span className="text-[9px] font-bold tracking-wider text-[var(--text-3)] bg-[var(--bg-hover)] px-2.5 py-1 rounded-full border border-[var(--border)]">
-              Hari ini
-            </span>
-          </div>
-
-          {messages.map((msg) => (
-            <div key={msg.id} className={cn("flex w-full flex-col", msg.sender === 'user' ? "items-end" : "items-start")}>
-                <div className="flex items-center mb-1 ml-2">
-                  <span className="text-[10px] font-semibold text-[var(--text-3)]">Gendhis</span>
-                </div>
-              
-              <div 
-                style={{ 
-                  borderRadius: msg.sender === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                }}
-                className={cn(
-                  "max-w-[85%] px-4 py-2.5 text-xs leading-5 transition-all duration-200",
-                  msg.sender === 'user' 
-                    ? "bg-[var(--accent)] text-white" 
-                    : "chat-bubble-bot"
-                )}
-              >
-                {msg.sender === 'user' ? (
-                  <p className="whitespace-pre-wrap font-sans font-medium">{msg.text}</p>
-                ) : (
-                  renderMarkdown(msg.text)
-                )}
-              </div>
-            </div>
-          ))}
-
-          {/* Streaming AI chunk text */}
-          {streamingMessage && (
-            <div className="flex w-full flex-col items-start">
-              <div className="flex items-center mb-1 ml-2">
-                <span className="text-[10px] font-semibold text-[var(--text-3)]">Gendhis</span>
-              </div>
-              <div 
-                style={{ borderRadius: '16px 16px 16px 4px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
-                className="max-w-[85%] px-4 py-2.5 text-xs leading-5 chat-bubble-bot"
-              >
-                <div className="text-xs leading-5 font-sans font-medium">
-                  {renderMarkdown(streamingMessage)}
-                  <span className="inline-block w-1.5 h-3.5 bg-[var(--accent)] rounded-sm animate-pulse ml-0.5 shrink-0"></span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Thinking loader */}
-          {isTyping && (
-            <div className="flex w-full justify-start items-center gap-2">
-              <div 
-                style={{ borderRadius: '16px 16px 16px 4px' }}
-                className="chat-bubble-bot px-4 py-2.5 shadow-sm flex items-center gap-1"
-              >
-                <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce"></span>
-                <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-              </div>
-            </div>
-          )}
-          
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* INPUT FOOTER */}
-        <div className="p-3 bg-[var(--bg-surface)] border-t border-[var(--border)] shrink-0">
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2 relative">
-            <input 
-              type="text" 
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Tanya Gendhis..."
-              className="flex-1 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-1)] text-[16px] md:text-sm rounded-full pl-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all placeholder-slate-400 outline-none"
-            />
-            <button 
-              type="submit"
-              disabled={!input.trim() || isTyping}
-              className="absolute right-1.5 top-1.5 bottom-1.5 aspect-square bg-[var(--accent)] text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-            >
-              <Send className="w-3.5 h-3.5 ml-0.5 text-white" />
-            </button>
-          </form>
-          <div className="mt-2 text-center pb-2 md:pb-0">
-            <span className="text-[9px] font-semibold text-[var(--text-3)] opacity-70">
-            Gendhis dapat membuat kesalahan. Harap verifikasi info medis.
-            </span>
-          </div>
-        </div>
-
-      </div>
-    </>
-  );
+  return null;
 }

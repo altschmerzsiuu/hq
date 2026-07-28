@@ -674,7 +674,7 @@ const translations = {
     sensor_signal_strong: 'Kuat',
     sensor_act_resting: 'Istirahat',
     sensor_act_eating: 'Makan',
-    sensor_act_ruminating: 'Memamah Biak',
+    sensor_act_ruminating: 'Ruminasi',
     sensor_act_estrus: 'Estrus / Aktif',
     sensor_act_sick: 'Sakit',
     sensor_act_normal: 'Normal',

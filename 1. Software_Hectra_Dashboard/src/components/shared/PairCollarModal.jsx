@@ -2,7 +2,7 @@
 // Shared Pair Collar Modal — dipakai di ManajemenTernak & Dashboard Quick Action
 
 import { useEffect } from 'react';
-import { X, Beef, Activity } from 'lucide-react';
+import { X, Beef, Activity, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import { useTernakStore } from '@/store/useTernakStore';
@@ -15,6 +15,8 @@ export default function PairCollarModal({
   setPairSelectedSapi,
   pairSelectedCollar,
   setPairSelectedCollar,
+  isWidgetMode = false,
+  onBack,
 }) {
   const {
     sapiList,
@@ -50,20 +52,27 @@ export default function PairCollarModal({
     }
   };
 
+  const overlayClass = isWidgetMode 
+    ? "fixed inset-0 z-[200] pointer-events-none" 
+    : "fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none";
+
+  const contentClass = isWidgetMode
+    ? "fixed bottom-[190px] md:bottom-[84px] right-4 md:right-6 w-[420px] h-[540px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] z-[200] animate-in slide-in-from-bottom-8 fade-in duration-300 flex flex-col bg-[var(--bg-surface)] border border-[var(--border)] rounded-[24px] shadow-[var(--shadow-modal)] pointer-events-auto overflow-hidden"
+    : "relative z-10 p-6 w-full max-w-2xl rounded-[24px] md:h-full max-h-[90vh] md:max-h-full animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto bg-[var(--bg-surface)] border-[0.5px] border-[var(--border)] shadow-[var(--shadow-modal)] flex flex-col overflow-hidden";
+
   return (
     <>
-      <div className="fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none">
+      <div className={overlayClass}>
         <div className="absolute inset-0 z-0 pointer-events-auto md:pointer-events-auto" onClick={onClose} />
-        <div
-          style={{
-            background: 'var(--bg-surface)',
-            border: '0.5px solid var(--border)',
-            boxShadow: 'var(--shadow-modal)',
-          }}
-          className="relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto"
-        >
+        <div className={contentClass}>
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div
+          className={
+            isWidgetMode
+              ? 'p-5 border-b border-[var(--border)] sticky top-0 bg-[var(--bg-surface)] z-10 flex justify-between items-start shrink-0'
+              : 'flex justify-between items-start mb-6 shrink-0'
+          }
+        >
           <div>
             <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">
               Pairing Collar IoT
@@ -72,25 +81,38 @@ export default function PairCollarModal({
               Pasangkan collar ke sapi yang belum memiliki sensor.
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)]"
-          >
-            <X size={20} />
-          </button>
+          {onBack ? (
+            <button
+              onClick={onBack}
+              className="p-2 bg-[var(--bg-surface)] rounded-full hover:bg-[var(--bg-hover)] shrink-0 transition-colors self-start"
+              title="Kembali ke Menu"
+            >
+              <ArrowLeft size={20} />
+            </button>
+          ) : (
+            <button
+              onClick={onClose}
+              className="p-2 bg-[var(--color-bg-surface)] rounded-full hover:bg-[var(--color-border)] ml-4 shrink-0 self-start transition-colors"
+              title="Tutup"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
 
+        <div className={isWidgetMode ? "p-5 flex-1 flex flex-col min-h-0" : "flex-1 flex flex-col min-h-0"}>
+
         {/* Two-column picker */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className={isWidgetMode ? "grid grid-cols-2 gap-4 flex-1 min-h-0" : "grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-0"}>
           {/* Left: Sapi tanpa collar */}
           <div
-            className="rounded-2xl p-5 border border-[var(--color-border)]"
+            className="rounded-2xl p-5 border border-[var(--color-border)] flex flex-col min-h-0"
             style={{ background: 'var(--bg-card)' }}
           >
-            <h3 className="font-bold text-[var(--color-primary)] mb-4 flex items-center gap-2">
+            <h3 className="font-bold text-[var(--color-primary)] mb-4 flex items-center gap-2 shrink-0">
               <Beef size={18} /> Sapi Tanpa Collar
             </h3>
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
               {sapiList.filter((s) => !s.collar_id).map((sapi) => (
                 <button
                   key={sapi.id}
@@ -139,13 +161,13 @@ export default function PairCollarModal({
 
           {/* Right: Collar tersedia */}
           <div
-            className="rounded-2xl p-5 border border-[var(--color-border)]"
+            className="rounded-2xl p-5 border border-[var(--color-border)] flex flex-col min-h-0"
             style={{ background: 'var(--bg-card)' }}
           >
-            <h3 className="font-bold text-[var(--color-primary)] mb-4 flex items-center gap-2">
+            <h3 className="font-bold text-[var(--color-primary)] mb-4 flex items-center gap-2 shrink-0">
               <Activity size={18} /> Collar Tersedia
             </h3>
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
               {unpairedCollars.map((cid) => (
                 <button
                   key={cid}
@@ -198,7 +220,7 @@ export default function PairCollarModal({
         </div>
 
         {/* Footer */}
-        <div className="mt-8 flex gap-3">
+        <div className="mt-6 flex gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
@@ -241,8 +263,9 @@ export default function PairCollarModal({
           >
             {loading ? 'Menyimpan...' : 'Pasang'}
           </button>
+          </div>
         </div>
-      </div>
+        </div>
       </div>
     </>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Activity, ScanLine, ChevronDown } from 'lucide-react';
+import { X, Activity, ScanLine, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useTernakStore } from '@/store/useTernakStore';
 import { toast } from '@/store/toastStore';
 import useSettingsStore from '@/store/settingsStore';
@@ -38,7 +38,7 @@ const hitungUsia = (lahir, lang) => {
   }
 };
 
-export default function AddCowModal({ isOpen, onClose }) {
+export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onBack }) {
   useBodyScrollLock(isOpen);
   const { lang } = useSettingsStore();
   const t = translations[lang];
@@ -80,19 +80,33 @@ export default function AddCowModal({ isOpen, onClose }) {
     }
   };
 
+  const overlayClass = isWidgetMode 
+    ? "fixed inset-0 z-[200] pointer-events-none" 
+    : "fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none";
+
+  const contentClass = isWidgetMode
+    ? "fixed bottom-[190px] md:bottom-[84px] right-4 md:right-6 w-[360px] h-[540px] max-w-[calc(100vw-32px)] z-[200] animate-in slide-in-from-bottom-8 fade-in duration-300 flex flex-col bg-[var(--bg-surface)] border border-[var(--border)] rounded-[24px] shadow-[var(--shadow-modal)] pointer-events-auto overflow-y-auto no-scrollbar"
+    : "relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto bg-[var(--bg-surface)] border-[0.5px] border-[var(--border)] shadow-[var(--shadow-modal)]";
+
   return (
     <>
-      <div className="fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none">
+      <div className={overlayClass}>
         <div className="absolute inset-0 z-0 pointer-events-auto md:pointer-events-auto" onClick={onClose} />
-        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', boxShadow: 'var(--shadow-modal)' }} className="relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-heading font-bold text-[var(--color-primary)]">{t.livestock_add_title}</h2>
-            <button onClick={onClose} className="p-2 bg-[var(--bg-surface)] rounded-full hover:bg-[var(--border)]">
-              <X size={20} />
-            </button>
+        <div className={contentClass}>
+          <div className={isWidgetMode ? "p-5 border-b border-[var(--border)] sticky top-0 bg-[var(--bg-surface)] z-10 flex justify-between items-center shrink-0" : "flex justify-between items-center mb-6 shrink-0"}>
+            <h2 className={isWidgetMode ? "text-lg font-heading font-bold text-[var(--color-primary)]" : "text-xl font-heading font-bold text-[var(--color-primary)]"}>{t.livestock_add_title}</h2>
+            {onBack ? (
+              <button onClick={onBack} className="p-2 bg-[var(--bg-surface)] rounded-full hover:bg-[var(--border)] ml-4 shrink-0 transition-colors" title="Kembali ke Menu">
+                <ArrowLeft size={20} />
+              </button>
+            ) : (
+              <button onClick={onClose} className="p-2 bg-[var(--bg-surface)] rounded-full hover:bg-[var(--border)] ml-4 shrink-0 transition-colors" title="Tutup">
+                <X size={20} />
+              </button>
+            )}
           </div>
           
-          <form className="space-y-5 flex flex-col" onSubmit={onSubmit}>
+          <form className={isWidgetMode ? "p-5 space-y-5 flex flex-col" : "space-y-5 flex flex-col"} onSubmit={onSubmit}>
             {/* 1. Nama Sapi */}
             <div>
               <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">
