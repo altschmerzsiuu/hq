@@ -352,12 +352,12 @@ export default function Settings() {
 
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="animate-in fade-in duration-500 max-w-5xl mx-auto">
+    <div className="animate-in fade-in duration-500 max-w-5xl mx-auto pt-[44px] pb-24 px-4 sm:px-0">
 
       {/* No more standard header or tabs */}
 
       {/* Content Area */}
-      <div className="relative mt-0">
+      <div className="relative">
         {loading && (
           <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-30 flex items-center justify-center rounded-3xl">
             <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />

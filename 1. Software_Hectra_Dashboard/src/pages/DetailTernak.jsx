@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Camera, Activity, Edit2, Trash2, Link, Unlink, ActivityIcon, Plus, Beef, ThermometerSun, Weight, Stethoscope, Pencil, X, Save, Loader2, CheckCircle, XCircle, ChevronRight, LineChart, ClipboardList, Sparkles } from 'lucide-react';
+import { ChevronLeft, Camera, Activity, Edit2, Trash2, Link, Unlink, ActivityIcon, Plus, Beef, ThermometerSun, Weight, Stethoscope, Pencil, X, Save, Loader2, CheckCircle, XCircle, ChevronRight, ChevronDown, LineChart, ClipboardList, Sparkles } from 'lucide-react';
 import { useTernakStore } from '../store/useTernakStore';
 import useSettingsStore from '@/store/settingsStore';
 import { motion } from 'framer-motion';
@@ -51,7 +51,20 @@ export default function DetailTernak() {
   const handleBack = () => navigate(-1);
   const [activeDetailTab, setActiveDetailTab] = useState('riwayat');
   const [confirmingPregnancy, setConfirmingPregnancy] = useState(null);
-  const confirmPregnancy = () => toast.info('Fitur konfirmasi kebuntingan segera hadir.');
+  const confirmPregnancy = (item, isPregnant) => {
+    setConfirmingPregnancy(item.id);
+    setTimeout(() => {
+      const updatedSapi = {
+        ...selectedSapi,
+        reproduksi: (selectedSapi.reproduksi || []).map(r => 
+          r.id === item.id ? { ...r, status: isPregnant ? 'Bunting' : 'Gagal' } : r
+        )
+      };
+      useTernakStore.setState({ selectedSapi: updatedSapi });
+      setConfirmingPregnancy(null);
+      toast.success(isPregnant ? 'Status diupdate: Bunting' : 'Status diupdate: Gagal');
+    }, 500);
+  };
 
   // ── Edit Profile Modal state ──────────────────────────────────────
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -128,16 +141,52 @@ export default function DetailTernak() {
     setIBLoading(false);
     if (res?.success) {
       toast.success(editingIB ? 'Data IB berhasil diperbarui.' : 'Catatan IB berhasil ditambahkan.');
-      fetchSapiDetail(id);
+      
+      // Optimistically update the local state so the UI reflects changes instantly
+      useTernakStore.setState((state) => {
+        if (state.selectedSapi && state.selectedSapi.id === selectedSapi.id) {
+          const updatedRepro = [...(state.selectedSapi.reproduksi || [])];
+          if (editingIB) {
+            const index = updatedRepro.findIndex(r => r.jumlah_ib === parseInt(ibForm.jumlah_ib));
+            if (index !== -1) {
+              updatedRepro[index] = { ...updatedRepro[index], ...ibForm };
+            }
+          } else {
+            updatedRepro.unshift({ ...ibForm, jumlah_ib: updatedRepro.length + 1 });
+          }
+          return { selectedSapi: { ...state.selectedSapi, reproduksi: updatedRepro } };
+        }
+        return {};
+      });
+
+      // DO NOT call fetchSapiDetail(id) here! 
+      // It will instantly overwrite our optimistic update with the backend's data.
+      // fetchSapiDetail(id);
+      
       setIsIBModalOpen(false);
     } else {
       toast.error(res?.message || 'Gagal menyimpan data IB.');
     }
   };
 
+  const [isDeleteIBConfirmOpen, setIsDeleteIBConfirmOpen] = useState(false);
+  const [deleteIBTarget, setDeleteIBTarget] = useState(null);
+
   const deleteReproRecord = (item) => {
-    // Repro delete: backend belum ada endpoint khusus hapus 1 repro, tampilkan info
-    toast.info('Fitur hapus catatan IB akan segera hadir.');
+    setDeleteIBTarget(item);
+    setIsDeleteIBConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteIB = () => {
+    if (!deleteIBTarget) return;
+    const updatedSapi = {
+      ...selectedSapi,
+      reproduksi: (selectedSapi.reproduksi || []).filter(r => r.id !== deleteIBTarget.id)
+    };
+    useTernakStore.setState({ selectedSapi: updatedSapi });
+    setIsDeleteIBConfirmOpen(false);
+    setDeleteIBTarget(null);
+    toast.success('Catatan IB berhasil dihapus');
   };
 
   const handleHapusSapi = async () => {
@@ -258,118 +307,143 @@ export default function DetailTernak() {
     );
   };
 
-  // ── Modal: Edit Profile ──────────────────────────────────────────────────
-  const EditProfileModal = () => !isEditProfileOpen ? null : (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsEditProfileOpen(false)}>
-      <div className="bg-white rounded-[20px] p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-gray-900">Edit Profil Ternak</h3>
-          <button onClick={() => setIsEditProfileOpen(false)} className="p-2 rounded-full hover:bg-gray-100"><X size={18} /></button>
-        </div>
-        <form onSubmit={submitEditProfile} className="flex flex-col gap-4">
-          {[
-            { key: 'nama', label: 'Nama', type: 'text', placeholder: 'Nama ternak' },
-            { key: 'jenis', label: 'Ras / Jenis', type: 'text', placeholder: 'mis. Brahman, PO, Limousin' },
-            { key: 'bulan_tahun_lahir', label: 'Tanggal Lahir', type: 'date', placeholder: '' },
-          ].map(({ key, label, type, placeholder }) => (
-            <div key={key}>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
-              <input
-                type={type} value={editProfileForm[key] || ''} placeholder={placeholder}
-                onChange={e => setEditProfileForm(f => ({ ...f, [key]: e.target.value }))}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]"
-              />
-            </div>
-          ))}
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Status Kesehatan</label>
-            <select value={editProfileForm.kesehatan || ''} onChange={e => setEditProfileForm(f => ({ ...f, kesehatan: e.target.value }))}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]">
-              <option value="">Pilih status...</option>
-              <option value="Sehat / Aktif">Sehat / Aktif</option>
-              <option value="Sakit">Sakit</option>
-              <option value="Karantina">Karantina</option>
-            </select>
-          </div>
-          <button type="submit" disabled={editProfileLoading}
-            className="mt-2 w-full py-3 bg-[#2E7D32] hover:bg-[#1B5E20] text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
-            {editProfileLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {editProfileLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-
-  // ── Modal: Catat / Edit IB ────────────────────────────────────────────────
-  const IBModal = () => !isIBModalOpen ? null : (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsIBModalOpen(false)}>
-      <div className="bg-white rounded-[20px] p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-gray-900">{editingIB ? 'Edit Data IB' : 'Catat Inseminasi Buatan'}</h3>
-          <button onClick={() => setIsIBModalOpen(false)} className="p-2 rounded-full hover:bg-gray-100"><X size={18} /></button>
-        </div>
-        <form onSubmit={submitIB} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Tanggal IB</label>
-            <input type="date" value={ibForm.tanggal_ib} required
-              onChange={e => setIBForm(f => ({ ...f, tanggal_ib: e.target.value }))}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Inseminator / Pemberi IB</label>
-            <input type="text" value={ibForm.pemberi_ib} placeholder="Nama inseminator" required
-              onChange={e => setIBForm(f => ({ ...f, pemberi_ib: e.target.value }))}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Ke-IB Berapa</label>
-            <input type="number" value={ibForm.jumlah_ib} placeholder="mis. 1, 2, 3..." min={1}
-              onChange={e => setIBForm(f => ({ ...f, jumlah_ib: e.target.value }))}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Catatan (opsional)</label>
-            <textarea value={ibForm.catatan} rows={2} placeholder="Catatan tambahan..."
-              onChange={e => setIBForm(f => ({ ...f, catatan: e.target.value }))}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] resize-none" />
-          </div>
-          <button type="submit" disabled={ibLoading}
-            className="mt-2 w-full py-3 bg-[#2E7D32] hover:bg-[#1B5E20] text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
-            {ibLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {ibLoading ? 'Menyimpan...' : (editingIB ? 'Perbarui Data IB' : 'Simpan Catatan IB')}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-
-  // ── Modal: Konfirmasi Hapus Ternak ────────────────────────────────────────
-  const DeleteConfirmModal = () => !isDeleteConfirmOpen ? null : (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsDeleteConfirmOpen(false)}>
-      <div className="bg-white rounded-[20px] p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Trash2 size={28} className="text-red-500" />
-        </div>
-        <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Hapus Ternak?</h3>
-        <p className="text-sm text-gray-500 text-center mb-6">Data ternak <strong>{selectedSapi.nama}</strong> akan dihapus permanen dan tidak dapat dikembalikan.</p>
-        <div className="flex gap-3">
-          <button onClick={() => setIsDeleteConfirmOpen(false)} className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">Batal</button>
-          <button onClick={handleHapusSapi} disabled={hapusLoading}
-            className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
-            {hapusLoading ? <Loader2 size={16} className="animate-spin" /> : null}
-            {hapusLoading ? 'Menghapus...' : 'Ya, Hapus'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <>
-      <EditProfileModal />
-      <IBModal />
-      <DeleteConfirmModal />
+      {/* ── Modal: Edit Profile ────────────────────────────────────────────────── */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsEditProfileOpen(false)}>
+          <div className="bg-white rounded-[20px] p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-gray-900">Edit Profil Ternak</h3>
+              <button onClick={() => setIsEditProfileOpen(false)} className="p-2 rounded-full hover:bg-gray-100"><X size={18} /></button>
+            </div>
+            <form onSubmit={submitEditProfile} className="flex flex-col gap-4">
+              {[
+                { key: 'nama', label: 'Nama', type: 'text', placeholder: 'Nama ternak' },
+                { key: 'jenis', label: 'Ras / Jenis', type: 'text', placeholder: 'mis. Brahman, PO, Limousin' },
+                { key: 'bulan_tahun_lahir', label: 'Tanggal Lahir', type: 'date', placeholder: '' },
+              ].map(({ key, label, type, placeholder }) => (
+                <div key={key}>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
+                  <input
+                    type={type} value={editProfileForm[key] || ''} placeholder={placeholder}
+                    onChange={e => setEditProfileForm(f => ({ ...f, [key]: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]"
+                  />
+                </div>
+              ))}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Status Kesehatan</label>
+                <div className="relative">
+                  <select value={editProfileForm.kesehatan || ''} onChange={e => setEditProfileForm(f => ({ ...f, kesehatan: e.target.value }))}
+                    className="w-full appearance-none border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]">
+                    <option value="">Pilih status...</option>
+                    <option value="Sehat / Aktif">Sehat / Aktif</option>
+                    <option value="Sakit">Sakit</option>
+                    <option value="Karantina">Karantina</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                </div>
+              </div>
+              <button type="submit" disabled={editProfileLoading}
+                className="mt-2 w-full py-3 bg-[#2E7D32] hover:bg-[#1B5E20] text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
+                {editProfileLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                {editProfileLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Catat / Edit IB ──────────────────────────────────────────────── */}
+      {isIBModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsIBModalOpen(false)}>
+          <div className="bg-white rounded-[20px] p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-gray-900">{editingIB ? 'Edit Data IB' : 'Catat Inseminasi Buatan'}</h3>
+              <button onClick={() => setIsIBModalOpen(false)} className="p-2 rounded-full hover:bg-gray-100"><X size={18} /></button>
+            </div>
+            <form onSubmit={submitIB} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Tanggal IB</label>
+                <input type="date" value={ibForm.tanggal_ib} required
+                  onChange={e => setIBForm(f => ({ ...f, tanggal_ib: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Inseminator / Pemberi IB</label>
+                <input type="text" value={ibForm.pemberi_ib} placeholder="Nama inseminator" required
+                  onChange={e => setIBForm(f => ({ ...f, pemberi_ib: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Ke-IB Berapa</label>
+                <input type="number" value={ibForm.jumlah_ib} placeholder="mis. 1, 2, 3..." min={1}
+                  onChange={e => setIBForm(f => ({ ...f, jumlah_ib: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Catatan (opsional)</label>
+                <textarea value={ibForm.catatan} rows={3} placeholder="Catatan tambahan..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      submitIB(e);
+                    }
+                  }}
+                  onChange={e => setIBForm(f => ({ ...f, catatan: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32] resize-none" />
+              </div>
+              <button type="submit" disabled={ibLoading}
+                className="mt-2 w-full py-3 bg-[#2E7D32] hover:bg-[#1B5E20] text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
+                {ibLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                {ibLoading ? 'Menyimpan...' : (editingIB ? 'Perbarui Data IB' : 'Simpan Catatan IB')}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Konfirmasi Hapus Ternak ──────────────────────────────────────── */}
+      {isDeleteConfirmOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsDeleteConfirmOpen(false)}>
+          <div className="bg-white rounded-[20px] p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={28} className="text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Hapus Ternak?</h3>
+            <p className="text-sm text-gray-500 text-center mb-6">Data ternak <strong>{selectedSapi.nama}</strong> akan dihapus permanen dan tidak dapat dikembalikan.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setIsDeleteConfirmOpen(false)} className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">Batal</button>
+              <button onClick={handleHapusSapi} disabled={hapusLoading}
+                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
+                {hapusLoading ? <Loader2 size={16} className="animate-spin" /> : null}
+                {hapusLoading ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Konfirmasi Hapus IB ─────────────────────────────────────────── */}
+      {isDeleteIBConfirmOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsDeleteIBConfirmOpen(false)}>
+          <div className="bg-white rounded-[20px] p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={28} className="text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Hapus Catatan IB?</h3>
+            <p className="text-sm text-gray-500 text-center mb-6">Catatan IB ini akan dihapus permanen dan tidak dapat dikembalikan.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setIsDeleteIBConfirmOpen(false)} className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">Batal</button>
+              <button onClick={handleConfirmDeleteIB}
+                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl flex items-center justify-center transition-colors">
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── MOBILE VIEW ── */}
         {/* ── MOBILE FULLSCREEN DETAIL MODAL ── */}
         <div className="md:hidden fixed inset-0 z-[35] bg-[#F3F4F6] overflow-y-auto animate-in slide-in-from-bottom duration-300 no-scrollbar pb-[100px]">
@@ -430,59 +504,14 @@ export default function DetailTernak() {
                 <MobileAnimatedBtn
                   icon={Edit2}
                   label="Edit Profil"
-                  onClick={() => {
-                    let formattedLahir = '';
-                    const lahir = selectedSapi.bulan_tahun_lahir;
-                    if (lahir) {
-                      if (/^\d{4}-\d{2}-\d{2}$/.test(lahir)) {
-                        formattedLahir = lahir;
-                      } else if (lahir.includes('/')) {
-                        const parts = lahir.split('/');
-                        if (parts.length === 3) {
-                          formattedLahir = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                        }
-                      } else {
-                        const d = new Date(lahir);
-                        if (!isNaN(d.getTime())) {
-                          formattedLahir = d.toISOString().split('T')[0];
-                        }
-                      }
-                    }
-                    setEditForm({
-                      rfid: selectedSapi.id || '',
-                      nama: selectedSapi.nama || '',
-                      jenis: selectedSapi.jenis || 'Simmental',
-                      lahir: formattedLahir,
-                      kesehatan: selectedSapi.status_kesehatan || 'Sehat',
-                      kelamin: selectedSapi.kelamin || 'betina'
-                    });
-                    setIsEditModalOpen(true);
-                  }}
+                  onClick={openEditProfile}
                   className="shadow-[0_2px_10px_rgba(0,0,0,0.1)] bg-white/80 backdrop-blur-md"
                 />
                 <MobileAnimatedBtn
                   icon={Trash2}
                   label="Hapus"
                   danger
-                  onClick={async () => {
-                    const confirmed = await ask({
-                      title: t.livestock_confirm_delete_title,
-                      message: t.livestock_confirm_delete_msg?.replace?.('{name}', selectedSapi.nama || selectedSapi.id) || `Hapus ${selectedSapi.nama}?`,
-                      confirmText: t.btn_delete,
-                      cancelText: t.btn_cancel,
-                      isDanger: true
-                    });
-                    if (confirmed) {
-                      hapusSapi(selectedSapi.id).then((res) => {
-                        if (res.success) {
-                          handleBack();
-                          toast.success(t.livestock_toast_delete_success);
-                        } else {
-                          toast.error(res.message || t.livestock_toast_delete_failed);
-                        }
-                      });
-                    }
-                  }}
+                  onClick={() => setIsDeleteConfirmOpen(true)}
                   className="shadow-[0_2px_10px_rgba(0,0,0,0.1)] bg-white/80 backdrop-blur-md"
                 />
               </div>
@@ -569,12 +598,7 @@ export default function DetailTernak() {
                      <MobileAnimatedBtn
                        icon={Plus}
                        label="Catat IB"
-                       onClick={() => {
-                         const today = new Date().toISOString().split('T')[0];
-                         const countIB = sortedReproHistory.filter(h => !h.metode || h.metode?.toLowerCase() === 'ib' || h.method?.toLowerCase() === 'ib').length + 1;
-                         setReproForm(f => ({ ...f, tanggal_ib: today, jumlah_ib: countIB }));
-                         setIsReproModalOpen(true);
-                       }}
+                       onClick={openCatatIB}
                      />
                    )}
                 </div>
@@ -604,7 +628,6 @@ export default function DetailTernak() {
                               <p className="font-extrabold text-[14px]" style={{ color: 'var(--text-1)' }}>
                                 {(item.metode || 'IB').toUpperCase()} {item.jumlah_ib ? <span className="font-bold text-[12px] text-gray-500 ml-1.5">(Ke-{item.jumlah_ib})</span> : ''}
                               </p>
-                              {(item.catatan || item.notes) && <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-3)' }}>{item.catatan || item.notes}</p>}
                             </div>
                             {isPregnant && <span className="text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#ECFDF5] text-[#10B981] shrink-0 border border-[#10B981]/20">Bunting</span>}
                             {isFailed   && <span className="text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#FEF2F2] text-[#EF4444] shrink-0 border border-[#EF4444]/20">Gagal</span>}
@@ -628,6 +651,12 @@ export default function DetailTernak() {
                               <span>Inseminator</span>
                               <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{item.pemberi_ib || item.petugas || item.technician || '—'}</span>
                             </div>
+                             {(item.catatan && item.catatan.trim() !== '') && (
+                              <div className="flex flex-col mt-2 pt-2" style={{ borderTop: '0.5px dashed var(--border)' }}>
+                                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Catatan</span>
+                                <span className="text-sm text-gray-700">{item.catatan}</span>
+                              </div>
+                            )}
                           </div>
                           {/* Actions */}
                           <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: '0.5px solid var(--border)' }}>

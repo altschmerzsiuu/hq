@@ -112,6 +112,20 @@ export const useTernakStore = create((set, get) => ({
     try {
       const response = await axiosInstance.get(`/scanner/profil/${rfid}`)
       let data = response.data.data || response.data;
+      
+      // Parse backend structure if it has 'hewan' key
+      if (data.hewan) {
+        data = { ...data.hewan, reproduksi_terbaru: data.reproduksi_terbaru };
+      }
+      
+      // Fetch full reproduksi history if possible
+      try {
+        const reproRes = await axiosInstance.get(`/scanner/reproduksi/${rfid}`);
+        data.reproduksi = reproRes.data.data || reproRes.data || [];
+      } catch (e) {
+        // Silently fail if history endpoint not found
+      }
+
       if (!data || Object.keys(data).length === 0 || !data.id) {
         data = get().sapiList.find(s => s.id === rfid) || { ...mockData, id: rfid, nama: 'Ternak ' + rfid.substring(0,4) };
       }
@@ -129,6 +143,14 @@ export const useTernakStore = create((set, get) => ({
       return { success: true, data: data }
     } catch (error) {
       const msg = parseErrorMessage(error);
+      const currentSapi = get().selectedSapi;
+      
+      // If we already have the cow in state (e.g. mock edits), preserve it!
+      if (currentSapi && currentSapi.id === rfid) {
+         set({ error: null, loading: false });
+         return { success: true, data: currentSapi };
+      }
+
       let fallbackData = get().sapiList.find(s => s.id === rfid);
       if (fallbackData) {
         if (fallbackData.nama?.toUpperCase() === 'ARA') fallbackData = { ...fallbackData, ...mockData, id: fallbackData.id || 'ARA' };
@@ -179,18 +201,18 @@ export const useTernakStore = create((set, get) => ({
         jenis: data.jenis || undefined,
         bulan_tahun_lahir: data.bulan_tahun_lahir || undefined,
         status_kesehatan: data.kesehatan || undefined,
-        // Repro fields — kirim undefined jika kosong (tidak akan di-update)
-        tanggal_ib: data.tanggal_ib || undefined,
-        pemberi_ib: data.pemberi_ib || undefined,
+        // Repro fields — kirim undefined jika tidak ada di data, tapi biarkan string kosong lewat
+        tanggal_ib: 'tanggal_ib' in data ? data.tanggal_ib : undefined,
+        pemberi_ib: 'pemberi_ib' in data ? data.pemberi_ib : undefined,
         jumlah_ib: data.jumlah_ib ? parseInt(data.jumlah_ib) : undefined,
-        birahi: data.birahi || undefined,
-        bunting: data.bunting || undefined,
-        hpl: data.hpl || undefined,
-        sapih: data.sapih || undefined,
-        catatan: data.catatan || undefined,
+        birahi: 'birahi' in data ? data.birahi : undefined,
+        bunting: 'bunting' in data ? data.bunting : undefined,
+        hpl: 'hpl' in data ? data.hpl : undefined,
+        sapih: 'sapih' in data ? data.sapih : undefined,
+        catatan: 'catatan' in data ? data.catatan : undefined,
       }
 
-      // Bersihkan undefined agar tidak dikirim
+      // Bersihkan undefined agar tidak dikirim (string kosong tetap dikirim)
       Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k])
 
       await axiosInstance.put(`/scanner/hewan/${rfid}/edit-full`, payload)

@@ -28,7 +28,6 @@ const Toaster = ({ ...props }) => {
           padding: 14px 18px !important;
           min-width: 280px !important;
           max-width: 360px !important;
-          margin: 0 auto !important;
         }
         [data-sonner-toaster] [data-sonner-toast] [data-title] {
           font-weight: 600 !important;

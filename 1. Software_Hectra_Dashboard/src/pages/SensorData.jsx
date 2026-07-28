@@ -572,7 +572,7 @@ export default function SensorData() {
         <div className="p-5 md:p-6 border-b border-gray-100 bg-gray-50/30">
            <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-4">{lang === 'id' ? 'Status Perangkat IoT Collar' : 'IoT Collar Device Status'}</h3>
            
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           <div className="grid grid-cols-3 gap-2 md:gap-4">
               {collarStats.map((item, idx) => (
                 <div key={idx} className="bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center text-center shadow-sm">
                   <span className="w-2.5 h-2.5 rounded-full mb-3" style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}80` }}></span>
@@ -711,7 +711,7 @@ export default function SensorData() {
               const lastSyncLabel = formatLastSync(row.lastSyncRaw, t);
               return (
                 <div key={row.id} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-3 relative">
                     <div className="flex items-center gap-2.5">
                       <div className={cn(
                         "h-8 w-8 rounded-full flex items-center justify-center border",
@@ -726,15 +726,41 @@ export default function SensorData() {
                         <p className="text-[11px]" style={{ color: 'var(--text-3)' }}>Collar: {row.id}</p>
                       </div>
                     </div>
-                    <span className={cn(
-                      "text-[10px] px-2 py-0.5 rounded-full font-bold border",
-                      row.activityState === 'ESTRUS' ? "bg-amber-50 text-amber-700 border-amber-200" :
-                      row.activityState === 'SICK' ? "bg-red-50 text-red-700 border-red-200" :
-                      row.activityState === 'RESTING' ? "bg-slate-50 text-slate-600 border-slate-200" :
-                      "bg-green-50 text-green-700 border-green-200"
-                    )}>
-                      {activityLabel}
-                    </span>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "text-[10px] px-2 py-0.5 rounded-full font-bold border",
+                        row.activityState === 'ESTRUS' ? "bg-amber-50 text-amber-700 border-amber-200" :
+                        row.activityState === 'SICK' ? "bg-red-50 text-red-700 border-red-200" :
+                        row.activityState === 'RESTING' ? "bg-slate-50 text-slate-600 border-slate-200" :
+                        "bg-green-50 text-green-700 border-green-200"
+                      )}>
+                        {activityLabel}
+                      </span>
+                      <button 
+                        onClick={() => setOpenDropdownId(openDropdownId === row.id ? null : row.id)}
+                        className="text-[var(--color-text-muted)] p-1 -mr-1"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {openDropdownId === row.id && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setOpenDropdownId(null)}></div>
+                        <div className="absolute right-0 top-10 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-[100] text-left">
+                          <button onClick={() => { toast.info('Membuka histori untuk ' + row.cowName); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                            <Activity className="w-4 h-4" /> {lang === 'id' ? 'Lihat Histori' : 'View History'}
+                          </button>
+                          <button onClick={() => { toast.info('Membuka pengaturan untuk ' + row.id); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                            <Settings2 className="w-4 h-4" /> {lang === 'id' ? 'Atur Perangkat' : 'Device Settings'}
+                          </button>
+                          <button onClick={() => { toast.error('Memutus koneksi dengan ' + row.id); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-50 mt-1">
+                            <X className="w-4 h-4" /> {lang === 'id' ? 'Putus Koneksi' : 'Disconnect'}
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="space-y-1.5 text-xs" style={{ color: 'var(--text-2)' }}>
                     <div className="flex justify-between">
