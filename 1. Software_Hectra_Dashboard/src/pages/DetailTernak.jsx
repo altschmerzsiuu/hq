@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Camera, Activity, Edit2, Trash2, Link, Unlink, ActivityIcon, Plus, Beef, ThermometerSun, Weight, Stethoscope, Pencil, X, Save, Loader2, CheckCircle, XCircle, ChevronRight, ChevronDown, LineChart, ClipboardList, Sparkles } from 'lucide-react';
+import { ChevronLeft, Camera, Activity, Edit2, Trash2, Link, Unlink, ActivityIcon, Plus, Beef, ThermometerSun, Weight, Stethoscope, Pencil, X, Save, Loader2, CheckCircle, XCircle, ChevronRight, ChevronDown, LineChart, ClipboardList, Sparkles, Check } from 'lucide-react';
 import { useTernakStore } from '../store/useTernakStore';
 import useSettingsStore from '@/store/settingsStore';
 import { motion } from 'framer-motion';
@@ -52,12 +52,12 @@ export default function DetailTernak() {
   const [activeDetailTab, setActiveDetailTab] = useState('riwayat');
   const [confirmingPregnancy, setConfirmingPregnancy] = useState(null);
   const confirmPregnancy = (item, isPregnant) => {
-    setConfirmingPregnancy(item.id);
+    setConfirmingPregnancy(item.id || item.jumlah_ib);
     setTimeout(() => {
       const updatedSapi = {
         ...selectedSapi,
         reproduksi: (selectedSapi.reproduksi || []).map(r => 
-          r.id === item.id ? { ...r, status: isPregnant ? 'Bunting' : 'Gagal' } : r
+          (r.id ? r.id === item.id : r.jumlah_ib === item.jumlah_ib) ? { ...r, results: isPregnant } : r
         )
       };
       useTernakStore.setState({ selectedSapi: updatedSapi });
@@ -131,12 +131,18 @@ export default function DetailTernak() {
     e.preventDefault();
     setIBLoading(true);
     let res;
+
+    const formattedPemberi = ibForm.pemberi_ib 
+      ? ibForm.pemberi_ib.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
+      : '';
+    const formattedIBForm = { ...ibForm, pemberi_ib: formattedPemberi };
+
     if (editingIB) {
       // Edit: gunakan editSapi dengan data repro
-      res = await editSapi(selectedSapi.id, { ...ibForm, rfid: selectedSapi.id });
+      res = await editSapi(selectedSapi.id, { ...formattedIBForm, rfid: selectedSapi.id });
     } else {
       // Tambah baru
-      res = await tambahReproduksi({ ...ibForm, rfid: selectedSapi.id });
+      res = await tambahReproduksi({ ...formattedIBForm, birahi: formattedIBForm.tanggal_ib, rfid: selectedSapi.id });
     }
     setIBLoading(false);
     if (res?.success) {
@@ -147,12 +153,13 @@ export default function DetailTernak() {
         if (state.selectedSapi && state.selectedSapi.id === selectedSapi.id) {
           const updatedRepro = [...(state.selectedSapi.reproduksi || [])];
           if (editingIB) {
-            const index = updatedRepro.findIndex(r => r.jumlah_ib === parseInt(ibForm.jumlah_ib));
+            const index = updatedRepro.findIndex(r => r.jumlah_ib === parseInt(formattedIBForm.jumlah_ib));
             if (index !== -1) {
-              updatedRepro[index] = { ...updatedRepro[index], ...ibForm };
+              updatedRepro[index] = { ...updatedRepro[index], ...formattedIBForm };
             }
           } else {
-            updatedRepro.unshift({ ...ibForm, jumlah_ib: updatedRepro.length + 1 });
+            const hpl = formattedIBForm.tanggal_ib ? new Date(new Date(formattedIBForm.tanggal_ib).getTime() + 283 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null;
+            updatedRepro.unshift({ ...formattedIBForm, birahi: formattedIBForm.tanggal_ib, hpl, jumlah_ib: updatedRepro.length + 1, results: 'Menunggu' });
           }
           return { selectedSapi: { ...state.selectedSapi, reproduksi: updatedRepro } };
         }
@@ -203,9 +210,16 @@ export default function DetailTernak() {
   };
 
   // ── Desktop AnimatedQAButton ──────────────────────────────────────────────────
-  const DesktopAnimatedBtn = ({ icon: Icon, label, onClick, danger = false }) => {
-    const baseColor = danger ? '#DC2626' : '#2E7D32';
-    const dimBg = danger ? 'rgba(220,38,38,0.07)' : 'rgba(46,125,50,0.07)';
+  const DesktopAnimatedBtn = ({ icon: Icon, label, onClick, danger = false, type = 'success', expandedWidth = '150px' }) => {
+    let baseColor = '#2E7D32';
+    let dimBg = 'rgba(46,125,50,0.07)';
+    if (danger || type === 'danger') {
+      baseColor = '#DC2626';
+      dimBg = 'rgba(220,38,38,0.07)';
+    } else if (type === 'info') {
+      baseColor = '#2563EB';
+      dimBg = 'rgba(37,99,235,0.07)';
+    }
     return (
       <button
         onClick={onClick}
@@ -219,7 +233,7 @@ export default function DetailTernak() {
           e.currentTarget.style.borderColor = baseColor;
           e.currentTarget.style.color = '#fff';
           const span = e.currentTarget.querySelector('span');
-          if (span) { span.style.maxWidth = '90px'; span.style.opacity = '1'; }
+          if (span) { span.style.maxWidth = expandedWidth; span.style.opacity = '1'; }
         }}
         onMouseLeave={e => {
           e.currentTarget.style.paddingLeft = '9px';
@@ -240,6 +254,7 @@ export default function DetailTernak() {
 
 
   const [activeTab, setActiveTab] = useState('riwayat');
+  const [reproFilter, setReproFilter] = useState('siklus_saat_ini');
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [pairSelectedSapi, setPairSelectedSapi] = useState(null);
   const [pairSelectedCollar, setPairSelectedCollar] = useState(null);
@@ -873,8 +888,8 @@ export default function DetailTernak() {
         <div className="flex flex-col lg:flex-row gap-6 pt-2">
 
           {/* LEFT COLUMN: Profile Card (fixed 280px) */}
-          <div className="w-full lg:w-[280px] shrink-0 flex flex-col gap-4">
-            <div className="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 flex flex-col items-center relative overflow-hidden">
+          <div className="w-full lg:w-[280px] shrink-0 self-stretch">
+            <div className="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 flex flex-col items-center relative overflow-hidden h-full">
               {/* Top decorative gradient */}
               <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-gray-50 to-white" />
 
@@ -954,77 +969,144 @@ export default function DetailTernak() {
           <div className="flex-1 flex flex-col min-w-0">
 
             {/* Tab Bar */}
-            <div className="bg-white rounded-t-[20px] border-b border-gray-100 shadow-sm flex overflow-x-auto no-scrollbar px-2">
-              {['riwayat', 'estrus', 'linimasa', 'analitik'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-4 text-[14px] font-bold whitespace-nowrap transition-colors relative ${
-                    activeTab === tab ? 'text-[#2E7D32]' : 'text-gray-500 hover:text-gray-800'
-                  }`}
-                >
-                  {tab === 'riwayat' && 'Riwayat Reproduksi'}
-                  {tab === 'estrus' && 'Deteksi Estrus'}
-                  {tab === 'linimasa' && 'Linimasa'}
-                  {tab === 'analitik' && 'Analitik & Grafik'}
+            <div className="bg-white rounded-t-[20px] border-b border-gray-100 shadow-sm flex items-center justify-between px-2 overflow-x-auto no-scrollbar">
+              <div className="flex">
+                {['riwayat', 'estrus', 'linimasa', 'analitik'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-5 py-4 text-[14px] font-bold whitespace-nowrap transition-colors relative ${
+                      activeTab === tab ? 'text-[#2E7D32]' : 'text-gray-500 hover:text-gray-800'
+                    }`}
+                  >
+                    {tab === 'riwayat' && 'Riwayat Reproduksi'}
+                    {tab === 'estrus' && 'Deteksi Estrus'}
+                    {tab === 'linimasa' && 'Linimasa'}
+                    {tab === 'analitik' && 'Analitik & Grafik'}
 
-                  {activeTab === tab && (
-                    <motion.div layoutId="detailTabIndicator" className="absolute bottom-0 left-4 right-4 h-[3px] bg-[#2E7D32] rounded-t-full" />
-                  )}
-                </button>
-              ))}
+                    {activeTab === tab && (
+                      <motion.div layoutId="detailTabIndicator" className="absolute bottom-0 left-4 right-4 h-[3px] bg-[#2E7D32] rounded-t-full" />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Tab Content */}
             <div className="bg-white rounded-b-[20px] shadow-sm p-6 min-h-[400px]">
               {activeTab === 'riwayat' && (
                 <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-                  <div className="flex justify-between items-center">
-                     <h3 className="text-lg font-bold text-gray-900">Catatan Reproduksi</h3>
-                     <DesktopAnimatedBtn icon={Plus} label="Catat Inseminasi" onClick={openCatatIB} />
+                  
+                  {/* Top Bar: Title, Filter, Summary Cards, and Actions */}
+                  <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    <div className="flex flex-col gap-3">
+                      <h3 className="text-xl font-black text-gray-900 tracking-tight">Riwayat Reproduksi Sapi</h3>
+                      <div className="relative inline-flex items-center group w-fit">
+                        <select 
+                          value={reproFilter}
+                          onChange={(e) => setReproFilter(e.target.value)}
+                          className="appearance-none outline-none text-sm font-semibold border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-[#2E7D32]/20 focus:border-[#2E7D32] py-2 pl-3 pr-9 bg-white text-gray-800 hover:border-gray-300 transition-colors cursor-pointer"
+                        >
+                          <option value="siklus_saat_ini">Siklus Saat Ini</option>
+                          <option value="semua_riwayat">Semua Riwayat</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 w-4 h-4 text-gray-400 group-hover:text-gray-600 pointer-events-none" />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="bg-white border border-gray-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
+                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Total Siklus</span>
+                        <span className="text-xl font-black text-gray-900">2</span>
+                      </div>
+                      <div className="bg-green-50/50 border border-green-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
+                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Siklus Berhasil</span>
+                        <span className="text-xl font-black text-green-700">1</span>
+                      </div>
+                      <div className="bg-red-50/50 border border-red-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
+                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Siklus Gagal</span>
+                        <span className="text-xl font-black text-red-700">1</span>
+                      </div>
+                      
+                      <div className="shrink-0 ml-2">
+                        <DesktopAnimatedBtn icon={Plus} label="Catat Inseminasi" onClick={openCatatIB} />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="overflow-x-auto rounded-2xl border border-gray-100">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-gray-50 border-b border-gray-100">
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Event</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Tanggal IB</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Inseminator</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Aksi</th>
+                  <div className="overflow-auto max-h-[500px] rounded-2xl border border-gray-100 relative shadow-inner mt-2">
+                    <table className="w-full text-center border-collapse">
+                      <thead className="sticky top-0 z-20">
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">IB Ke-</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">Tanggal Kawin</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">Perkiraan Hamil</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">Inseminator</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">Status</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm w-full min-w-[150px]">Catatan</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-center bg-gray-50 sticky top-0 shadow-sm w-[170px]">Aksi</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {sortedReproHistory.length > 0 ? (
-                          sortedReproHistory.map((item, idx) => (
-                            <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                              <td className="px-4 py-4">
-                                <p className="font-bold text-gray-900 text-sm">IB Ke-{item.jumlah_ib || idx + 1}</p>
-                              </td>
-                              <td className="px-4 py-4 text-sm text-gray-600">
-                                {item.tanggal_ib || item.service_date || '-'}
-                              </td>
-                              <td className="px-4 py-4 text-sm text-gray-600">
-                                {item.pemberi_ib || '-'}
-                              </td>
-                              <td className="px-4 py-4">
-                                <span className={`inline-flex px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${item.results === true || item.results === 'true' ? 'bg-green-50 text-green-700 border border-green-100' : item.results === false || item.results === 'failed' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
-                                  {item.results === true || item.results === 'true' ? 'Bunting' : item.results === false || item.results === 'failed' ? 'Gagal' : 'Menunggu'}
-                                </span>
-                              </td>
-                              <td className="px-4 py-4">
-                                <div className="flex items-center justify-end gap-2">
-                                  <DesktopAnimatedBtn icon={Pencil} label="Edit" onClick={() => startEditRepro(item)} />
-                                  <DesktopAnimatedBtn icon={Trash2} label="Hapus" danger onClick={() => deleteReproRecord(item)} />
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
+                        {sortedReproHistory.length === 0 ? (
                           <tr>
-                            <td colSpan="5" className="px-4 py-12 text-center text-gray-400 text-sm font-medium">Belum ada riwayat reproduksi tercatat.</td>
+                            <td colSpan="7" className="px-2 py-8 text-center text-sm text-gray-500">
+                              Belum ada catatan reproduksi.
+                            </td>
                           </tr>
+                        ) : (
+                          sortedReproHistory.map((item, idx) => {
+                            const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
+                            const isFailed      = item.results === false || item.results === 'failed' || item.is_pregnant === false;
+                            const isNote        = item.catatan && !item.pemberi_ib;
+                            const isPending     = !isPregnant && !isFailed && !isNote;
+
+                            return (
+                              <tr key={item.id || idx} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-4 text-sm font-bold text-gray-900 align-top">
+                                  {item.jumlah_ib || (sortedReproHistory.length - idx)}
+                                </td>
+                                <td className="px-4 py-4 text-sm text-gray-600 align-top text-center">
+                                  {item.tanggal_ib || item.service_date || '-'}
+                                </td>
+                                <td className="px-4 py-4 text-sm font-bold text-gray-900 align-top text-center">
+                                  {isPregnant ? (item.hpl || '-') : '-'}
+                                </td>
+                                <td className="px-4 py-4 text-sm font-bold text-gray-900 align-top text-center">
+                                  {item.pemberi_ib || '-'}
+                                </td>
+                                <td className="px-4 py-4 align-top">
+                                  <span className={`inline-flex px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${item.results === true || item.results === 'true' ? 'bg-green-50 text-green-700 border border-green-100' : item.results === false || item.results === 'failed' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+                                    {item.results === true || item.results === 'true' ? 'Bunting' : item.results === false || item.results === 'failed' ? 'Gagal' : 'Menunggu'}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4 text-sm text-gray-600 align-top text-center">
+                                  {(item.catatan && item.catatan.trim() !== '') ? (
+                                    <div className="break-words line-clamp-3 inline-block" title={item.catatan}>
+                                      {item.catatan}
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400 italic">-</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-4 align-top">
+                                  <div className="flex items-center justify-center gap-2 w-[140px] shrink-0 mx-auto">
+                                    {isPending ? (
+                                      <>
+                                        <DesktopAnimatedBtn icon={Check} label="Berhasil" expandedWidth="90px" onClick={() => confirmPregnancy(item, true)} />
+                                        <DesktopAnimatedBtn icon={X} label="Gagal" danger expandedWidth="80px" onClick={() => confirmPregnancy(item, false)} />
+                                      </>
+                                    ) : (
+                                      <>
+                                        <DesktopAnimatedBtn icon={Pencil} label="Edit" type="info" expandedWidth="70px" onClick={() => startEditRepro(item)} />
+                                        <DesktopAnimatedBtn icon={Trash2} label="Hapus" danger expandedWidth="80px" onClick={() => deleteReproRecord(item)} />
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
