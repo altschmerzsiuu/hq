@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LogOut, User, Bell, Key, Users, Settings as SettingsIcon, Trash2, Camera, ChevronLeft, ChevronDown, Monitor, HelpCircle, Globe, Sun, Moon, Send, Save, Loader2, UserPlus, CheckCheck, Check, Edit2 } from 'lucide-react';
+import { LogOut, User, Bell, Key, Users, Settings as SettingsIcon, Trash2, Camera, ChevronLeft, ChevronDown, Monitor, HelpCircle, Globe, Sun, Moon, Send, Save, Loader2, UserPlus, CheckCheck, Check, Edit2, X } from 'lucide-react';
 import { FAQ } from '@/components/shared/FAQ';
 import FeedbackModal from '@/components/shared/FeedbackModal';
 import ContactView from '@/components/shared/ContactView';
@@ -352,25 +352,30 @@ export default function Settings() {
 
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="animate-in fade-in duration-500 max-w-5xl mx-auto pt-[44px] pb-24 px-4 sm:px-0">
-
-      {/* No more standard header or tabs */}
-
+    <>
+    <div className="md:fixed md:inset-0 md:z-[100] md:flex md:items-center md:justify-center md:bg-black/50 md:backdrop-blur-sm animate-in fade-in duration-500 pt-[44px] pb-24 px-4 sm:px-0 md:p-4">
+      
       {/* Content Area */}
-      <div className="relative">
+      <div className="relative w-full md:max-w-5xl md:h-[85vh] bg-[#f8f9fa] md:bg-white md:rounded-[32px] md:shadow-2xl md:flex md:flex-row md:overflow-hidden md:border md:border-slate-200">
+        
+        {/* Close Button on Desktop */}
+        <button onClick={() => window.history.back()} className="hidden md:flex absolute top-6 left-6 z-50 p-2 rounded-full bg-black/5 hover:bg-black/10 text-gray-500 hover:text-gray-800 transition-colors">
+          <X className="w-5 h-5" />
+        </button>
+
         {loading && (
-          <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-30 flex items-center justify-center rounded-3xl">
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-30 flex items-center justify-center md:rounded-[32px]">
             <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
           </div>
         )}
 
-        <div className="min-h-[300px]">
+        <div className="w-full h-full md:flex md:flex-row">
 
           {/* ══════════════════════════════════════════════════════════════════
-              MAIN MENU (WhatsApp Style)
+              MAIN MENU
           ══════════════════════════════════════════════════════════════════ */}
-          {activeTab === 'main' && (
-            <div className="space-y-8 animate-in fade-in duration-300 pt-4">
+          <div className={`md:w-[350px] md:flex-shrink-0 md:border-r md:border-gray-200 bg-slate-50 md:overflow-y-auto ${activeTab === 'main' ? 'block' : 'hidden md:block'}`}>
+            <div className="space-y-8 animate-in fade-in duration-300 pt-4 md:p-6 md:pt-16">
               
               {/* ── Avatar + Name (CLEAN WHITE DESIGN WITH ACCENT) ── */}
               <div 
@@ -480,7 +485,7 @@ export default function Settings() {
                       <span className="text-sm font-bold">{lang === 'id' ? 'Hapus Akun' : 'Delete Account'}</span>
                     </div>
                   </button>
-                  <button type="button" onClick={() => useAuthStore.getState().logout()} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700">
+                  <button type="button" onClick={() => useAuthStore.getState().logout()} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 active:scale-[0.99]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-gray-50 rounded-lg"><LogOut className="w-4 h-4" /></div>
                       <span className="text-sm font-bold">{lang === 'id' ? 'Log Out' : 'Log Out'}</span>
@@ -489,7 +494,19 @@ export default function Settings() {
                 </div>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* ══════════════════════════════════════════════════════════════════
+              RIGHT PANE CONTENT AREA
+          ══════════════════════════════════════════════════════════════════ */}
+          <div className={`md:flex-1 md:overflow-y-auto bg-white md:p-8 ${activeTab !== 'main' ? 'block' : 'hidden md:flex md:flex-col md:items-center md:justify-center'}`}>
+            
+            {activeTab === 'main' && (
+              <div className="hidden md:flex flex-col items-center justify-center text-gray-400">
+                <SettingsIcon className="w-16 h-16 mb-4 opacity-20" />
+                <p className="text-sm font-bold">{lang === 'id' ? 'Pilih menu pengaturan di samping' : 'Select a settings menu from the sidebar'}</p>
+              </div>
+            )}
 
           {/* ══════════════════════════════════════════════════════════════════
               TAB 1 — GENERAL: Profile + Farm Details
@@ -499,7 +516,7 @@ export default function Settings() {
               
               {/* Header: Back Button & Title & Save Button */}
               <div className="relative flex items-center justify-center mb-6 h-10 w-full">
-                <button type="button" onClick={() => handleBackNavigation('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={() => handleBackNavigation('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_general || 'Profile'}</h2>
@@ -631,7 +648,7 @@ export default function Settings() {
           {activeTab === 'notifications' && (
             <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6">
               <div className="flex items-center relative mb-4">
-                <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="w-full text-center text-lg font-bold text-gray-900">{lang === 'id' ? 'Notifikasi' : 'Notifications'}</h2>
@@ -720,7 +737,7 @@ export default function Settings() {
           {activeTab === 'security' && (
             <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6">
               <div className="relative flex items-center justify-center mb-6 h-10 w-full max-w-lg">
-                <button type="button" onClick={() => handleBackNavigation('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={() => handleBackNavigation('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_security || 'Security'}</h2>
@@ -778,7 +795,7 @@ export default function Settings() {
           {activeTab === 'team' && (
             <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6">
               <div className="flex items-center relative mb-4">
-                <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="w-full text-center text-lg font-bold text-gray-900">{t.settings_tab_team || 'Team'}</h2>
@@ -854,7 +871,7 @@ export default function Settings() {
           {activeTab === 'appearance' && (
             <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6">
               <div className="w-full max-w-lg mb-4 relative flex items-center">
-                <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="w-full text-center text-lg font-bold text-gray-900">{lang === 'id' ? 'Tampilan' : 'Appearance'}</h2>
@@ -927,7 +944,7 @@ export default function Settings() {
                 <button type="button" onClick={() => {
                   if (helpView !== 'menu') setHelpView('menu');
                   else setActiveTab('main');
-                }} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors z-10">
+                }} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors z-10">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="w-full text-center text-lg font-bold text-gray-900">
@@ -993,9 +1010,12 @@ export default function Settings() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
+    </div>
       
+
       <FeedbackModal 
         isOpen={isFeedbackModalOpen} 
         onClose={() => setIsFeedbackModalOpen(false)} 
@@ -1082,6 +1102,6 @@ export default function Settings() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

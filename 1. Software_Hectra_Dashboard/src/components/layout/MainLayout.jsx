@@ -6,6 +6,7 @@ import GendhisWidget from '../gendhis/GendhisWidget';
 import GendhistPullUpSheet from '../gendhis/GendhistPullUpSheet';
 import MobileBottomNav from './MobileBottomNav';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useTernakStore } from '@/store/useTernakStore';
 import { toast } from '@/store/toastStore';
 import ScrollToTop from './ScrollToTop';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,8 @@ export default function MainLayout() {
   const [isCollapsed, setIsCollapsed] = useState(true); // Hover-to-expand defaults to true
   const [isScrolled, setIsScrolled] = useState(false);
   const addNotification = useNotificationStore(state => state.addNotification);
+  const updateSapiSensor = useTernakStore(state => state.updateSapiSensor);
+  
   useEffect(() => {
     let wsUrl = '';
     const apiUrl = import.meta.env.VITE_API_URL;
@@ -53,6 +56,12 @@ export default function MainLayout() {
               type: 'warning'
             });
             toast.warning(data.message);
+          } else if (data.type === 'SENSOR_UPDATE') {
+            updateSapiSensor(data.collar_id, {
+              suhu: data.temperature,
+              rms_z: data.rms_z,
+              estrus_probability: data.ml_estrus_prob
+            });
           }
         } catch (err) {
           console.error('Failed to process WS message:', err);

@@ -9,6 +9,7 @@ import ThemeToggle from '@/components/ui/ThemeToggle';
 import useSettingsStore from '@/store/settingsStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useAuthStore } from '@/store/authStore';
+import { useTernakStore } from '@/store/useTernakStore';
 import translations from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +35,11 @@ export default function Topbar({ onMenuClick, isScrolled }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
 
+  const { sapiList, fetchSapiList } = useTernakStore();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchRef = useRef(null);
+
   const today = new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {
     weekday: 'short',
     day: 'numeric',
@@ -43,7 +49,8 @@ export default function Topbar({ onMenuClick, isScrolled }) {
 
   useEffect(() => {
     fetchNotifications();
-  }, [fetchNotifications]);
+    fetchSapiList();
+  }, [fetchNotifications, fetchSapiList]);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -52,6 +59,9 @@ export default function Topbar({ onMenuClick, isScrolled }) {
       }
       if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
         setProfileMenuOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setIsSearchOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -62,6 +72,27 @@ export default function Topbar({ onMenuClick, isScrolled }) {
     logout();
     navigate('/login');
   };
+
+  const staticPages = [
+    { title: 'Dashboard', path: '/dashboard', icon: <Command size={16}/> },
+    { title: 'Data Sapi (Ternak)', path: '/ternak', icon: <Command size={16}/> },
+    { title: 'Riwayat Laporan', path: '/reports', icon: <Command size={16}/> },
+    { title: 'Data Sensor', path: '/sensor-data', icon: <Command size={16}/> },
+    { title: 'Pengaturan', path: '/settings', icon: <Settings size={16}/> },
+    { title: 'Bantuan', path: '/settings?tab=help', icon: <Settings size={16}/> },
+  ];
+
+  const searchResults = (() => {
+    if (!searchQuery.trim()) return { pages: [], cows: [] };
+    const q = searchQuery.toLowerCase();
+    return {
+      pages: staticPages.filter(p => p.title.toLowerCase().includes(q)),
+      cows: sapiList.filter(c => 
+        (c.nama || '').toLowerCase().includes(q) || 
+        (c.id || '').toLowerCase().includes(q)
+      ).slice(0, 5) // limit to 5 cows
+    };
+  })();
 
   const NotifPopover = ({ className = "" }) => (
     <div
@@ -236,6 +267,9 @@ export default function Topbar({ onMenuClick, isScrolled }) {
             )}
           </div>
         </div>
+
+        {/* Mobile Portal Target for Selection Header */}
+        <div id="topbar-portal-mobile" className="absolute inset-0 z-50 pointer-events-none rounded-b-xl overflow-hidden" />
       </header>
 
 
@@ -244,6 +278,9 @@ export default function Topbar({ onMenuClick, isScrolled }) {
           ========================================================================= */}
       <header className="hidden lg:flex items-center justify-between shrink-0 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E5E7EB] rounded-[24px] mx-4 mt-4 mb-2 px-5 py-3 relative z-30">
         
+        {/* Desktop Portal Target for Selection Header */}
+        <div id="topbar-portal-desktop" className="absolute inset-0 z-50 pointer-events-none rounded-[24px] overflow-hidden" />
+
         {/* Left: Greeting */}
         <div className="w-[220px] shrink-0">
           <div className="flex flex-col">
@@ -264,13 +301,94 @@ export default function Topbar({ onMenuClick, isScrolled }) {
 
         {/* Center: Search Bar */}
         <div className="flex-1 flex justify-center">
-          <div className="flex items-center bg-[#F8F9FA] border border-transparent hover:border-gray-200 rounded-[16px] px-4 py-2.5 w-[380px] transition-all focus-within:w-[440px] focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:border-emerald-500/30 group">
-            <Search size={16} className="text-gray-400 mr-3 group-focus-within:text-emerald-500 transition-colors shrink-0" />
-            <input
-              type="text"
-              placeholder="Cari..."
-              className="bg-transparent border-none outline-none flex-1 text-[14px] font-medium text-gray-700 placeholder-gray-400"
-            />
+          <div ref={searchRef} className="relative z-50">
+            <div className="flex items-center bg-[#F8F9FA] border border-transparent hover:border-gray-200 rounded-[16px] px-4 py-2.5 w-[380px] transition-all focus-within:w-[440px] focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10 focus-within:border-emerald-500/30 group">
+              <Search size={16} className="text-gray-400 mr-3 group-focus-within:text-emerald-500 transition-colors shrink-0" />
+              <input
+                type="text"
+                placeholder={lang === 'id' ? 'Cari halaman atau sapi...' : 'Search pages or cattle...'}
+                className="bg-transparent border-none outline-none flex-1 text-[14px] font-medium text-gray-700 placeholder-gray-400"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchOpen(true)}
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="ml-2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown Results */}
+            <AnimatePresence>
+              {isSearchOpen && searchQuery.trim() && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 shadow-2xl rounded-[20px] overflow-hidden flex flex-col z-[100]"
+                >
+                  <div className="max-h-[60vh] overflow-y-auto p-2">
+                    {/* Pages Results */}
+                    {searchResults.pages.length > 0 && (
+                      <div className="mb-2">
+                        <div className="px-3 py-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Halaman</div>
+                        {searchResults.pages.map((p, i) => (
+                          <button
+                            key={`p-${i}`}
+                            onClick={() => {
+                              navigate(p.path);
+                              setIsSearchOpen(false);
+                              setSearchQuery('');
+                            }}
+                            className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors text-gray-700 group"
+                          >
+                            <div className="p-1.5 bg-gray-50 rounded-md group-hover:bg-emerald-100 text-gray-400 group-hover:text-emerald-600">
+                              {p.icon}
+                            </div>
+                            <span className="font-medium text-sm">{p.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Cows Results */}
+                    {searchResults.cows.length > 0 && (
+                      <div>
+                        <div className="px-3 py-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Data Sapi</div>
+                        {searchResults.cows.map((c) => (
+                          <button
+                            key={`c-${c.id}`}
+                            onClick={() => {
+                              navigate('/ternak', { state: { selectedCowId: c.id } });
+                              setIsSearchOpen(false);
+                              setSearchQuery('');
+                            }}
+                            className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors group"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-200 group-hover:border-emerald-200">
+                              <img src={c.foto || "/photoprofile_default.jpeg"} alt={c.nama} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-sm text-gray-900 group-hover:text-emerald-700">{c.nama || 'Tanpa Nama'}</span>
+                              <span className="text-xs text-gray-500 group-hover:text-emerald-600/70">{c.id} • {c.status_kesehatan}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {searchResults.pages.length === 0 && searchResults.cows.length === 0 && (
+                      <div className="p-8 text-center text-gray-500">
+                        <Search size={24} className="mx-auto mb-2 opacity-20" />
+                        <p className="text-sm font-medium">Tidak ada hasil untuk "{searchQuery}"</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

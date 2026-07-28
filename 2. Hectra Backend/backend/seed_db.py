@@ -33,6 +33,7 @@ def init_db():
         cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
         cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS kelamin VARCHAR(20) DEFAULT 'betina';")
         cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS berat_badan FLOAT;")
+        cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS estrus_probability FLOAT DEFAULT 0.0;")
         
         # Ensure observation_logs table exists
         cur.execute("""
@@ -64,6 +65,32 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
+
+        # Ensure vector extension and knowledge_base table exists for RAG
+        cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS knowledge_base (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                content TEXT NOT NULL,
+                embedding vector(768)
+            );
+        """)
+        
+        # Seed dummy RAG data
+        dummy_sops = [
+            ("SOP Penanganan Sapi Terindikasi Penyakit Mulut dan Kuku (PMK)", "Langkah pertama saat menemukan sapi dengan gejala PMK (hipersalivasi, lepuh pada mulut/kuku): 1. Segera pisahkan sapi dari kandang utama ke kandang isolasi Blok C. 2. Hubungi drh. Budi di 0812-345-6789. 3. Semprot kandang lama dengan desinfektan klorin 2% selama 3 hari berturut-turut. Jangan memberi makan konsentrat keras."),
+            ("SOP Pemberian Pakan Laktasi", "Sapi pada fase laktasi (menyusui) harus diberikan ransum pakan dengan protein kasar minimal 16%. Jadwal pemberian pakan: Pukul 06:00 (Hijauan 15kg), Pukul 10:00 (Konsentrat 5kg), Pukul 15:00 (Hijauan 15kg). Air minum harus tersedia ad libitum (tanpa batas)."),
+            ("SOP Deteksi Birahi dan Inseminasi Buatan (IB)", "Jika sapi terdeteksi birahi oleh sensor Hectra (Notifikasi ESTRUS_ALERT > 75%), peternak wajib melakukan pengecekan visual (vulva bengkak, lendir bening). Waktu paling optimal untuk Inseminasi Buatan (IB) adalah 12-18 jam setelah tanda birahi pertama muncul. Teknisi IB (Bapak Eko) harus dihubungi segera.")
+        ]
+        
+        for title, content in dummy_sops:
+            cur.execute("""
+                INSERT INTO knowledge_base (title, content) 
+                SELECT %s, %s 
+                WHERE NOT EXISTS (SELECT 1 FROM knowledge_base WHERE title = %s);
+            """, (title, content, title))
+
         
         # Insert test devices
         devices = [

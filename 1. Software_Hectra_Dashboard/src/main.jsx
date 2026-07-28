@@ -7,7 +7,7 @@ import './index.css'
 const savedTheme = localStorage.getItem('herd-settings')
   ? JSON.parse(localStorage.getItem('herd-settings'))?.state?.theme
   : null;
-document.documentElement.setAttribute('data-theme', savedTheme || 'dark');
+document.documentElement.setAttribute('data-theme', savedTheme || 'light');
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

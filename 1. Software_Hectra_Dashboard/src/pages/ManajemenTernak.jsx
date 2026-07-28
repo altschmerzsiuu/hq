@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, Plus, Filter, Link, Unlink, ChevronRight, Edit2, Trash2, Activity, MapPin, X, Calendar, ClipboardList, Beef, Loader2, CheckCircle, XCircle, Baby, Pencil, Save, Tractor, PawPrint, SlidersHorizontal, ChevronLeft, Camera, ImagePlus, LineChart, Sparkles, Edit3, Dna } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -506,40 +507,47 @@ export default function ManajemenTernak() {
   return (
     <>
       {isSelectMode && (
-        <div className="fixed top-0 left-0 w-full h-[60px] bg-white z-[9999] flex items-center justify-between px-4 border-b border-gray-200 shadow-sm animate-in fade-in duration-200">
-          <button 
-            onClick={() => { setIsSelectMode(false); setSelectedForDelete([]); }}
-            className="text-[var(--text-2)] font-bold text-sm px-2 py-2"
-          >
-            Batal
-          </button>
-          
-          <div className="text-[15px] font-bold text-[var(--text-1)]">
-            {selectedForDelete.length > 0 ? `${selectedForDelete.length} Dipilih` : 'Pilih Ternak'}
-          </div>
+        <>
+          {document.getElementById('topbar-portal-mobile') && createPortal(
+            <div className="w-full h-full bg-white flex items-center justify-between px-4 border-b border-gray-200 shadow-sm animate-in fade-in duration-200 pointer-events-auto">
+              <button onClick={() => { setIsSelectMode(false); setSelectedForDelete([]); }} className="text-[var(--text-2)] font-bold text-sm py-2">
+                Batal
+              </button>
+              <div className="text-[15px] font-bold text-[var(--text-1)]">
+                {selectedForDelete.length > 0 ? `${selectedForDelete.length} Dipilih` : 'Pilih Ternak'}
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => { if (selectedForDelete.length === filteredSapi.length) { setSelectedForDelete([]); } else { setSelectedForDelete(filteredSapi.map(s => s.id)); } }} className="text-[var(--accent)] font-bold text-sm">
+                  {selectedForDelete.length === filteredSapi.length ? 'Batal Semua' : 'Semua'}
+                </button>
+                <button onClick={handleBulkDelete} disabled={selectedForDelete.length === 0} className={`flex items-center justify-center p-2 rounded-full ${selectedForDelete.length > 0 ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-200 text-gray-400'}`}>
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>,
+            document.getElementById('topbar-portal-mobile')
+          )}
 
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => {
-                if (selectedForDelete.length === filteredSapi.length) {
-                  setSelectedForDelete([]);
-                } else {
-                  setSelectedForDelete(filteredSapi.map(s => s.id));
-                }
-              }}
-              className="text-[var(--accent)] font-bold text-sm"
-            >
-              {selectedForDelete.length === filteredSapi.length ? 'Batal Semua' : 'Semua'}
-            </button>
-            <button 
-              onClick={handleBulkDelete}
-              disabled={selectedForDelete.length === 0}
-              className={`flex items-center justify-center p-2 rounded-full ${selectedForDelete.length > 0 ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-200 text-gray-400'}`}
-            >
-              <Trash2 size={18} />
-            </button>
-          </div>
-        </div>
+          {document.getElementById('topbar-portal-desktop') && createPortal(
+            <div className="w-full h-full bg-white flex items-center justify-between px-5 shadow-sm animate-in fade-in duration-200 pointer-events-auto">
+              <button onClick={() => { setIsSelectMode(false); setSelectedForDelete([]); }} className="text-[var(--text-2)] font-bold text-sm py-2">
+                Batal
+              </button>
+              <div className="text-[15px] font-bold text-[var(--text-1)]">
+                {selectedForDelete.length > 0 ? `${selectedForDelete.length} Dipilih` : 'Pilih Ternak'}
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => { if (selectedForDelete.length === filteredSapi.length) { setSelectedForDelete([]); } else { setSelectedForDelete(filteredSapi.map(s => s.id)); } }} className="text-[var(--accent)] font-bold text-sm">
+                  {selectedForDelete.length === filteredSapi.length ? 'Batal Semua' : 'Semua'}
+                </button>
+                <button onClick={handleBulkDelete} disabled={selectedForDelete.length === 0} className={`flex items-center justify-center p-2 rounded-full ${selectedForDelete.length > 0 ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-200 text-gray-400'}`}>
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>,
+            document.getElementById('topbar-portal-desktop')
+          )}
+        </>
       )}
 
       <div className="space-y-0 pb-6">

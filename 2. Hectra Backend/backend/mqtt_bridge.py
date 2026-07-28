@@ -14,6 +14,7 @@ from mailer import (
     send_estrus_alert_email, 
     send_breeding_reminder_email
 )
+from prediction_engine import ModelRegistry, run_hybrid_prediction
 
 # Load environment variables
 load_dotenv()
@@ -351,7 +352,48 @@ def process_redis_queue():
                 
                 ws_updates.append({"type": "SENSOR_UPDATE", "collar_id": collar_id, "rms_z": float(data.get('rms_z') or 0), "temperature": float(data.get('temperature') or 0)})
                 
-                if data.get('estrus_code') == 1:
+                estrus_triggered_by_sensor = (data.get('estrus_code') == 1)
+                hybrid_score = 0.0
+                
+                # --- ML PREDICTION ENGINE ---
+                try:
+                    cow_id_rows = db_query("SELECT cow_id FROM collar_registry WHERE collar_id = %s", (collar_id,))
+                    if cow_id_rows and cow_id_rows[0]['cow_id']:
+                        cow_id = cow_id_rows[0]['cow_id']
+                        
+                        siklus = db_query("SELECT * FROM siklus_individu WHERE rfid = %s", (cow_id,))
+                        if siklus and ModelRegistry.is_ready():
+                            s = siklus[0]
+                            last_birahi = s.get('last_birahi_date')
+                            if last_birahi:
+                                if isinstance(last_birahi, str):
+                                    last_birahi = datetime.fromisoformat(last_birahi).date()
+                                elif hasattr(last_birahi, 'date'):
+                                    last_birahi = last_birahi.date()
+                                
+                                days_since = (now_dt.date() - last_birahi).days
+                                c_avg = float(s.get('rata_siklus_hari', 21.0) or 21.0)
+                                par = int(s.get('jumlah_siklus_valid', 0) or 0)
+                                
+                                svm_p, xgb_p, hybrid_score = run_hybrid_prediction(
+                                    mean_z=float(data.get('mean_z', 0.0)),
+                                    rms_z=float(data.get('rms_z', 0.0)),
+                                    max_z=float(data.get('max_z', 0.0)),
+                                    temperature=float(data.get('temperature', 0.0)),
+                                    days_since_estrus=days_since,
+                                    cycle_avg=c_avg,
+                                    parity=par
+                                )
+                                
+                                ws_updates[-1]["ml_estrus_prob"] = hybrid_score
+                                
+                                # Simpan prediksi terbaru ke tabel hewan agar bisa dilihat di Dashboard
+                                db_execute("UPDATE hewan SET estrus_probability = %s WHERE id = %s", (hybrid_score, cow_id))
+                except Exception as e:
+                    print(f"⚠️ [PREDICTION ERROR] {e}")
+                # -----------------------------
+                
+                if estrus_triggered_by_sensor or hybrid_score > 0.75:
                     estrus_events.append((collar_id, kandang_id, data.get('rms_z', 0), data.get('temperature', 39.8)))
                 
                 temp = data.get('temperature', 0.0)
@@ -428,6 +470,9 @@ def init_notification_table():
 
 if __name__ == "__main__":
     init_notification_table()
+    
+    print("🛠️ Loading ML Models...")
+    ModelRegistry.load_from_disk()
     
     # Run database migration to ensure device_secret and updated_at columns exist
     print("🛠️ Ensuring collar_registry has device_secret column...")

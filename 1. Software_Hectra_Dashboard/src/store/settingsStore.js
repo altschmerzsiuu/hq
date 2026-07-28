@@ -30,7 +30,7 @@ const useSettingsStore = create(
         if (state?.theme) {
           document.documentElement.setAttribute('data-theme', state.theme);
         } else {
-          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.setAttribute('data-theme', 'light');
         }
       },
     }

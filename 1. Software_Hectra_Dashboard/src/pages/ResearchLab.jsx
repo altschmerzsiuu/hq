@@ -409,14 +409,17 @@ export default function ResearchLab() {
                     <span className="text-xs text-[var(--text-3)]">Memuat daftar sapi...</span>
                   </div>
                 ) : (
-                  <select value={selectedCow} onChange={(e) => setSelectedCow(e.target.value)}
-                    className="w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl px-5 py-4 text-[var(--color-text-primary)] focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer">
-                    {cows.map((c) => { const k = c.cow_id || c.id; return (
-                      <option key={k} value={k} className="bg-[var(--bg-surface)] text-[var(--color-text-primary)]">
-                        {k} - {c.nama || 'Sapi Tanpa Nama'} ({c.jenis})
-                      </option>
-                    ); })}
-                  </select>
+                  <div className="relative">
+                    <select value={selectedCow} onChange={(e) => setSelectedCow(e.target.value)}
+                      className="w-full appearance-none bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl px-5 py-4 text-[var(--color-text-primary)] focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer">
+                      {cows.map((c) => { const k = c.cow_id || c.id; return (
+                        <option key={k} value={k} className="bg-[var(--bg-surface)] text-[var(--color-text-primary)]">
+                          {k} - {c.nama || 'Sapi Tanpa Nama'} ({c.jenis})
+                        </option>
+                      ); })}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                  </div>
                 )}
               </div>
               <div>
@@ -472,7 +475,7 @@ export default function ResearchLab() {
                   ) : observations.length === 0 ? (
                     <p className="text-center py-6 text-sm text-[var(--text-3)]">Belum ada observasi yang dicatat.</p>
                   ) : (
-                    <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
+                    <div className="space-y-4 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
                       {observations.map((obs) => {
                         const meta = getActivityMeta(obs.activity_type);
                         return (
@@ -504,9 +507,12 @@ export default function ResearchLab() {
         </div>
       </section>
 
-      {/* SECTION 2: DEVICE LOG MONITOR */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
+      {/* GRID CONTAINER FOR SECTION 2 & 3 */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        
+        {/* SECTION 2: DEVICE LOG MONITOR */}
+        <section className="space-y-4 flex flex-col">
+          <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
           <span className="w-1.5 h-5 rounded-full bg-emerald-500" />
           <h2 className="text-lg font-bold font-display text-[var(--color-text-primary)]">Log Monitor Perangkat</h2>
           <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded border border-emerald-250/20 ml-2 uppercase">Real-Time Terminal</span>
@@ -656,8 +662,8 @@ export default function ResearchLab() {
       </section>
 
       {/* SECTION 3: DEVICE REMOTE CONFIGURATION */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
+        <section className="space-y-4 flex flex-col">
+          <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
           <span className="w-1.5 h-5 rounded-full bg-amber-500" />
           <h2 className="text-lg font-bold font-display text-[var(--color-text-primary)]">Konfigurasi Jarak Jauh</h2>
           <span className="text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 ml-2 uppercase">MQTT Config</span>
@@ -711,7 +717,8 @@ export default function ResearchLab() {
             </div>
           </div>
         </div>
-      </section>
+        </section>
+      </div>
 
       {/* SECTION 4: DEVICE SYSTEM MAINTENANCE & OTA */}
       <section className="space-y-4">
@@ -745,6 +752,91 @@ export default function ResearchLab() {
                 {otaLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
                 {otaLoading ? 'Mengaktifkan...' : 'Aktifkan OTA Mode'}
               </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 5: GENDHIS AI TRAINING (KNOWLEDGE BASE) */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
+          <span className="w-1.5 h-5 rounded-full bg-purple-500" />
+          <h2 className="text-lg font-bold font-display text-[var(--color-text-primary)]">Train Gendhis AI</h2>
+          <span className="text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded border border-purple-250/20 ml-2 uppercase">Knowledge Base</span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Input Section */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-slate-900 rounded-3xl p-6 shadow-card border border-purple-500/30 space-y-4 relative overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 blur-[60px] rounded-full pointer-events-none" />
+              <div className="flex justify-between items-center relative z-10">
+                <h3 className="text-white font-bold text-sm">Input SOPs (Standard Operating Procedures)</h3>
+              </div>
+              <textarea
+                className="w-full h-48 bg-slate-950/50 border border-slate-700 rounded-2xl p-4 text-xs text-slate-300 font-mono focus:outline-none focus:border-purple-500/50 transition-colors custom-scrollbar relative z-10"
+                placeholder="Type or paste SOP text here...&#10;Contoh:&#10;SOP Penanganan PMK...&#10;1. Pisahkan sapi...&#10;2. Hubungi dokter..."
+              />
+              <div className="flex justify-between items-center relative z-10">
+                <p className="text-[10px] text-slate-500">Mendukung format teks panjang</p>
+                <button className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-6 py-2 rounded-xl transition-all shadow-lg shadow-purple-900/20 active:scale-95">
+                  Simpan SOP
+                </button>
+              </div>
+            </div>
+
+            {/* Dropzone Section */}
+            <div className="bg-slate-900 rounded-3xl p-8 shadow-card border border-slate-800 border-dashed flex flex-col items-center justify-center space-y-4 transition-all hover:bg-slate-800/50 cursor-pointer group">
+               <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                 <svg className="w-5 h-5 text-slate-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                 </svg>
+               </div>
+               <div className="text-center">
+                 <h4 className="text-white font-bold text-sm">Drag & Drop Files Here</h4>
+                 <p className="text-slate-400 text-xs mt-1">or Browse Files</p>
+               </div>
+               <div className="bg-slate-800 px-4 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 font-semibold group-hover:border-slate-500 transition-colors">
+                 Upload Files
+               </div>
+               <p className="text-[10px] text-slate-500">Supports PDF, DOCX, TXT. Max size 50MB.</p>
+            </div>
+          </div>
+
+          {/* Sidebar Section */}
+          <div className="bg-slate-900 rounded-3xl p-6 shadow-card border border-slate-800 space-y-4 flex flex-col">
+            <div>
+              <h3 className="text-white font-bold text-sm">Existing Knowledge Base</h3>
+              <p className="text-slate-400 text-[10px]">3 Articles (Dummy)</p>
+            </div>
+            
+            <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar pr-2 max-h-[320px]">
+              {/* Dummy Item 1 */}
+              <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 hover:border-purple-500/30 transition-colors">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="text-slate-200 font-bold text-xs truncate pr-2">SOP Penanganan Sapi Terindikasi PMK</h4>
+                  <span className="bg-emerald-500/20 text-emerald-400 text-[9px] px-1.5 py-0.5 rounded font-bold">Active</span>
+                </div>
+                <p className="text-[10px] text-slate-500">Updated: Hari ini</p>
+              </div>
+
+              {/* Dummy Item 2 */}
+              <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 hover:border-purple-500/30 transition-colors">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="text-slate-200 font-bold text-xs truncate pr-2">SOP Pemberian Pakan Laktasi</h4>
+                  <span className="bg-emerald-500/20 text-emerald-400 text-[9px] px-1.5 py-0.5 rounded font-bold">Active</span>
+                </div>
+                <p className="text-[10px] text-slate-500">Updated: Kemarin</p>
+              </div>
+
+              {/* Dummy Item 3 */}
+              <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 hover:border-purple-500/30 transition-colors">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="text-slate-200 font-bold text-xs truncate pr-2">Deteksi Birahi & IB</h4>
+                  <span className="bg-purple-500/20 text-purple-400 text-[9px] px-1.5 py-0.5 rounded font-bold">Training</span>
+                </div>
+                <p className="text-[10px] text-slate-500">Updated: 2 Hari lalu</p>
+              </div>
             </div>
           </div>
         </div>

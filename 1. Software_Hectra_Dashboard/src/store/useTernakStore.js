@@ -53,6 +53,15 @@ export const useTernakStore = create((set, get) => ({
   loading: false,
   error: null,
 
+  // ─── Update Sapi dari WebSocket (Realtime) ─────────────────────────
+  updateSapiSensor: (collar_id, sensorData) => set((state) => ({
+    sapiList: state.sapiList.map(sapi => 
+      (sapi.collar_id === collar_id || sapi.id === collar_id) 
+        ? { ...sapi, ...sensorData } 
+        : sapi
+    )
+  })),
+
   // ─── Fetch all sapi ────────────────────────────────────────────────
   fetchSapiList: async () => {
     set({ loading: true, error: null })
