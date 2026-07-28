@@ -71,11 +71,11 @@ export default function ReproModal({ isOpen, onClose, isWidgetMode = false, onBa
 
   const overlayClass = isWidgetMode 
     ? "fixed inset-0 z-[200] pointer-events-none" 
-    : "fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none";
+    : "fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-start bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:pr-8 md:pt-[130px] animate-in fade-in pointer-events-none";
 
   const contentClass = isWidgetMode
-    ? "fixed bottom-[190px] md:bottom-[84px] right-4 md:right-6 w-[360px] h-[540px] max-w-[calc(100vw-32px)] z-[200] animate-in slide-in-from-bottom-8 fade-in duration-300 flex flex-col bg-[var(--bg-surface)] border border-[var(--border)] rounded-[24px] shadow-[var(--shadow-modal)] pointer-events-auto overflow-y-auto no-scrollbar"
-    : "relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto max-h-[90vh] md:max-h-full overflow-x-hidden no-scrollbar bg-[var(--bg-surface)] border-[0.5px] border-[var(--border)] shadow-[var(--shadow-modal)]";
+    ? "fixed bottom-[190px] md:bottom-[84px] right-4 md:right-6 w-[360px] h-auto max-h-[540px] max-w-[calc(100vw-32px)] z-[200] animate-in slide-in-from-bottom-8 fade-in duration-300 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[24px] shadow-[var(--shadow-modal)] pointer-events-auto overflow-y-auto no-scrollbar"
+    : "relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto max-h-[90vh] md:max-h-[85vh] overflow-x-hidden no-scrollbar bg-[var(--bg-surface)] border-[0.5px] border-[var(--border)] shadow-[var(--shadow-modal)]";
 
   return (
     <div className={overlayClass}>

@@ -1381,7 +1381,7 @@ export default function Dashboard() {
         <div className="hidden md:flex md:flex-col md:gap-0">
 
           {/* HEADER */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2 mt-2 md:mt-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 mt-2 md:mt-4">
             <div>
               <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none text-[var(--text-1)]">
                 Dashboard
@@ -1389,12 +1389,6 @@ export default function Dashboard() {
               <p className="text-[13px] font-medium text-[var(--text-2)] mt-2">
                 {lang === 'id' ? 'Ringkasan kondisi peternakanmu hari ini' : 'Here is your herd condition summary today'}
               </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <AnimatedQAButton icon={Plus} label="Tambah Ternak" onClick={() => setIsAddCowModalOpen(true)} />
-              <AnimatedQAButton icon={Syringe} label="Tambah Data IB" onClick={() => { fetchSapiList(); setIsReproModalOpen(true); }} />
-              <AnimatedQAButton icon={Cpu} label="Pasang Kalung" onClick={() => setIsPairModalOpen(true)} />
-              <AnimatedQAButton icon={Zap} label="Prediksi Estrus" onClick={() => setIsEstrusModalOpen(true)} />
             </div>
           </div>
 

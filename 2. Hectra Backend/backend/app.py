@@ -1300,6 +1300,7 @@ class HewanCreate(BaseModel):
     nama: str = Field(..., min_length=2, max_length=50)
     tanggal_lahir: Optional[str] = None
     jenis: str = Field(..., max_length=50)
+    kelamin: Optional[str] = Field("betina", max_length=20)
     breed_id: Optional[str] = Field(None, max_length=50)
     status_kesehatan: Optional[str] = Field("Sehat", max_length=20)
     berat_badan: Optional[float] = Field(None, gt=0, lt=2000)
@@ -1430,13 +1431,15 @@ async def add_hewan(hewan: HewanCreate, current_user: dict = Depends(get_current
             # Sesuaikan dengan kolom yang benar-benar ada di pgAdmin kamu
             await conn.execute("""
                 INSERT INTO hewan 
-                (id, nama, bulan_tahun_lahir, jenis, status_kesehatan, owner_id)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                (id, nama, bulan_tahun_lahir, jenis, kelamin, berat_badan, status_kesehatan, owner_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             """,
                 hewan.id, 
                 hewan.nama, 
                 hewan.tanggal_lahir, # Masuk ke bulan_tahun_lahir
                 hewan.jenis,         # Masuk ke jenis
+                hewan.kelamin,       # Masuk ke kelamin
+                hewan.berat_badan,   # Masuk ke berat_badan
                 hewan.status_kesehatan, 
                 get_effective_owner_id(current_user)
             )
@@ -1591,9 +1594,9 @@ async def update_hewan(hewan_id: str, data: HewanCreate, current_user: dict = De
         # Cek apakah sapi itu memang milik user yang login
         result = await conn.execute("""
             UPDATE hewan 
-            SET nama = $1, bulan_tahun_lahir = $2, jenis = $3, status_kesehatan = $4
-            WHERE id = $5 AND owner_id = $6
-        """, data.nama, data.tanggal_lahir, data.jenis, data.status_kesehatan, hewan_id, current_user.get('sub', current_user.get('id')))
+            SET nama = $1, bulan_tahun_lahir = $2, jenis = $3, kelamin = $4, berat_badan = $5, status_kesehatan = $6
+            WHERE id = $7 AND owner_id = $8
+        """, data.nama, data.tanggal_lahir, data.jenis, data.kelamin, data.berat_badan, data.status_kesehatan, hewan_id, current_user.get('sub', current_user.get('id')))
         
         if "UPDATE 0" in result:
             raise HTTPException(status_code=404, detail="Sapi tidak ditemukan atau bukan milik Anda")

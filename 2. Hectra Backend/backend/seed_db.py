@@ -31,6 +31,8 @@ def init_db():
         cur.execute("ALTER TABLE collar_registry ADD COLUMN IF NOT EXISTS device_secret VARCHAR(100);")
         cur.execute("ALTER TABLE reproduksi_ternak ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
         cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+        cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS kelamin VARCHAR(20) DEFAULT 'betina';")
+        cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS berat_badan FLOAT;")
         
         # Ensure observation_logs table exists
         cur.execute("""

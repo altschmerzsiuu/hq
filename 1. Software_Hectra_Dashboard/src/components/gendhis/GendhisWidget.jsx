@@ -517,7 +517,7 @@ export default function GendhisWidget() {
           {/* Dropdown Options */}
           <div 
             className={cn(
-              "flex flex-col items-center gap-4 transition-all duration-300 origin-bottom mb-2",
+              "flex flex-col items-center gap-4 transition-all duration-300 origin-bottom mb-6",
               (isFabOpen && !isAnyWidgetOpen) ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 translate-y-8 pointer-events-none"
             )}
           >

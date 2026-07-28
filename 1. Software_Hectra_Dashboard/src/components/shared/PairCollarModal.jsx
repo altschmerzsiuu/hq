@@ -54,7 +54,7 @@ export default function PairCollarModal({
 
   const overlayClass = isWidgetMode 
     ? "fixed inset-0 z-[200] pointer-events-none" 
-    : "fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none";
+    : "fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-start bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:pr-8 md:pt-[130px] animate-in fade-in pointer-events-none";
 
   const contentClass = isWidgetMode
     ? "fixed bottom-[190px] md:bottom-[84px] right-4 md:right-6 w-[420px] h-[540px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-120px)] z-[200] animate-in slide-in-from-bottom-8 fade-in duration-300 flex flex-col bg-[var(--bg-surface)] border border-[var(--border)] rounded-[24px] shadow-[var(--shadow-modal)] pointer-events-auto overflow-hidden"

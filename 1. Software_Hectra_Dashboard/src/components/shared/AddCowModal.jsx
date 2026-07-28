@@ -47,7 +47,7 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
   
   const [scanOpen, setScanOpen] = useState(false);
   const [tambahForm, setTambahForm] = useState({
-    nama: '', rfid: '', jenis: '', lahir: '', kesehatan: '', kelamin: 'betina'
+    nama: '', rfid: '', jenis: '', lahir: '', kesehatan: '', kelamin: 'betina', berat_badan: ''
   });
 
   if (!isOpen) return null;
@@ -71,7 +71,7 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
     const payload = { ...tambahForm, nama: formattedName, rfid: finalRfid };
     const res = await tambahSapi(payload);
     if (res.success) {
-      setTambahForm({ nama: '', rfid: '', jenis: '', lahir: '', kesehatan: '', kelamin: 'betina' });
+      setTambahForm({ nama: '', rfid: '', jenis: '', lahir: '', kesehatan: '', kelamin: 'betina', berat_badan: '' });
       onClose();
       toast.success(t.livestock_toast_add_success);
       navigate('/ternak', { state: { selectedCowId: res.id || finalRfid, from: '/' } });
@@ -82,11 +82,11 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
 
   const overlayClass = isWidgetMode 
     ? "fixed inset-0 z-[200] pointer-events-none" 
-    : "fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-end bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:p-4 md:pt-[100px] animate-in fade-in pointer-events-none";
+    : "fixed inset-0 z-[1100] flex justify-center items-center md:justify-end md:items-start bg-black/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none p-4 md:pr-8 md:pt-[130px] animate-in fade-in pointer-events-none";
 
   const contentClass = isWidgetMode
     ? "fixed bottom-[190px] md:bottom-[84px] right-4 md:right-6 w-[360px] h-[540px] max-w-[calc(100vw-32px)] z-[200] animate-in slide-in-from-bottom-8 fade-in duration-300 flex flex-col bg-[var(--bg-surface)] border border-[var(--border)] rounded-[24px] shadow-[var(--shadow-modal)] pointer-events-auto overflow-y-auto no-scrollbar"
-    : "relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] md:h-full overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto bg-[var(--bg-surface)] border-[0.5px] border-[var(--border)] shadow-[var(--shadow-modal)]";
+    : "relative z-10 p-6 w-full max-w-lg md:max-w-[400px] rounded-[24px] overflow-y-auto animate-in zoom-in-95 md:zoom-in-100 md:slide-in-from-right-1/2 duration-300 pointer-events-auto max-h-[90vh] md:max-h-[85vh] bg-[var(--bg-surface)] border-[0.5px] border-[var(--border)] shadow-[var(--shadow-modal)]";
 
   return (
     <>
@@ -159,6 +159,23 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={18} />
               </div>
+            </div>
+
+            {/* 3.6 Berat Badan (Opsional) */}
+            <div>
+              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">
+                {lang === 'id' ? 'Berat Badan (kg)' : 'Weight (kg)'} <span className="text-gray-400 font-normal text-xs ml-1">({lang === 'id' ? 'Opsional' : 'Optional'})</span>
+              </label>
+              <input 
+                type="number" 
+                step="0.1"
+                min="0"
+                style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} 
+                className="w-full h-[52px] px-4 rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none" 
+                placeholder="Misal: 450.5" 
+                value={tambahForm.berat_badan} 
+                onChange={e => setTambahForm({...tambahForm, berat_badan: e.target.value})} 
+              />
             </div>
 
             {/* 4. Status Kesehatan */}
