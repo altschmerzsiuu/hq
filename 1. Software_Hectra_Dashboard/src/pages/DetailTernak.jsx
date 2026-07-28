@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Camera, Activity, Edit2, Trash2, Link, Unlink, ActivityIcon, Plus, Beef, ThermometerSun, Weight, Stethoscope, Pencil, X, Save, Loader2, CheckCircle, XCircle, ChevronRight, ChevronDown, LineChart, ClipboardList, Sparkles, Check } from 'lucide-react';
 import { useTernakStore } from '../store/useTernakStore';
 import useSettingsStore from '@/store/settingsStore';
@@ -45,6 +45,7 @@ const hitungUsia = (lahir, lang) => {
 export default function DetailTernak() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { fetchSapiDetail, selectedSapi, loading, hapusSapi, editSapi, tambahReproduksi } = useTernakStore();
   const { language } = useSettingsStore();
   const lang = language || 'id';
@@ -82,6 +83,24 @@ export default function DetailTernak() {
   // ── Hapus Ternak ─────────────────────────────────────────────────
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [hapusLoading, setHapusLoading] = useState(false);
+
+  // ── Handle Location State (from Recommendations) ─────────────────
+  useEffect(() => {
+    if (location.state) {
+      if (location.state.openInseminasi) {
+        setTimeout(() => {
+          setIsIBModalOpen(true);
+          setEditingIB(null);
+        }, 100);
+      }
+      if (location.state.activeTab) {
+        setActiveTab(location.state.activeTab);
+        setActiveDetailTab(location.state.activeTab);
+      }
+      // Clear state after handling
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const openEditProfile = () => {
     setEditProfileForm({

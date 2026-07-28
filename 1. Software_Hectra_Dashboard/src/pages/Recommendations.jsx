@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Lightbulb, 
   Check, 
@@ -20,6 +21,7 @@ function fmtDate(dateStr, lang) {
 }
 
 export default function Recommendations() {
+  const navigate = useNavigate();
   const { lang } = useSettingsStore();
   const t = translations[lang];
   const [loading, setLoading] = useState(true);
@@ -247,7 +249,20 @@ export default function Recommendations() {
       ) : (
         <div className="flex flex-col gap-4">
           {displayRecs.map((recDetails) => (
-            <RecommendationRow key={recDetails.id} recDetails={recDetails} onMarkDone={() => handleMarkDone(recDetails)} />
+            <RecommendationRow 
+              key={recDetails.id} 
+              recDetails={recDetails} 
+              onMarkDone={() => handleMarkDone(recDetails)} 
+              onAction={() => {
+                if (recDetails.iconType === 'inseminate') {
+                  navigate(`/ternak/${recDetails.cowId}`, { state: { openInseminasi: true, activeTab: 'riwayat' } });
+                } else if (recDetails.iconType === 'health') {
+                  navigate(`/ternak/${recDetails.cowId}`, { state: { activeTab: 'analitik' } });
+                } else {
+                  navigate(`/ternak/${recDetails.cowId}`);
+                }
+              }}
+            />
           ))}
         </div>
       )}
@@ -256,7 +271,7 @@ export default function Recommendations() {
   );
 }
 
-function RecommendationRow({ recDetails, onMarkDone }) {
+function RecommendationRow({ recDetails, onMarkDone, onAction }) {
   const isHighUrgency = recDetails.urgencyVal === 'high';
   const isMediumUrgency = recDetails.urgencyVal === 'medium';
   
@@ -322,7 +337,12 @@ function RecommendationRow({ recDetails, onMarkDone }) {
           >
             <Check size={16} strokeWidth={3} /> {t.btn_done}
           </button>
-          <button style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', color: 'var(--text-2)' }} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-all">
+          <button 
+            onClick={onAction}
+            style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', color: 'var(--text-2)' }} 
+            className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-all"
+            title={lang === 'id' ? 'Tindak Lanjuti' : 'Take Action'}
+          >
             <ChevronRight size={16} />
           </button>
         </div>
