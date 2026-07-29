@@ -46,8 +46,29 @@ db_pool = pool.ThreadedConnectionPool(1, 10, **DB_CONFIG)
 import redis  # type: ignore
 import time
 
-REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379/0')
-redis_client = redis.StrictRedis.from_url(REDIS_URL, decode_responses=True)
+_raw_redis_url = os.getenv('REDIS_URL', 'redis://redis:6379/0')
+
+def _build_redis_client(raw_url: str):
+    """Connect to Redis safely, supporting passwords with special chars like @, # etc."""
+    try:
+        # Try to extract individual components from env vars first (most reliable)
+        redis_host = os.getenv('REDIS_HOST', 'redis')
+        redis_port = int(os.getenv('REDIS_PORT', '6379'))
+        redis_pass = os.getenv('REDIS_PASSWORD', 'R3d!s@H3ctr4#26')
+        redis_db   = int(os.getenv('REDIS_DB', '0'))
+        return redis.StrictRedis(
+            host=redis_host,
+            port=redis_port,
+            password=redis_pass,
+            db=redis_db,
+            decode_responses=True
+        )
+    except Exception:
+        pass
+    return redis.StrictRedis.from_url(raw_url, decode_responses=True)
+
+REDIS_URL = _raw_redis_url
+redis_client = _build_redis_client(_raw_redis_url)
 
 DEVICE_CACHE = {}
 

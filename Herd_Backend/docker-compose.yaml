@@ -118,6 +118,10 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgre
       - REDIS_URL=redis://:R3d!s@H3ctr4#26@redis:6379/0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=R3d!s@H3ctr4#26
+      - REDIS_DB=0
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_IDS=${TELEGRAM_CHAT_IDS}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
