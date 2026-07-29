@@ -512,7 +512,7 @@ export default function Settings() {
               TAB 1 — GENERAL: Profile + Farm Details
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'profile' && (
-            <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-4 md:px-0">
+            <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
               
               {/* Header: Back Button & Title & Save Button */}
               <div className="relative flex items-center justify-center mb-6 h-10 w-full">
@@ -646,7 +646,7 @@ export default function Settings() {
               TAB 2 — NOTIFICATIONS
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'notifications' && (
-            <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-4 md:px-0">
+            <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
               <div className="flex items-center relative mb-4">
                 <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -735,7 +735,7 @@ export default function Settings() {
               TAB 3 — SECURITY
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-4 md:px-0">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
               <div className="relative flex items-center justify-center mb-6 h-10 w-full md:max-w-lg">
                 <button type="button" onClick={() => handleBackNavigation('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -793,7 +793,7 @@ export default function Settings() {
               TAB 4 — TEAM MANAGEMENT
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'team' && (
-            <div className="space-y-5 animate-in fade-in duration-300 pt-4 md:pt-6 px-4 md:px-0">
+            <div className="space-y-5 animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
 
               {/* ── Mobile back header (hidden on md+) ── */}
               <div className="flex items-center relative md:hidden mb-1">
@@ -937,7 +937,7 @@ export default function Settings() {
               TAB 5 — APPEARANCE
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'appearance' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-4 md:px-0">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
               <div className="w-full md:max-w-lg mb-4 relative flex items-center">
                 <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -1007,7 +1007,7 @@ export default function Settings() {
               TAB 6 — HELP CENTRE
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'help' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-4 md:px-0">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
               <div className="w-full md:max-w-3xl mb-4 relative flex items-center">
                 <button type="button" onClick={() => {
                   if (helpView !== 'menu') setHelpView('menu');
