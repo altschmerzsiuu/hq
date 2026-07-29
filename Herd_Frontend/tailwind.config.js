@@ -8,10 +8,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        heading: ['"DM Sans"', 'system-ui', 'sans-serif'],
-        display: ['"DM Sans"', 'system-ui', 'sans-serif'],
-        body:    ['"Inter"', 'system-ui', 'sans-serif'],
-        sans:    ['"Inter"', 'system-ui', 'sans-serif'],
+        heading: ['Outfit', 'sans-serif'],
+        body:    ['Inter', 'sans-serif'],
       },
       colors: {
         // MP-3 design tokens

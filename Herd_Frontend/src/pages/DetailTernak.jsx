@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Camera, Activity, Edit2, Trash2, Link, Unlink, ActivityIcon, Plus, Beef, ThermometerSun, Weight, Stethoscope, Pencil, X, Save, Loader2, CheckCircle, XCircle, ChevronRight, ChevronDown, LineChart, ClipboardList, Sparkles, Check } from 'lucide-react';
+import { ChevronLeft, Camera, Activity, Edit2, Trash2, Link, Unlink, ActivityIcon, Plus, Beef, ThermometerSun, Weight, Stethoscope, Pencil, X, Save, Loader2, CheckCircle, XCircle, ChevronRight, ChevronDown, LineChart, ClipboardList, Sparkles, Check, AlertCircle } from 'lucide-react';
 import { useTernakStore } from '../store/useTernakStore';
 import useSettingsStore from '@/store/settingsStore';
 import { motion } from 'framer-motion';
@@ -8,6 +8,7 @@ import translations from '@/lib/i18n';
 import CowAnalyticsView from '@/components/shared/CowAnalyticsView';
 import CowEstrusView from '@/components/shared/CowEstrusView';
 import PairCollarModal from '@/components/shared/PairCollarModal';
+import ReportSickModal from '@/components/shared/ReportSickModal';
 
 import { Stepper, StepperItem, StepperTitle, StepperDescription } from '@/components/ui/stepper';
 import { toast } from '@/store/toastStore';
@@ -83,6 +84,15 @@ export default function DetailTernak() {
   // ── Hapus Ternak ─────────────────────────────────────────────────
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [hapusLoading, setHapusLoading] = useState(false);
+
+  // ── Lapor Sakit Modal state ────────────────────────────────────────
+  const [isReportSickOpen, setIsReportSickOpen] = useState(false);
+
+  const handleReportSick = async (cowId, data) => {
+    // Ideally this goes to backend: await axiosInstance.post(`/scanner/hewan/${cowId}/sick`, data);
+    toast.success('Laporan sakit berhasil dikirim!');
+    setIsReportSickOpen(false);
+  };
 
   // ── Handle Location State (from Recommendations) ─────────────────
   useEffect(() => {
@@ -481,6 +491,14 @@ export default function DetailTernak() {
           </div>
         </div>
       )}
+
+      {/* ── Modal: Lapor Sakit ─────────────────────────────────────────── */}
+      <ReportSickModal
+        isOpen={isReportSickOpen}
+        onClose={() => setIsReportSickOpen(false)}
+        onSubmit={handleReportSick}
+        cowId={selectedSapi?.id}
+      />
       {/* ── MOBILE VIEW ── */}
         {/* ── MOBILE FULLSCREEN DETAIL MODAL ── */}
         <div className="md:hidden fixed inset-0 z-[35] bg-[#F3F4F6] overflow-y-auto animate-in slide-in-from-bottom duration-300 no-scrollbar pb-[100px]">
@@ -542,6 +560,13 @@ export default function DetailTernak() {
                   icon={Edit2}
                   label="Edit Profil"
                   onClick={openEditProfile}
+                  className="shadow-[0_2px_10px_rgba(0,0,0,0.1)] bg-white/80 backdrop-blur-md"
+                />
+                <MobileAnimatedBtn
+                  icon={AlertCircle}
+                  label="Lapor"
+                  danger
+                  onClick={() => setIsReportSickOpen(true)}
                   className="shadow-[0_2px_10px_rgba(0,0,0,0.1)] bg-white/80 backdrop-blur-md"
                 />
                 <MobileAnimatedBtn
@@ -935,6 +960,7 @@ export default function DetailTernak() {
                 <DesktopAnimatedBtn icon={ChevronLeft} label="Kembali" onClick={() => navigate('/ternak')} />
                 <div className="flex gap-2">
                   <DesktopAnimatedBtn icon={Edit2} label="Edit" onClick={openEditProfile} />
+                  <DesktopAnimatedBtn icon={AlertCircle} label="Lapor Sakit" danger onClick={() => setIsReportSickOpen(true)} />
                   <DesktopAnimatedBtn icon={Trash2} label="Hapus" danger onClick={() => setIsDeleteConfirmOpen(true)} />
                 </div>
               </div>

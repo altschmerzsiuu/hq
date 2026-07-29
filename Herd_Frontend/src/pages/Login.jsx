@@ -432,7 +432,7 @@ export default function Login() {
                 <motion.img 
                   src={cowFeatureImg} 
                   alt="HERD Feature Desktop" 
-                  className="w-[450px] h-[450px] object-contain relative z-0" 
+                  className="w-full max-w-[400px] h-auto max-h-[400px] object-contain relative z-0" 
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
@@ -445,7 +445,10 @@ export default function Login() {
                 {/* Mobile back button */}
                 <div className="p-4 flex items-center sticky top-0 bg-[#F8F8F9]/80 lg:hidden backdrop-blur-md z-30">
                   <button 
-                    onClick={() => setStep('feature')}
+                    onClick={() => {
+                      setIsLoginMode(true);
+                      setStep('feature');
+                    }}
                     className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-[#111118] hover:bg-gray-50 transition-colors border border-gray-100"
                   >
                     <ChevronLeft size={20} />
@@ -471,13 +474,13 @@ export default function Login() {
                 </div>
 
                 {/* Form Content - Made more compact */}
-                <div className="px-6 lg:px-[12%] pb-6 flex flex-col flex-1 mt-2 lg:mt-28 lg:justify-center">
-                  <h1 className="text-[28px] lg:text-[40px] lg:tracking-tight font-bold text-[#111118] mb-2">{isLoginMode ? 'Sign In' : 'Sign up'}</h1>
-                  <p className="text-[13px] lg:text-[14px] text-[#62627A] mb-6 lg:mb-8">
+                <div className="px-6 lg:px-[12%] pb-6 flex flex-col flex-1 mt-2 lg:mt-24 lg:justify-center">
+                  <h1 className="text-[28px] lg:text-[40px] lg:tracking-tight font-bold text-[#111118] mb-1">{isLoginMode ? 'Sign In' : 'Sign up'}</h1>
+                  <p className="text-[13px] lg:text-[14px] text-[#62627A] mb-4 lg:mb-6">
                     By continuing, you agree to our <a href="#" className="font-bold text-[#FF7B1C]">Terms of Use</a>.
                   </p>
 
-                  <form onSubmit={handleSubmit} className="flex flex-col gap-3 flex-1">
+                  <form onSubmit={handleSubmit} className="flex flex-col gap-2.5 flex-1">
                     {!isLoginMode && (
                       <div className="flex gap-3">
                         <div className="flex-1">
@@ -499,18 +502,17 @@ export default function Login() {
                       </div>
                     )}
 
-                    <div>
-                      <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Email</label>
-                      <input 
-                        type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                        className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
-                        placeholder="your.email@example.com"
-                      />
-                    </div>
-
-                    {!isLoginMode && (
-                      <>
-                        <div>
+                    {!isLoginMode ? (
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Email</label>
+                          <input 
+                            type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                            className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
+                            placeholder="your.email@example.com"
+                          />
+                        </div>
+                        <div className="flex-1">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Phone Number</label>
                           <input 
                             type="text" inputMode="numeric" pattern="[0-9]*" required value={phone} onChange={handlePhoneChange}
@@ -518,7 +520,21 @@ export default function Login() {
                             placeholder="08..."
                           />
                         </div>
-                        <div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Email</label>
+                        <input 
+                          type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                          className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
+                          placeholder="your.email@example.com"
+                        />
+                      </div>
+                    )}
+
+                    {!isLoginMode && (
+                      <>
+                        <div className="w-full">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Farm Name</label>
                           <input 
                             type="text" required value={farmName} onChange={e => setFarmName(e.target.value)}
@@ -555,26 +571,39 @@ export default function Login() {
                       </>
                     )}
 
-                    <div className="relative">
-                      <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Password</label>
-                      <input 
-                        type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)}
-                        className="w-full h-[46px] bg-white rounded-[14px] pl-4 pr-12 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
-                        placeholder="••••••••"
-                      />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[32px] text-[#8E8EA0] hover:text-[#111118]">
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
-
-                    {!isLoginMode && (
+                    {!isLoginMode ? (
+                      <div className="flex gap-3">
+                        <div className="flex-1 relative">
+                          <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Password</label>
+                          <input 
+                            type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)}
+                            className="w-full h-[46px] bg-white rounded-[14px] pl-4 pr-12 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
+                            placeholder="••••••••"
+                          />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[32px] text-[#8E8EA0] hover:text-[#111118]">
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
+                        <div className="flex-1 relative">
+                          <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Confirm Password</label>
+                          <input 
+                            type={showPassword ? "text" : "password"} required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                            className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
+                            placeholder="••••••••"
+                          />
+                        </div>
+                      </div>
+                    ) : (
                       <div className="relative">
-                        <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Confirm Password</label>
+                        <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Password</label>
                         <input 
-                          type={showPassword ? "text" : "password"} required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                          className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
+                          type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)}
+                          className="w-full h-[46px] bg-white rounded-[14px] pl-4 pr-12 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                           placeholder="••••••••"
                         />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[32px] text-[#8E8EA0] hover:text-[#111118]">
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                       </div>
                     )}
 

@@ -160,16 +160,16 @@
   }
 
   body {
+    @apply font-body antialiased;
     background-color: var(--bg-base);
     color: var(--text-1);
-    font-family: 'Inter', system-ui, sans-serif;
     font-size: 14px;
     line-height: 1.5;
     transition: background-color 0.4s ease, color 0.4s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    @apply font-heading;
     letter-spacing: -0.02em;
     font-weight: 700;
   }
