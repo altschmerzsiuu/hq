@@ -12,6 +12,13 @@ from dotenv import load_dotenv
 # Ensure .env is loaded (important for standalone utility usage)
 load_dotenv()
 
+import redis as redis_lib
+redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
+try:
+    redis_client = redis_lib.StrictRedis.from_url(redis_url, decode_responses=True, socket_connect_timeout=2)
+except Exception:
+    redis_client = None
+
 # Configuration from environment variables
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 if not SECRET_KEY:
@@ -54,6 +61,26 @@ def verify_token(token: str, token_type: str = "access"):
     except JWTError as e:
         print(f"❌ DEBUG verify_token: JWTError occurred: {type(e).__name__}: {str(e)}")
         return None
+
+def blacklist_token(token: str):
+    if not redis_client: return
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False})
+        exp = payload.get("exp")
+        if exp:
+            now = int(datetime.now(timezone.utc).timestamp())
+            ttl = exp - now
+            if ttl > 0:
+                redis_client.setex(f"blacklist:{token}", ttl, "blacklisted")
+    except Exception as e:
+        print(f"Error blacklisting token: {e}")
+
+def is_token_blacklisted(token: str) -> bool:
+    if not redis_client: return False
+    try:
+        return redis_client.exists(f"blacklist:{token}") > 0
+    except Exception:
+        return False
 
 def hash_password(password: str) -> str:
     """Hash password using bcrypt"""

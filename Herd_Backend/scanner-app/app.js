@@ -1,3 +1,5 @@
+const logger = require("./logger");
+
 require("dotenv").config(); // Load environment variables
 const express = require("express");
 const TelegramBot = require("node-telegram-bot-api");
@@ -28,8 +30,8 @@ const allowedChatIds = process.env.TELEGRAM_CHAT_IDS.split(',').map(id => id.tri
 
 // Cek konfigurasi
 if (!token || !process.env.DATABASE_URL) {
-    console.error("❌ Konfigurasi .env tidak lengkap!");
-    console.error("   Pastikan TELEGRAM_BOT_TOKEN dan DATABASE_URL sudah diisi.");
+    logger.error("❌ Konfigurasi .env tidak lengkap!");
+    logger.error("   Pastikan TELEGRAM_BOT_TOKEN dan DATABASE_URL sudah diisi.");
     process.exit(1);
 }
 
@@ -37,16 +39,16 @@ const bot = new TelegramBot(token, { polling: true });
 
 // Hapus Webhook jika ada sisa-sisa (Best Practice untuk Dev Bot)
 bot.deleteWebHook().then(() => {
-    console.log("cwl -> Polling Telegram dimulai...");
+    logger.info("cwl -> Polling Telegram dimulai...");
 });
 
 cron.schedule('0 0 * * *', () => {
-    console.log("⏰ Menjalankan reset harian...");
+    logger.info("⏰ Menjalankan reset harian...");
 
     messageHistory.forEach((messageIds, chatId) => {
         messageIds.forEach(messageId => {
             bot.deleteMessage(chatId, messageId).catch(err => {
-                console.log(`❌ Gagal hapus pesan ${messageId} di chat ${chatId}:`, err.response?.body || err.message);
+                logger.info(`❌ Gagal hapus pesan ${messageId} di chat ${chatId}:`, err.response?.body || err.message);
             });
         });
     });
@@ -90,7 +92,7 @@ function sendTemporaryMessage(chatId, text, duration) {
     bot.sendMessage(chatId, text).then((sentMessage) => {
         setTimeout(() => {
             bot.deleteMessage(chatId, sentMessage.message_id).catch(error => {
-                console.error("Gagal menghapus pesan:", error);
+                logger.error("Gagal menghapus pesan:", error);
             });
         }, duration);
     });
@@ -151,7 +153,7 @@ function sendAndTrackWithOptionalDelete(chatId, text, options = {}, duration = n
         if (duration) {
             setTimeout(() => {
                 bot.deleteMessage(chatId, sent.message_id).catch(error => {
-                    console.error("Gagal menghapus pesan:", error);
+                    logger.error("Gagal menghapus pesan:", error);
                 });
             }, duration);
         }
@@ -202,7 +204,7 @@ function isValidDateFormat(text) {
 function calculateAgeInYears(monthYearStr) {
     // Add null/undefined check
     if (!monthYearStr) {
-        console.error("Error: monthYearStr is null or undefined");
+        logger.error("Error: monthYearStr is null or undefined");
         return 0; // or whatever default value makes sense for your application
     }
 
@@ -213,7 +215,7 @@ function calculateAgeInYears(monthYearStr) {
         if (isNaN(day) || isNaN(month) || isNaN(year) ||
             month < 1 || month > 12 ||
             day < 1 || day > 31) {
-            console.error("Error: Invalid date components in monthYearStr");
+            logger.error("Error: Invalid date components in monthYearStr");
             return 0;
         }
 
@@ -222,7 +224,7 @@ function calculateAgeInYears(monthYearStr) {
 
         // Check if the date is valid
         if (isNaN(birthDate.getTime())) {
-            console.error("Error: Invalid date created from monthYearStr");
+            logger.error("Error: Invalid date created from monthYearStr");
             return 0;
         }
 
@@ -240,7 +242,7 @@ function calculateAgeInYears(monthYearStr) {
         const ageInYears = totalMonths / 12;
         return parseFloat(ageInYears.toFixed(2));
     } catch (error) {
-        console.error("Error in calculateAgeInYears:", error);
+        logger.error("Error in calculateAgeInYears:", error);
         return 0;
     }
 }
@@ -260,17 +262,17 @@ function showMainMenu(chatId) {
 // SYNC TO SHEETS PROFIL TERNAK 
 async function syncToSheet(data, type) {
     // Handled purely by FastAPI Backend now!
-    console.log("⏩ syncToSheet di-bypass, dijalankan via FastAPI.");
+    logger.info("⏩ syncToSheet di-bypass, dijalankan via FastAPI.");
 }
 
 async function deleteRowByRFID(rfid) {
     // Handled purely by FastAPI Backend now!
-    console.log("⏩ deleteRowByRFID di-bypass, dijalankan via FastAPI.");
+    logger.info("⏩ deleteRowByRFID di-bypass, dijalankan via FastAPI.");
 }
 
 async function editRowByRFID(newData) {
     // Handled purely by FastAPI Backend now!
-    console.log("⏩ editRowByRFID di-bypass, dijalankan via FastAPI.");
+    logger.info("⏩ editRowByRFID di-bypass, dijalankan via FastAPI.");
 }
 
 // Fungsi cari baris RFID (sama seperti sebelumnya)
@@ -476,7 +478,7 @@ bot.on("message", async (msg) => {
         // ========================= FLOW SCAN RFID =========================
     } else if (msg.text === "📡 Scan RFID") {
         userScanStatus.set(chatId, true); // Set status bahwa user sedang dalam mode scan
-        console.log(`[DEBUG] User ${chatId} activated Scan Mode. Map keys: ${JSON.stringify([...userScanStatus.keys()])}`);
+        logger.info(`[DEBUG] User ${chatId} activated Scan Mode. Map keys: ${JSON.stringify([...userScanStatus.keys()])}`);
         sendAndTrackWithOptionalDelete(chatId, "🔷 Silahkan scan kartu Anda...", {
             reply_markup: {
                 keyboard: [["🔙 Kembali"]],
@@ -984,7 +986,7 @@ bot.on("message", async (msg) => {
                 });
 
                 if (feedInsertError) {
-                    console.error("❌ Gagal menyimpan ke feed_ai dari edit:", feedInsertError.message);
+                    logger.error("❌ Gagal menyimpan ke feed_ai dari edit:", feedInsertError.message);
                 }
 
                 if (updateError) throw updateError;
@@ -1029,7 +1031,7 @@ bot.on("message", async (msg) => {
                 return;
 
             } catch (error) {
-                console.error("❌ Gagal update:", error);
+                logger.error("❌ Gagal update:", error);
                 sendTemporaryMessage(chatId, `❌ Gagal mengupdate ${field}, coba lagi nanti.`, 60000);
                 return;
             }
@@ -1330,7 +1332,7 @@ bot.on("message", async (msg) => {
                         status_kesehatan: registerData.status_kesehatan
                     });
                 } catch (err) {
-                    console.error("❌ API Error:", err.response?.data?.detail || err.message);
+                    logger.error("❌ API Error:", err.response?.data?.detail || err.message);
                     throw new Error(err.response?.data?.detail || "Gagal menyimpan ke database API");
                 }
 
@@ -1387,7 +1389,7 @@ bot.on("message", async (msg) => {
                     userRegisterData.delete(chatId);
                 }
             } catch (err) {
-                console.error(err);
+                logger.error(err);
                 return sendTemporaryMessage(chatId, `❌ Gagal menyimpan data: ${err.message}`, 100000)
             }
         }
@@ -1441,7 +1443,7 @@ bot.on("message", async (msg) => {
 
         // ✅ Tangani error atau data kosong
         if (queryError) {
-            console.error("Supabase error:", queryError);
+            logger.error("Supabase error:", queryError);
             return sendTemporaryMessage(chatId, "⚠️ Gagal mengambil data riwayat reproduksi.", 120000);
         }
 
@@ -1643,7 +1645,7 @@ bot.on("message", async (msg) => {
                 try {
                     await axios.post("http://backend:5000/api/scanner/reproduksi", payload);
                 } catch (apiErr) {
-                    console.error("❌ Gagal simpan reproduksi via API:", apiErr.message);
+                    logger.error("❌ Gagal simpan reproduksi via API:", apiErr.message);
                     return bot.sendMessage(chatId, `❌ Gagal menyimpan: ${apiErr.message}`);
                 }
 
@@ -1692,7 +1694,7 @@ bot.on("callback_query", async (callbackQuery) => {
             await bot.sendMessage(chatId, "✅ Semua riwayat reproduksi untuk hewan ini telah dihapus.");
             userDeleteReproStatus.delete(chatId);
         } catch (error) {
-            console.error("❌ Error saat menghapus data:", error.message);
+            logger.error("❌ Error saat menghapus data:", error.message);
             await bot.answerCallbackQuery(callbackQuery.id);
             await bot.sendMessage(chatId, "⚠️ Gagal menghapus data via API. Coba lagi nanti.");
         }
@@ -1706,7 +1708,7 @@ bot.on("callback_query", async (callbackQuery) => {
             const { data: cekRiwayat, error } = await db.select("reproduksi_ternak", "*", { rfid: status.rfid }, { limit: 1 });
 
             if (error) {
-                console.error("❌ Error saat cek riwayat:", error);
+                logger.error("❌ Error saat cek riwayat:", error);
                 await bot.answerCallbackQuery(callbackQuery.id);
                 await bot.sendMessage(chatId, "⚠️ Terjadi kesalahan saat memeriksa data.");
                 return;
@@ -1742,7 +1744,7 @@ bot.on("callback_query", async (callbackQuery) => {
         const repro = resultRepro?.[0] || {};
 
         if (errorHewan || !hewanData) {
-            console.error("❌ Error saat ambil data hewan:", errorHewan);
+            logger.error("❌ Error saat ambil data hewan:", errorHewan);
             sendTemporaryMessage(chatId, "❌ Hewan tidak ditemukan.", 100000);
             return;
         }
@@ -1796,15 +1798,15 @@ bot.on("callback_query", async (callbackQuery) => {
         userReproData.set(chatId, { id_hewan: hewanId });
     }
 
-    console.log("Callback data diterima:", data);
+    logger.info("Callback data diterima:", data);
 
     // Jawab callback secepatnya agar tidak timeout
     bot.answerCallbackQuery(callbackQuery.id)
-        .catch(err => console.error("Gagal mengirim answerCallbackQuery:", err));
+        .catch(err => logger.error("Gagal mengirim answerCallbackQuery:", err));
 
 
     // ===================== PROSES EDIT DATA ======================
-    console.log("Callback data diterima:", data);
+    logger.info("Callback data diterima:", data);
 
     if (data.startsWith("edit_")) {
         const hewanId = data.split("_")[1];
@@ -1818,7 +1820,7 @@ bot.on("callback_query", async (callbackQuery) => {
             const { data: reproRows, error: reproError } = await db.select("reproduksi_ternak", "*", { rfid: hewanId }, { orderBy: { column: "tanggal_ib", ascending: false }, limit: 1 });
 
             if (hewanError || !hewan) {
-                console.error("❌ Gagal ambil data hewan:", hewanError);
+                logger.error("❌ Gagal ambil data hewan:", hewanError);
                 sendTemporaryMessage(chatId, "❌ Data tidak ditemukan.", 100000);
                 return;
             }
@@ -1873,7 +1875,7 @@ bot.on("callback_query", async (callbackQuery) => {
             userEditStatus.set(chatId, hewanId);
 
         } catch (error) {
-            console.error("❌ Error saat mengambil data untuk edit:", error);
+            logger.error("❌ Error saat mengambil data untuk edit:", error);
             sendTemporaryMessage(chatId, "❌ Terjadi kesalahan, coba lagi nanti.", 100000);
         }
     }
@@ -1915,7 +1917,7 @@ bot.on("callback_query", async (callbackQuery) => {
                 }, 300000);
 
         } catch (err) {
-            console.error(err);
+            logger.error(err);
             sendTemporaryMessage(chatId, "❌ Gagal menyimpan data via API.", 100000);
         }
 
@@ -1986,7 +1988,7 @@ bot.on("callback_query", async (callbackQuery) => {
                 }, 200000);
 
         } catch (error) {
-            console.error("❌ Gagal ambil data asli:", error);
+            logger.error("❌ Gagal ambil data asli:", error);
             sendTemporaryMessage(chatId, "❌ Gagal mengambil data asli dari database.", 100000);
         }
 
@@ -2001,7 +2003,7 @@ bot.on("callback_query", async (callbackQuery) => {
             await axios.delete(`http://backend:5000/api/scanner/hewan/${rfid}`);
             sendTemporaryMessage(chatId, `✅ Data hewan dengan RFID ${rfid} telah dihapus.`, 100000);
         } catch (error) {
-            console.error("❌ Gagal hapus dari database:", error.message);
+            logger.error("❌ Gagal hapus dari database:", error.message);
             sendTemporaryMessage(chatId, `❌ Gagal menghapus data via API: ${error.message}`, 100000);
         }
 
@@ -2165,7 +2167,7 @@ app.delete("/api/delete-animal", async (req, res) => {
 
         res.json({ message: "✅ Data hewan berhasil dihapus.", deletedData: result.rows[0] });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         res.status(500).json({ error: "❌ Terjadi kesalahan saat menghapus data." });
     }
 });
@@ -2175,5 +2177,5 @@ app.get("/ping-ping-ping", (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`🚀 Server berjalan di http://localhost:${port}`);
+    logger.info(`🚀 Server berjalan di http://localhost:${port}`);
 });

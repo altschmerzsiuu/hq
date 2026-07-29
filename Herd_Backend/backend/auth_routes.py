@@ -103,6 +103,11 @@ async def get_current_user(request: Request, authorization: Optional[str] = Head
     if not token:
         print("❌ DEBUG: No token found in Header or Cookie")
         raise HTTPException(status_code=401, detail="Not authenticated")
+        
+    from auth_utils import is_token_blacklisted, verify_token
+    if is_token_blacklisted(token):
+        print("❌ DEBUG: Token is blacklisted")
+        raise HTTPException(status_code=401, detail="Token has been revoked")
     
     payload = verify_token(token, "access")
     if not payload:

@@ -1578,10 +1578,22 @@ async def get_notifications(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/logout")
-async def logout():
-    """Logout endpoint (placeholder for frontend)"""
-    return {"message": "Logged out"}
-
+async def logout(request: Request, response: Response):
+    """Logout endpoint that blacklists token in Redis and clears cookies"""
+    authorization = request.headers.get("Authorization")
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+    elif "access_token" in request.cookies:
+        token = request.cookies.get("access_token")
+    
+    if token:
+        from auth_utils import blacklist_token
+        blacklist_token(token)
+        
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token_cookie")
+    return {"message": "Logged out successfully"}
 
 # ==========================
 # API FOR CRUD

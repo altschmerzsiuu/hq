@@ -1,3 +1,5 @@
+const logger = require("./logger");
+
 /**
  * PostgreSQL Database Helper
  * Provides simple query methods similar to Supabase API
@@ -18,10 +20,10 @@ class Database {
     async testConnection() {
         try {
             const client = await this.pool.connect();
-            console.log('✅ PostgreSQL connection successful');
+            logger.info('✅ PostgreSQL connection successful');
             client.release();
         } catch (error) {
-            console.error('❌ PostgreSQL connection failed:', error.message);
+            logger.error('❌ PostgreSQL connection failed:', error.message);
             process.exit(1);
         }
     }
@@ -71,7 +73,7 @@ class Database {
             const result = await this.pool.query(query, values);
             return { data: result.rows, error: null };
         } catch (error) {
-            console.error('Database select error:', error.message);
+            logger.error('Database select error:', error.message);
             return { data: null, error };
         }
     }
@@ -104,7 +106,7 @@ class Database {
 
             return { data: insertedRows, error: null };
         } catch (error) {
-            console.error('Database insert error:', error.message);
+            logger.error('Database insert error:', error.message);
             return { data: null, error };
         }
     }
@@ -147,7 +149,7 @@ class Database {
             const result = await this.pool.query(query, values);
             return { data: result.rows, error: null };
         } catch (error) {
-            console.error('Database update error:', error.message);
+            logger.error('Database update error:', error.message);
             return { data: null, error };
         }
     }
@@ -189,7 +191,7 @@ class Database {
 
             return { data: upsertedRows, error: null };
         } catch (error) {
-            console.error('Database upsert error:', error.message);
+            logger.error('Database upsert error:', error.message);
             return { data: null, error };
         }
     }
@@ -221,7 +223,7 @@ class Database {
             const result = await this.pool.query(query, values);
             return { data: result.rows, error: null };
         } catch (error) {
-            console.error('Database delete error:', error.message);
+            logger.error('Database delete error:', error.message);
             return { data: null, error };
         }
     }
@@ -237,7 +239,7 @@ class Database {
             const result = await this.pool.query(query, values);
             return { rows: result.rows, rowCount: result.rowCount, error: null };
         } catch (error) {
-            console.error('Database query error:', error.message);
+            logger.error('Database query error:', error.message);
             return { rows: null, rowCount: 0, error };
         }
     }
