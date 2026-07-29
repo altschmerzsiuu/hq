@@ -1159,12 +1159,12 @@ export default function Dashboard() {
             <p className="eyebrow" style={{ marginBottom: '12px' }}>AKSI CEPAT</p>
             <div className="flex flex-row gap-3 overflow-x-auto no-scrollbar pb-2">
               <SquareQAButton icon={Plus} label="Tambah Ternak" onClick={() => setIsAddCowModalOpen(true)} />
-              <SquareQAButton icon={Syringe} label="Tambah Data IB" onClick={() => {
+              <SquareQAButton icon={Syringe} label={lang === 'id' ? 'Tambah Data IB' : 'Add AI Data'} onClick={() => {
                 fetchSapiList();
                 setIsReproModalOpen(true);
               }} />
               <SquareQAButton icon={Cpu} label="Pasang Kalung" onClick={() => setIsPairModalOpen(true)} />
-              <SquareQAButton icon={Zap} label="Prediksi Birahi" onClick={() => setIsEstrusModalOpen(true)} />
+              <SquareQAButton icon={Zap} label={lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'} onClick={() => setIsEstrusModalOpen(true)} />
             </div>
           </div>
 
@@ -1288,7 +1288,7 @@ export default function Dashboard() {
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="200" strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center mt-1">
-                  <span className="text-2xl font-black leading-none text-[var(--text-1)]">80%</span>
+                  <span className="text-2xl font-black leading-none text-[var(--text-1)]">{sapiList.length > 0 ? Math.round((sapiList.filter(c => c.status === 'sehat' || c.status === 'normal' || !c.status).length / sapiList.length) * 100) + '%' : '0%'}</span>
                   <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">Sehat</span>
                 </div>
               </div>
@@ -1305,7 +1305,7 @@ export default function Dashboard() {
                 <ThermometerSun size={24} className="text-emerald-400 opacity-80" />
               </div>
               <h3 className="font-semibold text-emerald-100 mb-0.5 text-[13px] z-10 opacity-90">{lang === 'id' ? 'Kondisi Kandang (IoT)' : 'Farm Condition (IoT)'}</h3>
-              <p className="text-[11px] text-emerald-200/70 mb-auto z-10 font-medium">Terakhir diperbarui: {stats.lastSync}</p>
+              <p className="text-[11px] text-emerald-200/70 mb-auto z-10 font-medium">{lang === 'id' ? 'Terakhir diperbarui:' : 'Last updated:'} {stats.lastSync}</p>
 
               <div className="mt-6 z-10 relative">
                 <div className="text-[40px] font-black text-white leading-none tracking-tight flex items-start gap-1">
@@ -1323,7 +1323,7 @@ export default function Dashboard() {
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
               <h3 className="font-bold text-[var(--text-1)] text-[15px] mb-4">{lang === 'id' ? 'Aktivitas Terbaru' : 'Recent Activities'}</h3>
               <div className="flex flex-col gap-4">
-                <div className="text-[12px] text-gray-500 text-center py-2">Belum ada aktivitas hari ini.</div>
+                <div className="text-[12px] text-gray-500 text-center py-2">{lang === 'id' ? 'Belum ada aktivitas hari ini.' : 'No activities today.'}</div>
               </div>
               <button onClick={() => navigate('/ternak')} className="text-[11px] font-bold text-gray-500 hover:text-gray-900 text-left mt-4 flex items-center gap-1 w-max">
                 Lihat semua aktivitas <ChevronRight size={12} />
@@ -1360,7 +1360,7 @@ export default function Dashboard() {
             {/* Card 1: Total */}
             <div className="bg-[var(--color-primary)] text-white p-5 rounded-2xl flex flex-col justify-between shadow-lg relative overflow-hidden h-[140px]">
               <div className="flex justify-between items-start relative z-10">
-                <span className="font-semibold text-sm">Total Ternak</span>
+                <span className="font-semibold text-sm">{lang === 'id' ? 'Total Ternak' : 'Total Cattle'}</span>
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
                   <Database size={16} />
                 </div>
@@ -1368,7 +1368,7 @@ export default function Dashboard() {
               <div className="relative z-10">
                 <div className="text-[40px] font-black leading-none mb-1">{sapiList.length}</div>
                 <div className="text-xs text-emerald-100 flex items-center gap-1">
-                  <CheckCircle2 size={12} /> Kondisi terpantau
+                  <CheckCircle2 size={12} /> {lang === 'id' ? 'Kondisi terpantau' : 'Conditions monitored'}
                 </div>
               </div>
               <Sun size={140} strokeWidth={1} className="absolute -bottom-10 -right-10 text-white opacity-10 rotate-12" />
@@ -1395,7 +1395,7 @@ export default function Dashboard() {
             {/* Card 4: Butuh Perhatian */}
             <div className="bg-white border border-[var(--border)] p-5 rounded-2xl flex flex-col justify-between shadow-sm h-[140px]">
               <div className="flex justify-between items-start">
-                <span className="font-semibold text-sm text-[var(--text-2)]">Perlu Tindakan</span>
+                <span className="font-semibold text-sm text-[var(--text-2)]">{lang === 'id' ? 'Perlu Tindakan' : 'Needs Action'}</span>
                 <div className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg-surface)] cursor-pointer">
                   <ChevronRight size={16} />
                 </div>
@@ -1417,7 +1417,7 @@ export default function Dashboard() {
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
               <div className="flex items-center gap-2">
                 <AlertTriangle size={16} className="text-red-500 flex-shrink-0" />
-                <span className="font-bold text-[var(--text-1)] text-[14px]">Perhatian yang harus dilakukan hari ini</span>
+                <span className="font-bold text-[var(--text-1)] text-[14px]">{lang === 'id' ? 'Perhatian yang harus dilakukan hari ini' : 'Attention required today'}</span>
               </div>
               <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar" style={{ maxHeight: '200px' }}>
                 {intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').length > 0 ? (
@@ -1434,7 +1434,7 @@ export default function Dashboard() {
 
             {/* REKOMENDASI LAINNYA */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
-              <span className="font-bold text-[var(--text-1)] text-[14px]">Rekomendasi Lainnya</span>
+              <span className="font-bold text-[var(--text-1)] text-[14px]">{lang === 'id' ? 'Rekomendasi Lainnya' : 'Other Recommendations'}</span>
               <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar" style={{ maxHeight: '200px' }}>
                 {intel.filter(card => card.urgency === 'scheduled').length > 0 ? (
                   intel.filter(card => card.urgency === 'scheduled').map((card, i) => {
@@ -1532,7 +1532,7 @@ export default function Dashboard() {
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="200" strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center mt-2">
-                  <span className="text-3xl font-black leading-none text-[var(--text-1)]">80%</span>
+                  <span className="text-3xl font-black leading-none text-[var(--text-1)]">{sapiList.length > 0 ? Math.round((sapiList.filter(c => c.status === 'sehat' || c.status === 'normal' || !c.status).length / sapiList.length) * 100) + '%' : '0%'}</span>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">Sehat</span>
                 </div>
               </div>
@@ -1552,7 +1552,7 @@ export default function Dashboard() {
                 <ThermometerSun size={28} className="text-emerald-400 opacity-80" />
               </div>
               <h3 className="font-semibold text-emerald-100 mb-1 text-sm z-10 opacity-90">{lang === 'id' ? 'Kondisi Kandang (IoT)' : 'Farm Condition (IoT)'}</h3>
-              <p className="text-xs text-emerald-200/70 mb-auto z-10 font-medium">Terakhir diperbarui: {stats.lastSync}</p>
+              <p className="text-xs text-emerald-200/70 mb-auto z-10 font-medium">{lang === 'id' ? 'Terakhir diperbarui:' : 'Last updated:'} {stats.lastSync}</p>
 
               <div className="mt-8 z-10 relative">
                 <div className="text-[48px] font-black text-white leading-none tracking-tight flex items-start gap-1">
@@ -1572,7 +1572,7 @@ export default function Dashboard() {
                 <h3 className="font-bold text-[var(--text-1)] text-lg">{lang === 'id' ? 'Aktivitas Terbaru' : 'Recent Activities'}</h3>
               </div>
               <div className="flex flex-col gap-5 flex-1">
-                <div className="text-sm text-gray-500 text-center py-4">Belum ada aktivitas hari ini.</div>
+                <div className="text-sm text-gray-500 text-center py-4">{lang === 'id' ? 'Belum ada aktivitas hari ini.' : 'No activities today.'}</div>
               </div>
               <button onClick={() => navigate('/ternak')} className="text-xs font-bold text-gray-500 hover:text-gray-900 text-left mt-4 flex items-center gap-1 transition-colors w-max">
                 Lihat semua aktivitas <ChevronRight size={14} />

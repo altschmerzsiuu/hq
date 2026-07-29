@@ -380,7 +380,7 @@ export default function DetailTernak() {
                 </div>
               ))}
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Status Kesehatan</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">{lang === 'id' ? 'Status Kesehatan' : 'Health Status'}</label>
                 <div className="relative">
                   <select value={editProfileForm.kesehatan || ''} onChange={e => setEditProfileForm(f => ({ ...f, kesehatan: e.target.value }))}
                     className="w-full appearance-none border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]">
@@ -957,7 +957,7 @@ export default function DetailTernak() {
 
               {/* Action Row: Back | Edit | Hapus */}
               <div className="w-full flex items-center justify-between mb-4 z-10 relative">
-                <DesktopAnimatedBtn icon={ChevronLeft} label="Kembali" onClick={() => navigate('/ternak')} />
+                <DesktopAnimatedBtn icon={ChevronLeft} label=lang === 'id' ? 'Kembali' : 'Back' onClick={() => navigate('/ternak')} />
                 <div className="flex gap-2">
                   <DesktopAnimatedBtn icon={Edit2} label="Edit" onClick={openEditProfile} />
                   <DesktopAnimatedBtn icon={AlertCircle} label="Lapor Sakit" danger onClick={() => setIsReportSickOpen(true)} />

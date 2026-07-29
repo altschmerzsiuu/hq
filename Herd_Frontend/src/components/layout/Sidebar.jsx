@@ -166,7 +166,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
 
               {/* Text logo */}
               <span style={{
-                fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
+                fontFamily: "'Outfit', sans-serif", fontWeight: 700,
                 fontSize: '18px', color: 'var(--accent)',
                 letterSpacing: '-0.02em', whiteSpace: 'nowrap',
               }}>HERD</span>
@@ -456,7 +456,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
               className={cn("object-cover rounded-xl shadow-sm transition-all duration-300", isCollapsed ? "w-11 h-11" : "w-9 h-9")}
             />
             {!isCollapsed && (
-              <span className="font-['DM_Sans'] font-bold text-2xl text-[#0F172A] tracking-tight whitespace-nowrap transition-opacity duration-300">
+              <span className="font-['Outfit'] font-bold text-2xl text-[#0F172A] tracking-tight whitespace-nowrap transition-opacity duration-300">
                 HERD
               </span>
             )}

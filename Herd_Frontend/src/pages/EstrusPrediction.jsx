@@ -268,7 +268,7 @@ export default function EstrusPrediction() {
             </p>
             <span className="text-[14px] font-bold text-[var(--text-1)]">{lang === 'id' ? 'Hari' : 'Days'}</span>
           </div>
-          <p className="text-[10px] font-medium text-[var(--text-3)]">Riwayat data estrus</p>
+          <p className="text-[10px] font-medium text-[var(--text-3)]">{lang === 'id' ? 'Riwayat data estrus' : 'Estrus data history'}</p>
         </div>
       </div>
 
@@ -285,7 +285,7 @@ export default function EstrusPrediction() {
                 <CalendarClock className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-[var(--text-1)] font-display">Kalender Prediksi Birahi</h2>
+                <h2 className="text-base font-bold text-[var(--text-1)] font-display">{lang === 'id' ? 'Kalender Prediksi Birahi' : 'Estrus Prediction Calendar'}</h2>
                 <p className="text-xs text-[var(--text-2)]">{lang === 'id' ? 'Jadwal Pemantauan' : 'Monitoring Schedule'}</p>
               </div>
             </div>

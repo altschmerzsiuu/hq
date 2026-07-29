@@ -608,7 +608,7 @@ export default function ManajemenTernak() {
               >
                 <Beef size={24} className="text-white mb-2 opacity-90" strokeWidth={1.5} />
                 <span className="text-xl font-black leading-none mb-1">{sapiList.length}</span>
-                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide">Total Sapi</span>
+                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide">{lang === 'id' ? 'Total Sapi' : 'Total Cows'}</span>
               </button>
               
               <button 
@@ -617,7 +617,7 @@ export default function ManajemenTernak() {
               >
                 <Baby size={24} className="text-white mb-2 opacity-90" strokeWidth={1.5} />
                 <span className="text-xl font-black leading-none mb-1">{sapiList.filter(s => s.status_kesehatan === 'Hamil').length}</span>
-                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide">Bunting</span>
+                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide">{lang === 'id' ? 'Bunting' : 'Pregnant'}</span>
               </button>
               
               <button 
@@ -626,7 +626,7 @@ export default function ManajemenTernak() {
               >
                 <CheckCircle size={24} className="text-white mb-2 opacity-90" strokeWidth={1.5} />
                 <span className="text-xl font-black leading-none mb-1">{sapiList.filter(s => s.status_kesehatan === 'Sehat').length}</span>
-                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide">Sehat</span>
+                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide">{lang === 'id' ? 'Sehat' : 'Healthy'}</span>
               </button>
             </div>
           </div>

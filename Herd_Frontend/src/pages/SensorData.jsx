@@ -529,9 +529,9 @@ export default function SensorData() {
              </div>
              
              <div className="flex justify-center gap-4 text-[10px] font-medium text-gray-600 mt-2">
-                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#2f7d31]"></span>Sangat Sehat</div>
-                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span>Observasi</div>
-                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>Penanganan</div>
+                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#2f7d31]"></span>{lang === 'id' ? 'Sangat Sehat' : 'Very Healthy'}</div>
+                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span>{lang === 'id' ? 'Observasi' : 'Observation'}</div>
+                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>{lang === 'id' ? 'Penanganan' : 'Treatment'}</div>
              </div>
 
              <div className="mt-2 flex flex-col gap-2">

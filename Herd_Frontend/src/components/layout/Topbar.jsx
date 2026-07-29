@@ -287,10 +287,10 @@ export default function Topbar({ onMenuClick, isScrolled }) {
             <span className="text-[12px] font-normal text-gray-400">
               {(() => {
                 const h = new Date().getHours();
-                if (h < 11) return 'Selamat Pagi,';
-                if (h < 15) return 'Selamat Siang,';
-                if (h < 18) return 'Selamat Sore,';
-                return 'Selamat Malam,';
+                if (h < 11) return lang === 'id' ? 'Selamat Pagi,' : 'Good Morning,';
+                if (h < 15) return lang === 'id' ? 'Selamat Siang,' : 'Good Afternoon,';
+                if (h < 18) return lang === 'id' ? 'Selamat Sore,' : 'Good Evening,';
+                return lang === 'id' ? 'Selamat Malam,' : 'Good Night,';
               })()}
             </span>
             <span className="text-[16px] font-bold text-gray-800 leading-tight truncate">
