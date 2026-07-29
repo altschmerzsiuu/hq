@@ -253,7 +253,7 @@ export default function EstrusPrediction() {
               : '-'}
           </p>
           <p className="text-[10px] font-medium text-gray-400 flex items-center gap-1">
-            Berdasarkan konfirmasi
+            {lang === 'id' ? 'Berdasarkan konfirmasi' : 'Based on confirmation'}
           </p>
         </div>
 
@@ -413,9 +413,9 @@ export default function EstrusPrediction() {
               {/* Status Filters - Only show in Active Tab */}
               {activeTab === 'aktif' && [
                 { value: 'all',        label: t.prediction_filter_all },
-                { value: 'estrus',     label: 'Birahi', dot: 'var(--red)' },
-                { value: 'pre-estrus', label: 'Dekat',  dot: 'var(--amber)' },
-                { value: 'normal',     label: 'Normal', dot: 'var(--green)' },
+                { value: 'estrus',     label: lang === 'id' ? 'Birahi' : 'Estrus', dot: 'var(--red)' },
+                { value: 'pre-estrus', label: lang === 'id' ? 'Dekat' : 'Near',  dot: 'var(--amber)' },
+                { value: 'normal',     label: lang === 'id' ? 'Normal' : 'Normal', dot: 'var(--green)' },
               ].map(opt => (
                 <button
                   key={opt.value}

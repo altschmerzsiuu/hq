@@ -212,7 +212,7 @@ const CHART_DATA = {
   },
 };
 
-function TrenAktivitasChart() {
+function TrenAktivitasChart({ lang }) {
   const [activeFilter, setActiveFilter] = useState('Minggu');
   const data = CHART_DATA[activeFilter];
   return (
@@ -1333,7 +1333,7 @@ export default function Dashboard() {
             {/* Grafik Tren Aktivitas Kawanan */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col overflow-hidden">
               <div className="relative overflow-hidden -mx-4 -my-4 sm:-mx-5 sm:-my-5" style={{ minHeight: '220px' }}>
-                <TrenAktivitasChart />
+                <TrenAktivitasChart lang={lang} />
               </div>
             </div>
           </div>
@@ -1582,7 +1582,7 @@ export default function Dashboard() {
             {/* Grafik Tren Aktivitas Kawanan */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col overflow-hidden h-full">
               <div className="h-full relative overflow-hidden -mx-4 -my-4 sm:-mx-6 sm:-my-6" style={{ minHeight: '250px' }}>
-                <TrenAktivitasChart />
+                <TrenAktivitasChart lang={lang} />
               </div>
             </div>
           </div>
