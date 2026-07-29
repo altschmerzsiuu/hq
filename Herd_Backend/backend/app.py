@@ -751,7 +751,7 @@ async def save_sensor(data: dict, kandang_id: Optional[str] = None):
                 data.get('mean_z', 0.0),
                 data.get('rms_z', 0.0),
                 data.get('max_z', 0.0),
-                data.get('temperature', 0.0),
+                data.get('temperature'),
                 data.get('activity_state', 'UNKNOWN'),
                 data.get('estrus_code', 0),
                 data.get('battery_voltage', 0.0),
@@ -802,14 +802,14 @@ async def handle_mqtt_message(payload_raw: str):
             print(f"[DB OK] Saved data for {collar_id}")
             
             if payload.get('estrus_code') == 1:
-                await handle_estrus_alert(collar_id, kandang_id, payload.get('temperature', 39.8))
+                await handle_estrus_alert(collar_id, kandang_id, payload.get('temperature'))
         else:
             print(f" [DB FAIL] Could not save for {collar_id}")
 
     except Exception as e:
         print(f" [PROCESS ERROR] {str(e)}")
 
-async def handle_estrus_alert(collar_id: str, kandang_id: Optional[str] = None, temperature: float = 39.8):
+async def handle_estrus_alert(collar_id: str, kandang_id: Optional[str] = None, temperature: Optional[float] = None):
     """Specific logic for estrus alerts"""
     try:
         pool = await get_db_pool()
@@ -2137,22 +2137,6 @@ async def get_behavior_analytics(cow_id: str = "all", current_user: dict = Depen
                         "avg_temp": avg_temp
                     })
 
-                # Fallback for unusual behavior warning using first cow name
-                if not unusual_behavior:
-                    cattle = await conn.fetch("SELECT id, nama FROM hewan WHERE owner_id = $1 ORDER BY nama LIMIT 1", owner_id)
-                    if cattle:
-                        first_cow = cattle[0]
-                        unusual_behavior.append({
-                            "id": first_cow["id"],
-                            "cow_id_display": f"#{first_cow['id'][:4].upper()}",
-                            "name": first_cow["nama"],
-                            "message": f"{first_cow['nama']} - Peningkatan Aktivitas Terdeteksi",
-                            "detail": "+48% pergerakan dibanding rata-rata 7 hari",
-                            "status": "Observe",
-                            "label": "Estrus",
-                            "type": "danger",
-                            "avg_temp": 38.8
-                        })
 
             # D. Real distribution of activities for Pie Chart (last 24 hours)
             pie_rows = await conn.fetch(f"""

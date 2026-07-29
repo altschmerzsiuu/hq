@@ -217,7 +217,7 @@ def save_sensor(data, kandang_id):
         data.get('mean_z', 0.0),
         data.get('rms_z', 0.0),
         data.get('max_z', 0.0),
-        data.get('temperature', 0.0),
+        data.get('temperature'),
         data.get('activity_state', 'UNKNOWN'),
         data.get('estrus_code', 0),
         data.get('battery_voltage', 0.0),
@@ -230,7 +230,7 @@ def save_sensor(data, kandang_id):
 
 from worker import enqueue_task
 
-def handle_estrus_alert(collar_id, kandang_id, rms_z, temperature=39.8):
+def handle_estrus_alert(collar_id, kandang_id, rms_z, temperature=None):
     rows = db_query("""
         SELECT h.id, h.nama, h.last_estrus_alert_at 
         FROM hewan h
@@ -366,12 +366,12 @@ def process_redis_queue():
                 
                 valid_inserts.append((
                     kandang_id, data.get('collar_id'), data.get('mean_z', 0.0), data.get('rms_z', 0.0),
-                    data.get('max_z', 0.0), data.get('temperature', 0.0), data.get('activity_state', 'UNKNOWN'),
+                    data.get('max_z', 0.0), data.get('temperature'), data.get('activity_state', 'UNKNOWN'),
                     data.get('estrus_code', 0), data.get('battery_voltage', 0.0), data.get('battery_percent', 0),
                     batch_ts, now_dt
                 ))
                 
-                ws_updates.append({"type": "SENSOR_UPDATE", "collar_id": collar_id, "rms_z": float(data.get('rms_z') or 0), "temperature": float(data.get('temperature') or 0)})
+                ws_updates.append({"type": "SENSOR_UPDATE", "collar_id": collar_id, "rms_z": float(data.get('rms_z') or 0), "temperature": data.get('temperature')})
                 
                 estrus_triggered_by_sensor = (data.get('estrus_code') == 1)
                 hybrid_score = 0.0
@@ -400,7 +400,7 @@ def process_redis_queue():
                                     mean_z=float(data.get('mean_z', 0.0)),
                                     rms_z=float(data.get('rms_z', 0.0)),
                                     max_z=float(data.get('max_z', 0.0)),
-                                    temperature=float(data.get('temperature', 0.0)),
+                                    temperature=float(data.get('temperature') or 38.5),
                                     days_since_estrus=days_since,
                                     cycle_avg=c_avg,
                                     parity=par
@@ -415,10 +415,10 @@ def process_redis_queue():
                 # -----------------------------
                 
                 if estrus_triggered_by_sensor or hybrid_score > 0.75:
-                    estrus_events.append((collar_id, kandang_id, data.get('rms_z', 0), data.get('temperature', 39.8)))
+                    estrus_events.append((collar_id, kandang_id, data.get('rms_z', 0), data.get('temperature')))
                 
-                temp = data.get('temperature', 0.0)
-                if temp > 39.5:
+                temp = data.get('temperature')
+                if temp and temp > 39.5:
                     anomaly_events.append((collar_id, temp))
                     
             # Bulk Insert
