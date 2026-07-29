@@ -218,7 +218,7 @@ function TrenAktivitasChart() {
   return (
     <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col flex-1 w-full relative h-full min-h-[320px]">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h3 className="font-bold text-[var(--text-1)] text-lg whitespace-nowrap">Tren Aktivitas Kawanan</h3>
+        <h3 className="font-bold text-[var(--text-1)] text-lg whitespace-nowrap">{lang === 'id' ? 'Tren Aktivitas Kawanan' : 'Herd Activity Trend'}</h3>
         <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-hide">
           {['Hari', 'Minggu', 'Bulan'].map((filter) => (
             <button
@@ -641,12 +641,12 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
   const monitored = herd.filter(c => !!c.collar_id);
 
   if (slotType === 'total') {
-    count = sapiList.length;
+    count = herd.length;
     label = lang === 'id' ? 'Total ternak' : 'Total cows';
     popoverData = sapiList;
     Icon = Database;
   } else if (slotType === 'sehat') {
-    count = sapiList.length;
+    count = herd.length;
     label = lang === 'id' ? 'Kondisi sehat' : 'Healthy';
     popoverData = sapiList;
     Icon = CheckCircle2;
@@ -1108,13 +1108,13 @@ export default function Dashboard() {
                 slotType={selectedWidgets[0] || 'total'}
                 activePopover={activePopover} setActivePopover={setActivePopover}
                 slotId="slot1" stats={stats} herd={herd} intel={intel}
-                sapiList={sapiList} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
+                sapiList={herd} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
               />
               <DashSlotCard
                 slotType={selectedWidgets[1] || 'sehat'}
                 activePopover={activePopover} setActivePopover={setActivePopover}
                 slotId="slot2" stats={stats} herd={herd} intel={intel}
-                sapiList={sapiList} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
+                sapiList={herd} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
               />
             </div>
           </div>
@@ -1227,12 +1227,12 @@ export default function Dashboard() {
             {/* Ringkasan Birahi (Donut) */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col items-center">
               <h3 className="font-bold text-[var(--text-1)] text-[15px] mb-4 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
-              <p className="text-xs text-gray-500 self-start -mt-3 mb-3">7 hari terakhir</p>
+              <p className="text-xs text-gray-500 self-start -mt-3 mb-3">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
               <div className="flex w-full items-center gap-4">
                 <div className="relative w-24 h-24 flex-shrink-0">
                   <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="12" />
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 1) / Math.max(sapiList.length, 1))} strokeLinecap="round" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 1) / Math.max(herd.length, 1))} strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
@@ -1245,7 +1245,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-center justify-between text-[11px]">
                     <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-blue-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Birahi' : ' Not in Estrus'}</div>
-                    <span className="font-medium">{Math.max((sapiList.length || 0) - (stats.estrus || 0), 0)}</span>
+                    <span className="font-medium">{Math.max((herd.length || 0) - (stats.estrus || 0), 0)}</span>
                   </div>
                   <div className="flex items-center justify-between text-[11px]">
                     <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-gray-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Terdeteksi' : ' Undetected'}</div>
@@ -1260,7 +1260,7 @@ export default function Dashboard() {
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-[var(--text-1)] text-[15px]">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
               </div>
-              <p className="text-[11px] text-gray-500 mb-4">(3 Hari ke Depan)</p>
+              <p className="text-[11px] text-gray-500 mb-4">{lang === 'id' ? '(3 Hari ke Depan)' : '(Next 3 Days)'}</p>
               
               <div className="flex flex-col gap-3">
                 {activeEstrusPredictions.length > 0 ? activeEstrusPredictions.slice(0, 3).map((pred, i) => (
@@ -1270,7 +1270,7 @@ export default function Dashboard() {
                     <span className="text-[12px] font-medium text-gray-900">{Math.round((pred.confidence_final || 0.8) * 100)}%</span>
                   </div>
                 )) : (
-                  <div className="text-[12px] text-gray-500 text-center py-2">Tidak ada prediksi terdekat.</div>
+                  <div className="text-[12px] text-gray-500 text-center py-2">{lang === 'id' ? 'Tidak ada prediksi terdekat.' : 'No upcoming predictions.'}</div>
                 )}
               </div>
               <button onClick={() => navigate('/prediksi-estrus')} className="text-[11px] font-bold text-gray-500 hover:text-gray-900 text-left mt-3 flex items-center gap-1 w-max">
@@ -1288,8 +1288,8 @@ export default function Dashboard() {
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="200" strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center mt-1">
-                  <span className="text-2xl font-black leading-none text-[var(--text-1)]">{sapiList.length > 0 ? Math.round((sapiList.filter(c => c.status === 'sehat' || c.status === 'normal' || !c.status).length / sapiList.length) * 100) + '%' : '0%'}</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">Sehat</span>
+                  <span className="text-2xl font-black leading-none text-[var(--text-1)]">{herd.length > 0 ? Math.round((herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) * 100) + '%' : '0%'}</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">{lang === 'id' ? 'Sehat' : 'Healthy'}</span>
                 </div>
               </div>
               <div className="flex gap-3 mt-4 w-full justify-center">
@@ -1366,7 +1366,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="relative z-10">
-                <div className="text-[40px] font-black leading-none mb-1">{sapiList.length}</div>
+                <div className="text-[40px] font-black leading-none mb-1">{herd.length}</div>
                 <div className="text-xs text-emerald-100 flex items-center gap-1">
                   <CheckCircle2 size={12} /> {lang === 'id' ? 'Kondisi terpantau' : 'Conditions monitored'}
                 </div>
@@ -1470,12 +1470,12 @@ export default function Dashboard() {
             {/* Ringkasan Birahi (Donut) */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col items-center">
               <h3 className="font-bold text-[var(--text-1)] text-lg mb-6 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
-              <p className="text-xs text-gray-500 self-start -mt-5 mb-4">7 hari terakhir</p>
+              <p className="text-xs text-gray-500 self-start -mt-5 mb-4">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
               <div className="flex w-full items-center gap-6">
                 <div className="relative w-32 h-32 flex-shrink-0">
                   <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="12" />
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 1) / Math.max(sapiList.length, 1))} strokeLinecap="round" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 1) / Math.max(herd.length, 1))} strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-2xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
@@ -1489,7 +1489,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Birahi' : ' Not in Estrus'}</div>
-                    <span className="font-medium">{Math.max((sapiList.length || 0) - (stats.estrus || 0), 0)}</span>
+                    <span className="font-medium">{Math.max((herd.length || 0) - (stats.estrus || 0), 0)}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-gray-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Terdeteksi' : ' Undetected'}</div>
@@ -1504,7 +1504,7 @@ export default function Dashboard() {
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-[var(--text-1)] text-lg">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
               </div>
-              <p className="text-xs text-gray-500 mb-6">(3 Hari ke Depan)</p>
+              <p className="text-xs text-gray-500 mb-6">{lang === 'id' ? '(3 Hari ke Depan)' : '(Next 3 Days)'}</p>
               
               <div className="flex flex-col gap-4 flex-1">
                 {activeEstrusPredictions.length > 0 ? activeEstrusPredictions.slice(0, 3).map((pred, i) => (
@@ -1514,7 +1514,7 @@ export default function Dashboard() {
                     <span className="text-sm font-medium text-gray-900">{Math.round((pred.confidence_final || 0.8) * 100)}%</span>
                   </div>
                 )) : (
-                  <div className="text-sm text-gray-500 text-center py-4">Tidak ada prediksi terdekat.</div>
+                  <div className="text-sm text-gray-500 text-center py-4">{lang === 'id' ? 'Tidak ada prediksi terdekat.' : 'No upcoming predictions.'}</div>
                 )}
               </div>
               <button onClick={() => navigate('/prediksi-estrus')} className="text-xs font-bold text-gray-500 hover:text-gray-900 text-left mt-auto flex items-center gap-1 transition-colors w-max">
@@ -1532,8 +1532,8 @@ export default function Dashboard() {
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="200" strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center mt-2">
-                  <span className="text-3xl font-black leading-none text-[var(--text-1)]">{sapiList.length > 0 ? Math.round((sapiList.filter(c => c.status === 'sehat' || c.status === 'normal' || !c.status).length / sapiList.length) * 100) + '%' : '0%'}</span>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">Sehat</span>
+                  <span className="text-3xl font-black leading-none text-[var(--text-1)]">{herd.length > 0 ? Math.round((herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) * 100) + '%' : '0%'}</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">{lang === 'id' ? 'Sehat' : 'Healthy'}</span>
                 </div>
               </div>
               <div className="flex gap-4 mt-6 w-full justify-center pb-2">
@@ -1741,8 +1741,8 @@ export default function Dashboard() {
 
                   <div className="space-y-2">
                     {[
-                      { id: 'total', label: 'Total Ternak', icon: Database, value: sapiList.length, unit: '' },
-                      { id: 'sehat', label: 'Kondisi Sehat', icon: CheckCircle2, value: sapiList.length, unit: '' },
+                      { id: 'total', label: 'Total Ternak', icon: Database, value: herd.length, unit: '' },
+                      { id: 'sehat', label: 'Kondisi Sehat', icon: CheckCircle2, value: herd.length, unit: '' },
                       { id: 'estrus', label: 'Sedang Estrus', icon: Zap, value: stats.estrus ?? 0, unit: '' },
                       { id: 'tindakan', label: 'Perlu Tindakan', icon: ShieldAlert, value: intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length, unit: '' }
                     ].map(w => {

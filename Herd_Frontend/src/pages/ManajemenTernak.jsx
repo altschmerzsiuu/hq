@@ -516,7 +516,7 @@ export default function ManajemenTernak() {
               <div className="text-[15px] font-bold text-[var(--text-1)]">
                 {selectedForDelete.length > 0 
                   ? (t.livestock_select_mode_selected || '{count} Dipilih').replace('{count}', selectedForDelete.length) 
-                  : (t.livestock_select_mode_title || 'Pilih Ternak')}
+                  : (t.livestock_select_mode_title || (lang === 'id' ? 'Pilih Ternak' : 'Select Cattle'))}
               </div>
               <div className="flex items-center gap-3">
                 <button onClick={() => { if (selectedForDelete.length === filteredSapi.length) { setSelectedForDelete([]); } else { setSelectedForDelete(filteredSapi.map(s => s.id)); } }} className="text-[var(--accent)] font-bold text-sm">
@@ -540,7 +540,7 @@ export default function ManajemenTernak() {
               <div className="text-[15px] font-bold text-[var(--text-1)]">
                 {selectedForDelete.length > 0 
                   ? (t.livestock_select_mode_selected || '{count} Dipilih').replace('{count}', selectedForDelete.length) 
-                  : (t.livestock_select_mode_title || 'Pilih Ternak')}
+                  : (t.livestock_select_mode_title || (lang === 'id' ? 'Pilih Ternak' : 'Select Cattle'))}
               </div>
               <div className="flex items-center gap-3">
                 <button onClick={() => { if (selectedForDelete.length === filteredSapi.length) { setSelectedForDelete([]); } else { setSelectedForDelete(filteredSapi.map(s => s.id)); } }} className="text-[var(--accent)] font-bold text-sm">
@@ -578,10 +578,10 @@ export default function ManajemenTernak() {
             <div className="flex flex-col md:flex-row md:items-center justify-between w-full mb-6 gap-4">
               <div>
                 <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-[#FFD8B5]">
-                  KELOLA DATA PROFIL DAN RIWAYAT REPRODUKSI SAPI.
+                  {lang === 'id' ? 'KELOLA DATA PROFIL DAN RIWAYAT REPRODUKSI SAPI.' : 'MANAGE CATTLE PROFILE AND REPRODUCTION HISTORY.'}
                 </p>
                 <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
-                  Ternak Anda
+                  {lang === 'id' ? 'Ternak Anda' : 'Your Cattle'}
                 </h1>
               </div>
               <div className="hidden md:flex items-center gap-3">
@@ -665,7 +665,7 @@ export default function ManajemenTernak() {
                 className="hover:bg-gray-100"
               >
                 <ClipboardList size={18} />
-                Pilih
+                {lang === 'id' ? 'Pilih' : 'Select'}
               </button>
             </div>
           </div>
@@ -1036,7 +1036,7 @@ export default function ManajemenTernak() {
                     {t.livestock_add_breed.replace('*', '')} <span className="text-red-500">*</span>
                   </label>
                   <select required style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-4 h-[48px] rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none appearance-none cursor-pointer" value={editForm.jenis} onChange={e => setEditForm({...editForm, jenis: e.target.value})}>
-                    <option value="" disabled hidden>-- Pilih --</option>
+                    <option value="" disabled hidden>-- {lang === 'id' ? 'Pilih' : 'Select'} --</option>
                     <option value="Simmental">{t.breed_simmental}</option>
                     <option value="Brahman">{t.breed_brahman}</option>
                     <option value="Limosin">{t.breed_limousin}</option>
@@ -1051,7 +1051,7 @@ export default function ManajemenTernak() {
                     {t.livestock_add_health.replace('*', '')} <span className="text-red-500">*</span>
                   </label>
                   <select required style={{ background: 'var(--bg-card)', color: 'var(--text-1)', border: '0.5px solid var(--border)' }} className="w-full px-4 h-[48px] rounded-xl focus:ring-2 focus:ring-[var(--accent)] outline-none appearance-none cursor-pointer" value={editForm.kesehatan} onChange={e => setEditForm({...editForm, kesehatan: e.target.value})}>
-                    <option value="" disabled hidden>-- Pilih --</option>
+                    <option value="" disabled hidden>-- {lang === 'id' ? 'Pilih' : 'Select'} --</option>
                     <option value="Sehat">{t.livestock_filter_sehat}</option>
                     <option value="Sakit">{t.livestock_filter_sakit}</option>
                     <option value="Butuh Perawatan">{t.livestock_filter_care}</option>

@@ -341,8 +341,8 @@ export default function SensorData() {
   const widgetOptions = {
     collar_aktif: { id: 'collar_aktif', label: 'Collar Aktif', icon: Activity, value: activeCollars, subValue: `/ ${tableData.length || 0}`, unit: '' },
     rata_suhu: { id: 'rata_suhu', label: 'Rata Suhu', icon: Thermometer, value: avgTemp, unit: '°C' },
-    sapi_bunting: { id: 'sapi_bunting', label: 'Bunting', icon: HeartPulse, value: pregnantCount, unit: 'Ekor' },
-    perlu_cek: { id: 'perlu_cek', label: 'Perlu Cek', icon: ShieldAlert, value: sickCount, unit: 'Ekor' },
+    sapi_bunting: { id: 'sapi_bunting', label: 'Bunting', icon: HeartPulse, value: pregnantCount, unit: (lang === 'id' ? 'Ekor' : 'Cows') },
+    perlu_cek: { id: 'perlu_cek', label: 'Perlu Cek', icon: ShieldAlert, value: sickCount, unit: (lang === 'id' ? 'Ekor' : 'Cows') },
   };
 
   if (loading) {
@@ -576,7 +576,7 @@ export default function SensorData() {
                      timeFilter === t ? "bg-white text-[var(--accent)] shadow-sm" : "text-gray-500 hover:text-gray-700"
                    )}
                  >
-                   {t === '24h' ? '24 Jam' : t === '1wk' ? '7 Hari' : '30 Hari'}
+                   {t === '24h' ? (lang === 'id' ? '24 Jam' : '24 Hours') : t === '1wk' ? (lang === 'id' ? '7 Hari' : '7 Days') : (lang === 'id' ? '30 Hari' : '30 Days')}
                  </button>
                ))}
              </div>

@@ -957,7 +957,7 @@ export default function DetailTernak() {
 
               {/* Action Row: Back | Edit | Hapus */}
               <div className="w-full flex items-center justify-between mb-4 z-10 relative">
-                <DesktopAnimatedBtn icon={ChevronLeft} label=lang === 'id' ? 'Kembali' : 'Back' onClick={() => navigate('/ternak')} />
+                <DesktopAnimatedBtn icon={ChevronLeft} label={lang === 'id' ? 'Kembali' : 'Back'} onClick={() => navigate('/ternak')} />
                 <div className="flex gap-2">
                   <DesktopAnimatedBtn icon={Edit2} label="Edit" onClick={openEditProfile} />
                   <DesktopAnimatedBtn icon={AlertCircle} label="Lapor Sakit" danger onClick={() => setIsReportSickOpen(true)} />

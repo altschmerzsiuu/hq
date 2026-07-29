@@ -179,7 +179,7 @@ export default function Recommendations() {
 
         <div className="p-6 pt-[86px] md:p-8 relative z-10 flex-1 flex flex-col justify-center">
           <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-amber-200">
-            OPTIMASI KESEHATAN & PRODUKSI
+            {lang === 'id' ? 'OPTIMASI KESEHATAN & PRODUKSI' : 'HEALTH & PRODUCTION OPTIMIZATION'}
           </p>
           <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
             {t.recs_title}

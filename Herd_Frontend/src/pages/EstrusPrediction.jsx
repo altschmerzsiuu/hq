@@ -205,7 +205,7 @@ export default function EstrusPrediction() {
         <div className="flex flex-col sm:flex-row sm:items-stretch justify-between gap-4 relative z-10 min-h-[80px]">
           <div>
             <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-rose-200">
-              PEMANTAUAN MASA SUBUR & REPRODUKSI
+              {lang === 'id' ? 'PEMANTAUAN MASA SUBUR & REPRODUKSI' : 'FERTILITY & REPRODUCTION MONITORING'}
             </p>
             <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
               {t.prediction_title}
