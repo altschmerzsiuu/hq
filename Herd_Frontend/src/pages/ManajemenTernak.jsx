@@ -879,8 +879,8 @@ export default function ManajemenTernak() {
                   style={{ width: '100%', padding: '14px 16px', borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--bg-base)', outline: 'none', fontSize: '15px', color: 'var(--text-1)', fontWeight: 600, fontFamily: 'Inter, sans-serif', appearance: 'none' }}
                 >
                   <option value="all">Kapan Saja</option>
-                  <option value="7">7 Hari Terakhir</option>
-                  <option value="30">30 Hari Terakhir</option>
+                  <option value="7">{lang === 'id' ? '7 Hari Terakhir' : 'Last 7 Days'}</option>
+                  <option value="30">{lang === 'id' ? '30 Hari Terakhir' : 'Last 30 Days'}</option>
                   <option value="older">Lebih dari 1 Bulan</option>
                 </select>
               </div>
@@ -957,7 +957,7 @@ export default function ManajemenTernak() {
                 </div>
                 
                 <p style={{ fontSize: '13px', color: 'var(--text-2)', margin: '0 0 6px 0', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>
-                  Terakhir IB: {sapi.terakhir_ib ? formatTgl(sapi.terakhir_ib, lang) : '45 hari lalu'}
+                  Terakhir IB: {sapi.terakhir_ib ? formatTgl(sapi.terakhir_ib, lang) : lang === 'id' ? '45 hari lalu' : '45 days ago'}
                 </p>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-3)', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>

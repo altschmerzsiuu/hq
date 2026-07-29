@@ -310,7 +310,7 @@ export default function DetailTernak() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-screen bg-[#F3F4F6]">
         <div className="w-10 h-10 border-4 border-[#2E7D32] border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-gray-500 font-medium">Memuat data ternak...</p>
+        <p className="mt-4 text-gray-500 font-medium">{lang === 'id' ? 'Memuat data ternak...' : 'Loading cattle data...'}</p>
       </div>
     );
   }
@@ -361,12 +361,12 @@ export default function DetailTernak() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setIsEditProfileOpen(false)}>
           <div className="bg-white rounded-[20px] p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-gray-900">Edit Profil Ternak</h3>
+              <h3 className="text-lg font-bold text-gray-900">{lang === 'id' ? 'Edit Profil Ternak' : 'Edit Cattle Profile'}</h3>
               <button onClick={() => setIsEditProfileOpen(false)} className="p-2 rounded-full hover:bg-gray-100"><X size={18} /></button>
             </div>
             <form onSubmit={submitEditProfile} className="flex flex-col gap-4">
               {[
-                { key: 'nama', label: 'Nama', type: 'text', placeholder: 'Nama ternak' },
+                { key: 'nama', label: 'Nama', type: 'text', placeholder: lang === 'id' ? 'Nama ternak' : 'Cattle name' },
                 { key: 'jenis', label: 'Ras / Jenis', type: 'text', placeholder: 'mis. Brahman, PO, Limousin' },
                 { key: 'bulan_tahun_lahir', label: 'Tanggal Lahir', type: 'date', placeholder: '' },
               ].map(({ key, label, type, placeholder }) => (
@@ -386,7 +386,7 @@ export default function DetailTernak() {
                     className="w-full appearance-none border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]">
                     <option value="">Pilih status...</option>
                     <option value="Sehat / Aktif">Sehat / Aktif</option>
-                    <option value="Sakit">Sakit</option>
+                    <option value="Sakit">{lang === 'id' ? 'Sakit' : 'Sick'}</option>
                     <option value="Karantina">Karantina</option>
                   </select>
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
@@ -458,8 +458,8 @@ export default function DetailTernak() {
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 size={28} className="text-red-500" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Hapus Ternak?</h3>
-            <p className="text-sm text-gray-500 text-center mb-6">Data ternak <strong>{selectedSapi.nama}</strong> akan dihapus permanen dan tidak dapat dikembalikan.</p>
+            <h3 className="text-lg font-bold text-gray-900 text-center mb-2">{lang === 'id' ? 'Hapus Ternak?' : 'Delete Cattle?'}</h3>
+            <p className="text-sm text-gray-500 text-center mb-6">{lang === 'id' ? <>Data ternak <strong>{selectedSapi.nama}</strong> akan dihapus permanen dan tidak dapat dikembalikan.</> : <>Cattle data <strong>{selectedSapi.nama}</strong> will be permanently deleted and cannot be undone.</>}</p>
             <div className="flex gap-3">
               <button onClick={() => setIsDeleteConfirmOpen(false)} className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">Batal</button>
               <button onClick={handleHapusSapi} disabled={hapusLoading}
@@ -633,7 +633,7 @@ export default function DetailTernak() {
               }`}
             >
                <Activity size={20} strokeWidth={2.5} />
-               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Catatan Harian</span>
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">{lang === 'id' ? 'Catatan Harian' : 'Daily Notes'}</span>
             </button>
             {/* Tab 4: Analitik */}
             <button 
@@ -655,7 +655,7 @@ export default function DetailTernak() {
               {/* Riwayat Ternak - Card Style */}
               <div className="px-5 pb-6 bg-white">
                 <div className="flex justify-between items-center mb-4">
-                   <h3 className="text-[17px] font-extrabold text-[#111]">Riwayat Ternak</h3>
+                   <h3 className="text-[17px] font-extrabold text-[#111]">{lang === 'id' ? 'Riwayat Ternak' : 'Cattle History'}</h3>
                    {(!sortedReproHistory.some(item => item.results === true || item.results === 'true' || item.is_pregnant === true)) && (
                      <MobileAnimatedBtn
                        icon={Plus}
@@ -787,7 +787,7 @@ export default function DetailTernak() {
             <div className="px-5 pb-12 pt-6 bg-[#F8FBF9] min-h-[500px]">
               <div className="mb-8 flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="text-[20px] font-extrabold text-[#111]">Catatan Aktivitas Ternak</h3>
+                  <h3 className="text-[20px] font-extrabold text-[#111]">{lang === 'id' ? 'Catatan Aktivitas Ternak' : 'Cattle Activity Notes'}</h3>
                   <p className="text-[13px] text-gray-500 mt-1">Rekaman aktivitas untuk <strong className="text-[#2E7D32]">{selectedSapi.nama}</strong></p>
                 </div>
                 <div className="relative shrink-0">
@@ -796,7 +796,7 @@ export default function DetailTernak() {
                     onChange={(e) => setActivityFilter(e.target.value)}
                     className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
                   >
-                    <option value="hari_ini">Hari Ini</option>
+                    <option value="hari_ini">{lang === 'id' ? 'Hari Ini' : 'Today'}</option>
                     <option value="minggu_ini">Minggu Ini</option>
                     <option value="bulan_ini">Bulan Ini</option>
                     <option value="semua">Semua</option>
@@ -812,7 +812,7 @@ export default function DetailTernak() {
                       if (!sortedReproHistory || sortedReproHistory.length === 0) {
                           return (
                               <div className="w-full text-center py-10 bg-white border border-[#E8F0EA] rounded-[16px] shadow-sm">
-                                  <p className="text-[13px] text-gray-500">Belum ada data aktivitas untuk ternak ini.</p>
+                                  <p className="text-[13px] text-gray-500">{lang === 'id' ? 'Belum ada data aktivitas untuk ternak ini.' : 'No activity data for this cattle yet.'}</p>
                               </div>
                           );
                       }
@@ -960,7 +960,7 @@ export default function DetailTernak() {
                 <DesktopAnimatedBtn icon={ChevronLeft} label={lang === 'id' ? 'Kembali' : 'Back'} onClick={() => navigate('/ternak')} />
                 <div className="flex gap-2">
                   <DesktopAnimatedBtn icon={Edit2} label="Edit" onClick={openEditProfile} />
-                  <DesktopAnimatedBtn icon={AlertCircle} label="Lapor Sakit" danger onClick={() => setIsReportSickOpen(true)} />
+                  <DesktopAnimatedBtn icon={AlertCircle} label={lang === 'id' ? 'Lapor Sakit' : 'Report Sick'} danger onClick={() => setIsReportSickOpen(true)} />
                   <DesktopAnimatedBtn icon={Trash2} label="Hapus" danger onClick={() => setIsDeleteConfirmOpen(true)} />
                 </div>
               </div>
@@ -1187,7 +1187,7 @@ export default function DetailTernak() {
                  <div className="animate-in fade-in duration-300">
                    <div className="flex items-center justify-between mb-6">
                      <div>
-                       <h3 className="text-lg font-bold text-gray-900">Catatan Aktivitas Ternak</h3>
+                       <h3 className="text-lg font-bold text-gray-900">{lang === 'id' ? 'Catatan Aktivitas Ternak' : 'Cattle Activity Notes'}</h3>
                        <p className="text-sm text-gray-500 mt-0.5">Rekaman aktivitas untuk <strong className="text-[#2E7D32]">{selectedSapi?.nama}</strong></p>
                      </div>
                      <div className="relative">
@@ -1196,7 +1196,7 @@ export default function DetailTernak() {
                          onChange={(e) => setActivityFilter(e.target.value)}
                          className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
                        >
-                         <option value="hari_ini">Hari Ini</option>
+                         <option value="hari_ini">{lang === 'id' ? 'Hari Ini' : 'Today'}</option>
                          <option value="minggu_ini">Minggu Ini</option>
                          <option value="bulan_ini">Bulan Ini</option>
                          <option value="semua">Semua</option>
@@ -1210,7 +1210,7 @@ export default function DetailTernak() {
                            if (!sortedReproHistory || sortedReproHistory.length === 0) {
                                return (
                                    <div className="w-full text-center py-10 bg-white border border-[#E8F0EA] rounded-[16px] shadow-sm">
-                                       <p className="text-[13px] text-gray-500">Belum ada data aktivitas untuk ternak ini.</p>
+                                       <p className="text-[13px] text-gray-500">{lang === 'id' ? 'Belum ada data aktivitas untuk ternak ini.' : 'No activity data for this cattle yet.'}</p>
                                    </div>
                                );
                            }

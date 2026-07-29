@@ -1284,8 +1284,8 @@ export default function Dashboard() {
               <div className="relative w-32 h-32 flex items-center justify-center mt-2">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="14" />
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="50" strokeLinecap="round" className="opacity-90" />
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="200" strokeLinecap="round" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) : 0))} strokeLinecap="round" className="opacity-90 transition-all duration-1000" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status !== 'normal' && c.status).length / herd.length) : 0))} strokeLinecap="round" className="transition-all duration-1000" style={{ strokeDashoffset: 251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status !== 'normal' && c.status).length / herd.length) : 0)), transformOrigin: 'center', transform: `rotate(${360 * (herd.length > 0 ? (herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) : 0)}deg)` }} />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center mt-1">
                   <span className="text-2xl font-black leading-none text-[var(--text-1)]">{herd.length > 0 ? Math.round((herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) * 100) + '%' : '0%'}</span>
@@ -1528,8 +1528,8 @@ export default function Dashboard() {
               <div className="relative w-40 h-40 flex items-center justify-center mt-2">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="14" />
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="50" strokeLinecap="round" className="opacity-90" />
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="200" strokeLinecap="round" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) : 0))} strokeLinecap="round" className="opacity-90 transition-all duration-1000" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status !== 'normal' && c.status).length / herd.length) : 0))} strokeLinecap="round" className="transition-all duration-1000" style={{ strokeDashoffset: 251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status !== 'normal' && c.status).length / herd.length) : 0)), transformOrigin: 'center', transform: `rotate(${360 * (herd.length > 0 ? (herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) : 0)}deg)` }} />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center mt-2">
                   <span className="text-3xl font-black leading-none text-[var(--text-1)]">{herd.length > 0 ? Math.round((herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) * 100) + '%' : '0%'}</span>
