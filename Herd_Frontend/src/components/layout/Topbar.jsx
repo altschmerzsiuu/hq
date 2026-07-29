@@ -464,7 +464,7 @@ export default function Topbar({ onMenuClick, isScrolled }) {
                     {/* Header / Back Button */}
                     <div className="flex items-center justify-between px-3 pt-2 pb-2 mb-1 border-b border-gray-50">
                       <span className="text-gray-400 font-['Inter'] text-[11px] font-bold uppercase tracking-widest">
-                        Opsi Akun
+                        {lang === 'id' ? 'OPSI AKUN' : 'ACCOUNT OPTIONS'}
                       </span>
                     </div>
 
@@ -474,16 +474,12 @@ export default function Topbar({ onMenuClick, isScrolled }) {
                           onClick={() => { navigate('/settings'); setProfileMenuOpen(false); }}
                           className="flex items-center gap-3 w-full px-3 py-2.5 text-left text-[14px] font-['Inter'] font-medium text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-all"
                       >
-                        <Settings size={18} className="text-gray-400" />
-                        Pengaturan
-                      </button>
+                        <Settings size={18} className="text-gray-400" />{lang === 'id' ? 'Pengaturan' : 'Settings'}</button>
                       <button
                           onClick={() => { navigate('/settings?tab=profile'); setProfileMenuOpen(false); }}
                           className="flex items-center gap-3 w-full px-3 py-2.5 text-left text-[14px] font-['Inter'] font-medium text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-all"
                       >
-                        <User size={18} className="text-gray-400" />
-                        Akun
-                      </button>
+                        <User size={18} className="text-gray-400" />{lang === 'id' ? 'Akun' : 'Account'}</button>
                       <div className="h-px bg-gray-100 my-1 mx-2" />
                       <button
                           onClick={handleLogout}

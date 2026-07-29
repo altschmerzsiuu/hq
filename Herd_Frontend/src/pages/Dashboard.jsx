@@ -229,9 +229,7 @@ function TrenAktivitasChart({ lang }) {
                   ? 'bg-[#16A34A] text-white'
                   : 'text-[var(--text-2)] hover:text-[#16A34A] hover:bg-green-50'
               }`}
-            >
-              {filter}
-            </button>
+            > {lang === 'id' ? filter : filter === 'Hari' ? 'Day' : filter === 'Minggu' ? 'Week' : 'Month'} </button>
           ))}
         </div>
       </div>
@@ -665,7 +663,7 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
   const handleClick = (e) => {
     e.stopPropagation();
     if (count === 0) {
-      if (slotType === 'pantau') toast.error("Waduh, belum ada ternak yang dipantau nih! Yuk pasang kalungnya dulu");
+      if (slotType === 'pantau') toast.error("lang === 'id' ? 'Waduh, belum ada ternak yang dipantau nih! Yuk pasang kalungnya dulu' : 'Oops, no cattle are being monitored yet! Let\'s pair the collar first'");
       if (slotType === 'tindakan') toast.success("Semua ternak dalam kondisi baik. Tidak ada tindakan mendesak.");
       if (slotType === 'total' && count === 0) toast.error("Belum ada data ternak.");
       return;
@@ -1133,7 +1131,7 @@ export default function Dashboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
               <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
               <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-1)', fontFamily: 'DM Sans, sans-serif' }}>
-                Ada hal yang perlu kamu perhatikan hari ini
+                {lang === 'id' ? 'Ada hal yang perlu kamu perhatikan hari ini' : 'Things to pay attention to today'}
               </span>
             </div>
 
@@ -1148,7 +1146,7 @@ export default function Dashboard() {
                   padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
                   borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
                 }}>
-                  Kondisi semua ternak terpantau aman. Tidak ada tindakan mendesak yang perlu dilakukan sekarang.
+                  {lang === 'id' ? 'Kondisi semua ternak terpantau aman. Tidak ada tindakan mendesak yang perlu dilakukan sekarang.' : 'All cattle conditions are monitored safe. No urgent action needed now.'}
                 </div>
               )}
             </div>
@@ -1158,12 +1156,12 @@ export default function Dashboard() {
           <div>
             <p className="eyebrow" style={{ marginBottom: '12px' }}>AKSI CEPAT</p>
             <div className="flex flex-row gap-3 overflow-x-auto no-scrollbar pb-2">
-              <SquareQAButton icon={Plus} label="Tambah Ternak" onClick={() => setIsAddCowModalOpen(true)} />
+              <SquareQAButton icon={Plus} label={lang === 'id' ? 'Tambah Ternak' : 'Add Cattle'} onClick={() => setIsAddCowModalOpen(true)} />
               <SquareQAButton icon={Syringe} label={lang === 'id' ? 'Tambah Data IB' : 'Add AI Data'} onClick={() => {
                 fetchSapiList();
                 setIsReproModalOpen(true);
               }} />
-              <SquareQAButton icon={Cpu} label="Pasang Kalung" onClick={() => setIsPairModalOpen(true)} />
+              <SquareQAButton icon={Cpu} label={lang === 'id' ? 'Pasang Kalung' : 'Pair Collar'} onClick={() => setIsPairModalOpen(true)} />
               <SquareQAButton icon={Zap} label={lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'} onClick={() => setIsEstrusModalOpen(true)} />
             </div>
           </div>
@@ -1216,7 +1214,7 @@ export default function Dashboard() {
                   padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
                   borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
                 }}>
-                  Semua kondisi ternak hari ini dalam keadaan baik. Tidak ada rekomendasi tambahan untuk saat ini.
+                  {lang === 'id' ? 'Semua kondisi ternak hari ini dalam keadaan baik. Tidak ada rekomendasi tambahan untuk saat ini.' : 'All cattle conditions today are good. No additional recommendations at this time.'}
                 </div>
               )}
             </div>
@@ -1326,7 +1324,7 @@ export default function Dashboard() {
                 <div className="text-[12px] text-gray-500 text-center py-2">{lang === 'id' ? 'Belum ada aktivitas hari ini.' : 'No activities today.'}</div>
               </div>
               <button onClick={() => navigate('/ternak')} className="text-[11px] font-bold text-gray-500 hover:text-gray-900 text-left mt-4 flex items-center gap-1 w-max">
-                Lihat semua aktivitas <ChevronRight size={12} />
+                {lang === 'id' ? 'Lihat semua aktivitas' : 'View all activities'} <ChevronRight size={12} />
               </button>
             </div>
 
@@ -1387,7 +1385,7 @@ export default function Dashboard() {
                   {intel.filter(card => card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')).length}
                 </div>
                 <div className="text-xs text-amber-600 flex items-center gap-1 font-semibold bg-amber-50 w-fit px-2 py-0.5 rounded-md">
-                  <Zap size={12} /> Siap IB
+                  <Zap size={12} /> {lang === 'id' ? 'Siap IB' : 'Ready AI'}
                 </div>
               </div>
             </div>
@@ -1405,7 +1403,7 @@ export default function Dashboard() {
                   {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length}
                 </div>
                 <div className="text-xs text-red-600 flex items-center gap-1 font-semibold bg-red-50 w-fit px-2 py-0.5 rounded-md">
-                  <ShieldAlert size={12} /> Cek Sekarang
+                  <ShieldAlert size={12} /> {lang === 'id' ? 'Cek Sekarang' : 'Check Now'}
                 </div>
               </div>
             </div>
@@ -1575,7 +1573,7 @@ export default function Dashboard() {
                 <div className="text-sm text-gray-500 text-center py-4">{lang === 'id' ? 'Belum ada aktivitas hari ini.' : 'No activities today.'}</div>
               </div>
               <button onClick={() => navigate('/ternak')} className="text-xs font-bold text-gray-500 hover:text-gray-900 text-left mt-4 flex items-center gap-1 transition-colors w-max">
-                Lihat semua aktivitas <ChevronRight size={14} />
+                {lang === 'id' ? 'Lihat semua aktivitas' : 'View all activities'} <ChevronRight size={14} />
               </button>
             </div>
 

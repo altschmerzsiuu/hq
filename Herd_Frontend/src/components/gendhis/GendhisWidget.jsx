@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import useSettingsStore from '@/store/settingsStore';
 import { toast } from '@/store/toastStore';
 import { handleError } from '@/lib/errorHandler';
 import { useAuthStore } from '@/store/authStore';
@@ -34,6 +35,7 @@ import PairCollarModal from '@/components/shared/PairCollarModal';
 const API_BASE = import.meta.env.DEV ? '/api' : `${import.meta.env.VITE_API_URL || ''}/api`;
 
 export default function GendhisWidget() {
+  const { lang } = useSettingsStore();
   const navigate = useNavigate();
   const [isFabOpen, setIsFabOpen] = useState(false);
   
@@ -525,9 +527,7 @@ export default function GendhisWidget() {
               onClick={() => { setIsFabOpen(false); setIsAddCowModalOpen(true); }}
               className="relative flex items-center justify-center w-12 h-12 bg-white text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(16,185,129,0.4)]"
             >
-              <span className="absolute right-[120%] bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">
-                Tambah Ternak
-              </span>
+              <span className="absolute right-[120%] bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">{lang === 'id' ? 'Tambah Ternak' : 'Add Cattle'}</span>
               <Plus className="w-5 h-5" />
             </button>
             
@@ -535,9 +535,7 @@ export default function GendhisWidget() {
               onClick={() => { setIsFabOpen(false); setIsReproModalOpen(true); }}
               className="relative flex items-center justify-center w-12 h-12 bg-white text-sky-500 hover:bg-sky-500 hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(14,165,233,0.4)]"
             >
-              <span className="absolute right-[120%] bg-sky-500 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">
-                Tambah Data IB
-              </span>
+              <span className="absolute right-[120%] bg-sky-500 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">{lang === 'id' ? 'Tambah Data IB' : 'Add AI Data'}</span>
               <Syringe className="w-5 h-5" />
             </button>
             
@@ -545,9 +543,7 @@ export default function GendhisWidget() {
               onClick={() => { setIsFabOpen(false); setIsPairModalOpen(true); }}
               className="relative flex items-center justify-center w-12 h-12 bg-white text-[#f97316] hover:bg-[#f97316] hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(249,115,22,0.4)]"
             >
-              <span className="absolute right-[120%] bg-[#f97316] text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">
-                Pasang Kalung
-              </span>
+              <span className="absolute right-[120%] bg-[#f97316] text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">{lang === 'id' ? 'Pasang Kalung' : 'Pair Collar'}</span>
               <Cpu className="w-5 h-5" />
             </button>
 
@@ -562,9 +558,7 @@ export default function GendhisWidget() {
             }}
             className="relative flex items-center justify-center w-12 h-12 bg-white text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(22,163,74,0.4)]"
           >
-            <span className="absolute right-[120%] bg-[var(--accent)] text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">
-              Tanya Gendhis
-            </span>
+            <span className="absolute right-[120%] bg-[var(--accent)] text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">{lang === 'id' ? 'Tanya Gendhis' : 'Ask Gendhis'}</span>
             <MessageCircle className="w-5 h-5" />
           </button>
         </div>
