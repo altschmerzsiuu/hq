@@ -199,15 +199,15 @@ function AnimatedQAButton({ icon: Icon, label, onClick }) {
 // ── TREN AKTIVITAS CHART ─────────────────────────────────────
 const CHART_DATA = {
   Hari: {
-    bars: [30, 55, 70, 45, 80, 60, 40, 90, 50, 65, 75, 35],
+    bars: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     labels: ['06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17'],
   },
   Minggu: {
-    bars: [40, 70, 45, 90, 60, 80, 50],
+    bars: [0, 0, 0, 0, 0, 0, 0],
     labels: ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'],
   },
   Bulan: {
-    bars: [55, 70, 60, 80, 50, 65, 75, 45, 85, 70, 55, 90],
+    bars: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
   },
 };
@@ -216,18 +216,18 @@ function TrenAktivitasChart() {
   const [activeFilter, setActiveFilter] = useState('Minggu');
   const data = CHART_DATA[activeFilter];
   return (
-    <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm min-h-[300px] flex flex-col">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="font-bold text-[var(--text-1)] text-lg">Tren Aktivitas Kawanan</h3>
-        <div className="flex items-center gap-1">
+    <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col flex-1 w-full relative h-full min-h-[320px]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h3 className="font-bold text-[var(--text-1)] text-lg whitespace-nowrap">Tren Aktivitas Kawanan</h3>
+        <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-hide">
           {['Hari', 'Minggu', 'Bulan'].map((filter) => (
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 whitespace-nowrap ${
                 activeFilter === filter
-                  ? 'bg-[var(--color-primary-dim)] text-[var(--color-primary)]'
-                  : 'text-[var(--text-2)] hover:text-[var(--text-1)]'
+                  ? 'bg-[#16A34A] text-white'
+                  : 'text-[var(--text-2)] hover:text-[#16A34A] hover:bg-green-50'
               }`}
             >
               {filter}
@@ -235,15 +235,18 @@ function TrenAktivitasChart() {
           ))}
         </div>
       </div>
-      <div className="flex-1 flex items-end justify-between gap-1.5 px-2 pb-2 h-full mt-4">
-        {data.bars.map((h, i) => (
-          <div key={i} className="flex flex-col items-center gap-2 flex-1 group cursor-pointer">
-            <div className="w-full flex justify-center items-end h-[180px] bg-[var(--bg-surface)] rounded-t-xl relative">
-              <div className="w-full bg-[var(--color-primary)] rounded-t-xl transition-all duration-500 group-hover:opacity-70" style={{ height: `${h}%` }}></div>
+      <div className="flex-1 w-full overflow-x-auto overflow-y-hidden pb-2 custom-scrollbar">
+        <div className="flex items-end justify-between gap-2 px-2 h-[200px] mt-4" style={{ minWidth: data.bars.length > 7 ? '500px' : '100%' }}>
+          {data.bars.map((h, i) => (
+            <div key={i} className="flex flex-col items-center gap-2 flex-1 min-w-[30px] group cursor-pointer h-full justify-end">
+              <span className="text-[10px] sm:text-xs font-bold text-gray-400 group-hover:text-[#16A34A] transition-colors">{h}</span>
+              <div className="w-full max-w-[35px] flex justify-center items-end bg-green-50 rounded-t-xl relative group-hover:bg-green-100 transition-colors" style={{ height: '85%' }}>
+                <div className="w-full bg-[#16A34A] rounded-t-xl transition-all duration-500 group-hover:opacity-80" style={{ height: `${h}%`, minHeight: h === 0 ? '4px' : `${h}%` }}></div>
+              </div>
+              <span className="text-[10px] sm:text-[11px] text-gray-500 font-bold uppercase whitespace-nowrap mt-1">{data.labels[i]}</span>
             </div>
-            <span className="text-[10px] text-[var(--text-3)] font-bold uppercase">{data.labels[i]}</span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -649,7 +652,7 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
     Icon = CheckCircle2;
   } else if (slotType === 'estrus') {
     count = stats.estrus ?? 0;
-    label = lang === 'id' ? 'Sedang estrus' : 'In estrus';
+    label = lang === 'id' ? 'Sedang Birahi' : 'In estrus';
     popoverData = [];
     Icon = Zap;
   } else if (slotType === 'tindakan') {
@@ -922,7 +925,7 @@ export default function Dashboard() {
             let title = prefix;
             switch (item.type?.toLowerCase()) {
               case 'estrus':
-                title += lang === 'id' ? 'Deteksi Birahi (Estrus)' : 'Estrus Detected';
+                title += lang === 'id' ? 'Deteksi Birahi' : 'Estrus Detected';
                 break;
               case 'insemination':
                 title += lang === 'id' ? 'Catatan Inseminasi Buatan' : 'AI Record Logged';
@@ -1161,7 +1164,7 @@ export default function Dashboard() {
                 setIsReproModalOpen(true);
               }} />
               <SquareQAButton icon={Cpu} label="Pasang Kalung" onClick={() => setIsPairModalOpen(true)} />
-              <SquareQAButton icon={Zap} label="Prediksi Estrus" onClick={() => setIsEstrusModalOpen(true)} />
+              <SquareQAButton icon={Zap} label="Prediksi Birahi" onClick={() => setIsEstrusModalOpen(true)} />
             </div>
           </div>
 
@@ -1219,158 +1222,118 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ─── 6. TREN AKTIVITAS KAWANAN ─── */}
-          <div style={{
-            background: 'var(--bg-surface)',
-            border: '0.5px solid var(--border)',
-            borderRadius: '12px',
-            padding: '18px 16px',
-          }}>
-            <p className="eyebrow" style={{ marginBottom: '14px' }}>TREN AKTIVITAS KAWANAN</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              {['Hari', 'Minggu', 'Bulan'].map((f, fi) => (
-                <span key={f} style={{
-                  fontSize: '12px', fontWeight: 700,
-                  color: fi === 1 ? 'var(--color-primary)' : 'var(--text-3)',
-                  padding: '4px 12px',
-                  borderRadius: '999px',
-                  background: fi === 1 ? 'var(--color-primary-dim)' : 'transparent',
-                  cursor: 'pointer',
-                }}>{f}</span>
-              ))}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '80px' }}>
-              {[40, 70, 45, 90, 60, 80, 50].map((h, i) => (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  <div style={{
-                    width: '100%', borderRadius: '4px 4px 0 0',
-                    background: 'var(--color-primary)',
-                    height: `${h * 0.64}px`,
-                    opacity: 0.85,
-                  }} />
-                  <span style={{ fontSize: '9px', color: 'var(--text-3)', fontWeight: 700 }}>
-                    {['Min','Sen','Sel','Rab','Kam','Jum','Sab'][i]}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ─── 7. AKTIVITAS TERKINI ─── */}
-          <div style={{
-            background: 'var(--bg-surface)',
-            border: '0.5px solid var(--border)',
-            borderRadius: '12px',
-            padding: '18px 16px',
-          }}>
-            <p className="eyebrow" style={{ marginBottom: '14px' }}>AKTIVITAS TERKINI</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {[
-                { title: 'Inseminasi Sapi C432A', status: 'Selesai', color: 'var(--color-primary)', time: '2 jam lalu' },
-                { title: 'Pemeriksaan Kesehatan', status: 'Proses', color: 'var(--amber)', time: '4 jam lalu' },
-                { title: 'Anomali Suhu Terdeteksi', status: 'Tertunda', color: 'var(--red)', time: '5 jam lalu' },
-              ].map((act, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '36px', height: '36px', borderRadius: '50%',
-                    background: 'var(--bg-card)', border: '0.5px solid var(--border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, color: 'var(--text-3)',
-                  }}>
-                    <Activity size={15} />
+          {/* ─── 6. MOBILE WIDGETS ─── */}
+          <div className="flex flex-col gap-4 mb-4">
+            {/* Ringkasan Birahi (Donut) */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col items-center">
+              <h3 className="font-bold text-[var(--text-1)] text-[15px] mb-4 self-start w-full">Ringkasan Birahi</h3>
+              <p className="text-xs text-gray-500 self-start -mt-3 mb-3">7 hari terakhir</p>
+              <div className="flex w-full items-center gap-4">
+                <div className="relative w-24 h-24 flex-shrink-0">
+                  <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="12" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 1) / Math.max(sapiList.length, 1))} strokeLinecap="round" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-1)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{act.title}</p>
-                    <p style={{ fontSize: '11px', color: 'var(--text-3)', margin: '2px 0 0 0' }}>{act.time}</p>
-                  </div>
-                  <span style={{
-                    fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
-                    padding: '3px 8px', borderRadius: '6px',
-                    color: act.color, background: `${act.color}1A`,
-                  }}>{act.status}</span>
                 </div>
-              ))}
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-[#16A34A] rounded-sm"></div> Birahi</div>
+                    <span className="font-medium">{stats.estrus || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-blue-300 rounded-sm"></div> Tidak Birahi</div>
+                    <span className="font-medium">{Math.max((sapiList.length || 0) - (stats.estrus || 0), 0)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-gray-300 rounded-sm"></div> Tidak Terdeteksi</div>
+                    <span className="font-medium">0</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* ─── 8. STATUS POPULASI + KONDISI IoT ─── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
+            {/* Prediksi Birahi */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
+              <div className="flex justify-between items-center mb-1">
+                <h3 className="font-bold text-[var(--text-1)] text-[15px]">Prediksi Birahi</h3>
+              </div>
+              <p className="text-[11px] text-gray-500 mb-4">(3 Hari ke Depan)</p>
+              
+              <div className="flex flex-col gap-3">
+                {activeEstrusPredictions.length > 0 ? activeEstrusPredictions.slice(0, 3).map((pred, i) => (
+                  <div key={i} className="flex justify-between items-center border-b border-gray-100 pb-2.5 last:border-0 last:pb-0">
+                    <span className="text-[13px] font-bold text-gray-900">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
+                    <span className="text-[12px] text-gray-600">Hari ke-{i + 1}</span>
+                    <span className="text-[12px] font-medium text-gray-900">{Math.round((pred.confidence_final || 0.8) * 100)}%</span>
+                  </div>
+                )) : (
+                  <div className="text-[12px] text-gray-500 text-center py-2">Tidak ada prediksi terdekat.</div>
+                )}
+              </div>
+              <button onClick={() => navigate('/prediksi-estrus')} className="text-[11px] font-bold text-gray-500 hover:text-gray-900 text-left mt-3 flex items-center gap-1 w-max">
+                Lihat semua <ChevronRight size={12} />
+              </button>
+            </div>
+
             {/* Status Populasi */}
-            <div style={{
-              background: 'var(--bg-surface)',
-              border: '0.5px solid var(--border)',
-              borderRadius: '12px',
-              padding: '16px 14px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '10px' }}>
-                <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-1)', margin: 0 }}>Status Populasi</p>
-                <button
-                  onClick={() => navigate('/sensor-data')}
-                  style={{
-                    width: '24px', height: '24px', borderRadius: '50%',
-                    background: 'var(--color-primary-dim)', border: 'none', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  <ChevronRight size={13} style={{ color: 'var(--color-primary)' }} />
-                </button>
-              </div>
-              <div style={{ position: 'relative', width: '80px', height: '80px' }}>
-                <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-card)" strokeWidth="16" />
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset="50" strokeLinecap="round" />
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="16" strokeDasharray="251.2" strokeDashoffset="200" strokeLinecap="round" />
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col items-center">
+              <h3 className="font-bold text-[var(--text-1)] text-[15px] self-start w-full">Status Populasi</h3>
+              <div className="relative w-32 h-32 flex items-center justify-center mt-2">
+                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="14" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="50" strokeLinecap="round" className="opacity-90" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="200" strokeLinecap="round" />
                 </svg>
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '16px', fontWeight: 900, color: 'var(--text-1)', lineHeight: 1 }}>80%</span>
-                  <span style={{ fontSize: '8px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginTop: '2px' }}>Sehat</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center mt-1">
+                  <span className="text-2xl font-black leading-none text-[var(--text-1)]">80%</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">Sehat</span>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--color-primary)', display: 'inline-block' }} />Sehat
-                </span>
-                <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--amber)', display: 'inline-block' }} />Monitor
-                </span>
+              <div className="flex gap-3 mt-4 w-full justify-center">
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--color-primary)]"></div> Sehat</div>
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--amber)]"></div> Monitor</div>
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--border)]"></div> Sakit</div>
               </div>
             </div>
 
-            {/* Kondisi IoT */}
-            <div style={{
-              borderRadius: '12px',
-              padding: '16px 14px',
-              background: 'linear-gradient(145deg, #022C22 0%, #064E3B 100%)',
-              display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-              position: 'relative', overflow: 'hidden',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <div>
-                  <p style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(167,243,208,0.8)', margin: 0 }}>Kondisi Kandang</p>
-                  <p style={{ fontSize: '8px', color: 'rgba(167,243,208,0.5)', margin: '2px 0 0 0' }}>IoT · Baru saja</p>
+            {/* Kondisi Kandang (IoT) */}
+            <div className="rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col min-h-[220px]" style={{ background: 'linear-gradient(145deg, #022C22 0%, #064E3B 100%)' }}>
+              <div className="absolute top-0 right-0 p-4">
+                <ThermometerSun size={24} className="text-emerald-400 opacity-80" />
+              </div>
+              <h3 className="font-semibold text-emerald-100 mb-0.5 text-[13px] z-10 opacity-90">Kondisi Kandang (IoT)</h3>
+              <p className="text-[11px] text-emerald-200/70 mb-auto z-10 font-medium">Terakhir diperbarui: {stats.lastSync}</p>
+
+              <div className="mt-6 z-10 relative">
+                <div className="text-[40px] font-black text-white leading-none tracking-tight flex items-start gap-1">
+                  {stats.avgTemp || '--'}<span className="text-xl mt-1 text-emerald-200">°C</span>
                 </div>
-                <button
-                  onClick={() => navigate('/sensor-data')}
-                  style={{
-                    width: '24px', height: '24px', borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  <ChevronRight size={13} style={{ color: '#fff' }} />
-                </button>
               </div>
-              <div style={{ fontSize: '30px', fontWeight: 900, color: '#fff', lineHeight: 1 }}>
-                28.4<span style={{ fontSize: '14px', color: '#6ee7b7', marginLeft: '2px' }}>°C</span>
+
+              <svg className="absolute bottom-0 left-0 right-0 w-full opacity-40 text-emerald-500 pointer-events-none" viewBox="0 0 100 40" preserveAspectRatio="none" style={{ height: '50%' }}>
+                <path fill="currentColor" d="M0 40 C 20 20, 40 40, 60 20 C 80 0, 100 20, 100 40 Z" />
+                <path fill="currentColor" d="M0 40 C 30 10, 60 30, 100 10 L 100 40 Z" className="opacity-50" />
+              </svg>
+            </div>
+
+            {/* Aktivitas Terbaru */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
+              <h3 className="font-bold text-[var(--text-1)] text-[15px] mb-4">Aktivitas Terbaru</h3>
+              <div className="flex flex-col gap-4">
+                <div className="text-[12px] text-gray-500 text-center py-2">Belum ada aktivitas hari ini.</div>
               </div>
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                background: 'rgba(0,0,0,0.3)', borderRadius: '8px',
-                padding: '4px 10px', marginTop: '8px', width: 'fit-content',
-              }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }} />
-                <span style={{ fontSize: '10px', fontWeight: 700, color: '#d1fae5' }}>RH 65%</span>
+              <button onClick={() => navigate('/ternak')} className="text-[11px] font-bold text-gray-500 hover:text-gray-900 text-left mt-4 flex items-center gap-1 w-max">
+                Lihat semua aktivitas <ChevronRight size={12} />
+              </button>
+            </div>
+
+            {/* Grafik Tren Aktivitas Kawanan */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col overflow-hidden">
+              <div className="relative overflow-hidden -mx-4 -my-4 sm:-mx-5 sm:-my-5" style={{ minHeight: '220px' }}>
+                <TrenAktivitasChart />
               </div>
             </div>
           </div>
@@ -1392,8 +1355,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ROW 1: 4 STAT CARDS */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* ROW 1: 3 STAT CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Card 1: Total */}
             <div className="bg-[var(--color-primary)] text-white p-5 rounded-2xl flex flex-col justify-between shadow-lg relative overflow-hidden h-[140px]">
               <div className="flex justify-between items-start relative z-10">
@@ -1411,28 +1374,10 @@ export default function Dashboard() {
               <Sun size={140} strokeWidth={1} className="absolute -bottom-10 -right-10 text-white opacity-10 rotate-12" />
             </div>
 
-            {/* Card 2: Sehat */}
-            <div className="bg-white border border-[var(--border)] p-5 rounded-2xl flex flex-col justify-between shadow-sm h-[140px]">
-              <div className="flex justify-between items-start">
-                <span className="font-semibold text-sm text-[var(--text-2)]">Kondisi Sehat</span>
-                <div className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg-surface)] cursor-pointer">
-                  <ChevronRight size={16} />
-                </div>
-              </div>
-              <div>
-                <div className="text-[32px] font-black leading-none mb-1 text-[var(--text-1)]">
-                  {sapiList.filter(s => s.status_kesehatan === 'Sehat').length}
-                </div>
-                <div className="text-xs text-[var(--color-primary)] flex items-center gap-1 font-semibold bg-[var(--color-primary-dim)] w-fit px-2 py-0.5 rounded-md">
-                  <Activity size={12} /> Stabil & Aktif
-                </div>
-              </div>
-            </div>
-
             {/* Card 3: Estrus */}
             <div className="bg-white border border-[var(--border)] p-5 rounded-2xl flex flex-col justify-between shadow-sm h-[140px]">
               <div className="flex justify-between items-start">
-                <span className="font-semibold text-sm text-[var(--text-2)]">Sedang Estrus</span>
+                <span className="font-semibold text-sm text-[var(--text-2)]">Sedang Birahi</span>
                 <div className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg-surface)] cursor-pointer" onClick={() => setIsEstrusModalOpen(true)}>
                   <ChevronRight size={16} />
                 </div>
@@ -1520,45 +1465,67 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ROW 3: TREN AKTIVITAS — full width */}
-          <div className="grid grid-cols-1 gap-4 mt-4" style={{ gridTemplateColumns: '1fr' }}>
-            <TrenAktivitasChart />
-          </div>
-
-          {/* ROW 3: COLLAB, PROGRESS, IOT */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 mb-8">
-            {/* Timeline / Collaboration */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-[var(--text-1)] text-lg">Aktivitas Terkini</h3>
-                <button className="text-xs font-bold text-[var(--color-primary)] px-3 py-1.5 bg-[var(--color-primary-dim)] rounded-full hover:bg-[var(--color-primary)] hover:text-white transition-all">Lihat Semua</button>
-              </div>
-              <div className="flex flex-col gap-5 flex-1 justify-center">
-                {[
-                  { title: 'Inseminasi Sapi C432A', status: 'Selesai', color: 'var(--color-primary)', time: '2 jam lalu' },
-                  { title: 'Pemeriksaan Kesehatan', status: 'Proses', color: 'var(--amber)', time: '4 jam lalu' },
-                  { title: 'Anomali Suhu Terdeteksi', status: 'Tertunda', color: 'var(--red)', time: '5 jam lalu' },
-                ].map((act, i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 text-gray-400 shadow-sm">
-                      <Activity size={16} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-[var(--text-1)] truncate">{act.title}</p>
-                      <p className="text-[11px] font-medium text-[var(--text-3)] mt-0.5">{act.time}</p>
-                    </div>
-                    <span className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-md" style={{ color: act.color, background: `${act.color}1A`, fontWeight: 800 }}>
-                      {act.status}
-                    </span>
+          {/* ROW 3: ESTRUS SUMMARY & PREDICTION & POPULATION */}
+          <div className="grid grid-cols-1 lg:grid-cols-[4fr_3fr_3fr] gap-4 mt-4">
+            {/* Ringkasan Birahi (Donut) */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col items-center">
+              <h3 className="font-bold text-[var(--text-1)] text-lg mb-6 self-start w-full">Ringkasan Birahi</h3>
+              <p className="text-xs text-gray-500 self-start -mt-5 mb-4">7 hari terakhir</p>
+              <div className="flex w-full items-center gap-6">
+                <div className="relative w-32 h-32 flex-shrink-0">
+                  <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="12" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 1) / Math.max(sapiList.length, 1))} strokeLinecap="round" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
+                    <span className="text-[9px] font-bold text-gray-500 mt-1">Sapi Birahi</span>
                   </div>
-                ))}
+                </div>
+                <div className="flex flex-col gap-3 w-full">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-[#16A34A] rounded-sm"></div> Birahi</div>
+                    <span className="font-medium">{stats.estrus || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-300 rounded-sm"></div> Tidak Birahi</div>
+                    <span className="font-medium">{Math.max((sapiList.length || 0) - (stats.estrus || 0), 0)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-gray-300 rounded-sm"></div> Tidak Terdeteksi</div>
+                    <span className="font-medium">0</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Progress / Doughnut */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col items-center">
-              <h3 className="font-bold text-[var(--text-1)] text-lg mb-6 self-start w-full">Status Populasi</h3>
-              <div className="relative w-44 h-44 flex items-center justify-center">
+            {/* Prediksi Birahi */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col">
+              <div className="flex justify-between items-center mb-1">
+                <h3 className="font-bold text-[var(--text-1)] text-lg">Prediksi Birahi</h3>
+              </div>
+              <p className="text-xs text-gray-500 mb-6">(3 Hari ke Depan)</p>
+              
+              <div className="flex flex-col gap-4 flex-1">
+                {activeEstrusPredictions.length > 0 ? activeEstrusPredictions.slice(0, 3).map((pred, i) => (
+                  <div key={i} className="flex justify-between items-center border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                    <span className="text-sm font-bold text-gray-900">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
+                    <span className="text-sm text-gray-600">Hari ke-{i + 1}</span>
+                    <span className="text-sm font-medium text-gray-900">{Math.round((pred.confidence_final || 0.8) * 100)}%</span>
+                  </div>
+                )) : (
+                  <div className="text-sm text-gray-500 text-center py-4">Tidak ada prediksi terdekat.</div>
+                )}
+              </div>
+              <button onClick={() => navigate('/prediksi-estrus')} className="text-xs font-bold text-gray-500 hover:text-gray-900 text-left mt-auto flex items-center gap-1 transition-colors w-max">
+                Lihat semua <ChevronRight size={14} />
+              </button>
+            </div>
+
+            {/* Status Populasi */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col items-center justify-between">
+              <h3 className="font-bold text-[var(--text-1)] text-lg self-start w-full">Status Populasi</h3>
+              <div className="relative w-40 h-40 flex items-center justify-center mt-2">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="14" />
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset="50" strokeLinecap="round" className="opacity-90" />
@@ -1569,38 +1536,54 @@ export default function Dashboard() {
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">Sehat</span>
                 </div>
               </div>
-              <div className="flex gap-4 mt-auto w-full justify-center pb-2">
+              <div className="flex gap-4 mt-6 w-full justify-center pb-2">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]"></div> Sehat</div>
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--amber)]"></div> Monitor</div>
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--border)]"></div> Sakit</div>
               </div>
             </div>
+          </div>
 
-            {/* Time Tracker / Environment Widget */}
+          {/* ROW 4: KONDISI KANDANG & AKTIVITAS & GRAFIK */}
+          <div className="grid grid-cols-1 lg:grid-cols-[3fr_3fr_4fr] gap-4 mt-4 mb-8">
+            {/* Kondisi Kandang (IoT) */}
             <div className="rounded-2xl p-6 shadow-lg relative overflow-hidden flex flex-col min-h-[260px]" style={{ background: 'linear-gradient(145deg, #022C22 0%, #064E3B 100%)' }}>
               <div className="absolute top-0 right-0 p-5">
                 <ThermometerSun size={28} className="text-emerald-400 opacity-80" />
               </div>
               <h3 className="font-semibold text-emerald-100 mb-1 text-sm z-10 opacity-90">Kondisi Kandang (IoT)</h3>
-              <p className="text-xs text-emerald-200/70 mb-auto z-10 font-medium">Terakhir diperbarui: Baru saja</p>
+              <p className="text-xs text-emerald-200/70 mb-auto z-10 font-medium">Terakhir diperbarui: {stats.lastSync}</p>
 
               <div className="mt-8 z-10 relative">
                 <div className="text-[48px] font-black text-white leading-none tracking-tight flex items-start gap-1">
-                  28.4<span className="text-2xl mt-1 text-emerald-200">°C</span>
-                </div>
-                <div className="flex gap-3 mt-4">
-                  <div className="bg-black/30 backdrop-blur-md rounded-xl px-4 py-2.5 flex items-center gap-2 border border-white/10 shadow-sm">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                    <span className="text-xs font-bold tracking-wide text-emerald-50">RH 65%</span>
-                  </div>
+                  {stats.avgTemp || '--'}<span className="text-2xl mt-1 text-emerald-200">°C</span>
                 </div>
               </div>
 
-              {/* Abstract green waves in background */}
               <svg className="absolute bottom-0 left-0 right-0 w-full opacity-40 text-emerald-500 pointer-events-none" viewBox="0 0 100 40" preserveAspectRatio="none" style={{ height: '60%' }}>
                 <path fill="currentColor" d="M0 40 C 20 20, 40 40, 60 20 C 80 0, 100 20, 100 40 Z" />
                 <path fill="currentColor" d="M0 40 C 30 10, 60 30, 100 10 L 100 40 Z" className="opacity-50" />
               </svg>
+            </div>
+
+            {/* Aktivitas Terbaru */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-[var(--text-1)] text-lg">Aktivitas Terbaru</h3>
+              </div>
+              <div className="flex flex-col gap-5 flex-1">
+                <div className="text-sm text-gray-500 text-center py-4">Belum ada aktivitas hari ini.</div>
+              </div>
+              <button onClick={() => navigate('/ternak')} className="text-xs font-bold text-gray-500 hover:text-gray-900 text-left mt-4 flex items-center gap-1 transition-colors w-max">
+                Lihat semua aktivitas <ChevronRight size={14} />
+              </button>
+            </div>
+
+            {/* Grafik Tren Aktivitas Kawanan */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col overflow-hidden h-full">
+              <div className="h-full relative overflow-hidden -mx-4 -my-4 sm:-mx-6 sm:-my-6" style={{ minHeight: '250px' }}>
+                <TrenAktivitasChart />
+              </div>
             </div>
           </div>
 

@@ -25,6 +25,7 @@ import {
   Wifi,
   Zap,
   HelpCircle,
+  Headphones,
   Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,7 +49,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
     location.pathname.includes('/ternak') ||
     location.pathname.includes('/sensor-data')
   );
-  
+
   // Mobile Profile Ref
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileRef = useRef(null);
@@ -435,14 +436,14 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
       {/* =========================================================================
           DESKTOP VIEW SECTION - BRAND NEW BULKY DONEZO STYLE (HOVER TO EXPAND)
           ========================================================================= */}
-      <div 
+      <div
         onMouseEnter={() => setIsCollapsed(false)}
         onMouseLeave={() => setIsCollapsed(true)}
         className={cn(
-        "hidden lg:flex flex-shrink-0 bg-white border border-[#E5E7EB] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-col relative transition-all duration-300 ml-4 my-4 rounded-[24px] overflow-hidden",
-        isCollapsed ? "w-[88px]" : "w-[240px] xl:w-[260px]"
-      )}>
-        
+          "hidden lg:flex flex-shrink-0 bg-white border border-[#E5E7EB] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-col relative transition-all duration-300 ml-4 my-4 rounded-[24px] overflow-hidden",
+          isCollapsed ? "w-[88px]" : "w-[240px] xl:w-[260px]"
+        )}>
+
         {/* Top Branding (Logo) */}
         <div className={cn(
           "flex items-center pt-8 pb-6 transition-all",
@@ -464,7 +465,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
 
         {/* Scrollable Navigation */}
         <div className={cn("flex-1 overflow-y-auto pb-6 flex flex-col gap-6 no-scrollbar z-40", isCollapsed ? "px-4 mt-2" : "px-6")}>
-          
+
           {/* MENU Section */}
           <div className="flex flex-col gap-1.5">
             {!isCollapsed && (
@@ -511,11 +512,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
             ))}
           </div>
         </div>
-
-
-
       </div>
-
     </>
   );
 }

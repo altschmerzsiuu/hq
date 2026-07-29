@@ -118,7 +118,7 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
           </p>
           <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--text-3)' }}>
             {lang === 'id'
-              ? 'Prediksi Estrus tidak relevan saat sapi sedang bunting. Fitur ini akan otomatis terbuka setelah sapi melahirkan atau status berubah.'
+              ? 'Prediksi Birahi tidak relevan saat sapi sedang bunting. Fitur ini akan otomatis terbuka setelah sapi melahirkan atau status berubah.'
               : 'Estrus prediction is not relevant while pregnant. This feature will unlock after calving or when status changes.'}
           </p>
           {estCalving && (
@@ -140,7 +140,7 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
       <div className="flex flex-col items-center justify-center h-48 space-y-4">
         <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--color-primary)' }} />
         <p className="text-sm" style={{ color: 'var(--text-2)' }}>
-          {lang === 'id' ? 'Memuat prediksi estrus...' : 'Loading estrus prediction...'}
+          {lang === 'id' ? 'Memuat prediksi birahi...' : 'Loading estrus prediction...'}
         </p>
       </div>
     );
@@ -167,10 +167,10 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
             <BrainCircuit size={40} className="text-blue-500" />
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">
-            {lang === 'id' ? 'Belum Ada Prediksi Estrus' : 'No Estrus Prediction Yet'}
+            {lang === 'id' ? 'Belum Ada Prediksi Birahi' : 'No Estrus Prediction Yet'}
           </h3>
           <p className="text-gray-500 max-w-sm mb-8 leading-relaxed">
-            {lang === 'id' ? 'Jalankan AI untuk menganalisis siklus estrus sapi ini berdasarkan data historis dan sensor.' : 'Run AI to analyze this cow\'s estrus cycle based on historical and sensor data.'}
+            {lang === 'id' ? 'Jalankan AI untuk menganalisis siklus birahi sapi ini berdasarkan data historis dan sensor.' : 'Run AI to analyze this cow\'s estrus cycle based on historical and sensor data.'}
           </p>
           <button
             onClick={handleRunPredict}
@@ -300,7 +300,7 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-900">Siklus Berjalan (Aktif)</p>
-                    <p className="text-xs text-gray-500 font-medium mt-0.5">Sapi dalam fase {prediction.in_window_now ? 'Estrus (Subur)' : 'Diestrus (Tidak Subur)'}.</p>
+                    <p className="text-xs text-gray-500 font-medium mt-0.5">Sapi dalam fase {prediction.in_window_now ? 'Birahi (Subur)' : 'Diestrus (Tidak Subur)'}.</p>
                   </div>
                 </div>
 

@@ -230,23 +230,46 @@ export default function EstrusPrediction() {
 
       {/* ── STAT SUMMARY CARDS ────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: t.prediction_total_cows,     value: predictions.length, color: 'var(--text-1)',   icon: Target },
-          { label: t.prediction_estrus_now,value: countByType('estrus'),       color: 'var(--red)',   icon: AlertCircle  },
-          { label: t.prediction_approaching,      value: countByType('pre-estrus'),   color: 'var(--amber)', icon: Clock        },
-          { label: t.prediction_in_window,   value: inWindowNow,                 color: 'var(--blue)',  icon: CalendarClock },
-        ].map(({ label, value, color, icon: Icon }) => (
-          <div
-            key={label}
-            style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: '16px', padding: '20px', boxShadow: 'var(--shadow-card)' }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</p>
-              <Icon style={{ width: 16, height: 16, color }} />
-            </div>
-            <p style={{ fontSize: '28px', fontWeight: 800, color, fontFamily: 'DM Sans, sans-serif', lineHeight: 1 }}>{value}</p>
+        {/* Card 1: Sapi Dalam Pemantauan */}
+        <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
+          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">Sapi Dalam Pemantauan</p>
+          <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">{predictions.length}</p>
+          <p className="text-[10px] font-medium text-[var(--text-3)]">Terhubung sensor</p>
+        </div>
+
+        {/* Card 2: Terdeteksi Birahi */}
+        <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
+          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">Terdeteksi Birahi</p>
+          <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">{countByType('estrus')}</p>
+          <p className="text-[10px] font-medium text-[var(--text-3)]">Hari ini</p>
+        </div>
+
+        {/* Card 3: Akurasi Sistem */}
+        <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
+          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">Akurasi Sistem</p>
+          <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">
+            {predictions.some(p => p.verified !== null && p.verified !== undefined) ? 
+              `${Math.round((predictions.filter(p => p.verified === true).length / predictions.filter(p => p.verified !== null && p.verified !== undefined).length) * 100)}%` 
+              : '-'}
+          </p>
+          <p className="text-[10px] font-medium text-gray-400 flex items-center gap-1">
+            Berdasarkan konfirmasi
+          </p>
+        </div>
+
+        {/* Card 4: Rata-rata Siklus */}
+        <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
+          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">Rata-rata Siklus</p>
+          <div className="flex items-baseline gap-1 mb-2">
+            <p className="text-[28px] font-black text-[var(--text-1)] leading-none">
+              {predictions.some(p => p.cycle_length) ? 
+                (predictions.filter(p => p.cycle_length).reduce((a, b) => a + b.cycle_length, 0) / predictions.filter(p => p.cycle_length).length).toFixed(1) 
+                : '-'}
+            </p>
+            <span className="text-[14px] font-bold text-[var(--text-1)]">Hari</span>
           </div>
-        ))}
+          <p className="text-[10px] font-medium text-[var(--text-3)]">Riwayat data estrus</p>
+        </div>
       </div>
 
       {/* ── MAIN GRID ─────────────────────────────────────────────────────── */}
@@ -390,7 +413,7 @@ export default function EstrusPrediction() {
               {/* Status Filters - Only show in Active Tab */}
               {activeTab === 'aktif' && [
                 { value: 'all',        label: t.prediction_filter_all },
-                { value: 'estrus',     label: 'Estrus', dot: 'var(--red)' },
+                { value: 'estrus',     label: 'Birahi', dot: 'var(--red)' },
                 { value: 'pre-estrus', label: 'Dekat',  dot: 'var(--amber)' },
                 { value: 'normal',     label: 'Normal', dot: 'var(--green)' },
               ].map(opt => (
