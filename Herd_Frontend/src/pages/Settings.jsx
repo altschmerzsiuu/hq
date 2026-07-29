@@ -736,7 +736,7 @@ export default function Settings() {
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
             <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-4 md:px-0">
-              <div className="relative flex items-center justify-center mb-6 h-10 w-full max-w-lg">
+              <div className="relative flex items-center justify-center mb-6 h-10 w-full md:max-w-lg">
                 <button type="button" onClick={() => handleBackNavigation('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
@@ -747,7 +747,7 @@ export default function Settings() {
                   </button>
                 </div>
               </div>
-              <div className="w-full max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm">
+              <div className="w-full md:max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
                   <h2 className="text-lg font-bold text-gray-900 font-display flex items-center gap-2">
                     <Key className="w-5 h-5 text-[#2f7d31]" />
@@ -808,8 +808,6 @@ export default function Settings() {
                 <h2 className="text-xl font-bold text-[var(--text-1)] font-display">{t.settings_team_title}</h2>
                 <p className="text-sm text-[var(--text-2)] mt-1">{t.settings_team_desc}</p>
               </div>
-              {/* Mobile subtitle */}
-              <p className="md:hidden text-xs text-[var(--text-2)] mt-1 mb-1">{t.settings_team_desc}</p>
 
               {/* ── Invite form ── */}
               <form onSubmit={handleInviteTeam} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm space-y-4">
@@ -940,13 +938,13 @@ export default function Settings() {
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'appearance' && (
             <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-4 md:px-0">
-              <div className="w-full max-w-lg mb-4 relative flex items-center">
+              <div className="w-full md:max-w-lg mb-4 relative flex items-center">
                 <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="w-full text-center text-lg font-bold text-gray-900">{lang === 'id' ? 'Tampilan' : 'Appearance'}</h2>
               </div>
-              <div className="w-full max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm space-y-6">
+              <div className="w-full md:max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm space-y-6">
                 
                 {/* Theme Setting */}
                 <div>
@@ -1010,7 +1008,7 @@ export default function Settings() {
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'help' && (
             <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-4 md:px-0">
-              <div className="w-full max-w-3xl mb-4 relative flex items-center">
+              <div className="w-full md:max-w-3xl mb-4 relative flex items-center">
                 <button type="button" onClick={() => {
                   if (helpView !== 'menu') setHelpView('menu');
                   else setActiveTab('main');
@@ -1023,7 +1021,7 @@ export default function Settings() {
                   {helpView === 'contact' ? (lang === 'id' ? 'Hubungi Kami' : 'Contact Us') : ''}
                 </h2>
               </div>
-              <div className="w-full max-w-3xl">
+              <div className="w-full md:max-w-3xl">
                 
                 {/* 1. Main Help View */}
                 {helpView === 'menu' && (
