@@ -232,21 +232,21 @@ export default function EstrusPrediction() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Sapi Dalam Pemantauan */}
         <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">Sapi Dalam Pemantauan</p>
+          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">{lang === 'id' ? 'Sapi Dalam Pemantauan' : 'Cows Monitored'}</p>
           <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">{predictions.length}</p>
-          <p className="text-[10px] font-medium text-[var(--text-3)]">Terhubung sensor</p>
+          <p className="text-[10px] font-medium text-[var(--text-3)]">{lang === 'id' ? 'Terhubung sensor' : 'Sensors Connected'}</p>
         </div>
 
         {/* Card 2: Terdeteksi Birahi */}
         <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">Terdeteksi Birahi</p>
+          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">{lang === 'id' ? 'Terdeteksi Birahi' : 'Estrus Detected'}</p>
           <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">{countByType('estrus')}</p>
-          <p className="text-[10px] font-medium text-[var(--text-3)]">Hari ini</p>
+          <p className="text-[10px] font-medium text-[var(--text-3)]">{lang === 'id' ? 'Hari ini' : 'Today'}</p>
         </div>
 
         {/* Card 3: Akurasi Sistem */}
         <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">Akurasi Sistem</p>
+          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">{lang === 'id' ? 'Akurasi Sistem' : 'System Accuracy'}</p>
           <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">
             {predictions.some(p => p.verified !== null && p.verified !== undefined) ? 
               `${Math.round((predictions.filter(p => p.verified === true).length / predictions.filter(p => p.verified !== null && p.verified !== undefined).length) * 100)}%` 
@@ -259,14 +259,14 @@ export default function EstrusPrediction() {
 
         {/* Card 4: Rata-rata Siklus */}
         <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">Rata-rata Siklus</p>
+          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">{lang === 'id' ? 'Rata-rata Siklus' : 'Average Cycle'}</p>
           <div className="flex items-baseline gap-1 mb-2">
             <p className="text-[28px] font-black text-[var(--text-1)] leading-none">
               {predictions.some(p => p.cycle_length) ? 
                 (predictions.filter(p => p.cycle_length).reduce((a, b) => a + b.cycle_length, 0) / predictions.filter(p => p.cycle_length).length).toFixed(1) 
                 : '-'}
             </p>
-            <span className="text-[14px] font-bold text-[var(--text-1)]">Hari</span>
+            <span className="text-[14px] font-bold text-[var(--text-1)]">{lang === 'id' ? 'Hari' : 'Days'}</span>
           </div>
           <p className="text-[10px] font-medium text-[var(--text-3)]">Riwayat data estrus</p>
         </div>

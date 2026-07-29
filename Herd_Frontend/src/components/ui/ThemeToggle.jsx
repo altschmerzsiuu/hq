@@ -2,20 +2,25 @@
 // Uiverse.io jubayer-10 toggle — converted to React (MP-3 §12)
 
 import useSettingsStore from '@/store/settingsStore';
+import { toast } from '@/store/toastStore';
 
 export default function ThemeToggle() {
-  const { theme, toggleTheme } = useSettingsStore();
+  const { theme, toggleTheme, language } = useSettingsStore();
   const isDark = theme === 'dark';
 
-  const handleChange = () => toggleTheme();
+  const handleChange = (e) => {
+    e.preventDefault();
+    const msg = language === 'id' ? 'Mode Gelap masih dalam tahap pengembangan 🚧' : 'Dark Mode is still under development 🚧';
+    toast.info(msg);
+  };
 
   return (
-    <label className="tog-label" title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+    <label className="tog-label" title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'} onClick={handleChange}>
       <input
         type="checkbox"
         className="tog-input"
         checked={isDark}   /* checked = dark mode */
-        onChange={handleChange}
+        readOnly
       />
       <div className="tog-track">
         <div className="tog-thumb" />

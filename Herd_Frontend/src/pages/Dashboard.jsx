@@ -1226,7 +1226,7 @@ export default function Dashboard() {
           <div className="flex flex-col gap-4 mb-4">
             {/* Ringkasan Birahi (Donut) */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col items-center">
-              <h3 className="font-bold text-[var(--text-1)] text-[15px] mb-4 self-start w-full">Ringkasan Birahi</h3>
+              <h3 className="font-bold text-[var(--text-1)] text-[15px] mb-4 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
               <p className="text-xs text-gray-500 self-start -mt-3 mb-3">7 hari terakhir</p>
               <div className="flex w-full items-center gap-4">
                 <div className="relative w-24 h-24 flex-shrink-0">
@@ -1240,15 +1240,15 @@ export default function Dashboard() {
                 </div>
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex items-center justify-between text-[11px]">
-                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-[#16A34A] rounded-sm"></div> Birahi</div>
+                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-[#16A34A] rounded-sm"></div>{lang === 'id' ? ' Birahi' : ' In Estrus'}</div>
                     <span className="font-medium">{stats.estrus || 0}</span>
                   </div>
                   <div className="flex items-center justify-between text-[11px]">
-                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-blue-300 rounded-sm"></div> Tidak Birahi</div>
+                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-blue-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Birahi' : ' Not in Estrus'}</div>
                     <span className="font-medium">{Math.max((sapiList.length || 0) - (stats.estrus || 0), 0)}</span>
                   </div>
                   <div className="flex items-center justify-between text-[11px]">
-                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-gray-300 rounded-sm"></div> Tidak Terdeteksi</div>
+                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-gray-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Terdeteksi' : ' Undetected'}</div>
                     <span className="font-medium">0</span>
                   </div>
                 </div>
@@ -1258,7 +1258,7 @@ export default function Dashboard() {
             {/* Prediksi Birahi */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
               <div className="flex justify-between items-center mb-1">
-                <h3 className="font-bold text-[var(--text-1)] text-[15px]">Prediksi Birahi</h3>
+                <h3 className="font-bold text-[var(--text-1)] text-[15px]">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
               </div>
               <p className="text-[11px] text-gray-500 mb-4">(3 Hari ke Depan)</p>
               
@@ -1280,7 +1280,7 @@ export default function Dashboard() {
 
             {/* Status Populasi */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col items-center">
-              <h3 className="font-bold text-[var(--text-1)] text-[15px] self-start w-full">Status Populasi</h3>
+              <h3 className="font-bold text-[var(--text-1)] text-[15px] self-start w-full">{lang === 'id' ? 'Status Populasi' : 'Population Status'}</h3>
               <div className="relative w-32 h-32 flex items-center justify-center mt-2">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="14" />
@@ -1304,7 +1304,7 @@ export default function Dashboard() {
               <div className="absolute top-0 right-0 p-4">
                 <ThermometerSun size={24} className="text-emerald-400 opacity-80" />
               </div>
-              <h3 className="font-semibold text-emerald-100 mb-0.5 text-[13px] z-10 opacity-90">Kondisi Kandang (IoT)</h3>
+              <h3 className="font-semibold text-emerald-100 mb-0.5 text-[13px] z-10 opacity-90">{lang === 'id' ? 'Kondisi Kandang (IoT)' : 'Farm Condition (IoT)'}</h3>
               <p className="text-[11px] text-emerald-200/70 mb-auto z-10 font-medium">Terakhir diperbarui: {stats.lastSync}</p>
 
               <div className="mt-6 z-10 relative">
@@ -1321,7 +1321,7 @@ export default function Dashboard() {
 
             {/* Aktivitas Terbaru */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-              <h3 className="font-bold text-[var(--text-1)] text-[15px] mb-4">Aktivitas Terbaru</h3>
+              <h3 className="font-bold text-[var(--text-1)] text-[15px] mb-4">{lang === 'id' ? 'Aktivitas Terbaru' : 'Recent Activities'}</h3>
               <div className="flex flex-col gap-4">
                 <div className="text-[12px] text-gray-500 text-center py-2">Belum ada aktivitas hari ini.</div>
               </div>
@@ -1377,7 +1377,7 @@ export default function Dashboard() {
             {/* Card 3: Estrus */}
             <div className="bg-white border border-[var(--border)] p-5 rounded-2xl flex flex-col justify-between shadow-sm h-[140px]">
               <div className="flex justify-between items-start">
-                <span className="font-semibold text-sm text-[var(--text-2)]">Sedang Birahi</span>
+                <span className="font-semibold text-sm text-[var(--text-2)]">{lang === 'id' ? 'Sedang Birahi' : 'In Estrus'}</span>
                 <div className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg-surface)] cursor-pointer" onClick={() => setIsEstrusModalOpen(true)}>
                   <ChevronRight size={16} />
                 </div>
@@ -1469,7 +1469,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-[4fr_3fr_3fr] gap-4 mt-4">
             {/* Ringkasan Birahi (Donut) */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col items-center">
-              <h3 className="font-bold text-[var(--text-1)] text-lg mb-6 self-start w-full">Ringkasan Birahi</h3>
+              <h3 className="font-bold text-[var(--text-1)] text-lg mb-6 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
               <p className="text-xs text-gray-500 self-start -mt-5 mb-4">7 hari terakhir</p>
               <div className="flex w-full items-center gap-6">
                 <div className="relative w-32 h-32 flex-shrink-0">
@@ -1479,20 +1479,20 @@ export default function Dashboard() {
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-2xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
-                    <span className="text-[9px] font-bold text-gray-500 mt-1">Sapi Birahi</span>
+                    <span className="text-[9px] font-bold text-gray-500 mt-1">{lang === 'id' ? 'Sapi Birahi' : 'Cows in Estrus'}</span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 w-full">
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-[#16A34A] rounded-sm"></div> Birahi</div>
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-[#16A34A] rounded-sm"></div>{lang === 'id' ? ' Birahi' : ' In Estrus'}</div>
                     <span className="font-medium">{stats.estrus || 0}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-300 rounded-sm"></div> Tidak Birahi</div>
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Birahi' : ' Not in Estrus'}</div>
                     <span className="font-medium">{Math.max((sapiList.length || 0) - (stats.estrus || 0), 0)}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-gray-300 rounded-sm"></div> Tidak Terdeteksi</div>
+                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-gray-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Terdeteksi' : ' Undetected'}</div>
                     <span className="font-medium">0</span>
                   </div>
                 </div>
@@ -1502,7 +1502,7 @@ export default function Dashboard() {
             {/* Prediksi Birahi */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col">
               <div className="flex justify-between items-center mb-1">
-                <h3 className="font-bold text-[var(--text-1)] text-lg">Prediksi Birahi</h3>
+                <h3 className="font-bold text-[var(--text-1)] text-lg">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
               </div>
               <p className="text-xs text-gray-500 mb-6">(3 Hari ke Depan)</p>
               
@@ -1524,7 +1524,7 @@ export default function Dashboard() {
 
             {/* Status Populasi */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col items-center justify-between">
-              <h3 className="font-bold text-[var(--text-1)] text-lg self-start w-full">Status Populasi</h3>
+              <h3 className="font-bold text-[var(--text-1)] text-lg self-start w-full">{lang === 'id' ? 'Status Populasi' : 'Population Status'}</h3>
               <div className="relative w-40 h-40 flex items-center justify-center mt-2">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                   <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="14" />
@@ -1551,7 +1551,7 @@ export default function Dashboard() {
               <div className="absolute top-0 right-0 p-5">
                 <ThermometerSun size={28} className="text-emerald-400 opacity-80" />
               </div>
-              <h3 className="font-semibold text-emerald-100 mb-1 text-sm z-10 opacity-90">Kondisi Kandang (IoT)</h3>
+              <h3 className="font-semibold text-emerald-100 mb-1 text-sm z-10 opacity-90">{lang === 'id' ? 'Kondisi Kandang (IoT)' : 'Farm Condition (IoT)'}</h3>
               <p className="text-xs text-emerald-200/70 mb-auto z-10 font-medium">Terakhir diperbarui: {stats.lastSync}</p>
 
               <div className="mt-8 z-10 relative">
@@ -1569,7 +1569,7 @@ export default function Dashboard() {
             {/* Aktivitas Terbaru */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-[var(--text-1)] text-lg">Aktivitas Terbaru</h3>
+                <h3 className="font-bold text-[var(--text-1)] text-lg">{lang === 'id' ? 'Aktivitas Terbaru' : 'Recent Activities'}</h3>
               </div>
               <div className="flex flex-col gap-5 flex-1">
                 <div className="text-sm text-gray-500 text-center py-4">Belum ada aktivitas hari ini.</div>
@@ -1715,7 +1715,7 @@ export default function Dashboard() {
                   </div>
 
                   <div className="flex">
-                    <button type="button" onClick={() => setIsEstrusModalOpen(false)} style={{ padding: '12px 24px', color: 'var(--color-primary)', fontWeight: 700, borderRadius: '12px', background: 'var(--color-primary-dim)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>Tutup</button>
+                    <button type="button" onClick={() => setIsEstrusModalOpen(false)} style={{ padding: '12px 24px', color: 'var(--color-primary)', fontWeight: 700, borderRadius: '12px', background: 'var(--color-primary-dim)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', flex: 1 }}>{lang === 'id' ? 'Tutup' : 'Close'}</button>
                   </div>
                 </div>
               </div>
