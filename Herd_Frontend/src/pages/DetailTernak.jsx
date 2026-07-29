@@ -8,7 +8,7 @@ import translations from '@/lib/i18n';
 import CowAnalyticsView from '@/components/shared/CowAnalyticsView';
 import CowEstrusView from '@/components/shared/CowEstrusView';
 import PairCollarModal from '@/components/shared/PairCollarModal';
-import ActivityTimeline from '@/pages/ActivityTimeline';
+
 import { Stepper, StepperItem, StepperTitle, StepperDescription } from '@/components/ui/stepper';
 import { toast } from '@/store/toastStore';
 
