@@ -54,29 +54,7 @@ export default function CowAnalyticsView({ selectedCow }) {
         let behaviorRes = null;
         let telemetryRes = null;
 
-        if (selectedCow.id?.toUpperCase() === 'ARA' || selectedCow.cow_id?.toUpperCase() === 'ARA') {
-          const mockTelemetry = [];
-          for (let i = 0; i < limit; i++) {
-            const time = new Date(Date.now() - i * 3600000);
-            const hour = time.getHours();
-            
-            // Generate realistic mock data: higher temp and activity during day
-            const isDay = hour >= 6 && hour <= 18;
-            const tempBase = isDay ? 38.6 : 38.2;
-            const activityBase = isDay ? 0.6 : 0.2;
-            
-            // Randomly insert some estrus-like peaks
-            const isPeak = Math.random() > 0.95;
-            
-            mockTelemetry.push({
-              batch_ts: time.toISOString(),
-              temperature: tempBase + (Math.random() * 0.4 - 0.2) + (isPeak ? 0.8 : 0),
-              max_z: activityBase + (Math.random() * 0.3) + (isPeak ? 0.8 : 0),
-              activity_state: isPeak ? 'ESTRUS' : (isDay ? ['EATING', 'RUMINATING', 'EATING'][Math.floor(Math.random() * 3)] : 'RESTING')
-            });
-          }
-          telemetryRes = { data: mockTelemetry };
-        } else if (selectedCow.collar_id) {
+        if (selectedCow.collar_id) {
           telemetryRes = await axiosInstance.get(`/sensor-data?collar_id=${selectedCow.collar_id}&limit=${limit}`);
         } else {
           telemetryRes = { data: [] }; // Mock empty data

@@ -51,24 +51,7 @@ export default function Recommendations() {
           raw: cow
         }));
 
-      // [USER REQUEST] Injecting mock data to preview Recommendations UI
-      const mockRecs = [
-        {
-          id: 'estrus-mock-1',
-          type: 'estrus',
-          raw: {
-            id: 'mock-1',
-            cow_id: 'SAPI_A01',
-            cow_name: 'Gendhis',
-            confidence_final: 0.92,
-            in_window_now: true,
-            prediksi_tanggal: new Date().toISOString(),
-            prediksi_ib_optimal: new Date().toISOString()
-          }
-        }
-      ];
-
-      const allRecs = [...activeEstrus, ...healthAlerts, ...mockRecs];
+      const allRecs = [...activeEstrus, ...healthAlerts];
       setRecs(allRecs.filter(alert => !ignoredHealthAlerts.includes(alert.id)));
     } catch (err) {
       console.error('Gagal mengambil rekomendasi:', err);

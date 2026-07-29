@@ -5,4 +5,8 @@
 2. Herd Backend/scanner-app/.env
 2. Herd Backend/backend/gmail_credentials.json
 2. Herd Backend/backend/gmail_token.json
-2. Herd Backend/backend/credentials.json
+2. Herd Backend/backend/credentials.jsonHerd_Backend/backend/.venv/
+Herd_Backend/backend/credentials.json
+Herd_Backend/backend/gmail_credentials.json
+Herd_Backend/backend/gmail_token.json
+Herd_Backend/scanner-app/.env

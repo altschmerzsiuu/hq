@@ -77,22 +77,6 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
     try {
       const cowId = selectedCow.id || selectedCow.cow_id;
       
-      // MOCK DATA UNTUK ARA
-      if (cowId.toUpperCase() === 'ARA') {
-        setTimeout(() => {
-          setPrediction({
-            confidence_final: 0.85,
-            in_window_now: true,
-            days_until: 0,
-            prediksi_ib_optimal: new Date(Date.now() + 86400000).toISOString(),
-            window_awal: new Date().toISOString(),
-            window_akhir: new Date(Date.now() + 172800000).toISOString()
-          });
-          setLoading(false);
-        }, 800);
-        return;
-      }
-
       const res = await axiosInstance.get(`/estrus-predictions?cow_id=${cowId}&limit=1`);
       const data = Array.isArray(res.data) ? res.data : [];
       setPrediction(data[0] ?? null);

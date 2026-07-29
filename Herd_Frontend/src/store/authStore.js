@@ -116,23 +116,7 @@ export const useAuthStore = create((set) => ({
       return mergedUser;
     } catch (err) {
       console.warn("Backend server connection failed. Running in mock offline mode...", err);
-      // Fallback: If network is offline/error, run in premium offline demo mode!
-      if (err.message?.includes('Network Error') || err.code === 'ERR_NETWORK' || !err.response) {
-        // Fallback mockup login (e.g. admin@herd.ai / password)
-        const mockToken = "mock.eyJzdWIiOiIxIiwibmFtZSI6Ik9wZXJhdG9yIEhlY3RyYSIsImVtYWlsIjoiYWRtaW5AaGVjdHJhLmFpIiwicm9sZSI6ImFkbWluIiwiZnVsbF9uYW1lIjoiT3BlcmF0b3IgT3BlcmF0b3IgSGVjdHJhIiwiZXhwIjoyNjk1MzkxMTQ2fQ.mocksignature";
-        const decodedUser = parseJwt(mockToken);
-        const mockUser = { ...decodedUser, has_pin: false };
-        
-        localStorage.setItem('access_token', mockToken);
 
-        set({ 
-          token: mockToken, 
-          user: mockUser, 
-          isAuthenticated: true, 
-          isLoading: false 
-        });
-        return mockUser;
-      }
       set({ 
         error: err.response?.data?.detail || 'Gagal login. Periksa email dan password Anda.', 
         isLoading: false 

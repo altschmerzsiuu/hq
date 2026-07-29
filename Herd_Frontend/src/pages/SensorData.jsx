@@ -313,19 +313,7 @@ export default function SensorData() {
       console.error('Gagal memuat data sensor:', err);
       toast.error(t.sensor_sync_failed);
 
-      // Inject mock data for UI design review when API fails
-      setTableData([
-        { id: 'COL-001', rfid: 'TAG-8932', cowName: 'Sapi B02 (Gendhis)', temp: 38.5, activityState: 'Ruminating', battery: 85, lastSyncRaw: new Date().toISOString(), status: 'good' },
-        { id: 'COL-002', rfid: 'TAG-8933', cowName: 'Sapi A10 (Legi)', temp: 39.2, activityState: 'Active', battery: 15, lastSyncRaw: new Date().toISOString(), status: 'critical' },
-        { id: 'COL-003', rfid: 'TAG-8934', cowName: 'Sapi C05 (Pahing)', temp: 39.8, activityState: 'Resting', battery: 60, lastSyncRaw: new Date(Date.now() - 3600000).toISOString(), status: 'warning' },
-        { id: 'COL-004', rfid: 'TAG-8935', cowName: 'Sapi D12 (Wage)', temp: 38.1, activityState: 'Eating', battery: 45, lastSyncRaw: new Date(Date.now() - 86400000).toISOString(), status: 'good' },
-      ]);
-      setAllCowsData([
-        { cow_id: 'C01', nama: 'Sapi B02 (Gendhis)' },
-        { cow_id: 'C02', nama: 'Sapi A10 (Legi)' },
-        { cow_id: 'C03', nama: 'Sapi C05 (Pahing)' },
-        { cow_id: 'C04', nama: 'Sapi D12 (Wage)' },
-      ]);
+
     } finally {
       setLoading(false);
       setSyncing(false);

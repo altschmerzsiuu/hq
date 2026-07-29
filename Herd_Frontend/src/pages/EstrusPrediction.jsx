@@ -94,23 +94,6 @@ export default function EstrusPrediction() {
       const res = await axiosInstance.get('/estrus-predictions?status=all&limit=100');
       const data = Array.isArray(res.data) ? res.data : [];
 
-      // [USER REQUEST] Inject mock data for Estrus, Dekat, Normal
-      const now = new Date();
-      const mockEstrus = {
-        id: 'mock-estrus',
-        cow_id: 'SAPI_A01',
-        cow_name: 'Gendhis',
-        confidence_final: 0.92,
-        in_window_now: true,
-        prediksi_tanggal: new Date(now.getTime() - 2 * 3600000).toISOString(),
-        prediksi_ib_optimal: new Date(now.getTime() + 12 * 3600000).toISOString(),
-        window_awal: new Date(now.getTime() - 12 * 3600000).toISOString(),
-        window_akhir: new Date(now.getTime() + 12 * 3600000).toISOString(),
-        days_until: 0,
-        metode: 'full_hybrid',
-        confidence_layer1: 0.9, confidence_layer2: 0.95, confidence_layer3: 0.92
-      };
-      setPredictions([...data, mockEstrus]);
     } catch (err) {
       console.error('Gagal fetch prediksi:', err);
       toast.error(lang === 'id' ? 'Gagal memuat data prediksi estrus.' : 'Failed to load estrus prediction data.');

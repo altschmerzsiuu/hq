@@ -69,18 +69,7 @@ export const useTernakStore = create((set, get) => ({
       const response = await axiosInstance.get('/scanner/profil')
       let list = response.data.data || []
       
-      // MOCK: Ensure 'Ara' is always in the list for demo purposes
-      if (!list.find(sapi => sapi.nama?.toUpperCase() === 'ARA' || sapi.id === 'ARA')) {
-        list = [{
-          id: 'ARA',
-          nama: 'Ara',
-          status_kesehatan: 'Sehat / Aktif',
-          status_kebuntingan: 'Tidak Bunting',
-          fase_produksi: 'Laktasi',
-          berat_estimasi: 580,
-          suhu: 38.6
-        }, ...list];
-      }
+
       
       set({ sapiList: list, loading: false })
     } catch (error) {
@@ -93,31 +82,6 @@ export const useTernakStore = create((set, get) => ({
   fetchSapiDetail: async (rfid) => {
     set({ loading: true, error: null })
     
-    const mockData = {
-      id: 'ARA',
-      nama: 'Ara',
-      foto: null,
-      status_kesehatan: 'Sehat / Aktif',
-      status_kebuntingan: 'Tidak Bunting',
-      fase_produksi: 'Laktasi',
-      berat_estimasi: 580,
-      suhu: 38.6,
-      collar_id: 'CLLR-992',
-      reproduksi: [
-        { jumlah_ib: 3, tanggal_ib: '2023-10-15', service_date: '2023-10-15', metode: 'IB', pemberi_ib: 'Drh. Budi', results: 'failed' },
-        { jumlah_ib: 2, tanggal_ib: '2023-09-20', service_date: '2023-09-20', metode: 'IB', pemberi_ib: 'Drh. Budi', results: 'failed' },
-        { jumlah_ib: 1, tanggal_ib: '2023-08-25', service_date: '2023-08-25', metode: 'IB', pemberi_ib: 'Drh. Budi', results: 'failed' }
-      ]
-    };
-    
-    // MOCK INTERCEPTOR FOR ARA
-    if (rfid?.toUpperCase() === 'ARA') {
-      setTimeout(() => {
-        set({ selectedSapi: mockData, loading: false });
-      }, 500);
-      return { success: true, data: mockData };
-    }
-
     try {
       const response = await axiosInstance.get(`/scanner/profil/${rfid}`)
       let data = response.data.data || response.data;
@@ -135,26 +99,13 @@ export const useTernakStore = create((set, get) => ({
         // Silently fail if history endpoint not found
       }
 
-      if (!data || Object.keys(data).length === 0 || !data.id) {
-        data = get().sapiList.find(s => s.id === rfid) || { ...mockData, id: rfid, nama: 'Ternak ' + rfid.substring(0,4) };
-      }
-      
-      // Inject rich mock data if the fetched cow's name is Ara
-      if (data?.nama?.toUpperCase() === 'ARA') {
-        data = {
-          ...data,
-          ...mockData,
-          id: data.id || 'ARA',
-        }
-      }
-
       set({ selectedSapi: data, loading: false })
       return { success: true, data: data }
     } catch (error) {
       const msg = parseErrorMessage(error);
       const currentSapi = get().selectedSapi;
       
-      // If we already have the cow in state (e.g. mock edits), preserve it!
+      // If we already have the cow in state, preserve it!
       if (currentSapi && currentSapi.id === rfid) {
          set({ error: null, loading: false });
          return { success: true, data: currentSapi };
@@ -162,13 +113,11 @@ export const useTernakStore = create((set, get) => ({
 
       let fallbackData = get().sapiList.find(s => s.id === rfid);
       if (fallbackData) {
-        if (fallbackData.nama?.toUpperCase() === 'ARA') fallbackData = { ...fallbackData, ...mockData, id: fallbackData.id || 'ARA' };
         set({ selectedSapi: fallbackData, error: null, loading: false });
         return { success: true, data: fallbackData };
       }
-      // Fail-safe for demo: always provide a cow object so the UI doesn't break
-      const safeData = { ...mockData, id: rfid, nama: 'Ternak ' + rfid.substring(0, 4) };
-      set({ selectedSapi: safeData, error: msg, loading: false });
+      
+      set({ selectedSapi: null, error: msg, loading: false });
       return { success: false, message: msg };
     }
   },
