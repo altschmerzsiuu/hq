@@ -353,7 +353,7 @@ export default function Settings() {
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
     <>
-    <div className="md:fixed md:inset-0 md:z-[100] md:flex md:items-center md:justify-center md:bg-black/50 md:backdrop-blur-sm animate-in fade-in duration-500 pt-[44px] pb-24 px-4 sm:px-0 md:p-4">
+    <div className="md:fixed md:inset-0 md:z-[100] md:flex md:items-center md:justify-center md:bg-black/50 md:backdrop-blur-sm animate-in fade-in duration-500 pt-[44px] pb-24 px-0 md:p-4">
       
       {/* Content Area */}
       <div className="relative w-full md:max-w-5xl md:h-[85vh] bg-[#f8f9fa] md:bg-white md:rounded-[32px] md:shadow-2xl md:flex md:flex-row md:overflow-hidden md:border md:border-slate-200">
@@ -375,7 +375,7 @@ export default function Settings() {
               MAIN MENU
           ══════════════════════════════════════════════════════════════════ */}
           <div className={`md:w-[350px] md:flex-shrink-0 md:border-r md:border-gray-200 bg-slate-50 md:overflow-y-auto ${activeTab === 'main' ? 'block' : 'hidden md:block'}`}>
-            <div className="space-y-8 animate-in fade-in duration-300 pt-4 md:p-6 md:pt-16">
+            <div className="space-y-8 animate-in fade-in duration-300 pt-4 px-4 md:p-6 md:pt-16">
               
               {/* ── Avatar + Name (CLEAN WHITE DESIGN WITH ACCENT) ── */}
               <div 
@@ -512,7 +512,7 @@ export default function Settings() {
               TAB 1 — GENERAL: Profile + Farm Details
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'profile' && (
-            <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
+            <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
               
               {/* Header: Back Button & Title & Save Button */}
               <div className="relative flex items-center justify-center mb-6 h-10 w-full">
@@ -646,7 +646,7 @@ export default function Settings() {
               TAB 2 — NOTIFICATIONS
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'notifications' && (
-            <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
+            <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
               <div className="flex items-center relative mb-4">
                 <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -735,7 +735,7 @@ export default function Settings() {
               TAB 3 — SECURITY
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
               <div className="relative flex items-center justify-center mb-6 h-10 w-full md:max-w-lg">
                 <button type="button" onClick={() => handleBackNavigation('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -793,10 +793,10 @@ export default function Settings() {
               TAB 4 — TEAM MANAGEMENT
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'team' && (
-            <div className="space-y-5 animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
+            <div className="space-y-5 animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
 
               {/* ── Mobile back header (hidden on md+) ── */}
-              <div className="flex items-center relative md:hidden mb-1">
+              <div className="flex items-center relative md:hidden mb-4">
                 <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors">
                   <ChevronLeft className="w-5 h-5 text-gray-700" />
                 </button>
@@ -937,7 +937,7 @@ export default function Settings() {
               TAB 5 — APPEARANCE
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'appearance' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
               <div className="w-full md:max-w-lg mb-4 relative flex items-center">
                 <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -1007,7 +1007,7 @@ export default function Settings() {
               TAB 6 — HELP CENTRE
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'help' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-2 md:px-0">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
               <div className="w-full md:max-w-3xl mb-4 relative flex items-center">
                 <button type="button" onClick={() => {
                   if (helpView !== 'menu') setHelpView('menu');
