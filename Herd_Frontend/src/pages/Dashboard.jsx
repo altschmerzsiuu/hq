@@ -1424,7 +1424,7 @@ export default function Dashboard() {
                   ))
                 ) : (
                   <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text-2)] text-center">
-                    Kondisi semua ternak terpantau aman.
+                    {lang === 'id' ? 'Kondisi semua ternak terpantau aman.' : 'All cattle conditions are monitored safe.'}
                   </div>
                 )}
               </div>
@@ -1456,7 +1456,7 @@ export default function Dashboard() {
                   })
                 ) : (
                   <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text-2)] text-center">
-                    Tidak ada rekomendasi tambahan untuk saat ini.
+                    {lang === 'id' ? 'Tidak ada rekomendasi tambahan untuk saat ini.' : 'No additional recommendations at this time.'}
                   </div>
                 )}
               </div>
