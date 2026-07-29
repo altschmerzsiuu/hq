@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 export default function ReportSickModal({ isOpen, onClose, onSubmit, cowId }) {
-  const { t } = useTranslation();
   const [symptoms, setSymptoms] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +56,7 @@ export default function ReportSickModal({ isOpen, onClose, onSubmit, cowId }) {
               <label className="block text-sm font-medium text-[var(--text-2)] mb-1">
                 Sapi ID
               </label>
-              <div className="px-3 py-2 bg-[var(--bg-base)] border border-[var(--border)] rounded-lg text-[var(--text-1)] font-medium">
+              <div className="px-3 py-2 bg-[var(--bg-base)] border border-[var(--border)] rounded-xl text-[var(--text-1)] font-medium">
                 {cowId || '-'}
               </div>
             </div>
@@ -71,7 +69,7 @@ export default function ReportSickModal({ isOpen, onClose, onSubmit, cowId }) {
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-[var(--bg-base)] border border-[var(--border)] rounded-lg text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--color-primary)] transition-colors min-h-[80px]"
+                className="w-full px-3 py-2 bg-[var(--bg-base)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--color-primary)] transition-colors min-h-[80px]"
                 placeholder="Misal: Nafsu makan turun, demam..."
               />
             </div>
@@ -83,7 +81,7 @@ export default function ReportSickModal({ isOpen, onClose, onSubmit, cowId }) {
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2 bg-[var(--bg-base)] border border-[var(--border)] rounded-lg text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--color-primary)] transition-colors min-h-[80px]"
+                className="w-full px-3 py-2 bg-[var(--bg-base)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--color-primary)] transition-colors min-h-[80px]"
                 placeholder="Detail lain yang perlu dicatat..."
               />
             </div>
