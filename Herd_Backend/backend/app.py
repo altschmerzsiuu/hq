@@ -1460,10 +1460,11 @@ async def get_sensor_data(
     owner_id = get_effective_owner_id(current_user)
     async with pool.acquire() as conn:
         if collar_id:
-            # Join with hewan to verify ownership
+            # Join with hewan via collar_registry to verify ownership
             rows = await conn.fetch("""
                 SELECT sd.* FROM sensor_data sd
-                JOIN hewan h ON sd.collar_id = h.collar_id
+                JOIN collar_registry cr ON sd.collar_id = cr.collar_id
+                JOIN hewan h ON cr.cow_id = h.id
                 WHERE sd.collar_id = $1 AND h.owner_id = $2
                 ORDER BY sd.batch_ts DESC
                 LIMIT $3
@@ -1472,7 +1473,8 @@ async def get_sensor_data(
             # Show all sensor data for the owner's farm
             rows = await conn.fetch("""
                 SELECT sd.* FROM sensor_data sd
-                JOIN hewan h ON sd.collar_id = h.collar_id
+                JOIN collar_registry cr ON sd.collar_id = cr.collar_id
+                JOIN hewan h ON cr.cow_id = h.id
                 WHERE h.owner_id = $1
                 ORDER BY sd.batch_ts DESC
                 LIMIT $2

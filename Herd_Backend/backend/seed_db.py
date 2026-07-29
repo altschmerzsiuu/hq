@@ -34,6 +34,7 @@ def init_db():
         cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS kelamin VARCHAR(20) DEFAULT 'betina';")
         cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS berat_badan FLOAT;")
         cur.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS estrus_probability FLOAT DEFAULT 0.0;")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES users(id);")
         
         # Ensure observation_logs table exists
         cur.execute("""

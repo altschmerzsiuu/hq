@@ -793,75 +793,145 @@ export default function Settings() {
               TAB 4 — TEAM MANAGEMENT
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'team' && (
-            <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6">
-              <div className="flex items-center relative mb-4">
-                <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
-                  <ChevronLeft className="w-6 h-6 text-gray-700" />
+            <div className="space-y-5 animate-in fade-in duration-300 pt-4 md:pt-6">
+
+              {/* ── Mobile back header (hidden on md+) ── */}
+              <div className="flex items-center relative md:hidden mb-1">
+                <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-gray-700" />
                 </button>
-                <h2 className="w-full text-center text-lg font-bold text-gray-900">{t.settings_tab_team || 'Team'}</h2>
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-[var(--text-1)] font-display border-b border-[var(--border)] pb-2 mb-2">{t.settings_team_title}</h2>
-                <p className="text-xs text-[var(--text-2)]">{t.settings_team_desc}</p>
+                <h2 className="w-full text-center text-base font-bold text-gray-900 font-display">{t.settings_tab_team || 'Team'}</h2>
               </div>
 
-              <form onSubmit={handleInviteTeam} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4 shadow-sm">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-1)] flex items-center gap-1.5">
-                  <UserPlus className="w-4 h-4 text-[var(--accent)]" /> {t.settings_invite_title}
+              {/* ── Section heading (desktop only, no duplicate on mobile) ── */}
+              <div className="hidden md:block">
+                <h2 className="text-xl font-bold text-[var(--text-1)] font-display">{t.settings_team_title}</h2>
+                <p className="text-sm text-[var(--text-2)] mt-1">{t.settings_team_desc}</p>
+              </div>
+              {/* Mobile subtitle */}
+              <p className="md:hidden text-xs text-[var(--text-2)] -mt-2">{t.settings_team_desc}</p>
+
+              {/* ── Invite form ── */}
+              <form onSubmit={handleInviteTeam} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-[var(--accent)] flex items-center gap-2">
+                  <UserPlus className="w-4 h-4" /> {t.settings_invite_title}
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <input type="text" value={inviteName} onChange={e => setInviteName(e.target.value)} placeholder={lang === 'id' ? 'Nama Lengkap' : 'Full Name'} required className={inputClass} />
-                  <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder={lang === 'id' ? 'Alamat Email' : 'Email Address'} required className={inputClass} />
-                  <div className="flex gap-2">
-                    <div>
-                      <label className={labelClass}>{lang === 'id' ? 'PERAN' : 'ROLE'}</label>
-                      <div className="relative">
-                        <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className={`${inputClass} appearance-none pr-10`}>
-                          <option value="worker">{lang === 'id' ? 'Pekerja Kandang (Worker)' : 'Farm Worker'}</option>
-                          <option value="admin">{lang === 'id' ? 'Admin / Manajer' : 'Admin / Manager'}</option>
-                        </select>
-                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-                      </div>
+                {/* Desktop: 2 inputs side-by-side */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={inviteName}
+                    onChange={e => setInviteName(e.target.value)}
+                    placeholder={lang === 'id' ? 'Nama Lengkap' : 'Full Name'}
+                    required
+                    className={inputClass}
+                  />
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                    placeholder={lang === 'id' ? 'Alamat Email' : 'Email Address'}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+
+                {/* Role + Send button — always in a flex row */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+                  <div className="flex-1">
+                    <label className={labelClass}>{lang === 'id' ? 'PERAN' : 'ROLE'}</label>
+                    <div className="relative">
+                      <select
+                        value={inviteRole}
+                        onChange={e => setInviteRole(e.target.value)}
+                        className={`${inputClass} appearance-none pr-10 w-full`}
+                      >
+                        <option value="worker">{lang === 'id' ? 'Pekerja Kandang (Worker)' : 'Farm Worker'}</option>
+                        <option value="admin">{lang === 'id' ? 'Admin / Manajer' : 'Admin / Manager'}</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     </div>
-                    <button type="submit" disabled={teamLoading} className="px-4 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center shrink-0">
-                      {t.settings_invite_send}
-                    </button>
                   </div>
+                  <button
+                    type="submit"
+                    disabled={teamLoading}
+                    className="h-11 px-6 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] disabled:opacity-60 text-white text-sm font-bold rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto"
+                  >
+                    {teamLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                    {t.settings_invite_send}
+                  </button>
                 </div>
               </form>
 
-              <div className="overflow-x-auto border border-[var(--border)] rounded-2xl bg-[var(--bg-card)]">
-                {teamLoading ? (
-                  <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" /></div>
-                ) : (
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-[var(--border)] bg-slate-50 dark:bg-slate-900/60 text-[9px] font-black uppercase text-[var(--text-3)] tracking-wider">
-                        <th className="px-4 py-3">{t.settings_table_name}</th>
-                        <th className="px-4 py-3">{t.settings_table_email}</th>
-                        <th className="px-4 py-3 text-right">{t.settings_table_role}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--border)] text-xs font-semibold text-[var(--text-2)]">
-                      {teamMembers.map(m => (
-                        <tr key={m.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                          <td className="px-4 py-3.5 font-bold text-[var(--text-1)]">{m.full_name || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}</td>
-                          <td className="px-4 py-3.5 font-mono text-[var(--text-3)]">{m.email}</td>
-                          <td className="px-4 py-3.5 text-right">
-                            {m.role === 'owner'
-                              ? <span className="px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full font-bold text-[9px]">{t.settings_role_owner}</span>
-                              : <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs text-right cursor-pointer">
+              {/* ── Members list ── */}
+              {teamLoading && teamMembers.length === 0 ? (
+                <div className="py-10 flex justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" />
+                </div>
+              ) : teamMembers.length === 0 ? (
+                <div className="py-10 text-center text-sm text-[var(--text-3)]">
+                  {lang === 'id' ? 'Belum ada anggota tim.' : 'No team members yet.'}
+                </div>
+              ) : (
+                <>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto border border-[var(--border)] rounded-2xl bg-[var(--bg-card)]">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-[var(--border)] bg-slate-50 dark:bg-slate-900/60 text-[9px] font-black uppercase text-[var(--text-3)] tracking-wider">
+                          <th className="px-5 py-3">{t.settings_table_name}</th>
+                          <th className="px-5 py-3">{t.settings_table_email}</th>
+                          <th className="px-5 py-3 text-right">{t.settings_table_role}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border)]">
+                        {teamMembers.map(m => (
+                          <tr key={m.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+                            <td className="px-5 py-4 font-bold text-sm text-[var(--text-1)]">{m.full_name || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}</td>
+                            <td className="px-5 py-4 text-xs font-mono text-[var(--text-3)]">{m.email}</td>
+                            <td className="px-5 py-4 text-right">
+                              {m.role === 'owner'
+                                ? <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full font-bold text-[9px] uppercase tracking-wider">{t.settings_role_owner}</span>
+                                : <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs text-right cursor-pointer">
+                                    <option value="worker">{t.settings_role_worker}</option>
+                                    <option value="admin">{t.settings_role_admin}</option>
+                                  </select>
+                              }
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile card list — no nested containers, clean & readable */}
+                  <div className="md:hidden space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-3)] px-1">
+                      {lang === 'id' ? 'Anggota Tim' : 'Team Members'} · {teamMembers.length}
+                    </p>
+                    {teamMembers.map(m => (
+                      <div key={m.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3.5 flex items-center gap-3 shadow-sm">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                          {(m.full_name || m.email || '?')[0].toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-[var(--text-1)] truncate">{m.full_name || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}</p>
+                          <p className="text-[11px] text-[var(--text-3)] truncate">{m.email}</p>
+                        </div>
+                        <div className="shrink-0">
+                          {m.role === 'owner'
+                            ? <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-bold text-[9px] uppercase">{t.settings_role_owner}</span>
+                            : <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs cursor-pointer text-right">
                                 <option value="worker">{t.settings_role_worker}</option>
                                 <option value="admin">{t.settings_role_admin}</option>
                               </select>
-                            }
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+                          }
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
