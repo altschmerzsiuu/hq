@@ -315,7 +315,7 @@ export default function Settings() {
   const handleUpdateRole = async (memberId, newRole) => {
     setTeamLoading(true);
     try {
-      await axiosInstance.put(`/admin/users/${memberId}/role`, { role: newRole });
+      await axiosInstance.patch(`/admin/users/${memberId}/role`, { role: newRole });
       toast.success(lang === 'id' ? 'Role berhasil diperbarui!' : 'Role updated successfully!');
       loadTeamMembers();
     } catch {

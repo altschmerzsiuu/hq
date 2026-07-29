@@ -143,8 +143,8 @@ export default function SensorData() {
     setSyncing(true);
     try {
       const [cattleRes, telemetryRes] = await Promise.all([
-        axiosInstance.get('/cows'),
-        axiosInstance.get('/telemetry')
+        axiosInstance.get('/hewan'),
+        axiosInstance.get('/sensor-data?limit=100')
       ]);
       const allCows = cattleRes.data || [];
       setAllCowsData(allCows);
