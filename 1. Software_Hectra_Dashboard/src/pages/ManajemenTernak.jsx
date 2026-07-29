@@ -511,14 +511,18 @@ export default function ManajemenTernak() {
           {document.getElementById('topbar-portal-mobile') && createPortal(
             <div className="w-full h-full bg-white flex items-center justify-between px-4 border-b border-gray-200 shadow-sm animate-in fade-in duration-200 pointer-events-auto">
               <button onClick={() => { setIsSelectMode(false); setSelectedForDelete([]); }} className="text-[var(--text-2)] font-bold text-sm py-2">
-                Batal
+                {t.livestock_select_mode_cancel || 'Batal'}
               </button>
               <div className="text-[15px] font-bold text-[var(--text-1)]">
-                {selectedForDelete.length > 0 ? `${selectedForDelete.length} Dipilih` : 'Pilih Ternak'}
+                {selectedForDelete.length > 0 
+                  ? (t.livestock_select_mode_selected || '{count} Dipilih').replace('{count}', selectedForDelete.length) 
+                  : (t.livestock_select_mode_title || 'Pilih Ternak')}
               </div>
               <div className="flex items-center gap-3">
                 <button onClick={() => { if (selectedForDelete.length === filteredSapi.length) { setSelectedForDelete([]); } else { setSelectedForDelete(filteredSapi.map(s => s.id)); } }} className="text-[var(--accent)] font-bold text-sm">
-                  {selectedForDelete.length === filteredSapi.length ? 'Batal Semua' : 'Semua'}
+                  {selectedForDelete.length === filteredSapi.length 
+                    ? (t.livestock_select_mode_cancel_all || 'Batal Semua') 
+                    : (t.livestock_select_mode_all || 'Semua')}
                 </button>
                 <button onClick={handleBulkDelete} disabled={selectedForDelete.length === 0} className={`flex items-center justify-center p-2 rounded-full ${selectedForDelete.length > 0 ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-200 text-gray-400'}`}>
                   <Trash2 size={18} />
@@ -531,14 +535,18 @@ export default function ManajemenTernak() {
           {document.getElementById('topbar-portal-desktop') && createPortal(
             <div className="w-full h-full bg-white flex items-center justify-between px-5 shadow-sm animate-in fade-in duration-200 pointer-events-auto">
               <button onClick={() => { setIsSelectMode(false); setSelectedForDelete([]); }} className="text-[var(--text-2)] font-bold text-sm py-2">
-                Batal
+                {t.livestock_select_mode_cancel || 'Batal'}
               </button>
               <div className="text-[15px] font-bold text-[var(--text-1)]">
-                {selectedForDelete.length > 0 ? `${selectedForDelete.length} Dipilih` : 'Pilih Ternak'}
+                {selectedForDelete.length > 0 
+                  ? (t.livestock_select_mode_selected || '{count} Dipilih').replace('{count}', selectedForDelete.length) 
+                  : (t.livestock_select_mode_title || 'Pilih Ternak')}
               </div>
               <div className="flex items-center gap-3">
                 <button onClick={() => { if (selectedForDelete.length === filteredSapi.length) { setSelectedForDelete([]); } else { setSelectedForDelete(filteredSapi.map(s => s.id)); } }} className="text-[var(--accent)] font-bold text-sm">
-                  {selectedForDelete.length === filteredSapi.length ? 'Batal Semua' : 'Semua'}
+                  {selectedForDelete.length === filteredSapi.length 
+                    ? (t.livestock_select_mode_cancel_all || 'Batal Semua') 
+                    : (t.livestock_select_mode_all || 'Semua')}
                 </button>
                 <button onClick={handleBulkDelete} disabled={selectedForDelete.length === 0} className={`flex items-center justify-center p-2 rounded-full ${selectedForDelete.length > 0 ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-200 text-gray-400'}`}>
                   <Trash2 size={18} />

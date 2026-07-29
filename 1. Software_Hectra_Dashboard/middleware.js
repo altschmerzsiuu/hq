@@ -18,7 +18,7 @@ export default function middleware(request) {
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Akses Ditolak | Hectra Dashboard</title>
+          <title>Akses Ditolak | HERD Dashboard</title>
           <style>
             body { 
               font-family: system-ui, -apple-system, sans-serif; 
@@ -68,7 +68,7 @@ export default function middleware(request) {
           <div class="container">
             <div class="icon">⛔</div>
             <h1>Akses Wilayah Dibatasi</h1>
-            <p>Maaf, Hectra Dashboard hanya dapat diakses melalui jaringan internet dari dalam wilayah <strong>Indonesia</strong> untuk alasan keamanan.</p>
+            <p>Maaf, HERD Dashboard hanya dapat diakses melalui jaringan internet dari dalam wilayah <strong>Indonesia</strong> untuk alasan keamanan.</p>
             <div class="footer">
               Terdeteksi region: <strong>${country}</strong>
             </div>

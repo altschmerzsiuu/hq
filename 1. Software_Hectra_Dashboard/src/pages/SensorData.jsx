@@ -130,12 +130,12 @@ export default function SensorData() {
   useBodyScrollLock(showWidgetModal);
   
   const [selectedWidgets, setSelectedWidgets] = useState(() => {
-    const saved = localStorage.getItem('hectra_sensor_widgets');
+    const saved = localStorage.getItem('herd_sensor_widgets');
     return saved ? JSON.parse(saved) : ['collar_aktif', 'rata_suhu', 'sapi_bunting'];
   });
 
   useEffect(() => {
-    localStorage.setItem('hectra_sensor_widgets', JSON.stringify(selectedWidgets));
+    localStorage.setItem('herd_sensor_widgets', JSON.stringify(selectedWidgets));
   }, [selectedWidgets]);
 
   const fetchAllData = async (showMainLoader = false) => {

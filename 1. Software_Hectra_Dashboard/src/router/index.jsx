@@ -13,10 +13,6 @@ const Notifications = lazy(() => import('@/pages/Notifications'));
 const Settings = lazy(() => import('@/pages/Settings'));
 const ManajemenTernak = lazy(() => import('@/pages/ManajemenTernak'));
 const DetailTernak = lazy(() => import('@/pages/DetailTernak'));
-const ActivityTimeline = lazy(() => import('@/pages/ActivityTimeline'));
-const GendhisEye = lazy(() => import('@/pages/GendhisEye'));
-const IotManager = lazy(() => import('@/pages/IotManager'));
-const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 const ResearchLab = lazy(() => import('@/pages/ResearchLab'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
@@ -87,22 +83,6 @@ export const router = createBrowserRouter([
       {
         path: 'kandang',
         element: <Navigate to="/dashboard" replace />,
-      },
-      {
-        path: 'pakan',
-        element: withSuspense(ComingSoon),
-      },
-      {
-        path: 'activity-timeline',
-        element: withSuspense(ActivityTimeline),
-      },
-      {
-        path: 'gendhis-eye',
-        element: withSuspense(GendhisEye),
-      },
-      {
-        path: 'iot-manager',
-        element: withSuspense(IotManager),
       },
       {
         path: 'research-lab',
