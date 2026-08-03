@@ -28,3 +28,4 @@ Herd_Frontend/dist/
 # ── IDE ───────────────────────────────────────────────────────────────────────
 .vscode/
 **/.vscode/
+Herd_Backend/scanner-app/node_modules/
