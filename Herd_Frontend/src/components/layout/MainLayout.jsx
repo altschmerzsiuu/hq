@@ -134,8 +134,10 @@ export default function MainLayout() {
             maxWidth: '100%'
           }}
           className={cn(
-            "px-4 pb-4 md:px-4",
-            (location.pathname === '/dashboard' || location.pathname === '/ternak' || location.pathname === '/sensor-data') ? "pt-0" : "pt-4"
+            "pb-4 md:px-4",
+            (location.pathname === '/dashboard' || location.pathname === '/sensor-data') 
+              ? "pt-0 px-0" 
+              : ((location.pathname === '/ternak') ? "pt-0 px-4" : "pt-4 px-4")
           )}
         >
           <div 

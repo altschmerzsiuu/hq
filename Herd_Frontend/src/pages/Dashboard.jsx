@@ -1066,7 +1066,7 @@ export default function Dashboard() {
         <div className="flex md:hidden flex-col gap-4">
           {/* ─── 0. GREETING (GRADIENT DESIGN) ─── */}
           <div
-            className="rounded-t-none rounded-b-[40px] p-6 pt-[86px] shadow-lg relative overflow-hidden text-white flex flex-col justify-between -mx-4 mb-2"
+            className="rounded-t-none rounded-b-[40px] p-6 pt-[86px] shadow-lg relative overflow-hidden text-white flex flex-col justify-between mb-2"
             style={{
               minHeight: '260px',
               background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)'
@@ -1118,56 +1118,57 @@ export default function Dashboard() {
           </div>
 
           {/* ─── 2. URGENT ACTIONS CONTAINER ─── */}
-          <div style={{
-            background: 'var(--bg-surface)',
-            border: '0.5px solid var(--border)',
-            borderRadius: '12px',
-            padding: '20px 22px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-          }}>
-            {/* Subheader */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-              <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
-              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-1)', fontFamily: 'DM Sans, sans-serif' }}>
-                {lang === 'id' ? 'Ada hal yang perlu kamu perhatikan hari ini' : 'Things to pay attention to today'}
-              </span>
+          <div className="px-4 flex flex-col gap-4">
+            <div style={{
+              background: 'var(--bg-surface)',
+              border: '0.5px solid var(--border)',
+              borderRadius: '12px',
+              padding: '20px 22px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}>
+              {/* Subheader */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
+                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-1)', fontFamily: 'DM Sans, sans-serif' }}>
+                  {lang === 'id' ? 'Ada hal yang perlu kamu perhatikan hari ini' : 'Things to pay attention to today'}
+                </span>
+              </div>
+
+              {/* Urgent Cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').length > 0 ? (
+                  intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').map((card, i) => (
+                    <IntelCard key={i} {...card} t={t} />
+                  ))
+                ) : (
+                  <div style={{
+                    padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
+                    borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
+                  }}>
+                    {lang === 'id' ? 'Kondisi semua ternak terpantau aman. Tidak ada tindakan mendesak yang perlu dilakukan sekarang.' : 'All cattle conditions are monitored safe. No urgent action needed now.'}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Urgent Cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').length > 0 ? (
-                intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').map((card, i) => (
-                  <IntelCard key={i} {...card} t={t} />
-                ))
-              ) : (
-                <div style={{
-                  padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
-                  borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
-                }}>
-                  {lang === 'id' ? 'Kondisi semua ternak terpantau aman. Tidak ada tindakan mendesak yang perlu dilakukan sekarang.' : 'All cattle conditions are monitored safe. No urgent action needed now.'}
-                </div>
-              )}
+            {/* ─── 3. QUICK ACTIONS ─── */}
+            <div>
+              <p className="eyebrow" style={{ marginBottom: '12px' }}>AKSI CEPAT</p>
+              <div className="flex flex-row gap-3 overflow-x-auto no-scrollbar pb-2">
+                <SquareQAButton icon={Plus} label={lang === 'id' ? 'Tambah Ternak' : 'Add Cattle'} onClick={() => setIsAddCowModalOpen(true)} />
+                <SquareQAButton icon={Syringe} label={lang === 'id' ? 'Tambah Data IB' : 'Add AI Data'} onClick={() => {
+                  fetchSapiList();
+                  setIsReproModalOpen(true);
+                }} />
+                <SquareQAButton icon={Cpu} label={lang === 'id' ? 'Pasang Kalung' : 'Pair Collar'} onClick={() => setIsPairModalOpen(true)} />
+                <SquareQAButton icon={Zap} label={lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'} onClick={() => setIsEstrusModalOpen(true)} />
+              </div>
             </div>
-          </div>
 
-          {/* ─── 3. QUICK ACTIONS ─── */}
-          <div>
-            <p className="eyebrow" style={{ marginBottom: '12px' }}>AKSI CEPAT</p>
-            <div className="flex flex-row gap-3 overflow-x-auto no-scrollbar pb-2">
-              <SquareQAButton icon={Plus} label={lang === 'id' ? 'Tambah Ternak' : 'Add Cattle'} onClick={() => setIsAddCowModalOpen(true)} />
-              <SquareQAButton icon={Syringe} label={lang === 'id' ? 'Tambah Data IB' : 'Add AI Data'} onClick={() => {
-                fetchSapiList();
-                setIsReproModalOpen(true);
-              }} />
-              <SquareQAButton icon={Cpu} label={lang === 'id' ? 'Pasang Kalung' : 'Pair Collar'} onClick={() => setIsPairModalOpen(true)} />
-              <SquareQAButton icon={Zap} label={lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'} onClick={() => setIsEstrusModalOpen(true)} />
-            </div>
-          </div>
-
-          {/* ─── 5. REKOMENDASI LAINNYA ─── */}
-          <div style={{
+            {/* ─── 5. REKOMENDASI LAINNYA ─── */}
+            <div style={{
             background: 'var(--bg-surface)',
             border: '0.5px solid var(--border)',
             borderRadius: '12px',
@@ -1330,7 +1331,7 @@ export default function Dashboard() {
 
             {/* Grafik Tren Aktivitas Kawanan */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col overflow-hidden">
-              <div className="relative overflow-hidden -mx-4 -my-4 sm:-mx-5 sm:-my-5" style={{ minHeight: '220px' }}>
+              <div className="relative overflow-hidden -my-4 sm:-mx-5 sm:-my-5" style={{ minHeight: '220px' }}>
                 <TrenAktivitasChart lang={lang} />
               </div>
             </div>

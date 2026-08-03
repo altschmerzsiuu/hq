@@ -351,7 +351,7 @@ export default function SensorData() {
       
       {/* ── 0. HEADER (PINE GREEN CYBER DESIGN) ── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 md:pb-8 shadow-lg relative overflow-hidden text-white flex flex-col justify-between -mx-4 md:mx-0 mb-4" 
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 md:pb-8 shadow-lg relative overflow-hidden text-white flex flex-col justify-between md:mx-0 mb-4" 
         style={{ 
           background: 'linear-gradient(180deg, #115e59 0%, #022c22 100%)'
         }}
@@ -406,9 +406,10 @@ export default function SensorData() {
       </div>
 
       {/* ── NEW CONTAINERS ── */}
-      {/* Container 2: Ringkasan Populasi & Sapi Bunting (Merged) */}
-      <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm mb-4">
-        <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-6">
+      <div className="px-4 flex flex-col gap-4">
+        {/* Container 2: Ringkasan Populasi & Sapi Bunting (Merged) */}
+        <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm mb-4">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-6">
           {lang === 'id' ? 'Ringkasan Populasi & Kebuntingan' : 'Population & Pregnancy Summary'}
         </h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
@@ -1203,7 +1204,9 @@ export default function SensorData() {
             </div>
           </div>
         </div>
-      )}
+      )}        {/* End of px-4 wrapper */}
+      </div>
+
     </div>
   );
 }
