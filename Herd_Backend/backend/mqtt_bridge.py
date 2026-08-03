@@ -492,6 +492,23 @@ def init_notification_table():
 if __name__ == "__main__":
     init_notification_table()
     
+    import signal
+    import sys
+    
+    def graceful_shutdown(signum, frame):
+        print(f"🛑 Received signal {signum}. Shutting down gracefully...")
+        try:
+            client.disconnect()
+            client.loop_stop()
+        except: pass
+        try:
+            db_pool.closeall()
+        except: pass
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, graceful_shutdown)
+    signal.signal(signal.SIGTERM, graceful_shutdown)
+    
     print("🛠️ Loading ML Models...")
     ModelRegistry.load_from_disk()
     
@@ -525,7 +542,5 @@ if __name__ == "__main__":
     
     try:
         client.loop_forever()
-    except KeyboardInterrupt:
-        print("🛑 Bridge stopped.")
     except Exception as e:
         print(f"🔥 Critical Error: {e}")

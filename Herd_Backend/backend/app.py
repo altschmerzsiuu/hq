@@ -137,6 +137,13 @@ TELEGRAM_CHAT_IDS = [x.strip() for x in os.getenv('TELEGRAM_CHAT_IDS', '').split
 # FastAPI Application
 app = FastAPI(title="IoT Peternakan API", version="2.0.0")
 
+from limiter import limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # Consolidated Owner ID helper
 def get_effective_owner_id(user: dict) -> int:
     """Get either the user's ID or their parent's ID (the Farm Owner)"""

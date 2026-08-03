@@ -7,6 +7,11 @@ services:
     image: eclipse-mosquitto
     container_name: mqtt-broker
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "1883:1883"   # Plain MQTT — untuk collar lama & internal
       - "8883:8883"   # MQTTS (TLS) — untuk collar baru dengan enkripsi
@@ -23,6 +28,11 @@ services:
     image: redis:alpine
     container_name: redis-cache
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     command: redis-server --requirepass R3d!s@H3ctr4#26
     ports:
       - "127.0.0.1:6379:6379"  # Internal only
@@ -34,9 +44,14 @@ services:
     image: pgvector/pgvector:pg15
     container_name: postgres-db
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgre
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgre}
       POSTGRES_DB: Collar_to_Gateway
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -51,6 +66,11 @@ services:
     image: dpage/pgadmin4
     container_name: pgadmin
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@herd.my.id
       PGADMIN_DEFAULT_PASSWORD: H3ctr@Adm1n#2026
@@ -68,6 +88,11 @@ services:
     build: ./backend
     container_name: backend-api
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       - ./backend:/app
     env_file:
@@ -79,7 +104,7 @@ services:
       - DB_PORT=5432
       - DB_NAME=Collar_to_Gateway
       - DB_USER=postgres
-      - DB_PASSWORD=postgre
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgre}
       - REDIS_URL=redis://:R3d!s@H3ctr4#26@redis:6379/0
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_IDS=${TELEGRAM_CHAT_IDS}
@@ -104,6 +129,11 @@ services:
     build: ./backend
     container_name: mqtt-bridge
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     command: python mqtt_bridge.py
     volumes:
       - ./backend:/app
@@ -116,7 +146,7 @@ services:
       - DB_PORT=5432
       - DB_NAME=Collar_to_Gateway
       - DB_USER=postgres
-      - DB_PASSWORD=postgre
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgre}
       - REDIS_URL=redis://:R3d!s@H3ctr4#26@redis:6379/0
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -139,6 +169,11 @@ services:
     build: ./scanner-app
     container_name: scanner-app
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     env_file:
       - ./scanner-app/.env
     ports:

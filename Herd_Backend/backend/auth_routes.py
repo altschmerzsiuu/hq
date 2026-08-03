@@ -182,8 +182,11 @@ async def register(user_data: UserRegister, response: Response, pool=Depends(get
             "user": user_dict
         }
 
+from limiter import limiter
+
 @router.post("/login", response_model=LoginResponse)
-async def login(credentials: UserLogin, response: Response, pool=Depends(get_db_pool_dependency)):
+@limiter.limit("5/minute")
+async def login(request: Request, credentials: UserLogin, response: Response, pool=Depends(get_db_pool_dependency)):
     """Login with email and password"""
     async with pool.acquire() as conn:
         user = await conn.fetchrow("SELECT * FROM users WHERE email = $1 AND is_active = true", credentials.email)
