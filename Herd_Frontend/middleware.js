@@ -10,6 +10,8 @@ export default function middleware(request) {
   const country = request.headers.get('x-vercel-ip-country');
 
   // Jika negara terdeteksi dan bukan Indonesia ('ID'), maka blokir
+  // [TEMPORARY] Disabled region blocking so user can access from Malaysia
+  /*
   if (country && country !== 'ID') {
     return new Response(
       `
@@ -82,6 +84,7 @@ export default function middleware(request) {
       }
     );
   }
+  */
 
   // Jika dari Indonesia (atau sedang di local development), teruskan request seperti biasa
   return new Response(null, {
