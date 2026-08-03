@@ -367,13 +367,24 @@ export default function Login() {
               className="absolute inset-0 bg-white flex flex-col overflow-hidden lg:hidden"
             >
               {/* Top Orange Header Section */}
-              <div className="w-full flex-[1.1] bg-[#FF7B1C] rounded-b-[40px] flex flex-col items-center justify-center pt-8 pb-4 relative overflow-hidden">
+              <div 
+                className="w-full flex-[1.1] bg-[#FF7B1C] rounded-b-[40px] flex flex-col items-center justify-center pb-4 relative overflow-hidden"
+                style={{ paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}
+              >
                 {/* Herd Logo top left */}
-                <div className="absolute top-8 left-6 w-10 h-10 bg-white rounded-xl shadow-lg p-1 flex items-center justify-center z-20">
+                <div 
+                  className="absolute left-6 w-10 h-10 bg-white rounded-xl shadow-lg p-1 flex items-center justify-center z-20"
+                  style={{ top: 'calc(env(safe-area-inset-top) + 2rem)' }}
+                >
                   <img src="/herd.jpeg" alt="HERD Logo" className="w-full h-full object-contain rounded-lg" />
                 </div>
                 
-                <h1 className="text-white text-[15px] font-extrabold tracking-widest absolute top-10 right-10 z-20">HERD</h1>
+                <h1 
+                  className="text-white text-[15px] font-extrabold tracking-widest absolute right-10 z-20"
+                  style={{ top: 'calc(env(safe-area-inset-top) + 2.5rem)' }}
+                >
+                  HERD
+                </h1>
 
                 <motion.img 
                   src={cowFeatureImg} 
@@ -454,7 +465,7 @@ export default function Login() {
               <div className="w-full lg:w-1/2 flex flex-col h-full relative bg-[#F8F8F9] lg:bg-white lg:rounded-l-[40px] lg:shadow-[-20px_0_40px_rgba(0,0,0,0.15)] z-20 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 
                 {/* Mobile back button */}
-                <div className="p-4 flex items-center sticky top-0 bg-[#F8F8F9]/80 lg:hidden backdrop-blur-md z-30">
+                <div className="p-4 flex items-center sticky top-0 bg-[#F8F8F9]/80 lg:hidden backdrop-blur-md z-30" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
                   <button 
                     onClick={() => {
                       setIsLoginMode(true);
@@ -672,7 +683,8 @@ export default function Login() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 h-[100dvh] bg-white px-6 py-6 flex flex-col items-center justify-start overflow-hidden"
+              className="fixed inset-0 h-[100dvh] bg-white px-6 pb-6 flex flex-col items-center justify-start overflow-hidden"
+              style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}
             >
               <div className="w-full flex flex-col items-center max-w-[320px] pt-[2vh] pb-4">
                 <motion.img 
@@ -755,7 +767,8 @@ export default function Login() {
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 h-[100dvh] bg-white px-6 py-6 flex flex-col items-center justify-start overflow-hidden"
+              className="fixed inset-0 h-[100dvh] bg-white px-6 pb-6 flex flex-col items-center justify-start overflow-hidden"
+              style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}
             >
               <div className="w-full flex flex-col items-center max-w-[320px] pt-[2vh] pb-4">
                 <motion.img 

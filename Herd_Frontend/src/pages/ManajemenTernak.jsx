@@ -561,8 +561,9 @@ export default function ManajemenTernak() {
       <div className="space-y-0 pb-6">
       {/* ── UNIFIED HEADER (Brand Orange with DNA accent) ── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 px-6 pt-[86px] md:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4 md:mx-0"
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 px-6 md:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4 md:mx-0"
         style={{ 
+          paddingTop: 'calc(env(safe-area-inset-top) + 86px)',
           background: 'linear-gradient(135deg, #FF7B1C 0%, #E65C00 100%)'
         }}
       >

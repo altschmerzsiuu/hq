@@ -189,7 +189,8 @@ export default function Topbar({ onMenuClick, isScrolled }) {
       <header
         className="flex lg:hidden items-center justify-between shrink-0 absolute top-0 left-0 right-0 z-30 px-4 transition-all duration-300"
         style={{
-          height: '56px',
+          height: 'calc(56px + env(safe-area-inset-top))',
+          paddingTop: 'env(safe-area-inset-top)',
           background: isMergedHeader ? (isScrolled ? 'var(--bg-surface)' : 'transparent') : 'var(--bg-surface)',
           borderBottom: isMergedHeader ? (isScrolled ? '0.5px solid var(--border)' : 'none') : '0.5px solid var(--border)',
           boxShadow: (isMergedHeader && isScrolled) ? '0 4px 20px rgba(0,0,0,0.03)' : 'none',

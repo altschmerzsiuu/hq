@@ -607,7 +607,7 @@ export default function DetailTernak() {
             )}
             
             {/* Top Bar / Back Button */}
-            <div className="absolute top-0 left-0 right-0 p-4 pt-6 flex justify-between items-start z-30">
+            <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start z-30" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}>
               <button onClick={handleBack} className="p-2 bg-white/80 backdrop-blur-md rounded-full text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.1)] flex items-center justify-center border border-white/50 active:scale-95 transition-transform">
                 <ChevronLeft size={24} />
               </button>

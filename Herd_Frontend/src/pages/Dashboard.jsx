@@ -1066,8 +1066,9 @@ export default function Dashboard() {
         <div className="flex md:hidden flex-col gap-4">
           {/* ─── 0. GREETING (GRADIENT DESIGN) ─── */}
           <div
-            className="rounded-t-none rounded-b-[40px] p-6 pt-[86px] shadow-lg relative overflow-hidden text-white flex flex-col justify-between mb-2"
+            className="rounded-t-none rounded-b-[40px] p-6 shadow-lg relative overflow-hidden text-white flex flex-col justify-between mb-2"
             style={{
+              paddingTop: 'calc(env(safe-area-inset-top) + 86px)',
               minHeight: '260px',
               background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)'
             }}
