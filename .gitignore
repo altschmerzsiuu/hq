@@ -29,3 +29,13 @@ Herd_Frontend/dist/
 .vscode/
 **/.vscode/
 Herd_Backend/scanner-app/node_modules/
+
+# ── Test & Sample Files ───────────────────────────────────────────────────────
+Herd_Backend/backend/Laporan_Medis_Sapi_D12.pdf
+Herd_Backend/backend/historis_clean.csv
+Herd_Backend/backend/template_historis.csv
+Herd_Backend/backend/test_collar_hmac.py
+Herd_Backend/backend/test_pdf.py
+Herd_Backend/backend/test_playwright.py
+Herd_Backend/backend/test_prediction_engine.py
+Herd_Backend/backend/generate_synthetic_data.py
