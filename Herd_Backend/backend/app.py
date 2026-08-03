@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException, Depends, Body, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, Response, Depends, BackgroundTasks, UploadFile, File, WebSocket, WebSocketDisconnect, Body
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field, field_validator
@@ -1171,6 +1172,7 @@ async def lifespan(app: FastAPI):
             await conn.execute("ALTER TABLE collar_registry ADD COLUMN IF NOT EXISTS device_secret VARCHAR(100);")
             await conn.execute("ALTER TABLE reproduksi_ternak ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
             await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
+            await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS foto VARCHAR(255);")
             # Ensure observation_logs table exists
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS observation_logs (
@@ -1488,6 +1490,32 @@ async def get_sensor_data(
             """, owner_id, limit)
         
         return [dict(row) for row in rows]
+
+@app.post("/api/hewan/{rfid}/upload")
+async def upload_hewan_picture(
+    rfid: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload picture for a specific cow"""
+    from supabase_client import upload_image_to_storage
+    
+    pool = await get_db_pool()
+    owner_id = get_effective_owner_id(current_user)
+    
+    async with pool.acquire() as conn:
+        # Check ownership
+        hewan = await conn.fetchrow("SELECT id FROM hewan WHERE id = $1 AND owner_id = $2", rfid, owner_id)
+        if not hewan:
+            raise HTTPException(status_code=404, detail="Cow not found or access denied")
+            
+        # Upload to Supabase
+        public_url = await upload_image_to_storage(file, folder=f"cows/{rfid}")
+        
+        # Update DB
+        await conn.execute("UPDATE hewan SET foto = $1 WHERE id = $2", public_url, rfid)
+        
+    return {"message": "Cow picture updated successfully", "url": public_url}
 
 @app.post("/api/alert-test")
 async def test_telegram_alert(alert: AlertTest):
@@ -2811,14 +2839,23 @@ async def run_batch_prediction(current_user: dict = Depends(get_current_user)):
                 cycle_avg  = float(repro['cycle_avg']  or 21.0) if repro else 21.0
                 parity     = int(repro['parity']       or 0)    if repro else 0
 
+                # 3.5 Check if sensor data is complete
+                if sensor['mean_z'] is None or sensor['temperature'] is None:
+                    print(f"[BATCH PREDICT] Incomplete sensor data for {collar_id}, skipping")
+                    continue
+
                 # 4. Run hybrid model
-                svm_p, xgb_p, hybrid = run_hybrid_prediction(
-                    float(sensor['mean_z']     or -0.97),
-                    float(sensor['rms_z']      or  0.97),
-                    float(sensor['max_z']      or -0.95),
-                    float(sensor['temperature'] or 38.5),
-                    days_since, cycle_avg, parity,
-                )
+                try:
+                    svm_p, xgb_p, hybrid = run_hybrid_prediction(
+                        float(sensor['mean_z']),
+                        float(sensor['rms_z'] or sensor['mean_z']), # Fallback to mean if rms is None
+                        float(sensor['max_z'] or sensor['mean_z']), # Fallback to mean if max is None
+                        float(sensor['temperature']),
+                        days_since, cycle_avg, parity,
+                    )
+                except (TypeError, ValueError) as e:
+                    print(f"[BATCH PREDICT] Type cast error for {collar_id}: {e}")
+                    continue
 
                 # 5. Persist
                 await conn.execute("""

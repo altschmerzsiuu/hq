@@ -12,6 +12,7 @@ import ReportSickModal from '@/components/shared/ReportSickModal';
 
 import { Stepper, StepperItem, StepperTitle, StepperDescription } from '@/components/ui/stepper';
 import { toast } from '@/store/toastStore';
+import axiosInstance from '@/lib/axios';
 
 const hitungUsia = (lahir, lang) => {
   if(!lahir) return '';
@@ -54,6 +55,29 @@ export default function DetailTernak() {
 
   const handleBack = () => navigate(-1);
   const [activeDetailTab, setActiveDetailTab] = useState('riwayat');
+  const [isUploadingFoto, setIsUploadingFoto] = useState(false);
+
+  const handleUploadFoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingFoto(true);
+    const tid = toast.loading(lang === 'id' ? 'Mengunggah foto sapi...' : 'Uploading cow photo...');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      await axiosInstance.post(`/hewan/${selectedSapi.id}/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success(lang === 'id' ? 'Foto berhasil diunggah!' : 'Photo uploaded successfully!', { id: tid });
+      fetchSapiDetail(id); // reload data
+    } catch (err) {
+      console.error(err);
+      toast.error(lang === 'id' ? 'Gagal mengunggah foto.' : 'Failed to upload photo.', { id: tid });
+    } finally {
+      setIsUploadingFoto(false);
+    }
+  };
   const [confirmingPregnancy, setConfirmingPregnancy] = useState(null);
   const confirmPregnancy = (item, isPregnant) => {
     setConfirmingPregnancy(item.id || item.jumlah_ib);
@@ -517,7 +541,7 @@ export default function DetailTernak() {
             <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/40 to-transparent pointer-events-none" />
             
             {/* Photo Action Buttons if No Photo */}
-            {!selectedSapi.foto && (
+            {!selectedSapi.foto ? (
                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
                   <div className="flex flex-col items-center mb-6">
                      <div className="bg-white/10 backdrop-blur-md p-4 rounded-full mb-3 border border-white/20 shadow-lg">
@@ -528,24 +552,21 @@ export default function DetailTernak() {
                   <div className="flex items-center bg-white/20 backdrop-blur-md p-1 rounded-2xl border border-white/30 shadow-xl pointer-events-auto">
                      <label className="px-4 py-2 rounded-xl text-[11px] font-bold text-white cursor-pointer active:scale-95 transition-transform flex items-center gap-2 hover:bg-white/10">
                        <Camera size={14} /> Ambil Foto
-                       <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                             const url = URL.createObjectURL(e.target.files[0]);
-                             setSelectedSapi({...selectedSapi, foto: url});
-                          }
-                       }} />
+                       <input type="file" accept="image/*" capture="environment" className="hidden" disabled={isUploadingFoto} onChange={handleUploadFoto} />
                      </label>
                      <div className="w-[1px] h-4 bg-white/30 mx-1" />
                      <label className="px-4 py-2 rounded-xl text-[11px] font-bold text-white cursor-pointer active:scale-95 transition-transform flex items-center gap-2 hover:bg-white/10">
                        <Camera size={14} /> Unggah Foto
-                       <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                             const url = URL.createObjectURL(e.target.files[0]);
-                             setSelectedSapi({...selectedSapi, foto: url});
-                          }
-                       }} />
+                       <input type="file" accept="image/*" className="hidden" disabled={isUploadingFoto} onChange={handleUploadFoto} />
                      </label>
                   </div>
+               </div>
+            ) : (
+               <div className="absolute top-20 right-4 pointer-events-auto z-20">
+                 <label className="p-2.5 bg-black/40 backdrop-blur-md rounded-full text-white shadow-lg flex items-center justify-center border border-white/20 active:scale-95 transition-transform cursor-pointer hover:bg-black/60">
+                   <Camera size={18} />
+                   <input type="file" accept="image/*" className="hidden" disabled={isUploadingFoto} onChange={handleUploadFoto} />
+                 </label>
                </div>
             )}
             
@@ -976,7 +997,7 @@ export default function DetailTernak() {
                 )}
                 <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                   <Camera size={20} className="text-white" />
-                  <input type="file" accept="image/*" className="hidden" />
+                  <input type="file" accept="image/*" className="hidden" disabled={isUploadingFoto} onChange={handleUploadFoto} />
                 </label>
               </div>
 

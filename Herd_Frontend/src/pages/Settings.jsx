@@ -386,7 +386,7 @@ export default function Settings() {
               >
                   <div className="relative z-10 mb-5 mt-2 cursor-pointer group" onClick={() => setActiveTab('profile')}>
                     <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center bg-gray-100 border-[3px] border-[#2f7d31]/20 shadow-sm group-hover:scale-105 group-active:scale-95 transition-all overflow-hidden">
-                        <img src="/photoprofile_default.jpeg" alt="Profile" className="w-full h-full object-cover" />
+                        <img src={user?.profile_picture_url || "/photoprofile_default.jpeg"} alt="Profile" className="w-full h-full object-cover" />
                     </div>
                   </div>
                   <div className="text-center">
@@ -530,7 +530,7 @@ export default function Settings() {
               {/* Avatar section */}
               <div className="flex flex-col items-center gap-2 mb-4">
                 <div onClick={() => setIsAvatarModalOpen(true)} className="relative w-28 h-28 rounded-full flex items-center justify-center bg-gray-100 cursor-pointer overflow-hidden group shadow-lg ring-4 ring-[#2f7d31]/20 hover:scale-105 transition-transform">
-                  <img src="/photoprofile_default.jpeg" alt="Profile" className="w-full h-full object-cover" />
+                  <img src={user?.profile_picture_url || "/photoprofile_default.jpeg"} alt="Profile" className="w-full h-full object-cover" />
                 </div>
                 <button type="button" onClick={() => setIsAvatarModalOpen(true)} className="text-[#2f7d31] text-sm font-bold mt-1 hover:underline">
                   {lang === 'id' ? 'Lihat Foto' : 'View Photo'}
@@ -1096,7 +1096,7 @@ export default function Settings() {
             
             {/* The 1:1 image view */}
             <div className="relative w-full aspect-square bg-gray-100">
-               <img src={avatarPreviewSrc || "/photoprofile_default.jpeg"} alt="Profile" className="w-full h-full object-cover" />
+               <img src={avatarPreviewSrc || user?.profile_picture_url || "/photoprofile_default.jpeg"} alt="Profile" className="w-full h-full object-cover" />
                
                {/* Overlay gradient for buttons visibility */}
                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none"></div>
@@ -1109,13 +1109,26 @@ export default function Settings() {
                  <div className="flex gap-2">
                    {avatarFile && (
                      <button 
-                       onClick={() => {
-                         toast.success(lang === 'id' ? 'Foto profil berhasil diperbarui!' : 'Profile picture updated successfully!');
-                         setIsAvatarModalOpen(false);
-                         setAvatarPreviewSrc(null);
-                         setAvatarFile(null);
-                         // TODO: Actual upload logic here
-                       }} 
+                       onClick={async () => {
+                         if (!avatarFile) return;
+                         const tid = toast.loading(lang === 'id' ? 'Mengunggah foto...' : 'Uploading photo...');
+                         try {
+                           const formData = new FormData();
+                           formData.append('file', avatarFile);
+                           await axiosInstance.post('/profile/upload', formData, {
+                             headers: { 'Content-Type': 'multipart/form-data' }
+                           });
+                           toast.success(lang === 'id' ? 'Foto profil berhasil diperbarui!' : 'Profile picture updated successfully!', { id: tid });
+                           setIsAvatarModalOpen(false);
+                           setAvatarPreviewSrc(null);
+                           setAvatarFile(null);
+                           // Refresh user profile
+                           useAuthStore.getState().checkAuth();
+                         } catch (err) {
+                           handleError(err, 'Upload Foto');
+                           toast.dismiss(tid);
+                         }
+                       }}
                        className="p-2 bg-[#2f7d31] rounded-full text-white hover:bg-[#2f7d31]/90 active:scale-95 transition-all shadow-md"
                      >
                        <Check className="w-5 h-5" />

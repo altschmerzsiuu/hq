@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS hewan (
     bulan_tahun_lahir VARCHAR(20) NOT NULL, -- Format: dd/mm/yyyy
     usia INTEGER,                         -- Usia dalam bulan
     status_kesehatan VARCHAR(100),
+    foto VARCHAR(255),
+    foto VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

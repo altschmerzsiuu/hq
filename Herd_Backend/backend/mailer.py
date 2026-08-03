@@ -27,6 +27,7 @@ import asyncio
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+from typing import Optional
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -146,8 +147,9 @@ def _html_daily_summary(total: int, sick: int, estrus_count: int,
 
 
 def _html_estrus_alert(cow_name: str, collar_id: str, kandang_id: str,
-                        probability: float, temperature: float) -> str:
+                        probability: float, temperature: Optional[float]) -> str:
     now = datetime.now(WITA).strftime("%d %b %Y, %H:%M WITA")
+    temp_val = temperature if temperature is not None else 38.5
     return f"""
 <!DOCTYPE html>
 <html>
@@ -188,7 +190,7 @@ def _html_estrus_alert(cow_name: str, collar_id: str, kandang_id: str,
     <div class="info-row"><span class="info-label">Nama Sapi</span><span class="info-value">{cow_name}</span></div>
     <div class="info-row"><span class="info-label">Collar ID</span><span class="info-value">{collar_id}</span></div>
     <div class="info-row"><span class="info-label">Kandang</span><span class="info-value">{kandang_id}</span></div>
-    <div class="info-row"><span class="info-label">Suhu Tubuh</span><span class="info-value">{temperature:.1f} °C</span></div>
+    <div class="info-row"><span class="info-label">Suhu Tubuh</span><span class="info-value">{temp_val:.1f} °C</span></div>
     <div class="info-row"><span class="info-label">Probabilitas Birahi</span><span class="info-value" style="color:#dc2626">{probability:.0f}%</span></div>
     <div class="prob-bar"><div class="prob-fill"></div></div>
     <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;margin-top:16px;">
@@ -330,7 +332,7 @@ def send_daily_summary_email(to: str, total: int, sick: int,
 
 def send_estrus_alert_email(to: str, cow_name: str, collar_id: str,
                              kandang_id: str, probability: float = 90.0,
-                             temperature: float = 39.8) -> bool:
+                             temperature: Optional[float] = None) -> bool:
     """
     Kirim estrus alert email (detail lengkap, sebagai backup Telegram).
     Dipanggil dari handle_estrus_alert() di app.py (via asyncio.to_thread).

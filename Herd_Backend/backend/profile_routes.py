@@ -119,6 +119,28 @@ async def update_profile(
         
         return {"message": "Profile updated successfully", "user": dict(updated_user)}
 
+@router.post("/upload")
+async def upload_profile_picture(
+    file: UploadFile = File(...),
+    pool=Depends(get_db_pool_dependency),
+    current_user=Depends(get_current_user)
+):
+    """Upload user profile picture"""
+    from supabase_client import upload_image_to_storage
+    user_id = current_user['id']
+    
+    # Upload to Supabase
+    public_url = await upload_image_to_storage(file, folder=f"profiles/{user_id}")
+    
+    # Update DB
+    async with pool.acquire() as conn:
+        updated_user = await conn.fetchrow(
+            "UPDATE users SET profile_picture_url = $1 WHERE id = $2 RETURNING id, email, full_name, role, profile_picture_url",
+            public_url, user_id
+        )
+        
+    return {"message": "Profile picture updated successfully", "user": dict(updated_user)}
+
 @router.post("/change-password")
 async def change_password(
     data: PasswordChange,

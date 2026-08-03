@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Activity, ScanLine, ChevronDown, ArrowLeft } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Activity, ScanLine, ChevronDown, ArrowLeft, Camera, Image as ImageIcon } from 'lucide-react';
 import { useTernakStore } from '@/store/useTernakStore';
 import { toast } from '@/store/toastStore';
 import useSettingsStore from '@/store/settingsStore';
@@ -7,6 +7,7 @@ import translations from '@/lib/i18n';
 import useBodyScrollLock from '@/hooks/useBodyScrollLock';
 import ScanModal from '@/components/scan/ScanModal';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '@/lib/axios';
 
 const hitungUsia = (lahir, lang) => {
   if(!lahir) return '';
@@ -49,6 +50,17 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
   const [tambahForm, setTambahForm] = useState({
     nama: '', rfid: '', jenis: '', lahir: '', kesehatan: '', kelamin: 'betina', berat_badan: ''
   });
+  const [cowImage, setCowImage] = useState(null);
+  const [cowImagePreview, setCowImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCowImage(file);
+      setCowImagePreview(URL.createObjectURL(file));
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -71,7 +83,23 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
     const payload = { ...tambahForm, nama: formattedName, rfid: finalRfid };
     const res = await tambahSapi(payload);
     if (res.success) {
+      if (cowImage) {
+        try {
+          const tid = toast.loading(lang === 'id' ? 'Mengunggah foto sapi...' : 'Uploading cow photo...');
+          const formData = new FormData();
+          formData.append('file', cowImage);
+          await axiosInstance.post(`/hewan/${finalRfid}/upload`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          toast.success(lang === 'id' ? 'Foto sapi berhasil diunggah!' : 'Cow photo uploaded!', { id: tid });
+        } catch (err) {
+          console.error(err);
+          toast.error(lang === 'id' ? 'Gagal mengunggah foto sapi.' : 'Failed to upload cow photo.');
+        }
+      }
       setTambahForm({ nama: '', rfid: '', jenis: '', lahir: '', kesehatan: '', kelamin: 'betina', berat_badan: '' });
+      setCowImage(null);
+      setCowImagePreview(null);
       onClose();
       toast.success(t.livestock_toast_add_success);
       navigate('/ternak', { state: { selectedCowId: res.id || finalRfid, from: '/' } });
@@ -107,6 +135,24 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
           </div>
           
           <form className={isWidgetMode ? "p-5 space-y-5 flex flex-col" : "space-y-5 flex flex-col"} onSubmit={onSubmit}>
+            {/* Foto Sapi */}
+            <div className="flex flex-col items-center">
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageChange} />
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer overflow-hidden hover:bg-gray-50 transition-colors"
+              >
+                {cowImagePreview ? (
+                  <img src={cowImagePreview} alt="Cow" className="w-full h-full object-cover" />
+                ) : (
+                  <>
+                    <Camera className="w-6 h-6 text-gray-400 mb-1" />
+                    <span className="text-[10px] text-gray-500 font-medium">{lang === 'id' ? 'Tambah Foto' : 'Add Photo'}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* 1. Nama Sapi */}
             <div>
               <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">

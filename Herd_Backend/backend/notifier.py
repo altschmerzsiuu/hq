@@ -1,5 +1,6 @@
 import os
 import requests
+from typing import Optional
 from datetime import datetime, timezone, timedelta
 
 WITA = timezone(timedelta(hours=8))
@@ -46,12 +47,13 @@ def _send_telegram(text: str, chat_ids: list = None) -> bool:
 
 def _fmt_estrus_telegram(cow_name, collar_id, kandang_id, probability, temperature, dashboard_host):
     now = datetime.now(WITA).strftime("%d %b %Y, %H:%M WITA")
+    temp_val = temperature if temperature is not None else 38.5
     return (
         "<b>ESTRUS ALERT — Estrus AI</b>\n\n"
         f"Sapi      : {cow_name} ({collar_id})\n"
         f"Kandang   : {kandang_id}\n"
         f"Probabilitas : {probability:.0f}%\n"
-        f"Suhu Tubuh   : {temperature:.1f} C\n"
+        f"Suhu Tubuh   : {temp_val:.1f} C\n"
         f"Waktu        : {now}\n\n"
         "Waktu optimal IB: <b>12-24 jam ke depan</b>\n"
         f"<a href=\'http://{dashboard_host}:3030/pages/notifications.html\'>Buka Dashboard</a>"
@@ -91,7 +93,7 @@ def _fmt_daily_telegram(total, sick, estrus_count, anomaly_count, dashboard_host
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def send_estrus_alert(cow_name: str, collar_id: str, kandang_id: str,
-                       probability: float = 90.0, temperature: float = 39.8,
+                       probability: float = 90.0, temperature: Optional[float] = None,
                        chat_ids: list = None) -> bool:
     host = os.getenv("DASHBOARD_HOST", os.getenv("MQTT_BROKER_URL", "192.168.1.33"))
     msg  = _fmt_estrus_telegram(cow_name, collar_id, kandang_id, probability, temperature, host)

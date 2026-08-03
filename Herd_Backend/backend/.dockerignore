@@ -9,3 +9,4 @@ __pycache__
 .github
 *.db
 *.sqlite3
+._*
