@@ -1337,7 +1337,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-        </div>
+        </div> {/* Close the px-4 wrapper */}
+        </div> {/* Close the mobile view wrapper */}
 
         {/* ─── DESKTOP BENTO GRID DASHBOARD ─── */}
         <div className="hidden md:flex md:flex-col md:gap-0">
