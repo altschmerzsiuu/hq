@@ -13,35 +13,46 @@ const Toaster = ({ ...props }) => {
       {/* Inject global CSS for glass effect */}
       <style>{`
 
+        [data-sonner-toaster] {
+          top: 16px !important;
+          pointer-events: none; /* Let clicks pass through empty space */
+        }
+        
         [data-sonner-toaster] [data-sonner-toast] {
-          backdrop-filter: blur(20px) saturate(180%) !important;
-          -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-          background: rgba(240, 240, 245, 0.72) !important;
-          border: 1px solid rgba(255, 255, 255, 0.55) !important;
+          pointer-events: auto; /* Re-enable clicks for toast */
+          backdrop-filter: blur(40px) saturate(150%) !important;
+          -webkit-backdrop-filter: blur(40px) saturate(150%) !important;
+          background: rgba(255, 255, 255, 0.65) !important;
+          border: 1px solid rgba(255, 255, 255, 0.4) !important;
           border-radius: 20px !important;
           box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.10),
-            0 1px 0 rgba(255,255,255,0.6) inset !important;
+            0 8px 32px rgba(0, 0, 0, 0.08),
+            0 0 0 1px rgba(255,255,255,0.6) inset,
+            0 4px 12px rgba(255, 255, 255, 0.4) inset !important;
           color: #111118 !important;
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif !important;
-          font-size: 14px !important;
-          padding: 14px 18px !important;
-          min-width: 280px !important;
-          max-width: 360px !important;
+          padding: 16px 20px !important;
+          min-width: 320px !important;
+          max-width: 90vw !important;
         }
         [data-sonner-toaster] [data-sonner-toast] [data-title] {
-          font-weight: 600 !important;
-          font-size: 14px !important;
-          letter-spacing: -0.1px !important;
+          font-weight: 700 !important;
+          font-size: 15px !important;
+          letter-spacing: -0.2px !important;
           color: #111118 !important;
+          margin-bottom: 4px !important;
         }
         [data-sonner-toaster] [data-sonner-toast] [data-description] {
-          font-size: 12.5px !important;
-          color: #62627A !important;
-          margin-top: 2px !important;
+          font-size: 13.5px !important;
+          color: #4A4A5C !important;
+          line-height: 1.4 !important;
         }
         [data-sonner-toaster] [data-sonner-toast] [data-icon] {
-          margin-right: 10px !important;
+          margin-right: 14px !important;
+          background: rgba(255, 255, 255, 0.5) !important;
+          padding: 8px !important;
+          border-radius: 12px !important;
+          border: 1px solid rgba(255, 255, 255, 0.6) !important;
         }
       `}</style>
       <Sonner

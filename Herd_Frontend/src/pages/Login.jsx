@@ -156,10 +156,18 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isLoginMode) {
-      if (!email || !password) return;
+      if (!email || !password) {
+        toast.error('Email dan Password wajib diisi!');
+        return;
+      }
       setIsLoading(true);
       const userObj = await login(email, password);
       setIsLoading(false);
+      
+      if (!userObj) {
+        toast.error('Gagal masuk. Periksa email dan password Anda.');
+        return;
+      }
 
       if (userObj) {
         const { registerDevice } = useAuthStore.getState();
@@ -176,7 +184,10 @@ export default function Login() {
         }
       }
     } else {
-      if (!firstName || !email || !password || !confirmPassword) return;
+      if (!firstName || !email || !password || !confirmPassword) {
+        toast.error('Mohon lengkapi semua data!');
+        return;
+      }
       if (password !== confirmPassword) {
         toast.error('Konfirmasi password tidak cocok!');
         return;
@@ -337,11 +348,11 @@ export default function Login() {
   };
 
 
-  if (isCheckingUser) return <div className="min-h-screen bg-[#F2F2F7] flex items-center justify-center" />;
+  if (isCheckingUser) return <div className="min-h-[100dvh] bg-white lg:bg-[#FDFBF7] flex items-center justify-center" />;
 
   return (
-    <div className="min-h-[100dvh] bg-[#F2F2F7] lg:bg-white flex justify-center items-center font-sans sm:p-4 lg:p-0">
-      <div className={`w-full max-w-[420px] lg:max-w-none h-[100dvh] sm:h-[850px] sm:max-h-[90vh] lg:h-screen lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row ${(!isLoginMode && step === 'auth') ? 'overflow-y-auto' : ''}`}>
+    <div className="min-h-[100dvh] bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans sm:p-4 lg:p-0">
+      <div className={`w-full max-w-[420px] lg:max-w-none h-[100dvh] sm:h-[850px] sm:max-h-[90vh] lg:h-[100dvh] lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row ${(!isLoginMode && step === 'auth') ? 'overflow-y-auto' : ''}`}>
         
         <AnimatePresence mode="wait">
           

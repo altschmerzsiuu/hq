@@ -52,7 +52,7 @@ function App() {
               <motion.img 
                 initial={{ scale: 0.8, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
                 src={splashScreenImg} 
                 alt="HERD Mascot" 
                 className="w-[260px] h-[260px] object-contain"
@@ -62,24 +62,27 @@ function App() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
+              transition={{ duration: 0.5 }}
               className="absolute bottom-10 left-0 right-0 flex flex-col items-center"
             >
+              <style>{`
+                @keyframes smoothBounce {
+                  0%, 100% { transform: translateY(0); }
+                  50% { transform: translateY(-8px); }
+                }
+              `}</style>
               <div className="flex gap-2 items-center mb-3">
-                <motion.div 
+                <div 
                   className="w-2.5 h-2.5 rounded-full bg-white/90"
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut", delay: 0 }}
+                  style={{ animation: 'smoothBounce 0.8s infinite ease-in-out' }}
                 />
-                <motion.div 
+                <div 
                   className="w-2.5 h-2.5 rounded-full bg-white/90"
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut", delay: 0.15 }}
+                  style={{ animation: 'smoothBounce 0.8s infinite ease-in-out 0.15s' }}
                 />
-                <motion.div 
+                <div 
                   className="w-2.5 h-2.5 rounded-full bg-white/90"
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+                  style={{ animation: 'smoothBounce 0.8s infinite ease-in-out 0.3s' }}
                 />
               </div>
               <h1 className="text-white text-2xl font-extrabold tracking-wider">HERD</h1>

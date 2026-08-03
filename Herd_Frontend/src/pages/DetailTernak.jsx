@@ -9,6 +9,7 @@ import CowAnalyticsView from '@/components/shared/CowAnalyticsView';
 import CowEstrusView from '@/components/shared/CowEstrusView';
 import PairCollarModal from '@/components/shared/PairCollarModal';
 import ReportSickModal from '@/components/shared/ReportSickModal';
+import ImageCropperModal from '@/components/shared/ImageCropperModal';
 
 import { Stepper, StepperItem, StepperTitle, StepperDescription } from '@/components/ui/stepper';
 import { toast } from '@/store/toastStore';
@@ -57,23 +58,39 @@ export default function DetailTernak() {
   const [activeDetailTab, setActiveDetailTab] = useState('riwayat');
   const [isUploadingFoto, setIsUploadingFoto] = useState(false);
 
-  const handleUploadFoto = async (e) => {
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [selectedFileUrl, setSelectedFileUrl] = useState(null);
+
+  const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Create an object URL for the cropper
+    const url = URL.createObjectURL(file);
+    setSelectedFileUrl(url);
+    setIsCropperOpen(true);
+    e.target.value = ''; // Reset input
+  };
 
+  const handleUploadFoto = async (croppedBlob) => {
     setIsUploadingFoto(true);
     const tid = toast.loading(lang === 'id' ? 'Mengunggah foto sapi...' : 'Uploading cow photo...');
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      await axiosInstance.post(`/hewan/${selectedSapi.id}/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      formData.append('file', croppedBlob, 'profile.jpg');
+      
+      const response = await axiosInstance.post(`/hewan/${selectedSapi.id}/upload`, formData);
+      const newUrl = response.data.url;
+      
+      // Update immediately for smooth loading
+      useTernakStore.setState({
+        selectedSapi: { ...selectedSapi, foto: newUrl }
       });
+      
       toast.success(lang === 'id' ? 'Foto berhasil diunggah!' : 'Photo uploaded successfully!', { id: tid });
-      fetchSapiDetail(id); // reload data
     } catch (err) {
       console.error(err);
-      toast.error(lang === 'id' ? 'Gagal mengunggah foto.' : 'Failed to upload photo.', { id: tid });
+      toast.error(err.response?.data?.detail || (lang === 'id' ? 'Gagal mengunggah foto.' : 'Failed to upload photo.'), { id: tid });
     } finally {
       setIsUploadingFoto(false);
     }
@@ -389,6 +406,23 @@ export default function DetailTernak() {
               <button onClick={() => setIsEditProfileOpen(false)} className="p-2 rounded-full hover:bg-gray-100"><X size={18} /></button>
             </div>
             <form onSubmit={submitEditProfile} className="flex flex-col gap-4">
+              {/* Photo Upload in Edit Modal */}
+              <div className="flex flex-col items-center mb-2">
+                <div className="relative group w-24 h-24 rounded-[32px] overflow-hidden bg-gray-100 border border-gray-200 shadow-sm cursor-pointer">
+                  {selectedSapi?.foto ? (
+                    <img src={selectedSapi.foto} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <Camera size={32} />
+                    </div>
+                  )}
+                  <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <Camera size={24} className="text-white" />
+                    <input type="file" accept="image/*" className="hidden" disabled={isUploadingFoto} onChange={handleFileSelect} />
+                  </label>
+                </div>
+                <span className="text-[11px] font-semibold text-gray-400 mt-2">{lang === 'id' ? 'Ketuk untuk ubah foto' : 'Tap to change photo'}</span>
+              </div>
               {[
                 { key: 'nama', label: 'Nama', type: 'text', placeholder: lang === 'id' ? 'Nama ternak' : 'Cattle name' },
                 { key: 'jenis', label: 'Ras / Jenis', type: 'text', placeholder: 'mis. Brahman, PO, Limousin' },
@@ -403,6 +437,9 @@ export default function DetailTernak() {
                   />
                 </div>
               ))}
+              
+
+
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">{lang === 'id' ? 'Status Kesehatan' : 'Health Status'}</label>
                 <div className="relative">
@@ -523,25 +560,42 @@ export default function DetailTernak() {
         onSubmit={handleReportSick}
         cowId={selectedSapi?.id}
       />
+
+      {/* ── Modal: Cropper ─────────────────────────────────────────── */}
+      <ImageCropperModal
+        isOpen={isCropperOpen}
+        onClose={() => setIsCropperOpen(false)}
+        imageSrc={selectedFileUrl}
+        onCropComplete={handleUploadFoto}
+        aspectRatio={1}
+      />
+
       {/* ── MOBILE VIEW ── */}
         {/* ── MOBILE FULLSCREEN DETAIL MODAL ── */}
         <div className="md:hidden fixed inset-0 z-[35] bg-[#F3F4F6] overflow-y-auto animate-in slide-in-from-bottom duration-300 no-scrollbar pb-[100px]">
           {/* Header Photo */}
           <div className="sticky top-0 w-full h-[60vh] min-h-[450px] z-0">
             {selectedSapi.foto ? (
-              <img 
-                src={selectedSapi.foto} 
-                alt={selectedSapi.nama} 
-                className="w-full h-full object-cover" 
-              />
+              <div className="w-full h-full relative bg-gray-200 animate-pulse">
+                <img 
+                  src={selectedSapi.foto} 
+                  alt={selectedSapi.nama} 
+                  fetchpriority="high"
+                  className="w-full h-full object-cover absolute inset-0 transition-opacity duration-300 opacity-0"
+                  onLoad={(e) => {
+                    e.target.style.opacity = 1;
+                    e.target.parentElement.classList.remove('animate-pulse');
+                  }}
+                />
+              </div>
             ) : (
               <div className="w-full h-full bg-gray-300 relative" />
             )}
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/40 to-transparent pointer-events-none" />
             
-            {/* Photo Action Buttons if No Photo */}
-            {!selectedSapi.foto ? (
+            {/* Floating Photo Action Buttons REMOVED per user request */}
+            {!selectedSapi.foto && (
                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
                   <div className="flex flex-col items-center mb-6">
                      <div className="bg-white/10 backdrop-blur-md p-4 rounded-full mb-3 border border-white/20 shadow-lg">
@@ -549,24 +603,6 @@ export default function DetailTernak() {
                      </div>
                      <p className="text-[13px] font-medium text-white/90 tracking-wide" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>Belum ada foto</p>
                   </div>
-                  <div className="flex items-center bg-white/20 backdrop-blur-md p-1 rounded-2xl border border-white/30 shadow-xl pointer-events-auto">
-                     <label className="px-4 py-2 rounded-xl text-[11px] font-bold text-white cursor-pointer active:scale-95 transition-transform flex items-center gap-2 hover:bg-white/10">
-                       <Camera size={14} /> Ambil Foto
-                       <input type="file" accept="image/*" capture="environment" className="hidden" disabled={isUploadingFoto} onChange={handleUploadFoto} />
-                     </label>
-                     <div className="w-[1px] h-4 bg-white/30 mx-1" />
-                     <label className="px-4 py-2 rounded-xl text-[11px] font-bold text-white cursor-pointer active:scale-95 transition-transform flex items-center gap-2 hover:bg-white/10">
-                       <Camera size={14} /> Unggah Foto
-                       <input type="file" accept="image/*" className="hidden" disabled={isUploadingFoto} onChange={handleUploadFoto} />
-                     </label>
-                  </div>
-               </div>
-            ) : (
-               <div className="absolute top-20 right-4 pointer-events-auto z-20">
-                 <label className="p-2.5 bg-black/40 backdrop-blur-md rounded-full text-white shadow-lg flex items-center justify-center border border-white/20 active:scale-95 transition-transform cursor-pointer hover:bg-black/60">
-                   <Camera size={18} />
-                   <input type="file" accept="image/*" className="hidden" disabled={isUploadingFoto} onChange={handleUploadFoto} />
-                 </label>
                </div>
             )}
             
@@ -989,16 +1025,23 @@ export default function DetailTernak() {
               {/* Avatar */}
               <div className="w-24 h-24 rounded-full bg-gray-100 overflow-hidden shrink-0 border-4 border-white shadow-md relative group z-10">
                 {selectedSapi.foto ? (
-                  <img src={selectedSapi.foto} alt={selectedSapi.nama} className="w-full h-full object-cover" />
+                  <div className="w-full h-full relative bg-gray-200 animate-pulse">
+                    <img 
+                      src={selectedSapi.foto} 
+                      alt={selectedSapi.nama} 
+                      fetchpriority="high"
+                      className="w-full h-full object-cover absolute inset-0 transition-opacity duration-300 opacity-0"
+                      onLoad={(e) => {
+                        e.target.style.opacity = 1;
+                        e.target.parentElement.classList.remove('animate-pulse');
+                      }}
+                    />
+                  </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gray-50">
                     <Beef size={36} className="text-gray-300" />
                   </div>
                 )}
-                <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                  <Camera size={20} className="text-white" />
-                  <input type="file" accept="image/*" className="hidden" disabled={isUploadingFoto} onChange={handleUploadFoto} />
-                </label>
               </div>
 
               {/* Name & ID */}

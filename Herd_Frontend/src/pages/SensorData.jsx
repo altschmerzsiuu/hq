@@ -281,15 +281,6 @@ export default function SensorData() {
           };
         });
 
-      if (liveCows.length === 0) {
-        liveCows = [
-          { id: 'COL-001', cow_id: allCows[0]?.id || '1', rfid: 'TAG-8932', cowName: allCows[0]?.nama || 'Sapi B02 (Gendhis)', temp: 38.5, activityState: 'Ruminating', battery: 85, lastSyncRaw: new Date().toISOString(), status: 'good' },
-          { id: 'COL-002', cow_id: allCows[1]?.id || '2', rfid: 'TAG-8933', cowName: allCows[1]?.nama || 'Sapi A10 (Legi)', temp: 39.2, activityState: 'Active', battery: 15, lastSyncRaw: new Date().toISOString(), status: 'critical' },
-          { id: 'COL-003', cow_id: allCows[2]?.id || '3', rfid: 'TAG-8934', cowName: allCows[2]?.nama || 'Sapi C05 (Pahing)', temp: 39.8, activityState: 'Resting', battery: 60, lastSyncRaw: new Date(Date.now() - 3600000).toISOString(), status: 'warning' },
-          { id: 'COL-004', cow_id: allCows[3]?.id || '4', rfid: 'TAG-8935', cowName: allCows[3]?.nama || 'Sapi D12 (Wage)', temp: 38.1, activityState: 'Eating', battery: 45, lastSyncRaw: new Date(Date.now() - 86400000).toISOString(), status: 'good' },
-        ];
-      }
-
       setTableData(liveCows);
 
       // Process telemetry data for chart (chronological order)
@@ -643,14 +634,7 @@ export default function SensorData() {
         <div className="w-full h-[250px] mt-4">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
-              data={(chartData.length > 0 ? (timeFilter === '24h' ? chartData.slice(-12) : chartData) : [
-                { time: '08:00', temp: 38.2, activity: 120 },
-                { time: '10:00', temp: 38.5, activity: 150 },
-                { time: '12:00', temp: 39.1, activity: 110 },
-                { time: '14:00', temp: 38.9, activity: 90 },
-                { time: '16:00', temp: 38.6, activity: 140 },
-                { time: '18:00', temp: 38.4, activity: 160 }
-              ]).map(d => ({
+              data={(chartData.length > 0 ? (timeFilter === '24h' ? chartData.slice(-12) : chartData) : []).map(d => ({
                 ...d,
                 compareTemp: d.temp ? parseFloat((d.temp - 0.4 + Math.sin(d.temp) * 0.5).toFixed(1)) : null
               }))} 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { LogOut, User, Bell, Key, Users, Settings as SettingsIcon, Trash2, Camera, ChevronLeft, ChevronDown, Monitor, HelpCircle, Globe, Sun, Moon, Send, Save, Loader2, UserPlus, CheckCheck, Check, Edit2, X } from 'lucide-react';
+import ImageCropperModal from '@/components/shared/ImageCropperModal';
 import { FAQ } from '@/components/shared/FAQ';
 import FeedbackModal from '@/components/shared/FeedbackModal';
 import ContactView from '@/components/shared/ContactView';
@@ -40,13 +41,31 @@ export default function Settings() {
   const fileInputRef = useRef(null);
 
   const [avatarPreviewSrc, setAvatarPreviewSrc] = useState(null);
-  const [avatarFile, setAvatarFile] = useState(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
 
   const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
-      setAvatarFile(file);
       setAvatarPreviewSrc(URL.createObjectURL(file));
+      setIsCropperOpen(true);
+    }
+    e.target.value = ''; // Reset input
+  };
+
+  const handleUploadFoto = async (croppedBlob) => {
+    const tid = toast.loading(lang === 'id' ? 'Mengunggah foto...' : 'Uploading photo...');
+    try {
+      const formData = new FormData();
+      formData.append('file', croppedBlob, 'profile.jpg');
+      await axiosInstance.post('/profile/upload', formData);
+      toast.success(lang === 'id' ? 'Foto profil berhasil diperbarui!' : 'Profile picture updated successfully!', { id: tid });
+      useAuthStore.getState().checkAuth();
+    } catch (err) {
+      handleError(err, 'Upload Foto');
+      toast.dismiss(tid);
+    } finally {
+      setIsCropperOpen(false);
+      setAvatarPreviewSrc(null);
     }
   };
 
@@ -103,8 +122,6 @@ export default function Settings() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('worker');
   const [teamLoading, setTeamLoading] = useState(false);
-
-  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
   const inputClass = "w-full min-h-[46px] px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2f7d31]/20 focus:border-[#2f7d31] transition-all shadow-sm";
   const labelClass = "block text-[11px] font-black text-gray-500 mb-2 uppercase tracking-wider";
@@ -529,11 +546,15 @@ export default function Settings() {
 
               {/* Avatar section */}
               <div className="flex flex-col items-center gap-2 mb-4">
-                <div onClick={() => setIsAvatarModalOpen(true)} className="relative w-28 h-28 rounded-full flex items-center justify-center bg-gray-100 cursor-pointer overflow-hidden group shadow-lg ring-4 ring-[#2f7d31]/20 hover:scale-105 transition-transform">
+                <div onClick={() => fileInputRef.current?.click()} className="relative w-28 h-28 rounded-full flex items-center justify-center bg-gray-100 cursor-pointer overflow-hidden group shadow-lg ring-4 ring-[#2f7d31]/20 hover:scale-105 transition-transform">
                   <img src={user?.profile_picture_url || "/photoprofile_default.jpeg"} alt="Profile" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-8 h-8 text-white" />
+                  </div>
                 </div>
-                <button type="button" onClick={() => setIsAvatarModalOpen(true)} className="text-[#2f7d31] text-sm font-bold mt-1 hover:underline">
-                  {lang === 'id' ? 'Lihat Foto' : 'View Photo'}
+                <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[#2f7d31] text-sm font-bold mt-1 hover:underline">
+                  {lang === 'id' ? 'Ganti Foto' : 'Change Photo'}
                 </button>
               </div>
 
@@ -556,9 +577,6 @@ export default function Settings() {
                     <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{lang === 'id' ? 'No. WhatsApp' : 'WhatsApp No.'}</label>
                     <div className="flex items-center justify-end w-full gap-2">
                       <span className="text-sm font-medium text-gray-500">{phoneNumber ? (phoneNumber.length > 7 ? phoneNumber.slice(0, 4) + '***' + phoneNumber.slice(-3) : phoneNumber) : '—'}</span>
-                      <button type="button" className="text-[10px] font-bold text-[#2f7d31] hover:text-[#007b46] underline underline-offset-2 ml-2 transition-colors">
-                        {lang === 'id' ? 'Ganti' : 'Change'}
-                      </button>
                     </div>
                   </div>
                 ) : (
@@ -1083,74 +1101,23 @@ export default function Settings() {
       </div>
     </div>
       
+      {/* MODAL: IMAGE CROPPER FOR AVATAR */}
+      <ImageCropperModal
+        isOpen={isCropperOpen}
+        onClose={() => {
+          setIsCropperOpen(false);
+          setAvatarPreviewSrc(null);
+        }}
+        imageSrc={avatarPreviewSrc}
+        onCropComplete={handleUploadFoto}
+        aspectRatio={1}
+      />
 
       <FeedbackModal 
         isOpen={isFeedbackModalOpen} 
         onClose={() => setIsFeedbackModalOpen(false)} 
         lang={lang} 
       />
-      {/* Avatar Preview Modal (Centered Modal) */}
-      {isAvatarModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => { setIsAvatarModalOpen(false); setAvatarPreviewSrc(null); setAvatarFile(null); }}>
-          <div className="relative w-full max-w-sm rounded-[32px] shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden bg-white" onClick={e => e.stopPropagation()}>
-            
-            {/* The 1:1 image view */}
-            <div className="relative w-full aspect-square bg-gray-100">
-               <img src={avatarPreviewSrc || user?.profile_picture_url || "/photoprofile_default.jpeg"} alt="Profile" className="w-full h-full object-cover" />
-               
-               {/* Overlay gradient for buttons visibility */}
-               <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/60 to-transparent pointer-events-none"></div>
-
-               {/* Buttons */}
-               <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-auto">
-                 <button onClick={() => { setIsAvatarModalOpen(false); setAvatarPreviewSrc(null); setAvatarFile(null); }} className="p-2 bg-white/20 rounded-full text-white hover:bg-white/30 active:bg-white/40 active:scale-95 transition-all backdrop-blur-md">
-                   <ChevronLeft className="w-6 h-6" />
-                 </button>
-                 <div className="flex gap-2">
-                   {avatarFile && (
-                     <button 
-                       onClick={async () => {
-                         if (!avatarFile) return;
-                         const tid = toast.loading(lang === 'id' ? 'Mengunggah foto...' : 'Uploading photo...');
-                         try {
-                           const formData = new FormData();
-                           formData.append('file', avatarFile);
-                           await axiosInstance.post('/profile/upload', formData, {
-                             headers: { 'Content-Type': 'multipart/form-data' }
-                           });
-                           toast.success(lang === 'id' ? 'Foto profil berhasil diperbarui!' : 'Profile picture updated successfully!', { id: tid });
-                           setIsAvatarModalOpen(false);
-                           setAvatarPreviewSrc(null);
-                           setAvatarFile(null);
-                           // Refresh user profile
-                           useAuthStore.getState().checkAuth();
-                         } catch (err) {
-                           handleError(err, 'Upload Foto');
-                           toast.dismiss(tid);
-                         }
-                       }}
-                       className="p-2 bg-[#2f7d31] rounded-full text-white hover:bg-[#2f7d31]/90 active:scale-95 transition-all shadow-md"
-                     >
-                       <Check className="w-5 h-5" />
-                     </button>
-                   )}
-                   <button onClick={() => fileInputRef.current?.click()} className="p-2 bg-white/20 rounded-full text-white hover:bg-white/30 active:bg-white/40 active:scale-95 transition-all backdrop-blur-md">
-                     <Edit2 className="w-5 h-5" />
-                   </button>
-                 </div>
-               </div>
-            </div>
-            
-            <input 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
-              ref={fileInputRef} 
-              onChange={handleAvatarChange} 
-            />
-          </div>
-        </div>
-      )}
 
       {/* Unsaved Changes Discard Modal */}
       {showDiscardModal && (

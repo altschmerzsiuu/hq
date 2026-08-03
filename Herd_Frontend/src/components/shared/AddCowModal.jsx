@@ -88,9 +88,7 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
           const tid = toast.loading(lang === 'id' ? 'Mengunggah foto sapi...' : 'Uploading cow photo...');
           const formData = new FormData();
           formData.append('file', cowImage);
-          await axiosInstance.post(`/hewan/${finalRfid}/upload`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
+          await axiosInstance.post(`/hewan/${finalRfid}/upload`, formData);
           toast.success(lang === 'id' ? 'Foto sapi berhasil diunggah!' : 'Cow photo uploaded!', { id: tid });
         } catch (err) {
           console.error(err);

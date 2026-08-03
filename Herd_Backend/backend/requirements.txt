@@ -49,8 +49,9 @@ jinja2
 
 # ── Scanner & Telegram Bot ───────────────────────────────────────────────
 python-dateutil==2.8.2
-python-telegram-bot==20.7
+python-telegram-bot==22.8
 redis
 slowapi>=0.1.8
-supabase>=2.3.0
+supabase>=2.31.0
 python-multipart>=0.0.9
+python-magic>=0.4.27

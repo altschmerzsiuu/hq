@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
     curl \
+    libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -26,9 +27,10 @@ COPY report_routes.py .
 COPY notifier.py .
 COPY mailer.py .
 COPY calendar_reminder.py .
+COPY supabase_client.py .
 
 # Copy directories
 COPY ai/ ./ai/
 COPY routers/ ./routers/
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000", "--workers", "4"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000", "--workers", "1"]

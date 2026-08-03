@@ -99,7 +99,7 @@ export default function MainLayout() {
   return (
     <div style={{
       display: 'flex',
-      height: '100vh',
+      height: '100dvh',
       background: '#F8F9FA', // Clean grayish background to contrast floating cards
       overflow: 'hidden',
     }}>
@@ -130,17 +130,18 @@ export default function MainLayout() {
           style={{ 
             flex: 1, 
             overflowY: 'auto', 
-            overflowX: 'hidden'
+            overflowX: 'hidden',
+            maxWidth: '100%'
           }}
           className={cn(
-            "px-3 pb-4 md:px-4",
-            (location.pathname === '/dashboard' || location.pathname === '/ternak' || location.pathname === '/sensor-data') ? "pt-0" : "pt-3"
+            "px-4 pb-4 md:px-4",
+            (location.pathname === '/dashboard' || location.pathname === '/ternak' || location.pathname === '/sensor-data') ? "pt-0" : "pt-4"
           )}
         >
           <div 
             className={location.pathname.startsWith('/ternak/') && location.pathname !== '/ternak' 
               ? "w-full" 
-              : "md:bg-white md:border md:border-[#E5E7EB] md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:rounded-[24px] md:p-5 lg:p-6 lg:min-h-[calc(100vh-100px)]"} 
+              : "md:bg-white md:border md:border-[#E5E7EB] md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:rounded-[24px] md:p-5 lg:p-6 lg:min-h-[calc(100dvh-100px)]"} 
             style={{ 
               width: '100%',
               maxWidth: '100%',
