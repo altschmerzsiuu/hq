@@ -1,0 +1,1192 @@
+// src/pages/Settings.jsx
+
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { LogOut, User, Bell, Key, Users, Settings as SettingsIcon, Trash2, Camera, ChevronLeft, ChevronDown, Monitor, HelpCircle, Globe, Sun, Moon, Send, Save, Loader2, UserPlus, CheckCheck, Check, Edit2, X } from 'lucide-react';
+import ImageCropperModal from '@/components/shared/ImageCropperModal';
+import { FAQ } from '@/components/shared/FAQ';
+import FeedbackModal from '@/components/shared/FeedbackModal';
+import ContactView from '@/components/shared/ContactView';
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import { toast } from '@/store/toastStore';
+import { handleError } from '@/lib/errorHandler';
+import axiosInstance from '@/lib/axios';
+import useSettingsStore from '@/store/settingsStore';
+import translations from '@/lib/i18n';
+import regionData from '@/data/indonesia-region.json';
+import { useAuthStore } from '@/store/authStore';
+import { requestFirebaseNotificationPermission } from '@/firebase-config';
+import useConfirmStore from '@/store/confirmStore';
+
+export default function Settings() {
+  const { lang, setLang } = useSettingsStore();
+  const t = translations[lang];
+  const user = useAuthStore(state => state.user);
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState('main');
+
+  // Sync tab with URL query params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    } else {
+      setActiveTab('main');
+    }
+  }, [location.search]);
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const [avatarPreviewSrc, setAvatarPreviewSrc] = useState(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarPreviewSrc(URL.createObjectURL(file));
+      setIsCropperOpen(true);
+    }
+    e.target.value = ''; // Reset input
+  };
+
+  const handleUploadFoto = async (croppedBlob) => {
+    const tid = toast.loading(lang === 'id' ? 'Mengunggah foto...' : 'Uploading photo...');
+    try {
+      const formData = new FormData();
+      formData.append('file', croppedBlob, 'profile.jpg');
+      await axiosInstance.post('/profile/upload', formData);
+      toast.success(lang === 'id' ? 'Foto profil berhasil diperbarui!' : 'Profile picture updated successfully!', { id: tid });
+      useAuthStore.getState().checkAuth();
+    } catch (err) {
+      handleError(err, 'Upload Foto');
+      toast.dismiss(tid);
+    } finally {
+      setIsCropperOpen(false);
+      setAvatarPreviewSrc(null);
+    }
+  };
+
+  const handleLogout = async () => {
+    const isConfirmed = await useConfirmStore.getState().ask({
+      title: lang === 'id' ? 'Konfirmasi Logout' : 'Confirm Logout',
+      message: lang === 'id' ? 'Apakah Anda yakin ingin keluar dari aplikasi?' : 'Are you sure you want to log out?',
+      confirmText: 'Logout',
+      cancelText: lang === 'id' ? 'Batal' : 'Cancel',
+      isDanger: false
+    });
+    
+    if (isConfirmed) {
+      useAuthStore.getState().logout();
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const isConfirmed = await useConfirmStore.getState().ask({
+      title: lang === 'id' ? 'Hapus Akun Permanen?' : 'Delete Account Permanently?',
+      message: lang === 'id' 
+        ? 'Aksi ini tidak dapat dibatalkan. Semua data profil dan pengaturan Anda akan dihapus permanen.' 
+        : 'This action cannot be undone. All your profile data and settings will be permanently deleted.',
+      confirmText: lang === 'id' ? 'Ya, Hapus' : 'Yes, Delete',
+      cancelText: lang === 'id' ? 'Batal' : 'Cancel',
+      isDanger: true
+    });
+
+    if (isConfirmed) {
+      const tid = toast.loading(lang === 'id' ? 'Menghapus akun...' : 'Deleting account...');
+      try {
+        await axiosInstance.delete('/auth/profile');
+        toast.success(lang === 'id' ? 'Akun berhasil dihapus' : 'Account successfully deleted', { id: tid });
+        useAuthStore.getState().logout();
+      } catch (err) {
+        handleError(err, 'Hapus Akun');
+        toast.dismiss(tid);
+      }
+    }
+  };
+
+  // Toggle Topbar visibility based on active tab
+  useEffect(() => {
+    const topbar = document.getElementById('main-topbar');
+    if (topbar) {
+      topbar.style.display = activeTab === 'main' ? 'flex' : 'none';
+    }
+    return () => {
+      if (topbar) topbar.style.display = 'flex';
+    };
+  }, [activeTab]);
+
+  // Tab 1: Profile
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  // loginMethod: 'phone' = login via WA OTP, 'google' = login via Google
+  // Determined from API response, NOT from phoneNumber state (to avoid the re-render bug)
+  const [loginMethod, setLoginMethod] = useState('phone');
+  const [createdAt, setCreatedAt] = useState('--');
+
+  // Tab 1: Farm Details
+  const [farmName, setFarmName] = useState('');
+  const [selectedProv, setSelectedProv] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [origProv, setOrigProv] = useState('');
+  const [origCity, setOrigCity] = useState('');
+  const [origFullName, setOrigFullName] = useState('');
+  const [origPhoneNumber, setOrigPhoneNumber] = useState('');
+  const [origFarmName, setOrigFarmName] = useState('');
+
+  // Tab 2: Notifications — master toggle + channel toggles (local state / mock)
+  const [notifEnabled, setNotifEnabled] = useState(true);
+  const [notifChannels, setNotifChannels] = useState({ push: false, telegram: false, email: false });
+  const [telegramChatId, setTelegramChatId] = useState('');
+  const [emailAddress, setEmailAddress] = useState(user?.email || '');
+
+  // Help Centre States
+  const [helpView, setHelpView] = useState('menu'); // 'menu' | 'faq' | 'contact'
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+
+  // Tab 3: Security -- PIN
+  const [pinNewDigits, setPinNewDigits] = useState('');
+  const [pinConfirmDigits, setPinConfirmDigits] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinLoading, setPinLoading] = useState(false);
+  const [userHasPin, setUserHasPin] = useState(user?.has_pin ?? false);
+
+  // Tab 4: Team
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [inviteName, setInviteName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('worker');
+  const [teamLoading, setTeamLoading] = useState(false);
+
+  const inputClass = "w-full min-h-[46px] px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2f7d31]/20 focus:border-[#2f7d31] transition-all shadow-sm";
+  const labelClass = "block text-[11px] font-black text-gray-500 mb-2 uppercase tracking-wider";
+
+
+  // ─── Load profile on mount ────────────────────────────────────────────────────
+  useEffect(() => {
+    loadProfileAndSettings();
+  }, [lang]);
+
+  const loadProfileAndSettings = async () => {
+    setLoading(true);
+    let profileLoaded = false;
+
+    // 1. Fetch Primary Profile Info
+    try {
+      const response = await axiosInstance.get('/profile');
+      const data = response.data;
+      if (data) {
+        const u = data.user || {};
+        setFullName(u.full_name || '');
+        setOrigFullName(u.full_name || '');
+        setEmail(u.email || '');
+        setPhoneNumber(u.phone_number || '');
+        setOrigPhoneNumber(u.phone_number || '');
+        setFarmName(data.peternakan?.nama_peternakan || '');
+        setOrigFarmName(data.peternakan?.nama_peternakan || '');
+        setSelectedProv(data.peternakan?.provinsi_id?.toString() || '');
+        setSelectedCity(data.peternakan?.kabupaten_id?.toString() || '');
+        setOrigProv(data.peternakan?.provinsi_id?.toString() || '');
+        setOrigCity(data.peternakan?.kabupaten_id?.toString() || '');
+        // Determine login method from API: if user has a phone_number, they logged in via WA OTP
+        setLoginMethod(u.phone_number ? 'phone' : 'google');
+        setCreatedAt(u.created_at ? new Date(u.created_at).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { dateStyle: 'long' }) : '--');
+
+        const f = data.farm || {};
+        if (f.farm_name) { 
+          setFarmName(f.farm_name); 
+          setOrigFarmName(f.farm_name); 
+        }
+        if (f.province_id) { 
+          setSelectedProv(f.province_id.toString()); 
+          setOrigProv(f.province_id.toString()); 
+        }
+        if (f.city_id) { 
+          setSelectedCity(f.city_id.toString()); 
+          setOrigCity(f.city_id.toString()); 
+        }
+        profileLoaded = true;
+      }
+    } catch (err) {
+      console.warn('Profile fetch failed, loading offline defaults', err);
+      setFullName(user?.full_name || '');
+      setOrigFullName(user?.full_name || '');
+      setEmail(user?.email || '');
+      setLoginMethod(user?.phone_number ? 'phone' : 'google');
+      setPhoneNumber(user?.phone_number || '');
+      setOrigPhoneNumber(user?.phone_number || '');
+      setCreatedAt(new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { dateStyle: 'long' }));
+      setFarmName('');
+      setOrigFarmName('');
+      setSelectedProv('');
+      setOrigProv('');
+      setSelectedCity('');
+      setOrigCity('');
+    }
+
+    // 2. Load Team Members (Owners/Admins only)
+    try {
+      if (['owner', 'admin'].includes(user?.role)) {
+        await loadTeamMembers();
+      }
+    } catch (err) {
+      console.warn('Team members fetch failed', err);
+    }
+
+    setLoading(false);
+  };
+
+  const loadTeamMembers = async () => {
+    setTeamLoading(true);
+    try {
+      const response = await axiosInstance.get('/admin/users');
+      setTeamMembers(response.data || []);
+    } catch {
+      setTeamMembers([]);
+    } finally {
+      setTeamLoading(false);
+    }
+  };
+
+  // ─── Save handlers ────────────────────────────────────────────────────────────
+
+  const handleSaveGeneral = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await Promise.all([
+        axiosInstance.put('/profile', { full_name: fullName, email, phone_number: phoneNumber }),
+        axiosInstance.put('/profile/farm', {
+          farm_name: farmName,
+          province_id: selectedProv || null,
+          city_id: selectedCity || null,
+        }),
+      ]);
+      toast.success(lang === 'id' ? 'Profil & Detail Peternakan berhasil diperbarui!' : 'Profile & Farm Details successfully updated!');
+      loadProfileAndSettings();
+    } catch {
+      toast.error(lang === 'id' ? 'Gagal memperbarui profil atau detail peternakan.' : 'Failed to update profile or farm details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Notification Toggle (local mock) ---
+  const handleToggleNotif = async () => {
+    const newState = !notifEnabled;
+    setNotifEnabled(newState);
+    
+    if (newState) {
+      // Always request Web Push when master toggle is enabled
+      const tid = toast.loading(lang === 'id' ? 'Mengaktifkan notifikasi...' : 'Enabling notifications...');
+      const token = await requestFirebaseNotificationPermission();
+      if (token) {
+        try {
+          await axiosInstance.post('/profile/fcm-token', { token, device_info: navigator.userAgent });
+          toast.success(lang === 'id' ? 'Notifikasi berhasil diaktifkan!' : 'Notifications enabled successfully!', { id: tid });
+        } catch (err) {
+          console.error('Failed to save FCM token', err);
+          toast.error(lang === 'id' ? 'Gagal menyimpan konfigurasi notifikasi' : 'Failed to save notification config', { id: tid });
+        }
+      } else {
+        toast.error(lang === 'id' ? 'Gagal mendapatkan akses Push Notification' : 'Failed to get Push Notification access', { id: tid });
+      }
+    } else {
+      toast.success(lang === 'id' ? 'Notifikasi dinonaktifkan' : 'Notifications disabled');
+    }
+  };
+
+  const handleTestTelegram = async () => {
+    if (!telegramChatId) {
+      toast.error(lang === 'id' ? 'Masukkan Chat ID terlebih dahulu' : 'Please enter Chat ID first');
+      return;
+    }
+    const tid = toast.loading(lang === 'id' ? 'Mengirim pesan tes...' : 'Sending test message...');
+    try {
+      await axiosInstance.post('/profile/test-telegram', { chat_id: telegramChatId });
+      toast.success(lang === 'id' ? 'Pesan tes terkirim ke Telegram!' : 'Test message sent to Telegram!', { id: tid });
+    } catch (err) {
+      handleError(err, 'Test Telegram');
+      toast.dismiss(tid);
+    }
+  };
+
+  const handleSavePIN = async (e) => {
+    e.preventDefault();
+    setPinError('');
+    if (!/^\d{6}$/.test(pinNewDigits)) {
+      setPinError(lang === 'id' ? 'PIN harus tepat 6 digit angka.' : 'PIN must be exactly 6 digits.');
+      return;
+    }
+    if (pinNewDigits !== pinConfirmDigits) {
+      setPinError(lang === 'id' ? 'Konfirmasi PIN tidak cocok.' : 'PIN entries do not match.');
+      return;
+    }
+    setPinLoading(true);
+    try {
+      await axiosInstance.post('/auth/pin/set', { pin: pinNewDigits });
+      setUserHasPin(true);
+      setPinNewDigits('');
+      setPinConfirmDigits('');
+
+      // Save user ID + name to localStorage so PIN screen appears on next login
+      const { user: authUser, registerDevice } = useAuthStore.getState();
+      if (authUser?.id) {
+        localStorage.setItem('herd_user_id', String(authUser.id));
+        localStorage.setItem('herd_user_name', authUser.full_name || authUser.name || '');
+      }
+      // Ensure this device is registered as trusted
+      await registerDevice();
+
+      toast.success(lang === 'id' ? 'PIN berhasil diperbarui! Login berikutnya pakai PIN.' : 'PIN updated! Next login will use your PIN.');
+    } catch (err) {
+      handleError(err, 'simpan PIN baru');
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
+  const handleInviteTeam = async (e) => {
+    e.preventDefault();
+    if (!inviteName || !inviteEmail) return;
+    setTeamLoading(true);
+    try {
+      await axiosInstance.post('/admin/users/invite', {
+        email: inviteEmail, full_name: inviteName, role: inviteRole,
+      });
+      toast.success(lang === 'id' ? `Undangan dikirim ke ${inviteEmail}!` : `Invitation sent to ${inviteEmail}!`);
+      setInviteName(''); setInviteEmail('');
+      loadTeamMembers();
+    } catch {
+      toast.error(lang === 'id' ? 'Gagal mengundang anggota tim.' : 'Failed to invite team member.');
+    } finally {
+      setTeamLoading(false);
+    }
+  };
+
+  const handleUpdateRole = async (memberId, newRole) => {
+    setTeamLoading(true);
+    try {
+      await axiosInstance.patch(`/admin/users/${memberId}/role`, { role: newRole });
+      toast.success(lang === 'id' ? 'Role berhasil diperbarui!' : 'Role updated successfully!');
+      loadTeamMembers();
+    } catch {
+      toast.error(lang === 'id' ? 'Gagal memperbarui role.' : 'Failed to update role.');
+      setTeamLoading(false);
+    }
+  };
+
+  const isGeneralChanged = selectedProv !== origProv || selectedCity !== origCity || fullName !== origFullName || phoneNumber !== origPhoneNumber || farmName !== origFarmName;
+  const isSecurityChanged = pinNewDigits.length > 0 || pinConfirmDigits.length > 0;
+  
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [pendingTab, setPendingTab] = useState(null);
+
+  const handleBackNavigation = (targetTab) => {
+    if (activeTab === 'profile' && isGeneralChanged) {
+      setPendingTab(targetTab);
+      setShowDiscardModal(true);
+    } else if (activeTab === 'security' && isSecurityChanged) {
+      setPendingTab(targetTab);
+      setShowDiscardModal(true);
+    } else {
+      setActiveTab(targetTab);
+    }
+  };
+
+  // ─── Reusable Toggle component ────────────────────────────────────────────────
+  const Toggle = ({ checked, onChange }) => (
+    <label className="relative inline-flex items-center cursor-pointer select-none">
+      <input type="checkbox" checked={checked} onChange={onChange} className="sr-only peer" />
+      <div className="w-11 h-6 bg-slate-300 dark:bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent)]" />
+    </label>
+  );
+
+  // ─── Render ───────────────────────────────────────────────────────────────────
+  return (
+    <>
+    <div className="md:fixed md:inset-0 md:z-[100] md:flex md:items-center md:justify-center md:bg-black/50 md:backdrop-blur-sm animate-in fade-in duration-500 pt-[44px] pb-24 px-0 md:p-4">
+      
+      {/* Content Area */}
+      <div className="relative w-full md:max-w-5xl md:h-[85vh] bg-[#f8f9fa] md:bg-white md:rounded-[32px] md:shadow-2xl md:flex md:flex-row md:overflow-hidden md:border md:border-slate-200">
+        
+        {/* Close Button on Desktop */}
+        <button onClick={() => window.history.back()} className="hidden md:flex absolute top-6 left-6 z-50 p-2 rounded-full bg-black/5 hover:bg-black/10 text-gray-500 hover:text-gray-800 transition-colors">
+          <X className="w-5 h-5" />
+        </button>
+
+        {loading && (
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-30 flex items-center justify-center md:rounded-[32px]">
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+          </div>
+        )}
+
+        <div className="w-full h-full md:flex md:flex-row">
+
+          {/* ══════════════════════════════════════════════════════════════════
+              MAIN MENU
+          ══════════════════════════════════════════════════════════════════ */}
+          <div className={`md:w-[350px] md:flex-shrink-0 md:border-r md:border-gray-200 bg-slate-50 md:overflow-y-auto ${activeTab === 'main' ? 'block' : 'hidden md:block'}`}>
+            <div className="space-y-8 animate-in fade-in duration-300 pt-4 px-4 md:p-6 md:pt-16">
+              
+              {/* ── Avatar + Name (CLEAN WHITE DESIGN WITH ACCENT) ── */}
+              <div 
+                className="bg-gradient-to-b from-[#2f7d31]/10 to-white border border-gray-200 rounded-3xl p-6 shadow-sm relative overflow-hidden mb-6 flex flex-col items-center justify-center text-gray-900" 
+                style={{ 
+                  minHeight: '280px',
+                }}
+              >
+                  <div className="relative z-10 mb-5 mt-2 cursor-pointer group" onClick={() => setActiveTab('profile')}>
+                    <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center bg-gray-100 border-[3px] border-[#2f7d31]/20 shadow-sm group-hover:scale-105 group-active:scale-95 transition-all overflow-hidden">
+                        <img src={user?.profile_picture_url || "/photoprofile_default.jpeg"} alt="Profile" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                      <h2 className="text-[22px] font-black tracking-tight leading-none mb-1.5 text-gray-900">
+                          {fullName || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}
+                      </h2>
+                      <div className="text-[14px] font-medium text-gray-500 flex items-center justify-center gap-2">
+                          <span>{email || (lang === 'id' ? 'Tidak ada email' : 'No email')}</span>
+                          <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                          <span>{farmName || (lang === 'id' ? 'Belum ada peternakan' : 'No farm name')}</span>
+                      </div>
+                  </div>
+              </div>
+
+              {/* ── Menu List ── */}
+              <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mt-4">
+                
+                <button onClick={() => setActiveTab('profile')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 active:scale-[0.99]">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-50 text-[#2f7d31] rounded-lg"><User size={18} /></div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-gray-900">{t.settings_tab_general || 'General'}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{lang === 'id' ? 'Detail profil & peternakan' : 'Profile & farm details'}</p>
+                    </div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400 -rotate-90" />
+                </button>
+
+                <button onClick={() => setActiveTab('notifications')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 active:scale-[0.99]">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Bell size={18} /></div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-gray-900">{lang === 'id' ? 'Notifikasi' : 'Notifications'}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{lang === 'id' ? 'Pengaturan Pesan' : 'Message Settings'}</p>
+                    </div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400 -rotate-90" />
+                </button>
+
+                <button onClick={() => setActiveTab('security')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 active:scale-[0.99]">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Key size={18} /></div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-gray-900">{t.settings_tab_security || 'Security'}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{lang === 'id' ? 'Ubah PIN login perangkat' : 'Change device login PIN'}</p>
+                    </div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400 -rotate-90" />
+                </button>
+
+                {['owner', 'admin'].includes(user?.role) && (
+                  <button onClick={() => setActiveTab('team')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 active:scale-[0.99]">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><Users size={18} /></div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-gray-900">{t.settings_tab_team || 'Team'}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">{lang === 'id' ? 'Manajemen pekerja & admin' : 'Manage workers & admins'}</p>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-gray-400 -rotate-90" />
+                  </button>
+                )}
+
+                <button onClick={() => setActiveTab('appearance')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 active:scale-[0.99]">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Monitor size={18} /></div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-gray-900">{lang === 'id' ? 'Tampilan' : 'Appearance'}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{lang === 'id' ? 'Tema & Bahasa' : 'Theme & Language'}</p>
+                    </div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400 -rotate-90" />
+                </button>
+
+                <button onClick={() => setActiveTab('help')} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors active:scale-[0.99]">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-teal-50 text-teal-600 rounded-lg"><HelpCircle size={18} /></div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-gray-900">{lang === 'id' ? 'Pusat Bantuan' : 'Help Centre'}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{lang === 'id' ? 'FAQ & Kirim Masukan' : 'FAQ & Feedback'}</p>
+                    </div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400 -rotate-90" />
+                </button>
+              </div>
+
+              {/* Account Created & Danger Zone */}
+              <div className="pt-2 text-center space-y-4">
+                <p className="text-[11px] font-bold text-gray-400">
+                  {lang === 'id' ? 'Akun Dibuat: ' : 'Account Created: '} {createdAt}
+                </p>
+                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                  <button type="button" onClick={handleDeleteAccount} className="w-full flex items-center justify-between px-4 py-3 hover:bg-red-50 transition-colors border-b border-gray-100 text-red-600">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></div>
+                      <span className="text-sm font-bold">{lang === 'id' ? 'Hapus Akun' : 'Delete Account'}</span>
+                    </div>
+                  </button>
+                  <button type="button" onClick={handleLogout} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 active:scale-[0.99]">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gray-50 rounded-lg"><LogOut className="w-4 h-4" /></div>
+                      <span className="text-sm font-bold">{lang === 'id' ? 'Log Out' : 'Log Out'}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════════════════════════════════
+              RIGHT PANE CONTENT AREA
+          ══════════════════════════════════════════════════════════════════ */}
+          <div className={`md:flex-1 md:overflow-y-auto bg-transparent md:bg-white md:p-8 ${activeTab !== 'main' ? 'block' : 'hidden md:flex md:flex-col md:items-center md:justify-center'}`}>
+            
+            {activeTab === 'main' && (
+              <div className="hidden md:flex flex-col items-center justify-center text-gray-400">
+                <SettingsIcon className="w-16 h-16 mb-4 opacity-20" />
+                <p className="text-sm font-bold">{lang === 'id' ? 'Pilih menu pengaturan di samping' : 'Select a settings menu from the sidebar'}</p>
+              </div>
+            )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              TAB 1 — GENERAL: Profile + Farm Details
+          ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'profile' && (
+            <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
+              
+              {/* Header: Back Button & Title & Save Button */}
+              <div className="relative flex items-center justify-center mb-6 h-10 w-full">
+                <button type="button" onClick={() => handleBackNavigation('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                  <ChevronLeft className="w-6 h-6 text-gray-700" />
+                </button>
+                <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_general || 'Profile'}</h2>
+                <div className="absolute right-0 flex items-center justify-center">
+                  <button type="submit" disabled={!isGeneralChanged || loading} className={`p-2.5 text-white rounded-full shadow-sm transition-all ${isGeneralChanged ? 'bg-[#2f7d31] hover:bg-[#2f7d31]/90 active:scale-95' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Avatar section */}
+              <div className="flex flex-col items-center gap-2 mb-4">
+                <div onClick={() => fileInputRef.current?.click()} className="relative w-28 h-28 rounded-full flex items-center justify-center bg-gray-100 cursor-pointer overflow-hidden group shadow-lg ring-4 ring-[#2f7d31]/20 hover:scale-105 transition-transform">
+                  <img src={user?.profile_picture_url || "/photoprofile_default.jpeg"} alt="Profile" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[#2f7d31] text-sm font-bold mt-1 hover:underline">
+                  {lang === 'id' ? 'Ganti Foto' : 'Change Photo'}
+                </button>
+              </div>
+
+              {/* Personal Info Container */}
+              <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm relative mt-2">
+                <div className="px-5 pt-5 pb-2 border-b border-gray-100 flex items-center gap-2 relative z-10">
+                  <User className="w-4 h-4 md:w-5 md:h-5 text-[#2f7d31]" />
+                  <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#2f7d31]">
+                    {lang === 'id' ? 'INFORMASI PERSONAL' : 'PERSONAL INFORMATION'}
+                  </h3>
+                </div>
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 transition-colors focus-within:bg-gray-50 group">
+                  <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{t.settings_full_name || 'Name'}</label>
+                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full bg-transparent text-sm font-medium text-gray-600 text-right outline-none placeholder-gray-400 group-hover:bg-gray-100 focus:bg-white border border-transparent focus:border-gray-300 rounded-lg px-3 py-1.5 transition-all" placeholder={lang === 'id' ? 'Nama Lengkap Anda' : 'Your Full Name'} />
+                </div>
+
+                {/* Identity login */}
+                {loginMethod === 'phone' ? (
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50">
+                    <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{lang === 'id' ? 'No. WhatsApp' : 'WhatsApp No.'}</label>
+                    <div className="flex items-center justify-end w-full gap-2">
+                      <span className="text-sm font-medium text-gray-500">{phoneNumber ? (phoneNumber.length > 7 ? phoneNumber.slice(0, 4) + '***' + phoneNumber.slice(-3) : phoneNumber) : '—'}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50">
+                      <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">Email</label>
+                      <span className="text-sm font-medium text-gray-500 truncate text-right w-full">{email || '—'}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 transition-colors focus-within:bg-gray-50 group">
+                      <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{lang === 'id' ? 'Nomor HP' : 'Phone Number'}</label>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        value={phoneNumber}
+                        onChange={e => { const v = e.target.value.replace(/\D/g, ''); setPhoneNumber(v); }}
+                        className="w-full bg-transparent text-sm font-medium text-gray-600 text-right outline-none placeholder-gray-400 group-hover:bg-gray-100 focus:bg-white border border-transparent focus:border-gray-300 rounded-lg px-3 py-1.5 transition-all"
+                        placeholder="081234567890"
+                        maxLength={15}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* ── Section: Farm Details ── */}
+              <div className="bg-white border border-gray-200 rounded-3xl shadow-sm relative overflow-hidden mt-6">
+                <Globe className="absolute -right-4 -bottom-4 w-32 h-32 md:w-40 md:h-40 text-[#2f7d31] opacity-5 pointer-events-none" />
+                
+                <div className="px-5 pt-5 pb-2 border-b border-gray-100 flex items-center gap-2 relative z-10">
+                  <Globe className="w-4 h-4 md:w-5 md:h-5 text-[#2f7d31]" />
+                  <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#2f7d31]">
+                    {t.settings_farm_details}
+                  </h3>
+                </div>
+
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 transition-colors focus-within:bg-gray-50 group">
+                    <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{t.settings_farm_name || 'Farm Name'}</label>
+                    <input type="text" value={farmName} onChange={e => setFarmName(e.target.value)} className="w-full bg-transparent text-sm font-medium text-gray-600 text-right outline-none placeholder-gray-400 group-hover:bg-gray-100 focus:bg-white border border-transparent focus:border-gray-300 rounded-lg px-3 py-1.5 transition-all" placeholder={lang === 'id' ? 'Peternakan Jaya Abadi' : 'Jaya Abadi Farm'} />
+                  </div>
+
+                  {/* Provinsi */}
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 transition-colors focus-within:bg-gray-50 relative">
+                    <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{lang === 'id' ? 'Provinsi' : 'Province'}</label>
+                    <div className="w-full relative flex items-center justify-end">
+                      <select
+                        value={selectedProv}
+                        onChange={e => { setSelectedProv(e.target.value); setSelectedCity(''); }}
+                        className="w-full bg-transparent text-sm font-medium text-gray-600 text-right appearance-none outline-none pr-6 cursor-pointer"
+                        dir="rtl"
+                      >
+                        <option value="">{lang === 'id' ? 'Pilih...' : 'Select...'}</option>
+                        {regionData.map(p => <option key={p.id} value={p.id}>{p.nama}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-0 w-4 h-4 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Kota / Kabupaten */}
+                  <div className="flex items-center justify-between px-5 py-4 transition-colors focus-within:bg-gray-50 relative">
+                    <label className="text-sm font-bold text-gray-900 w-1/3 shrink-0">{lang === 'id' ? 'Kota/Kabupaten' : 'City/Regency'}</label>
+                    <div className="w-full relative flex items-center justify-end">
+                      <select
+                        value={selectedCity}
+                        onChange={e => setSelectedCity(e.target.value)}
+                        disabled={!selectedProv}
+                        className="w-full bg-transparent text-sm font-medium text-gray-600 text-right appearance-none outline-none pr-6 cursor-pointer disabled:opacity-50"
+                        dir="rtl"
+                      >
+                        <option value="">{lang === 'id' ? 'Pilih...' : 'Select...'}</option>
+                        {regionData.find(p => p.id === selectedProv)?.cities.map(c => (
+                          <option key={c.id} value={c.id}>{c.nama}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-0 w-4 h-4 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          )}
+
+
+          {/* ══════════════════════════════════════════════════════════════════
+              TAB 2 — NOTIFICATIONS
+          ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'notifications' && (
+            <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
+              <div className="flex items-center relative mb-4">
+                <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                  <ChevronLeft className="w-6 h-6 text-gray-700" />
+                </button>
+                <h2 className="w-full text-center text-lg font-bold text-gray-900">{lang === 'id' ? 'Notifikasi' : 'Notifications'}</h2>
+              </div>
+
+              {/* Master toggle */}
+              <div className="p-4 bg-white border border-gray-200 rounded-3xl shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2.5 rounded-2xl shrink-0 ${notifEnabled ? 'bg-[#2f7d31]/10 text-[#2f7d31]' : 'bg-gray-100 text-gray-400'}`}>
+                      <Bell className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900">
+                        {lang === 'id' ? 'Aktifkan Notifikasi' : 'Enable Notifications'}
+                      </h3>
+                      <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">
+                        {lang === 'id' ? 'Dapatkan peringatan penting' : 'Get important alerts'}
+                      </p>
+                    </div>
+                  </div>
+                  <Toggle checked={notifEnabled} onChange={handleToggleNotif} />
+                </div>
+              </div>
+
+              {/* Channel toggles */}
+              <div className="p-4 bg-white border border-gray-200 rounded-3xl shadow-sm space-y-1">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">
+                  {lang === 'id' ? 'Opsional' : 'Optional'}
+                </p>
+
+                {/* Telegram */}
+                <div className={`flex flex-col py-2.5 px-1 border-b border-gray-100 transition-opacity ${!notifEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm" style={{ background: '#229ED9' }}>
+                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">Telegram</p>
+                      </div>
+                    </div>
+                    <Toggle checked={notifChannels.telegram} onChange={() => setNotifChannels(p => ({ ...p, telegram: !p.telegram }))} />
+                  </div>
+                  {notifChannels.telegram && (
+                    <div className="mt-3 ml-11">
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          value={telegramChatId} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (/^-?\d*$/.test(val)) {
+                              setTelegramChatId(val);
+                            }
+                          }}
+                          placeholder={lang === 'id' ? 'Masukkan Chat ID Telegram...' : 'Enter Telegram Chat ID...'} 
+                          className="w-full bg-gray-50 text-sm py-2.5 pl-3 pr-10 rounded-lg border border-gray-200 outline-none focus:border-[var(--accent)] transition-colors"
+                        />
+                        <button 
+                          type="button"
+                          title="Tes Koneksi"
+                          onClick={handleTestTelegram}
+                          className="absolute right-1 top-1 bottom-1 px-2.5 flex items-center justify-center text-gray-400 hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 rounded-md transition-colors"
+                        >
+                          <Send size={16} />
+                        </button>
+                      </div>
+                      <p className="text-[9px] text-gray-400 mt-1">
+                        {lang === 'id' ? 'Dapatkan dari bot ' : 'Get from bot '}
+                        <a href="https://t.me/HerdAssistantBot" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">
+                          @HerdAssistantBot
+                        </a>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              TAB 3 — SECURITY
+          ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'security' && (
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
+              <div className="relative flex items-center justify-center mb-6 h-10 w-full md:max-w-lg">
+                <button type="button" onClick={() => handleBackNavigation('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                  <ChevronLeft className="w-6 h-6 text-gray-700" />
+                </button>
+                <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_security || 'Security'}</h2>
+                <div className="absolute right-0 flex items-center justify-center">
+                  <button type="submit" form="pin-form" disabled={!isSecurityChanged || pinLoading || pinNewDigits.length !== 6 || pinConfirmDigits.length !== 6} className={`p-2.5 text-white rounded-full shadow-sm transition-all ${isSecurityChanged ? 'bg-[#2f7d31] hover:bg-[#2f7d31]/90 active:scale-95' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+                    {pinLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+              <div className="w-full md:max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+                  <h2 className="text-lg font-bold text-gray-900 font-display flex items-center gap-2">
+                    <Key className="w-5 h-5 text-[#2f7d31]" />
+                    {lang === 'id' ? 'Ubah PIN Login' : 'Change Login PIN'}
+                  </h2>
+                </div>
+                <form id="pin-form" onSubmit={handleSavePIN} className="space-y-4">
+                  {pinError && (
+                    <div className="px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+                      {pinError}
+                    </div>
+                  )}
+                  <div>
+                      <label className={labelClass}>{lang === 'id' ? 'PIN Baru (6 digit)' : 'New PIN (6 digits)'}</label>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={pinNewDigits}
+                        onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPinNewDigits(e.target.value); setPinError(''); } }}
+                        placeholder="••••••"
+                        className={`${inputClass} font-mono tracking-[0.5em] text-center`}
+                      />
+                  </div>
+                  <div>
+                      <label className={labelClass}>{lang === 'id' ? 'Konfirmasi PIN Baru' : 'Confirm New PIN'}</label>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={pinConfirmDigits}
+                        onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPinConfirmDigits(e.target.value); setPinError(''); } }}
+                        placeholder="••••••"
+                        className={`${inputClass} font-mono tracking-[0.5em] text-center`}
+                      />
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              TAB 4 — TEAM MANAGEMENT
+          ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'team' && (
+            <div className="space-y-5 animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
+
+              {/* ── Mobile back header (hidden on md+) ── */}
+              <div className="flex items-center relative md:hidden mb-4">
+                <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-gray-700" />
+                </button>
+                <h2 className="w-full text-center text-base font-bold text-gray-900 font-display">{t.settings_tab_team || 'Team'}</h2>
+              </div>
+
+              {/* ── Section heading (desktop only, no duplicate on mobile) ── */}
+              <div className="hidden md:block">
+                <h2 className="text-xl font-bold text-[var(--text-1)] font-display">{t.settings_team_title}</h2>
+                <p className="text-sm text-[var(--text-2)] mt-1">{t.settings_team_desc}</p>
+              </div>
+
+              {/* ── Invite form ── */}
+              <form onSubmit={handleInviteTeam} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-[var(--accent)] flex items-center gap-2">
+                  <UserPlus className="w-4 h-4" /> {t.settings_invite_title}
+                </h3>
+                {/* Desktop: 2 inputs side-by-side */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={inviteName}
+                    onChange={e => setInviteName(e.target.value)}
+                    placeholder={lang === 'id' ? 'Nama Lengkap' : 'Full Name'}
+                    required
+                    className={inputClass}
+                  />
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                    placeholder={lang === 'id' ? 'Alamat Email' : 'Email Address'}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+
+                {/* Role + Send button — always in a flex row */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+                  <div className="flex-1">
+                    <label className={labelClass}>{lang === 'id' ? 'PERAN' : 'ROLE'}</label>
+                    <div className="relative">
+                      <select
+                        value={inviteRole}
+                        onChange={e => setInviteRole(e.target.value)}
+                        className={`${inputClass} appearance-none pr-10 w-full`}
+                      >
+                        <option value="worker">{lang === 'id' ? 'Pekerja Kandang (Worker)' : 'Farm Worker'}</option>
+                        <option value="admin">{lang === 'id' ? 'Admin / Manajer' : 'Admin / Manager'}</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={teamLoading}
+                    className="h-11 px-6 bg-[var(--accent)] hover:bg-[var(--color-primary-hover)] disabled:opacity-60 text-white text-sm font-bold rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto"
+                  >
+                    {teamLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                    {t.settings_invite_send}
+                  </button>
+                </div>
+              </form>
+
+              {/* ── Members list ── */}
+              {teamLoading && teamMembers.length === 0 ? (
+                <div className="py-10 flex justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" />
+                </div>
+              ) : teamMembers.length === 0 ? (
+                <div className="py-10 text-center text-sm text-[var(--text-3)]">
+                  {lang === 'id' ? 'Belum ada anggota tim.' : 'No team members yet.'}
+                </div>
+              ) : (
+                <>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto border border-[var(--border)] rounded-2xl bg-[var(--bg-card)]">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-[var(--border)] bg-slate-50 dark:bg-slate-900/60 text-[9px] font-black uppercase text-[var(--text-3)] tracking-wider">
+                          <th className="px-5 py-3">{t.settings_table_name}</th>
+                          <th className="px-5 py-3">{t.settings_table_email}</th>
+                          <th className="px-5 py-3 text-right">{t.settings_table_role}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border)]">
+                        {teamMembers.map(m => (
+                          <tr key={m.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+                            <td className="px-5 py-4 font-bold text-sm text-[var(--text-1)]">{m.full_name || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}</td>
+                            <td className="px-5 py-4 text-xs font-mono text-[var(--text-3)]">{m.email}</td>
+                            <td className="px-5 py-4 text-right">
+                              {m.role === 'owner'
+                                ? <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full font-bold text-[9px] uppercase tracking-wider">{t.settings_role_owner}</span>
+                                : <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs text-right cursor-pointer">
+                                    <option value="worker">{t.settings_role_worker}</option>
+                                    <option value="admin">{t.settings_role_admin}</option>
+                                  </select>
+                              }
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile card list — no nested containers, clean & readable */}
+                  <div className="md:hidden space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-3)] px-1">
+                      {lang === 'id' ? 'Anggota Tim' : 'Team Members'} · {teamMembers.length}
+                    </p>
+                    {teamMembers.map(m => (
+                      <div key={m.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3.5 flex items-center gap-3 shadow-sm">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                          {(m.full_name || m.email || '?')[0].toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-[var(--text-1)] truncate">{m.full_name || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}</p>
+                          <p className="text-[11px] text-[var(--text-3)] truncate">{m.email}</p>
+                        </div>
+                        <div className="shrink-0">
+                          {m.role === 'owner'
+                            ? <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-bold text-[9px] uppercase">{t.settings_role_owner}</span>
+                            : <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs cursor-pointer text-right">
+                                <option value="worker">{t.settings_role_worker}</option>
+                                <option value="admin">{t.settings_role_admin}</option>
+                              </select>
+                          }
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              TAB 5 — APPEARANCE
+          ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'appearance' && (
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
+              <div className="w-full md:max-w-lg mb-4 relative flex items-center">
+                <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                  <ChevronLeft className="w-6 h-6 text-gray-700" />
+                </button>
+                <h2 className="w-full text-center text-lg font-bold text-gray-900">{lang === 'id' ? 'Tampilan' : 'Appearance'}</h2>
+              </div>
+              <div className="w-full md:max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm space-y-6">
+                
+                {/* Theme Setting */}
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 mb-4">{lang === 'id' ? 'Tema Aplikasi' : 'App Theme'}</h3>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                        <Monitor size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">{lang === 'id' ? 'Mode Gelap' : 'Dark Mode'}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{lang === 'id' ? 'Pilih mode tampilan' : 'Choose display mode'}</p>
+                      </div>
+                    </div>
+                    <ThemeToggle />
+                  </div>
+                </div>
+
+                {/* Language Setting */}
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 mb-4">{lang === 'id' ? 'Bahasa' : 'Language'}</h3>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                        <Globe size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">{lang === 'id' ? 'Bahasa Aplikasi' : 'App Language'}</p>
+                      </div>
+                    </div>
+                    <select
+                      value={lang}
+                      onChange={(e) => setLang(e.target.value)}
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: 'var(--text-1)',
+                        background: 'var(--bg-surface)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        outline: 'none',
+                        padding: '8px 14px 8px 14px',
+                        appearance: 'none',
+                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                      }}
+                      className="hover:border-[var(--accent)]"
+                    >
+                      <option value="id">🇮🇩 Indonesia</option>
+                      <option value="en">🇬🇧 English</option>
+                    </select>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              TAB 6 — HELP CENTRE
+          ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'help' && (
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
+              <div className="w-full md:max-w-3xl mb-4 relative flex items-center">
+                <button type="button" onClick={() => {
+                  if (helpView !== 'menu') setHelpView('menu');
+                  else setActiveTab('main');
+                }} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors z-10">
+                  <ChevronLeft className="w-6 h-6 text-gray-700" />
+                </button>
+                <h2 className="w-full text-center text-lg font-bold text-gray-900">
+                  {helpView === 'menu' ? (lang === 'id' ? 'Pusat Bantuan' : 'Help Centre') : ''}
+                  {helpView === 'faq' ? (lang === 'id' ? 'Pertanyaan Umum' : 'FAQ') : ''}
+                  {helpView === 'contact' ? (lang === 'id' ? 'Hubungi Kami' : 'Contact Us') : ''}
+                </h2>
+              </div>
+              <div className="w-full md:max-w-3xl">
+                
+                {/* 1. Main Help View */}
+                {helpView === 'menu' && (
+                  <div className="animate-in slide-in-from-left-4 duration-300">
+                    <ContactView lang={lang} />
+
+                    <div className="bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden">
+                      <button onClick={() => setHelpView('faq')} className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors border-b border-gray-100 active:scale-[0.99]">
+                        <div className="text-left">
+                          <p className="text-base font-bold text-gray-900">{lang === 'id' ? 'Pusat Bantuan' : 'Help Centre'}</p>
+                          <p className="text-sm text-gray-500 mt-0.5">{lang === 'id' ? 'Pertanyaan yang sering diajukan' : 'Frequently asked questions'}</p>
+                        </div>
+                        <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
+                      </button>
+
+                      <button onClick={() => setIsFeedbackModalOpen(true)} className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors active:scale-[0.99]">
+                        <div className="text-left">
+                          <p className="text-base font-bold text-gray-900">{lang === 'id' ? 'Kirim Masukan' : 'Send feedback'}</p>
+                          <p className="text-sm text-gray-500 mt-0.5">{lang === 'id' ? 'Laporkan masalah teknis' : 'Report technical issues'}</p>
+                        </div>
+                        <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. FAQ View */}
+                {helpView === 'faq' && (
+                  <div className="bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden animate-in slide-in-from-right-4 duration-300">
+                    <FAQ 
+                      title={lang === 'id' ? 'Pertanyaan Umum' : 'FAQs'}
+                      subtitle={lang === 'id' ? 'Pusat Bantuan' : 'Help Centre'}
+                      categories={{
+                        general: lang === 'id' ? 'Umum' : 'General',
+                        account: lang === 'id' ? 'Akun' : 'Account',
+                        reproduction: lang === 'id' ? 'Reproduksi' : 'Reproduction'
+                      }}
+                      faqData={{
+                        general: [
+                          { question: lang === 'id' ? 'Apa itu aplikasi HERD?' : 'What is HERD app?', answer: lang === 'id' ? 'HERD adalah aplikasi cerdas untuk manajemen peternakan sapi dengan fitur prediksi estrus AI.' : 'HERD is a smart application for cattle farm management with AI estrus prediction.' },
+                          { question: lang === 'id' ? 'Bagaimana cara menghubungi support?' : 'How to contact support?', answer: lang === 'id' ? 'Anda dapat menghubungi melalui menu Kirim Masukan atau icon sosial media di bawah.' : 'You can contact via Send Feedback or social media icons below.' }
+                        ],
+                        account: [
+                          { question: lang === 'id' ? 'Bagaimana mengubah PIN?' : 'How to change PIN?', answer: lang === 'id' ? 'Pergi ke tab Keamanan di menu pengaturan untuk mengubah PIN Anda.' : 'Go to Security tab in settings to change your PIN.' }
+                        ],
+                        reproduction: [
+                          { question: lang === 'id' ? 'Kapan saya harus mencatat IB?' : 'When to record IB?', answer: lang === 'id' ? 'Gunakan fitur Catat IB segera setelah proses inseminasi buatan selesai.' : 'Use Record IB feature right after the artificial insemination is done.' }
+                        ]
+                      }}
+                    />
+                  </div>
+                )}
+
+              </div>
+            </div>
+          )}
+          </div>
+        </div>
+      </div>
+    </div>
+      
+      {/* MODAL: IMAGE CROPPER FOR AVATAR */}
+      <ImageCropperModal
+        isOpen={isCropperOpen}
+        onClose={() => {
+          setIsCropperOpen(false);
+          setAvatarPreviewSrc(null);
+        }}
+        imageSrc={avatarPreviewSrc}
+        onCropComplete={handleUploadFoto}
+        aspectRatio={1}
+      />
+
+      <FeedbackModal 
+        isOpen={isFeedbackModalOpen} 
+        onClose={() => setIsFeedbackModalOpen(false)} 
+        lang={lang} 
+      />
+
+      {/* Unsaved Changes Discard Modal */}
+      {showDiscardModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[24px] p-6 w-full max-w-[320px] shadow-2xl animate-in zoom-in-95 duration-200 text-center">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{lang === 'id' ? 'Batalkan Perubahan?' : 'Discard Changes?'}</h3>
+            <p className="text-sm text-gray-600 mb-6">{lang === 'id' ? 'Anda memiliki perubahan yang belum disimpan. Yakin ingin membuangnya?' : 'You have unsaved changes. Are you sure you want to discard them?'}</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDiscardModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors">
+                {lang === 'id' ? 'Batal' : 'Cancel'}
+              </button>
+              <button onClick={() => {
+                setShowDiscardModal(false);
+                if (activeTab === 'profile') {
+                  setFullName(origFullName);
+                  setPhoneNumber(origPhoneNumber);
+                  setFarmName(origFarmName);
+                  setSelectedProv(origProv);
+                  setSelectedCity(origCity);
+                } else if (activeTab === 'security') {
+                  setPinNewDigits('');
+                  setPinConfirmDigits('');
+                  setPinError('');
+                }
+                setActiveTab(pendingTab);
+              }} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors">
+                {lang === 'id' ? 'Buang' : 'Discard'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

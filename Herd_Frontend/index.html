@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/jpeg" href="/herd.jpeg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" />
+    <title>HERD | Manajemen Ternak</title>
+    <meta name="description" content="HERD membantu peternak memutuskan apa yang perlu dilakukan hari ini. Sederhana, cerdas, dan manusiawi." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").catch(() => {
+            // Secara diam-diam (silent) mengabaikan error pendaftaran ServiceWorker di local dev.
+            // Biasanya disebabkan oleh akses via IP (192.168.x.x) atau masalah SSL lokal.
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
