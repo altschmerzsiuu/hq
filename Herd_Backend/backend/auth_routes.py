@@ -411,3 +411,36 @@ async def register_device(
         device_label=request_data.device_label
     )
     return {"message": "Perangkat terdaftar"}
+
+@router.delete("/profile")
+async def delete_account(current_user: dict = Depends(get_current_user)):
+    """Permanently delete user account and all associated data"""
+    from app import get_db_pool
+    from supabase_client import supabase
+    
+    user_id = current_user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tidak ada user aktif")
+
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            # PostgreSQL ON DELETE CASCADE will handle related data if configured
+            # Otherwise, we just delete the user.
+            result = await conn.execute("DELETE FROM users WHERE id = $1", user_id)
+            
+            # Optional: Delete profile picture from Supabase if exists
+            # We don't block if it fails
+            profile_url = current_user.get("profile_picture_url")
+            if profile_url and "supabase" in profile_url:
+                try:
+                    filename = profile_url.split("/")[-1]
+                    supabase.storage.from_("avatars").remove([filename])
+                except Exception as e:
+                    print(f"Failed to delete avatar from Supabase: {e}")
+
+        return {"message": "Akun berhasil dihapus permanen"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Gagal menghapus akun")

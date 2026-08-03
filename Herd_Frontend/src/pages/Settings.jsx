@@ -16,8 +16,7 @@ import translations from '@/lib/i18n';
 import regionData from '@/data/indonesia-region.json';
 import { useAuthStore } from '@/store/authStore';
 import { requestFirebaseNotificationPermission } from '@/firebase-config';
-
-
+import useConfirmStore from '@/store/confirmStore';
 
 export default function Settings() {
   const { lang, setLang } = useSettingsStore();
@@ -66,6 +65,44 @@ export default function Settings() {
     } finally {
       setIsCropperOpen(false);
       setAvatarPreviewSrc(null);
+    }
+  };
+
+  const handleLogout = async () => {
+    const isConfirmed = await useConfirmStore.getState().ask({
+      title: lang === 'id' ? 'Konfirmasi Logout' : 'Confirm Logout',
+      message: lang === 'id' ? 'Apakah Anda yakin ingin keluar dari aplikasi?' : 'Are you sure you want to log out?',
+      confirmText: 'Logout',
+      cancelText: lang === 'id' ? 'Batal' : 'Cancel',
+      isDanger: false
+    });
+    
+    if (isConfirmed) {
+      useAuthStore.getState().logout();
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const isConfirmed = await useConfirmStore.getState().ask({
+      title: lang === 'id' ? 'Hapus Akun Permanen?' : 'Delete Account Permanently?',
+      message: lang === 'id' 
+        ? 'Aksi ini tidak dapat dibatalkan. Semua data profil dan pengaturan Anda akan dihapus permanen.' 
+        : 'This action cannot be undone. All your profile data and settings will be permanently deleted.',
+      confirmText: lang === 'id' ? 'Ya, Hapus' : 'Yes, Delete',
+      cancelText: lang === 'id' ? 'Batal' : 'Cancel',
+      isDanger: true
+    });
+
+    if (isConfirmed) {
+      const tid = toast.loading(lang === 'id' ? 'Menghapus akun...' : 'Deleting account...');
+      try {
+        await axiosInstance.delete('/auth/profile');
+        toast.success(lang === 'id' ? 'Akun berhasil dihapus' : 'Account successfully deleted', { id: tid });
+        useAuthStore.getState().logout();
+      } catch (err) {
+        handleError(err, 'Hapus Akun');
+        toast.dismiss(tid);
+      }
     }
   };
 
@@ -496,13 +533,13 @@ export default function Settings() {
                   {lang === 'id' ? 'Akun Dibuat: ' : 'Account Created: '} {createdAt}
                 </p>
                 <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-                  <button type="button" className="w-full flex items-center justify-between px-4 py-3 hover:bg-red-50 transition-colors border-b border-gray-100 text-red-600">
+                  <button type="button" onClick={handleDeleteAccount} className="w-full flex items-center justify-between px-4 py-3 hover:bg-red-50 transition-colors border-b border-gray-100 text-red-600">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></div>
                       <span className="text-sm font-bold">{lang === 'id' ? 'Hapus Akun' : 'Delete Account'}</span>
                     </div>
                   </button>
-                  <button type="button" onClick={() => useAuthStore.getState().logout()} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 active:scale-[0.99]">
+                  <button type="button" onClick={handleLogout} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 active:scale-[0.99]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-gray-50 rounded-lg"><LogOut className="w-4 h-4" /></div>
                       <span className="text-sm font-bold">{lang === 'id' ? 'Log Out' : 'Log Out'}</span>

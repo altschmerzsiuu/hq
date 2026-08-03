@@ -22,8 +22,8 @@ function mapErrorToMessage(err) {
   // ── Network / Timeout ──────────────────────────────────────────────
   if (isNetwork || err?.code === 'ERR_CANCELED') {
     return {
-      title: 'Tidak ada koneksi',
-      description: 'Periksa koneksi internet Anda, kemudian coba lagi.',
+      title: 'Tidak ada koneksi internet',
+      description: 'Gagal terhubung ke server. Mohon periksa jaringan WiFi atau Data Seluler Anda, lalu coba lagi.',
     };
   }
 
@@ -32,63 +32,63 @@ function mapErrorToMessage(err) {
     case 400:
       return {
         title: 'Permintaan tidak valid',
-        description: 'Periksa kembali data yang Anda kirim.',
+        description: 'Format data yang Anda kirim salah atau tidak lengkap. Cek kembali isian formulir Anda.',
       };
 
     case 401:
       return {
         title: 'Sesi Anda telah berakhir',
-        description: 'Silakan masuk kembali untuk melanjutkan.',
+        description: 'Sistem membutuhkan otorisasi ulang. Silakan login kembali untuk melanjutkan.',
       };
 
     case 403:
       return {
         title: 'Akses ditolak',
-        description: 'Anda tidak memiliki izin untuk melakukan tindakan ini.',
+        description: 'Anda tidak memiliki hak akses (admin) untuk melakukan tindakan ini.',
       };
 
     case 404:
       return {
         title: 'Data tidak ditemukan',
-        description: 'Informasi yang Anda cari tidak tersedia di sistem.',
+        description: 'Informasi atau halaman yang Anda cari tidak tersedia. Mungkin sudah dihapus atau dipindahkan.',
       };
 
     case 409:
       return {
-        title: 'Data sudah ada',
-        description: 'Data serupa sudah tercatat. Periksa kembali isian Anda.',
+        title: 'Email sudah terdaftar',
+        description: 'Email yang Anda masukkan sudah digunakan. Silakan langsung Login atau gunakan email lain.',
       };
 
     case 422:
       return {
         title: 'Beberapa data belum lengkap',
-        description: 'Periksa kembali kolom isian yang masih kosong atau belum sesuai.',
+        description: 'Sistem menolak penyimpanan karena ada isian (seperti foto atau teks) yang belum lengkap atau formatnya salah.',
       };
 
     case 429:
       return {
         title: 'Terlalu banyak percobaan',
-        description: 'Tunggu beberapa saat sebelum mencoba lagi.',
+        description: 'Anda melakukan tindakan ini terlalu sering. Mohon tunggu sekitar 1-2 menit sebelum mencoba lagi.',
       };
 
     case 500:
       return {
-        title: 'Terjadi gangguan pada sistem',
-        description: 'Tim kami sedang berusaha mengatasinya. Silakan coba lagi nanti.',
+        title: 'Sistem sedang sibuk',
+        description: 'Server kami sedang mengalami gangguan internal. Tim teknisi kami akan segera memperbaikinya. Coba lagi dalam beberapa menit.',
       };
 
     case 502:
     case 503:
     case 504:
       return {
-        title: 'Server tidak dapat dijangkau',
-        description: 'Layanan sedang tidak tersedia. Silakan coba beberapa saat lagi.',
+        title: 'Server tidak merespon (Offline)',
+        description: 'Layanan sedang dalam perbaikan rutin atau down sementara. Coba buka kembali aplikasi beberapa saat lagi.',
       };
 
     default:
       return {
-        title: 'Terjadi kesalahan',
-        description: 'Silakan coba kembali atau hubungi administrator jika masalah berlanjut.',
+        title: 'Terjadi kendala tak terduga',
+        description: 'Sistem mengalami error yang tidak dikenali. Silakan coba kembali, atau lapor ke Admin jika terus berulang.',
       };
   }
 }
