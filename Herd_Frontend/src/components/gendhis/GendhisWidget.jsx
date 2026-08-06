@@ -33,6 +33,7 @@ import AddCowModal from '@/components/shared/AddCowModal';
 import ReproModal from '@/components/shared/ReproModal';
 import PairCollarModal from '@/components/shared/PairCollarModal';
 import { useNotificationStore } from '@/store/notificationStore';
+import NotifModalMobile from '@/components/shared/NotifModalMobile';
 
 const API_BASE = import.meta.env.DEV ? '/api' : `${import.meta.env.VITE_API_URL || ''}/api`;
 
@@ -45,6 +46,7 @@ export default function GendhisWidget() {
   const [isAddCowModalOpen, setIsAddCowModalOpen] = useState(false);
   const [isReproModalOpen, setIsReproModalOpen] = useState(false);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
+  const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
   const [pairSelectedSapi, setPairSelectedSapi] = useState(null);
   const [pairSelectedCollar, setPairSelectedCollar] = useState(null);
 
@@ -354,6 +356,10 @@ export default function GendhisWidget() {
         pairSelectedCollar={pairSelectedCollar}
         setPairSelectedCollar={setPairSelectedCollar}
       />
+      <NotifModalMobile
+        isOpen={isNotifModalOpen}
+        onClose={() => setIsNotifModalOpen(false)}
+      />
     </>
   );
 
@@ -535,7 +541,7 @@ export default function GendhisWidget() {
             </button>
             
             <button 
-              onClick={() => { setIsFabOpen(false); navigate('/notifications'); }}
+              onClick={() => { setIsFabOpen(false); setIsNotifModalOpen(true); }}
               className="relative flex items-center justify-center w-12 h-12 bg-white text-rose-500 hover:bg-rose-500 hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(244,63,94,0.4)]"
             >
               <span className="absolute right-[120%] bg-rose-500 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">{lang === 'id' ? 'Notifikasi' : 'Notifications'}</span>
@@ -598,6 +604,11 @@ export default function GendhisWidget() {
           )}
           title={isAnyWidgetOpen ? "Tutup Semua" : "Menu Cepat"}
         >
+          {(!isAnyWidgetOpen && !isFabOpen && unreadCount > 0) && (
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full border-2 border-[var(--bg-surface)] flex items-center justify-center text-[11px] font-bold text-white shadow-sm z-10 animate-in zoom-in">
+              {unreadCount}
+            </div>
+          )}
           <div className={cn("transition-all duration-300 absolute flex items-center justify-center", (isFabOpen || isAnyWidgetOpen) ? "rotate-90 opacity-0 scale-50" : "rotate-0 opacity-100 scale-100")}>
             <LayoutGrid className="w-6 h-6 group-hover:scale-110 transition-transform" />
           </div>

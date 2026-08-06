@@ -160,6 +160,7 @@
     overflow-x: hidden;
     width: 100%;
     position: relative;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -172,8 +173,7 @@
     overflow-x: hidden;
     width: 100%;
     position: relative;
-    overscroll-behavior-y: none;
-    overscroll-behavior-x: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   h1, h2, h3, h4, h5, h6 {

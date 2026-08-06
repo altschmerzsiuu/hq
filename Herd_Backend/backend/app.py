@@ -136,14 +136,17 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_CHAT_IDS = [x.strip() for x in os.getenv('TELEGRAM_CHAT_IDS', '').split(',') if x.strip()]
 
 # FastAPI Application
-import sentry_sdk
-sentry_dsn = os.getenv("SENTRY_DSN")
-if sentry_dsn:
-    sentry_sdk.init(
-        dsn=sentry_dsn,
-        traces_sample_rate=1.0,
-        profiles_sample_rate=1.0,
-    )
+try:
+    import sentry_sdk
+    sentry_dsn = os.getenv("SENTRY_DSN")
+    if sentry_dsn:
+        sentry_sdk.init(
+            dsn=sentry_dsn,
+            traces_sample_rate=1.0,
+            profiles_sample_rate=1.0,
+        )
+except ImportError:
+    print("[WARNING] sentry_sdk is not installed. Sentry will not be initialized.")
 
 app = FastAPI(title="IoT Peternakan API", version="2.0.0")
 from limiter import limiter

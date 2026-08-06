@@ -663,12 +663,24 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
   const handleClick = (e) => {
     e.stopPropagation();
     if (count === 0) {
-      if (slotType === 'pantau') toast.error("lang === 'id' ? 'Waduh, belum ada ternak yang dipantau nih! Yuk pasang kalungnya dulu' : 'Oops, no cattle are being monitored yet! Let\'s pair the collar first'");
-      if (slotType === 'tindakan') toast.success("Semua ternak dalam kondisi baik. Tidak ada tindakan mendesak.");
-      if (slotType === 'total' && count === 0) toast.error("Belum ada data ternak.");
+      if (slotType === 'pantau') toast.error(lang === 'id' ? 'Belum ada ternak yang dipantau.' : 'No cattle are being monitored yet.');
+      if (slotType === 'tindakan') toast.success(lang === 'id' ? 'Semua ternak dalam kondisi baik.' : 'All cattle are in good condition.');
+      if (slotType === 'total') toast.error(lang === 'id' ? 'Belum ada data ternak.' : 'No cattle data yet.');
       return;
     }
-    setActivePopover(activePopover === slotId ? null : slotId);
+    
+    // Navigate to /ternak with the corresponding filter
+    if (slotType === 'estrus') {
+      navigate('/estrus-prediction');
+      return;
+    }
+    
+    let filterVal = 'all';
+    if (slotType === 'sehat') filterVal = 'Sehat';
+    if (slotType === 'tindakan') filterVal = 'action';
+    if (slotType === 'pantau') filterVal = 'pantau';
+    
+    navigate(`/ternak?filter=${filterVal}`);
   };
 
   return (
@@ -1068,8 +1080,8 @@ export default function Dashboard() {
           <div
             className="rounded-t-none rounded-b-[40px] p-6 shadow-lg relative text-white flex flex-col justify-between mb-2"
             style={{
-              paddingTop: 'calc(env(safe-area-inset-top) + 86px)',
-              minHeight: '260px',
+              paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
+              minHeight: '180px',
               background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)'
             }}
           >
@@ -1259,7 +1271,7 @@ export default function Dashboard() {
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-[var(--text-1)] text-[15px]">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
-                <button onClick={() => navigate('/prediksi-estrus')} className="text-[11px] font-bold text-gray-500 hover:text-[var(--accent)] flex items-center gap-1">
+                <button onClick={() => navigate('/estrus-prediction')} className="text-[11px] font-bold text-gray-500 hover:text-[var(--accent)] flex items-center gap-1">
                   Lihat semua <ChevronRight size={12} />
                 </button>
               </div>

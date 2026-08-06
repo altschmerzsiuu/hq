@@ -290,6 +290,7 @@ export default function SensorData() {
         const timeStr = d.batch_ts ? new Date(d.batch_ts).toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
         return {
           time: timeStr,
+          rawTime: d.batch_ts ? new Date(d.batch_ts) : null,
           temp: d.temperature !== null ? parseFloat(d.temperature.toFixed(1)) : null,
           activity: d.max_z !== null ? Math.round(d.max_z * 30) : 0
         };
@@ -353,7 +354,7 @@ export default function SensorData() {
       <div 
         className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 md:pt-8 md:pb-8 shadow-lg relative overflow-hidden text-white flex flex-col justify-between md:mx-0 mb-4" 
         style={{ 
-          paddingTop: 'calc(env(safe-area-inset-top) + 86px)',
+          paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
           background: 'linear-gradient(180deg, #115e59 0%, #022c22 100%)'
         }}
       >
@@ -575,83 +576,50 @@ export default function SensorData() {
              </div>
           </div>
           <div className="p-5 md:p-6 flex-1 w-full min-h-[300px]">
-             {chartData.length === 0 ? (
-               <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                 <Activity size={32} className="mb-2 opacity-30" />
-                 <p className="text-sm font-medium">{t.sensor_empty || 'Belum ada data telemetri yang tersedia.'}</p>
-               </div>
-             ) : (
-               <ResponsiveContainer width="100%" height="100%">
-                 <LineChart data={timeFilter === '24h' ? chartData.slice(-12) : timeFilter === '1wk' ? chartData.slice(-30) : chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.6} />
-                   <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} dy={10} minTickGap={30} />
-                   <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                   <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-                   <Tooltip 
-                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                     formatter={(value, name) => [value, name === 'temp' ? 'Suhu (°C)' : 'Aktivitas']}
-                   />
-                   <Line yAxisId="left" type="monotone" dataKey="temp" name="temp" stroke="#EF4444" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#EF4444' }} />
-                   <Line yAxisId="right" type="monotone" dataKey="activity" name="activity" stroke="#3B82F6" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#3B82F6' }} />
-                 </LineChart>
-               </ResponsiveContainer>
-             )}
+             {(() => {
+                const filteredData = chartData.filter(d => {
+                  if (!d.rawTime) return false;
+                  const diff = new Date() - d.rawTime;
+                  if (timeFilter === '24h') return diff <= 24 * 60 * 60 * 1000;
+                  if (timeFilter === '1wk') return diff <= 7 * 24 * 60 * 60 * 1000;
+                  if (timeFilter === '30d') return diff <= 30 * 24 * 60 * 60 * 1000;
+                  return true;
+                });
+                if (filteredData.length === 0) {
+                  return (
+                   <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                     <Activity size={32} className="mb-2 opacity-30" />
+                     <p className="text-sm font-medium">{t.sensor_empty || 'Belum ada data telemetri yang tersedia.'}</p>
+                   </div>
+                  );
+                }
+                return (
+                 <ResponsiveContainer width="100%" height="100%">
+                   <LineChart data={filteredData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.6} />
+                     <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} dy={10} minTickGap={30} />
+                     <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                     <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                     <Tooltip 
+                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                       formatter={(value, name) => [value, name === 'temp' ? 'Suhu (°C)' : 'Aktivitas']}
+                     />
+                     <Line yAxisId="left" type="monotone" dataKey="temp" name="temp" stroke="#EF4444" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#EF4444' }} />
+                     <Line yAxisId="right" type="monotone" dataKey="activity" name="activity" stroke="#3B82F6" strokeWidth={3} dot={false} activeDot={{ r: 6, fill: '#3B82F6' }} />
+                   </LineChart>
+                 </ResponsiveContainer>
+                );
+             })()}
           </div>
         </div>
       </div>
 
-      {/* Container 6.5: Bandingkan Grafik */}
+      {/* Container 6.5: Bandingkan Grafik Sensor (Temporarily Hidden as it lacks API) */}
+      {/* 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col mb-4 p-5 md:p-6 overflow-hidden">
-        <div className="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-6 relative z-10">
-          <div>
-            <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-1">{lang === 'id' ? 'Bandingkan Grafik Sensor' : 'Compare Sensor Graph'}</h3>
-            <p className="text-sm text-gray-500">{lang === 'id' ? 'Bandingkan data sapi saat ini dengan rata-rata kandang atau sapi lainnya.' : 'Compare current cow data with herd average or other cows.'}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
-            <div className="flex flex-col">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{lang === 'id' ? 'Target Pembanding' : 'Comparison Target'}</label>
-              <div className="relative inline-flex items-center group w-full">
-                <select className="w-full appearance-none outline-none text-sm font-semibold border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-[#2E7D32]/20 focus:border-[#2E7D32] py-2 pl-3 pr-9 bg-white text-gray-800 hover:border-gray-300 transition-colors cursor-pointer">
-                  <option value="herd">{lang === 'id' ? 'Rata-rata Kandang' : 'Herd Average'}</option>
-                  {allCowsData.map(c => (
-                    <option key={c.cow_id || c.id} value={c.cow_id || c.id}>{c.nama || c.cow_id || 'Sapi'}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 w-4 h-4 text-gray-400 group-hover:text-gray-600 pointer-events-none" />
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{lang === 'id' ? 'Parameter' : 'Parameter'}</label>
-              <div className="relative inline-flex items-center group w-full">
-                <select className="w-full appearance-none outline-none text-sm font-semibold border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-[#2E7D32]/20 focus:border-[#2E7D32] py-2 pl-3 pr-9 bg-white text-gray-800 hover:border-gray-300 transition-colors cursor-pointer">
-                  <option value="temp">{lang === 'id' ? 'Suhu Tubuh' : 'Body Temp'}</option>
-                  <option value="activity">{lang === 'id' ? 'Aktivitas' : 'Activity'}</option>
-                </select>
-                <ChevronDown className="absolute right-3 w-4 h-4 text-gray-400 group-hover:text-gray-600 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="w-full h-[250px] mt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart 
-              data={chartData.length > 0 ? (timeFilter === '24h' ? chartData.slice(-12) : chartData) : []} 
-              margin={{ top: 20, right: 10, left: -20, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.6} />
-              <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} dy={10} minTickGap={30} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} domain={['dataMin - 1', 'dataMax + 1']} />
-              <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                formatter={(value, name) => [Number(value).toFixed(1) + '°C', name === 'temp' ? (lang === 'id' ? 'Sapi Saat Ini' : 'Current Cow') : (lang === 'id' ? 'Pembanding' : 'Comparison')]}
-              />
-              <Line type="monotone" dataKey="temp" name="temp" stroke="#EF4444" strokeWidth={3} dot={{ r: 4, fill: '#EF4444' }} activeDot={{ r: 6 }} />
-              {/* Compare line removed temporarily until real API is available to avoid mockup data */}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        ... (Hidden pending API support) ...
       </div>
+      */}
 
       {/* Container 7: Status Perangkat IoT Collar & List Perangkat */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col mb-4">
@@ -811,7 +779,7 @@ export default function SensorData() {
               const signalLabel = getSignalStrength(row.lastSyncRaw, t);
               const lastSyncLabel = formatLastSync(row.lastSyncRaw, t);
               return (
-                <div key={row.id} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
+                <div key={row.id} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '14px', position: 'relative', zIndex: openDropdownId === row.id ? 50 : 1 }}>
                   <div className="flex items-center justify-between mb-3 relative">
                     <div className="flex items-center gap-2.5">
                       <div className={cn(

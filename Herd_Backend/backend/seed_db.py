@@ -82,7 +82,7 @@ def init_db():
         dummy_sops = [
             ("SOP Penanganan Sapi Terindikasi Penyakit Mulut dan Kuku (PMK)", "Langkah pertama saat menemukan sapi dengan gejala PMK (hipersalivasi, lepuh pada mulut/kuku): 1. Segera pisahkan sapi dari kandang utama ke kandang isolasi Blok C. 2. Hubungi drh. Budi di 0812-345-6789. 3. Semprot kandang lama dengan desinfektan klorin 2% selama 3 hari berturut-turut. Jangan memberi makan konsentrat keras."),
             ("SOP Pemberian Pakan Laktasi", "Sapi pada fase laktasi (menyusui) harus diberikan ransum pakan dengan protein kasar minimal 16%. Jadwal pemberian pakan: Pukul 06:00 (Hijauan 15kg), Pukul 10:00 (Konsentrat 5kg), Pukul 15:00 (Hijauan 15kg). Air minum harus tersedia ad libitum (tanpa batas)."),
-            ("SOP Deteksi Birahi dan Inseminasi Buatan (IB)", "Jika sapi terdeteksi birahi oleh sensor Hectra (Notifikasi ESTRUS_ALERT > 75%), peternak wajib melakukan pengecekan visual (vulva bengkak, lendir bening). Waktu paling optimal untuk Inseminasi Buatan (IB) adalah 12-18 jam setelah tanda birahi pertama muncul. Teknisi IB (Bapak Eko) harus dihubungi segera.")
+            ("SOP Deteksi Birahi dan Inseminasi Buatan (IB)", "Jika sapi terdeteksi birahi oleh sensor Herd (Notifikasi ESTRUS_ALERT > 75%), peternak wajib melakukan pengecekan visual (vulva bengkak, lendir bening). Waktu paling optimal untuk Inseminasi Buatan (IB) adalah 12-18 jam setelah tanda birahi pertama muncul. Teknisi IB (Bapak Eko) harus dihubungi segera.")
         ]
         
         for title, content in dummy_sops:

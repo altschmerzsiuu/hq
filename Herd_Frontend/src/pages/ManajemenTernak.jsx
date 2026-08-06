@@ -216,13 +216,12 @@ export default function ManajemenTernak() {
     if (location.state?.selectedCowId && sapiList.length > 0) {
       const cow = sapiList.find(h => 
         h.id === location.state.selectedCowId || 
+        h.rfid === location.state.selectedCowId ||
         h.cow_id === location.state.selectedCowId ||
         h.nama?.toLowerCase() === location.state.selectedCowId?.toLowerCase()
       );
       if (cow) {
-        setSelectedSapi(cow);
-        // Clear selectedCowId from state but keep 'from' so back button works
-        navigate(location.pathname, { 
+        navigate('/ternak/' + cow.id, { 
           replace: true, 
           state: { ...location.state, selectedCowId: undefined } 
         });
@@ -234,7 +233,7 @@ export default function ManajemenTernak() {
         });
       }
     }
-  }, [location.state, sapiList]);
+  }, [location.state, sapiList, navigate]);
 
   // Reset tab to riwayat every time a new cow is opened
   useEffect(() => {
@@ -578,7 +577,7 @@ export default function ManajemenTernak() {
       <div 
         className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 px-6 md:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4 md:mx-0"
         style={{ 
-          paddingTop: 'calc(env(safe-area-inset-top) + 86px)',
+          paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
           background: 'linear-gradient(135deg, #FF7B1C 0%, #E65C00 100%)'
         }}
       >
@@ -806,14 +805,16 @@ export default function ManajemenTernak() {
             />
           </div>
           <button 
+            type="button"
             onClick={() => setShowFilter(f => !f)}
-            style={{ width: '50px', height: '50px', borderRadius: '16px', background: showFilter ? 'var(--accent-dim)' : 'var(--bg-surface)', border: `1px solid ${showFilter ? 'var(--accent)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: showFilter ? 'var(--accent)' : 'var(--text-2)', boxShadow: '0 2px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s' }}
+            style={{ width: '50px', height: '50px', borderRadius: '16px', background: showFilter ? '#FF7B1C' : 'var(--bg-surface)', border: `1px solid ${showFilter ? '#FF7B1C' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: showFilter ? '#fff' : 'var(--text-2)', boxShadow: showFilter ? '0 4px 12px rgba(255,123,28,0.35)' : '0 2px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s', position: 'relative', zIndex: 50 }}
           >
             <SlidersHorizontal size={20} />
           </button>
           <button 
+            type="button"
             onClick={() => setIsSelectMode(!isSelectMode)}
-            style={{ width: '50px', height: '50px', borderRadius: '16px', background: isSelectMode ? 'var(--accent-dim)' : 'var(--bg-surface)', border: `1px solid ${isSelectMode ? 'var(--accent)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isSelectMode ? 'var(--accent)' : 'var(--text-2)', boxShadow: '0 2px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s' }}
+            style={{ width: '50px', height: '50px', borderRadius: '16px', background: isSelectMode ? '#FF7B1C' : 'var(--bg-surface)', border: `1px solid ${isSelectMode ? '#FF7B1C' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isSelectMode ? '#fff' : 'var(--text-2)', boxShadow: isSelectMode ? '0 4px 12px rgba(255,123,28,0.35)' : '0 2px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s', position: 'relative', zIndex: 50 }}
           >
             <ClipboardList size={20} />
           </button>
@@ -847,27 +848,31 @@ export default function ManajemenTernak() {
           })}
         </div>
 
-        {/* Advanced Filter Panel Mobile (Bottom Sheet Modal) */}
-        {showFilter && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+        {/* Advanced Filter Panel Mobile (Bottom Sheet Modal) - rendered via portal to escape z-index stacking */}
+        {showFilter && createPortal(
+          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             {/* Backdrop */}
             <div 
-              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)' }} 
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} 
               className="animate-in fade-in duration-200"
               onClick={() => setShowFilter(false)} 
             />
             
             {/* Modal Content */}
             <div 
-              style={{ position: 'relative', width: '100%', background: 'var(--bg-surface)', padding: '24px 20px', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', boxShadow: '0 -4px 24px rgba(0,0,0,0.1)' }} 
+              style={{ position: 'relative', width: '100%', background: 'var(--bg-surface)', padding: '24px 20px', borderTopLeftRadius: '28px', borderTopRightRadius: '28px', boxShadow: '0 -8px 40px rgba(0,0,0,0.2)', zIndex: 1 }} 
               className="animate-in slide-in-from-bottom-full duration-300"
             >
               {/* Drag Handle */}
-              <div style={{ width: '48px', height: '5px', background: 'var(--border)', borderRadius: '10px', margin: '0 auto 24px auto' }} />
+              <div style={{ width: '48px', height: '5px', background: 'var(--border-2)', borderRadius: '10px', margin: '0 auto 20px auto' }} />
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h4 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-1)', margin: 0 }}>Filter Lanjutan</h4>
-                <button onClick={() => setShowFilter(false)} style={{ background: 'var(--bg-hover)', border: 'none', color: 'var(--text-2)', cursor: 'pointer', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowFilter(false)} 
+                  style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#f3f4f6', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#374151' }}
+                >
                   <X size={18} />
                 </button>
               </div>
@@ -901,7 +906,7 @@ export default function ManajemenTernak() {
                 </select>
               </div>
               
-              <div style={{ display: 'flex', gap: '12px', paddingBottom: 'env(safe-area-inset-bottom, 20px)' }}>
+              <div style={{ display: 'flex', gap: '12px', paddingBottom: 'max(env(safe-area-inset-bottom), 20px)' }}>
                  <button 
                   onClick={() => { setFilters({ kesehatan: 'all', jenis: 'all' }); setShowFilter(false); }} 
                   style={{ flex: 1, padding: '14px', borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-2)', fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
@@ -910,13 +915,14 @@ export default function ManajemenTernak() {
                  </button>
                  <button 
                   onClick={() => setShowFilter(false)} 
-                  style={{ flex: 1, padding: '14px', borderRadius: '16px', border: 'none', background: 'var(--accent)', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.2)', fontFamily: 'Inter, sans-serif' }}
+                  style={{ flex: 1, padding: '14px', borderRadius: '16px', border: 'none', background: '#FF7B1C', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(255,123,28,0.3)', fontFamily: 'Inter, sans-serif' }}
                  >
                    Terapkan
                  </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* Mobile View: List Items */}

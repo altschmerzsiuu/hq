@@ -153,7 +153,9 @@ export default function MainLayout() {
             flex: 1, 
             overflowY: 'auto', 
             overflowX: 'hidden',
-            maxWidth: '100%'
+            maxWidth: '100%',
+            WebkitOverflowScrolling: 'touch',
+            scrollBehavior: 'smooth'
           }}
           className={cn(
             "pb-4 md:px-4",
