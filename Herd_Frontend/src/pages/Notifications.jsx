@@ -60,7 +60,7 @@ export default function Notifications() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto pb-20">
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto pb-20" style={{ paddingTop: 'max(env(safe-area-inset-top), 24px)' }}>
       
       <div className="flex items-center justify-between">
         <h1 className="text-[20px] font-bold text-gray-900 font-display">
