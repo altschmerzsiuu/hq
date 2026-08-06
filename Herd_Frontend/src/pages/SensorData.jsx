@@ -607,11 +607,11 @@ export default function SensorData() {
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-1">{lang === 'id' ? 'Bandingkan Grafik Sensor' : 'Compare Sensor Graph'}</h3>
             <p className="text-sm text-gray-500">{lang === 'id' ? 'Bandingkan data sapi saat ini dengan rata-rata kandang atau sapi lainnya.' : 'Compare current cow data with herd average or other cows.'}</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
             <div className="flex flex-col">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{lang === 'id' ? 'Target Pembanding' : 'Comparison Target'}</label>
-              <div className="relative inline-flex items-center group w-fit">
-                <select className="appearance-none outline-none text-sm font-semibold border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-[#2E7D32]/20 focus:border-[#2E7D32] py-2 pl-3 pr-9 bg-white text-gray-800 hover:border-gray-300 transition-colors cursor-pointer">
+              <div className="relative inline-flex items-center group w-full">
+                <select className="w-full appearance-none outline-none text-sm font-semibold border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-[#2E7D32]/20 focus:border-[#2E7D32] py-2 pl-3 pr-9 bg-white text-gray-800 hover:border-gray-300 transition-colors cursor-pointer">
                   <option value="herd">{lang === 'id' ? 'Rata-rata Kandang' : 'Herd Average'}</option>
                   {allCowsData.map(c => (
                     <option key={c.cow_id || c.id} value={c.cow_id || c.id}>{c.nama || c.cow_id || 'Sapi'}</option>
@@ -622,8 +622,8 @@ export default function SensorData() {
             </div>
             <div className="flex flex-col">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{lang === 'id' ? 'Parameter' : 'Parameter'}</label>
-              <div className="relative inline-flex items-center group w-fit">
-                <select className="appearance-none outline-none text-sm font-semibold border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-[#2E7D32]/20 focus:border-[#2E7D32] py-2 pl-3 pr-9 bg-white text-gray-800 hover:border-gray-300 transition-colors cursor-pointer">
+              <div className="relative inline-flex items-center group w-full">
+                <select className="w-full appearance-none outline-none text-sm font-semibold border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-[#2E7D32]/20 focus:border-[#2E7D32] py-2 pl-3 pr-9 bg-white text-gray-800 hover:border-gray-300 transition-colors cursor-pointer">
                   <option value="temp">{lang === 'id' ? 'Suhu Tubuh' : 'Body Temp'}</option>
                   <option value="activity">{lang === 'id' ? 'Aktivitas' : 'Activity'}</option>
                 </select>
@@ -636,10 +636,7 @@ export default function SensorData() {
         <div className="w-full h-[250px] mt-4">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
-              data={(chartData.length > 0 ? (timeFilter === '24h' ? chartData.slice(-12) : chartData) : []).map(d => ({
-                ...d,
-                compareTemp: d.temp ? parseFloat((d.temp - 0.4 + Math.sin(d.temp) * 0.5).toFixed(1)) : null
-              }))} 
+              data={chartData.length > 0 ? (timeFilter === '24h' ? chartData.slice(-12) : chartData) : []} 
               margin={{ top: 20, right: 10, left: -20, bottom: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" opacity={0.6} />
@@ -649,8 +646,8 @@ export default function SensorData() {
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                 formatter={(value, name) => [Number(value).toFixed(1) + '°C', name === 'temp' ? (lang === 'id' ? 'Sapi Saat Ini' : 'Current Cow') : (lang === 'id' ? 'Pembanding' : 'Comparison')]}
               />
-              <Line type="monotone" dataKey="temp" name="temp" stroke="#7CB342" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{ r: 6 }} />
-              <Line type="monotone" dataKey="compareTemp" name="compare" stroke="#9CA3AF" strokeDasharray="5 5" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="temp" name="temp" stroke="#EF4444" strokeWidth={3} dot={{ r: 4, fill: '#EF4444' }} activeDot={{ r: 6 }} />
+              {/* Compare line removed temporarily until real API is available to avoid mockup data */}
             </LineChart>
           </ResponsiveContainer>
         </div>

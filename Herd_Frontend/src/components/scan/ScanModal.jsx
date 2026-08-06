@@ -69,30 +69,40 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
   const inputRef = useRef(null);
   const videoRef = useRef(null);
 
+  const streamRef = useRef(null);
+
   // ── Camera lifecycle ────────────────────────
   useEffect(() => {
-    if (!isOpen || result || notFound || loading) return;
-    let stream = null;
+    if (!isOpen) {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      return;
+    }
+
     const startCamera = async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (err) {
-        if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
-          toast.error('Akses kamera ditolak. Izinkan akses kamera di pengaturan browser Anda.');
-        } else {
-          handleError(err, 'akses kamera');
+      if (!streamRef.current) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          streamRef.current = stream;
+        } catch (err) {
+          if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+            toast.error('Akses kamera ditolak. Izinkan akses kamera di pengaturan browser Anda.');
+          } else {
+            handleError(err, 'akses kamera');
+          }
         }
       }
+      
+      // If video ref is available (meaning scanner view is active)
+      if (videoRef.current && streamRef.current && !result && !notFound && !loading) {
+        videoRef.current.srcObject = streamRef.current;
+      }
     };
+
     startCamera();
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
+
   }, [isOpen, result, notFound, loading]);
 
   // ── WebSocket lifecycle ──────────────────────

@@ -103,6 +103,21 @@ export default function ManajemenTernak() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({ kesehatan: 'all', jenis: 'all' });
+
+  // Hide bottom nav when filter is open
+  useEffect(() => {
+    const nav = document.getElementById('mobile-bottom-nav');
+    if (nav) {
+      if (showFilter) {
+        nav.style.display = 'none';
+      } else {
+        nav.style.display = 'block';
+      }
+    }
+    return () => {
+      if (nav) nav.style.display = 'block';
+    };
+  }, [showFilter]);
   const [scanOpen, setScanOpen] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState([]);

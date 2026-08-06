@@ -187,7 +187,7 @@ export default function Topbar({ onMenuClick, isScrolled }) {
           MOBILE TOPBAR (UNTOUCHED, EXACTLY AS BEFORE)
           ========================================================================= */}
       <header
-        className="flex lg:hidden items-center justify-between shrink-0 absolute top-0 left-0 right-0 z-30 px-4 transition-all duration-300"
+        className="hidden"
         style={{
           height: 'calc(56px + env(safe-area-inset-top))',
           paddingTop: 'env(safe-area-inset-top)',

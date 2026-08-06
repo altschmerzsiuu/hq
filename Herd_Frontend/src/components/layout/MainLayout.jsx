@@ -90,6 +90,28 @@ export default function MainLayout() {
     };
   }, [addNotification]);
 
+  // Dynamic Theme Color for Android Status Bar
+  useEffect(() => {
+    let themeColor = '#F8F9FA';
+    if (location.pathname === '/dashboard') {
+      themeColor = '#2f7d31';
+    } else if (location.pathname === '/sensor-data') {
+      themeColor = '#115e59';
+    } else if (location.pathname === '/ternak') {
+      themeColor = '#FF7B1C';
+    } else if (location.pathname.startsWith('/ternak/')) {
+      themeColor = '#F3F4F6';
+    }
+
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement('meta');
+      metaThemeColor.name = 'theme-color';
+      document.head.appendChild(metaThemeColor);
+    }
+    metaThemeColor.content = themeColor;
+  }, [location.pathname]);
+
   const handleScroll = (e) => {
     const scrollTop = e.target.scrollTop;
     // Only turn solid white when scrolled past most of the green card

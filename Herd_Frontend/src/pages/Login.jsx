@@ -9,18 +9,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import cowFeatureImg from '@/assets/onboarding/cow_featuree.png';
 import farmerPinImg from '@/assets/onboarding/farmer_pin.png';
 
-const PROVINCES = [
-  "", "Aceh", "Sumatera Utara", "Sumatera Barat", "Riau", "Jambi", "Sumatera Selatan", "Bengkulu", "Lampung",
-  "Kepulauan Bangka Belitung", "Kepulauan Riau", "DKI Jakarta", "Jawa Barat", "Jawa Tengah", "DI Yogyakarta",
-  "Jawa Timur", "Banten", "Bali", "Nusa Tenggara Barat", "Nusa Tenggara Timur", "Kalimantan Barat",
-  "Kalimantan Tengah", "Kalimantan Selatan", "Kalimantan Timur", "Kalimantan Utara", "Sulawesi Utara",
-  "Sulawesi Tengah", "Sulawesi Selatan", "Sulawesi Tenggara", "Gorontalo", "Sulawesi Barat",
-  "Maluku", "Maluku Utara", "Papua Barat", "Papua"
-];
+import indonesiaRegionsData from '@/data/indonesia-region.json';
 
-const CITIES = [
-  "", "Bandung", "Jakarta", "Surabaya", "Semarang", "Yogyakarta", "Medan", "Makassar", "Denpasar", "Malang", "Bogor", "Lainnya..."
-];
+const PROVINCES = ["", ...indonesiaRegionsData.map(r => r.nama)];
+const ALL_CITIES = ["", ...indonesiaRegionsData.flatMap(r => r.cities.map(c => c.nama))];
+
+const getProvinceByCity = (cityName) => {
+  for (const region of indonesiaRegionsData) {
+    if (region.cities.some(c => c.nama === cityName)) {
+      return region.nama;
+    }
+  }
+  return "";
+};
+
+const getCitiesByProvince = (provinceName) => {
+  if (!provinceName) return ALL_CITIES;
+  const region = indonesiaRegionsData.find(r => r.nama === provinceName);
+  return region ? ["", ...region.cities.map(c => c.nama)] : ALL_CITIES;
+};
+
 
 export default function Login() {
   const navigate = useNavigate();
@@ -77,6 +85,16 @@ export default function Login() {
       }
       setIsCheckingUser(false);
     }
+
+    // Set Android status bar theme color
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement('meta');
+      metaThemeColor.name = 'theme-color';
+      document.head.appendChild(metaThemeColor);
+    }
+    metaThemeColor.content = '#2f7d31'; // Login background color
+
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
@@ -116,7 +134,11 @@ export default function Login() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Google authentication failed');
+      if (!res.ok) {
+        const err = new Error(data.detail || 'Gagal login dengan Google');
+        err.response = { status: res.status, data };
+        throw err;
+      }
 
       const { access_token, user } = data;
       localStorage.setItem('access_token', access_token);
@@ -209,7 +231,11 @@ export default function Login() {
           }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Pendaftaran gagal');
+        if (!res.ok) {
+          const err = new Error(data.detail || 'Pendaftaran gagal');
+          err.response = { status: res.status, data };
+          throw err;
+        }
 
         toast.success('Pendaftaran berhasil! Mengalihkan...');
 
@@ -347,8 +373,7 @@ export default function Login() {
     navigate('/dashboard', { replace: true });
   };
 
-
-  if (isCheckingUser) return <div className="min-h-[100dvh] bg-white lg:bg-[#FDFBF7] flex items-center justify-center" />;
+  if (isCheckingUser) return <div className="min-h-[100dvh] bg-[#FF7B1C] lg:bg-[#FDFBF7] flex items-center justify-center" />;
 
   return (
     <div className="min-h-[100dvh] bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans sm:p-4 lg:p-0">
@@ -368,24 +393,9 @@ export default function Login() {
             >
               {/* Top Orange Header Section */}
               <div 
-                className="w-full flex-[1.1] bg-[#FF7B1C] rounded-b-[40px] flex flex-col items-center justify-center pb-4 relative overflow-hidden"
+                className="w-full flex-[1.4] bg-[#FF7B1C] rounded-b-[40px] flex flex-col items-center justify-center pb-4 relative overflow-hidden"
                 style={{ paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}
               >
-                {/* Herd Logo top left */}
-                <div 
-                  className="absolute left-6 w-10 h-10 bg-white rounded-xl shadow-lg p-1 flex items-center justify-center z-20"
-                  style={{ top: 'calc(env(safe-area-inset-top) + 2rem)' }}
-                >
-                  <img src="/herd.jpeg" alt="HERD Logo" className="w-full h-full object-contain rounded-lg" />
-                </div>
-                
-                <h1 
-                  className="text-white text-[15px] font-extrabold tracking-widest absolute right-10 z-20"
-                  style={{ top: 'calc(env(safe-area-inset-top) + 2.5rem)' }}
-                >
-                  HERD
-                </h1>
-
                 <motion.img 
                   src={cowFeatureImg} 
                   alt="HERD Feature" 
@@ -568,7 +578,13 @@ export default function Login() {
                           <div className="flex-1">
                             <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Province</label>
                             <select 
-                              required value={province} onChange={e => setProvince(e.target.value)}
+                              required value={province} onChange={e => { 
+                                setProvince(e.target.value); 
+                                // If the currently selected city doesn't belong to the new province, reset it
+                                if (e.target.value && city && getProvinceByCity(city) !== e.target.value) {
+                                  setCity('');
+                                }
+                              }}
                               className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118] appearance-none"
                               style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%238E8EA0\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.2em' }}
                             >
@@ -580,12 +596,19 @@ export default function Login() {
                           <div className="flex-1">
                             <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">City / Regency</label>
                             <select 
-                              required value={city} onChange={e => setCity(e.target.value)}
+                              required value={city} onChange={e => {
+                                const selectedCity = e.target.value;
+                                setCity(selectedCity);
+                                if (selectedCity && !province) {
+                                  const autoProv = getProvinceByCity(selectedCity);
+                                  if (autoProv) setProvince(autoProv);
+                                }
+                              }}
                               className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118] appearance-none"
                               style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%238E8EA0\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.2em' }}
                             >
-                              {CITIES.map(c => (
-                                <option key={c} value={c} disabled={c === ""}>{c === "" ? "Select City" : c}</option>
+                              {getCitiesByProvince(province).map(c => (
+                                <option key={c} value={c} disabled={c === ""}>{c === "" ? "Select City/Region" : c}</option>
                               ))}
                             </select>
                           </div>

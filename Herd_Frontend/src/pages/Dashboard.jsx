@@ -366,8 +366,8 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
     e.stopPropagation();
     toast.success('Melanjutkan tindakan rekomendasi sistem...');
 
-    if (name || cow_id || id) {
-      navigate('/ternak', { state: { selectedCowId: name || cow_id || id, fromDashboard: true } });
+    if (cow_id || id || name) {
+      navigate('/ternak', { state: { selectedCowId: cow_id || id || name, fromDashboard: true } });
     } else {
       navigate('/ternak');
     }
@@ -1066,7 +1066,7 @@ export default function Dashboard() {
         <div className="flex md:hidden flex-col gap-4">
           {/* ─── 0. GREETING (GRADIENT DESIGN) ─── */}
           <div
-            className="rounded-t-none rounded-b-[40px] p-6 shadow-lg relative overflow-hidden text-white flex flex-col justify-between mb-2"
+            className="rounded-t-none rounded-b-[40px] p-6 shadow-lg relative text-white flex flex-col justify-between mb-2"
             style={{
               paddingTop: 'calc(env(safe-area-inset-top) + 86px)',
               minHeight: '260px',
@@ -1259,13 +1259,20 @@ export default function Dashboard() {
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-[var(--text-1)] text-[15px]">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
+                <button onClick={() => navigate('/prediksi-estrus')} className="text-[11px] font-bold text-gray-500 hover:text-[var(--accent)] flex items-center gap-1">
+                  Lihat semua <ChevronRight size={12} />
+                </button>
               </div>
               <p className="text-[11px] text-gray-500 mb-4">{lang === 'id' ? '(3 Hari ke Depan)' : '(Next 3 Days)'}</p>
               
               <div className="flex flex-col gap-3">
                 {activeEstrusPredictions.length > 0 ? activeEstrusPredictions.slice(0, 3).map((pred, i) => (
-                  <div key={i} className="flex justify-between items-center border-b border-gray-100 pb-2.5 last:border-0 last:pb-0">
-                    <span className="text-[13px] font-bold text-gray-900">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
+                  <div 
+                    key={i} 
+                    onClick={() => navigate('/ternak', { state: { selectedCowId: pred.cow_id || pred.id, fromDashboard: true } })}
+                    className="flex justify-between items-center border-b border-gray-100 pb-2.5 last:border-0 last:pb-0 cursor-pointer hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
+                  >
+                    <span className="text-[13px] font-bold text-gray-900 hover:text-[var(--accent)] transition-colors">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
                     <span className="text-[12px] text-gray-600">Hari ke-{i + 1}</span>
                     <span className="text-[12px] font-medium text-gray-900">{Math.round((pred.confidence_final || 0.8) * 100)}%</span>
                   </div>
@@ -1273,9 +1280,6 @@ export default function Dashboard() {
                   <div className="text-[12px] text-gray-500 text-center py-2">{lang === 'id' ? 'Tidak ada prediksi terdekat.' : 'No upcoming predictions.'}</div>
                 )}
               </div>
-              <button onClick={() => navigate('/prediksi-estrus')} className="text-[11px] font-bold text-gray-500 hover:text-gray-900 text-left mt-3 flex items-center gap-1 w-max">
-                Lihat semua <ChevronRight size={12} />
-              </button>
             </div>
 
             {/* Status Populasi */}

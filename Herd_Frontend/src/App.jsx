@@ -34,8 +34,19 @@ function App() {
       sessionStorage.setItem('herd_splash_shown', 'true');
     }, 2500); // 2.5 seconds splash screen
     
+    // Set initial splash screen theme color
+    if (showSplash) {
+      let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (!metaThemeColor) {
+        metaThemeColor = document.createElement('meta');
+        metaThemeColor.name = 'theme-color';
+        document.head.appendChild(metaThemeColor);
+      }
+      metaThemeColor.content = '#FF7B1C';
+    }
+
     return () => clearTimeout(timer);
-  }, []);
+  }, [showSplash]);
 
   return (
     <>
