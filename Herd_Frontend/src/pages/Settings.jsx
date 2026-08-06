@@ -406,7 +406,7 @@ export default function Settings() {
 
   return (
     <>
-    <div className="md:fixed md:inset-0 md:z-[100] md:flex md:items-center md:justify-center md:bg-black/50 md:backdrop-blur-sm animate-in fade-in duration-500 pb-24 px-0 md:p-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 48px)' }}>
+    <div className="md:fixed md:inset-0 md:z-[100] md:flex md:items-center md:justify-center md:bg-black/50 md:backdrop-blur-sm animate-in fade-in duration-500 pb-24 px-0 md:p-4 pt-safe-48">
       
       {/* Content Area */}
       <div className="relative w-full md:max-w-5xl md:h-[85vh] bg-[#f8f9fa] md:bg-white md:rounded-[32px] md:shadow-2xl md:flex md:flex-row md:overflow-hidden md:border md:border-slate-200">

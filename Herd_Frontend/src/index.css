@@ -449,3 +449,15 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+@layer utilities {
+  .pt-safe-16 {
+    padding-top: max(env(safe-area-inset-top), 16px);
+  }
+  .pt-safe-24 {
+    padding-top: max(env(safe-area-inset-top), 24px);
+  }
+  .pt-safe-48 {
+    padding-top: max(env(safe-area-inset-top), 48px);
+  }
+}
