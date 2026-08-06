@@ -433,10 +433,7 @@ export default function Settings() {
               
               {/* ── Avatar + Name (CLEAN WHITE DESIGN WITH ACCENT) ── */}
               <div 
-                className="bg-gradient-to-b from-[#2f7d31]/10 to-white border border-gray-200 rounded-3xl p-6 shadow-sm relative overflow-hidden mb-6 flex flex-col items-center justify-center text-gray-900" 
-                style={{ 
-                  minHeight: '280px',
-                }}
+                className="bg-gradient-to-b from-[#2f7d31]/10 to-white border border-gray-200 rounded-3xl p-6 py-8 md:py-10 shadow-sm relative overflow-hidden mb-6 flex flex-col items-center justify-center text-gray-900 md:min-h-[280px] min-h-[200px]" 
               >
                   <div className="relative z-10 mb-5 mt-2 cursor-pointer group" onClick={() => setActiveTab('profile')}>
                     <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center bg-gray-100 border-[3px] border-[#2f7d31]/20 shadow-sm group-hover:scale-105 group-active:scale-95 transition-all overflow-hidden">
