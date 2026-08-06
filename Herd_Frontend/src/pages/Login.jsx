@@ -719,13 +719,13 @@ export default function Login() {
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                 />
                 <h1 className="text-2xl font-bold text-[#111118] mb-1">Welcome Back!</h1>
-                <p className="text-[#62627A] text-[14px] mb-4 text-center px-4 shrink-0">
+                <p className="text-[#62627A] text-[14px] mb-8 text-center px-4 shrink-0">
                   Hi <span className="font-bold text-[#111118]">{localStorage.getItem('herd_user_name') || 'User'}</span>, enter your 6-digit PIN.
                 </p>
 
                 {/* PIN Indicator Dots */}
                 <motion.div 
-                  className="flex gap-4 mb-4 shrink-0"
+                  className="flex gap-4 mb-8 shrink-0"
                   animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
                   transition={{ duration: 0.4 }}
                 >
@@ -740,7 +740,7 @@ export default function Login() {
                 {pinError && <p className="text-red-500 text-sm font-bold mb-4 shrink-0">{pinError}</p>}
 
                 {/* Custom Numpad */}
-                <div className="grid grid-cols-3 gap-y-1 gap-x-8 w-full mt-2 shrink-0">
+                <div className="grid grid-cols-3 gap-y-4 gap-x-8 w-full mt-4 shrink-0">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                     <button
                       key={num}
