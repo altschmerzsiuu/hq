@@ -449,8 +449,12 @@ export default function Settings() {
                       </h2>
                       <div className="text-[14px] font-medium text-gray-500 flex items-center justify-center gap-2">
                           <span>{email || (lang === 'id' ? 'Tidak ada email' : 'No email')}</span>
-                          <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                          <span>{farmName || (lang === 'id' ? 'Belum ada peternakan' : 'No farm name')}</span>
+                          {farmName && (
+                              <>
+                                  <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                  <span>{farmName}</span>
+                              </>
+                          )}
                       </div>
                   </div>
               </div>
