@@ -1,5 +1,5 @@
 import { useRouteError } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+
 
 export default function ErrorBoundary() {
   const error = useRouteError();
