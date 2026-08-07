@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Eye, EyeOff, ChevronLeft, User, Delete } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -38,7 +38,6 @@ export default function Login() {
   const [step, setStep] = useState('feature');
   // Initialize to true so desktop defaults to Login
   const [isLoginMode, setIsLoginMode] = useState(true);
-  const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   // Form State
   const [firstName, setFirstName] = useState('');
@@ -61,7 +60,7 @@ export default function Login() {
   const [shake, setShake] = useState(false);
   const [tempUserId, setTempUserId] = useState(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Check if returning user
     const savedUserId = localStorage.getItem('herd_user_id');
 
@@ -74,7 +73,6 @@ export default function Login() {
     if (savedUserId) {
       // Returning user, show PIN login
       setStep('pin_login');
-      setIsCheckingUser(false);
     } else {
       // New user flow - Skip feature step if on desktop
       if (window.innerWidth >= 1024) {
@@ -83,7 +81,6 @@ export default function Login() {
       } else {
         setStep('feature');
       }
-      setIsCheckingUser(false);
     }
 
     // Set Android status bar theme color
@@ -373,13 +370,13 @@ export default function Login() {
     navigate('/dashboard', { replace: true });
   };
 
-  if (isCheckingUser) return <div className="h-full bg-[#FF7B1C] lg:bg-[#FDFBF7] flex items-center justify-center" />;
+  // Removed isCheckingUser flash screen
 
   return (
     <div className="h-full bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans sm:p-4 lg:p-0 overflow-hidden">
       <div className={`w-full max-w-[420px] lg:max-w-none h-full sm:h-[850px] sm:max-h-[90vh] lg:h-full lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row ${(!isLoginMode && step === 'auth') ? 'overflow-y-auto' : ''}`}>
         
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false}>
           
           {/* STEP 1: FEATURE PROPOSITION (Mobile Only) */}
           {step === 'feature' && (
