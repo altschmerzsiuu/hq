@@ -374,7 +374,7 @@ export default function Login() {
 
   return (
     <div className="h-full bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans sm:p-4 lg:p-0 overflow-hidden">
-      <div className={`w-full max-w-[420px] lg:max-w-none h-full sm:h-[850px] sm:max-h-[90vh] lg:h-full lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row ${(!isLoginMode && step === 'auth') ? 'overflow-y-auto' : ''}`}>
+      <div className="w-full max-w-[420px] lg:max-w-none h-full sm:h-[850px] sm:max-h-[90vh] lg:h-full lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row">
         
         <AnimatePresence initial={false}>
           
@@ -382,10 +382,10 @@ export default function Login() {
           {step === 'feature' && (
             <motion.div 
               key="feature"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.4 }}
+              initial={{ x: 0 }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: 'tween', duration: 0.35, ease: 'easeInOut' }}
               className="absolute inset-0 bg-white flex flex-col overflow-hidden lg:hidden"
             >
               {/* Top Orange Header Section */}
@@ -440,10 +440,10 @@ export default function Login() {
           {step === 'auth' && (
             <motion.div 
               key="auth"
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: 'tween', duration: 0.35, ease: 'easeInOut' }}
               className="absolute inset-0 flex flex-col lg:flex-row bg-[#F8F8F9] lg:bg-[#FF7B1C] overflow-hidden"
             >
               {/* DESKTOP LEFT PANEL (Hidden on Mobile, now Orange to blend with image) */}
@@ -700,9 +700,10 @@ export default function Login() {
           {step === 'pin_login' && (
             <motion.div 
               key="pin_login"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: 'tween', duration: 0.35, ease: 'easeInOut' }}
               className="fixed inset-0 h-full bg-white px-6 pb-6 flex flex-col items-center justify-start overflow-hidden"
               style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}
             >
@@ -784,10 +785,10 @@ export default function Login() {
           {step === 'pin_setup' && (
             <motion.div 
               key="pin_setup"
-              initial={{ opacity: 0, y: '100%' }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: '100%' }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: 'tween', duration: 0.35, ease: 'easeInOut' }}
               className="fixed inset-0 h-full bg-white px-6 pb-6 flex flex-col items-center justify-start overflow-hidden"
               style={{ zIndex: 50, paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}
             >
