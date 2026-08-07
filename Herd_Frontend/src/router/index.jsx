@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import ErrorBoundary from '@/components/layout/ErrorBoundary';
 
 const Login = lazy(() => import('@/pages/Login'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
@@ -18,8 +19,8 @@ const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Loading spinner component
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[400px]">
-    <div className="w-8 h-8 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+  <div className="flex items-center justify-center min-h-[100dvh]">
+    <div className="w-8 h-8 border-4 border-[#2f7d31] border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
 
@@ -34,9 +35,11 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: withSuspense(Login),
+    errorElement: <ErrorBoundary />,
   },
   {
     path: '/',
+    errorElement: <ErrorBoundary />,
     element: (
       <ProtectedRoute>
         <MainLayout />
