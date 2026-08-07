@@ -188,7 +188,7 @@ export default function EstrusPrediction() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-24 lg:pb-8">
 
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <div 
@@ -215,7 +215,7 @@ export default function EstrusPrediction() {
           <button 
             onClick={handleRunPredict}
             disabled={isPredicting}
-            className="flex items-center justify-center gap-3 px-6 bg-white/20 border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md self-stretch min-w-[200px] group"
+            className="flex items-center justify-center gap-3 px-6 py-3 md:py-0 bg-white/20 border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md self-stretch min-w-[200px] group"
           >
             <RefreshCw size={20} className={isPredicting ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} />
             <div className="text-left flex flex-col">
@@ -438,18 +438,17 @@ export default function EstrusPrediction() {
               ))}
 
               {/* Search */}
-              <div style={{ position: 'relative' }}>
-                <Search style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'var(--text-3)' }} />
+              <div className="w-full sm:w-auto relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-[var(--text-3)]" />
                 <input
                   type="text"
                   placeholder={t.prediction_search_placeholder}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
+                  className="w-full sm:w-[220px] md:w-[260px] pl-10 pr-4 py-2.5 md:py-3 text-sm border border-[var(--border)] rounded-full outline-none transition-all focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
                   style={{
-                    paddingLeft: '30px', paddingRight: '12px', paddingTop: '7px', paddingBottom: '7px',
-                    border: '0.5px solid var(--border)', borderRadius: '20px', fontSize: '12px',
-                    background: 'var(--bg-card)', color: 'var(--text-1)', outline: 'none',
-                    fontFamily: 'Inter, sans-serif', width: '160px',
+                    background: 'var(--bg-card)', color: 'var(--text-1)',
+                    fontFamily: 'Inter, sans-serif',
                   }}
                 />
               </div>

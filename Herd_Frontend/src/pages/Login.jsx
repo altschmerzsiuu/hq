@@ -373,7 +373,7 @@ export default function Login() {
   // Removed isCheckingUser flash screen
 
   return (
-    <div className="h-full bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans sm:p-4 lg:p-0 overflow-hidden">
+    <div className="min-h-[100dvh] bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans sm:p-4 lg:p-0 overflow-hidden">
       <div className="w-full max-w-[420px] lg:max-w-none h-full sm:h-[850px] sm:max-h-[90vh] lg:h-full lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row">
         
         <AnimatePresence initial={false}>

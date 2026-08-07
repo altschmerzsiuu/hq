@@ -57,7 +57,7 @@ function App() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="fixed top-0 left-0 right-0 bottom-0 h-[100vh] w-[100dvw] z-[9999] bg-[#FF7B1C] flex flex-col items-center justify-center overflow-hidden"
+            className="fixed inset-0 z-[9999] bg-[#FF7B1C] flex flex-col items-center justify-center overflow-hidden"
           >
             <div className="flex-1 flex items-center justify-center">
               <motion.img 

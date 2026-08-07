@@ -41,16 +41,12 @@ export default function NotifModalMobile({ isOpen, onClose }) {
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 26, stiffness: 220 }}
             drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.2}
+            dragConstraints={{ top: 0 }}
+            dragElastic={{ top: 0, bottom: 0.2 }}
             onDragEnd={(e, info) => {
               if (info.offset.y > 80 || info.velocity.y > 500) {
                 // Drag down to close
                 onClose();
-              } else if (info.offset.y < -80 || info.velocity.y < -500) {
-                // Drag up to navigate
-                onClose();
-                setTimeout(() => navigate('/notifications'), 200);
               }
             }}
             style={{
@@ -138,20 +134,7 @@ export default function NotifModalMobile({ isOpen, onClose }) {
         </div>
 
         {/* Footer — safe-area-aware */}
-        {notifs.length > 0 && (
-          <div style={{
-            padding: '12px 16px',
-            paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 20px)',
-            borderTop: '1px solid var(--border)',
-          }}>
-            <button
-              onClick={() => { onClose(); navigate('/notifications'); }}
-              style={{ width: '100%', padding: '14px', borderRadius: '14px', background: 'var(--bg-hover)', color: 'var(--text-1)', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 700 }}
-            >
-              Lihat Semua Notifikasi
-            </button>
-              </div>
-            )}
+        <div style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 20px)' }} />
             </div>
           </motion.div>
         </div>

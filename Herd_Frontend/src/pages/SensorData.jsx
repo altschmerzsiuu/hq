@@ -348,7 +348,7 @@ export default function SensorData() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-24 lg:pb-8">
       
       {/* ── 0. HEADER (PINE GREEN CYBER DESIGN) ── */}
       <div 
@@ -808,9 +808,9 @@ export default function SensorData() {
                       </span>
                       <button 
                         onClick={() => setOpenDropdownId(openDropdownId === row.id ? null : row.id)}
-                        className="text-[var(--color-text-muted)] p-1 -mr-1"
+                        className="text-[var(--color-text-muted)] p-2 md:p-1 -mr-2 md:-mr-1 flex items-center justify-center min-w-[40px] min-h-[40px] md:min-w-0 md:min-h-0"
                       >
-                        <MoreVertical className="w-4 h-4" />
+                        <MoreVertical className="w-5 h-5 md:w-4 md:h-4" />
                       </button>
                     </div>
 

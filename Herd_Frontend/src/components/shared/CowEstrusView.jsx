@@ -79,7 +79,40 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
       
       const res = await axiosInstance.get(`/estrus-predictions?cow_id=${cowId}&limit=1`);
       const data = Array.isArray(res.data) ? res.data : [];
-      setPrediction(data[0] ?? null);
+      let pred = data[0] ?? null;
+
+      if (pred && pred.prediksi_ib_optimal) {
+        let predDate = new Date(pred.prediksi_ib_optimal);
+        let winAwal = pred.window_awal ? new Date(pred.window_awal) : null;
+        let winAkhir = pred.window_akhir ? new Date(pred.window_akhir) : null;
+        
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        
+        let cycleDays = 21; // Default to 21
+        // Optional: you could extract specific cycle days if needed, but 21 is safe for rolling forward predictions in the UI
+        
+        while (predDate < now) {
+           predDate.setDate(predDate.getDate() + cycleDays);
+           if (winAwal) winAwal.setDate(winAwal.getDate() + cycleDays);
+           if (winAkhir) winAkhir.setDate(winAkhir.getDate() + cycleDays);
+        }
+        
+        const diffTime = predDate.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const inWindow = winAwal && winAkhir ? (now >= winAwal && now <= winAkhir) : false;
+        
+        pred = {
+          ...pred,
+          prediksi_ib_optimal: predDate.toISOString(),
+          window_awal: winAwal ? winAwal.toISOString() : null,
+          window_akhir: winAkhir ? winAkhir.toISOString() : null,
+          days_until: diffDays,
+          in_window_now: inWindow
+        };
+      }
+
+      setPrediction(pred);
     } catch (err) {
       console.error('Gagal fetch estrus prediction:', err);
     } finally {

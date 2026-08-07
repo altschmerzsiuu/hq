@@ -406,10 +406,13 @@ export default function Settings() {
 
   return (
     <>
-    <div className="md:fixed md:inset-0 md:z-[100] md:flex md:items-center md:justify-center md:bg-black/50 md:backdrop-blur-sm animate-in fade-in duration-500 pb-24 px-0 md:p-4 pt-safe-48">
+    <div 
+      className="bg-[#f8f9fa] md:bg-transparent md:fixed md:inset-0 md:z-[100] md:flex md:items-center md:justify-center md:bg-black/50 md:backdrop-blur-sm animate-in fade-in duration-500 pb-24 md:pb-0 px-0 md:p-4 min-h-screen"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
+    >
       
       {/* Content Area */}
-      <div className="relative w-full md:max-w-5xl md:h-[85vh] bg-[#f8f9fa] md:bg-white md:rounded-[32px] md:shadow-2xl md:flex md:flex-row md:overflow-hidden md:border md:border-slate-200">
+      <div className="relative w-full md:max-w-5xl md:h-[85vh] md:bg-white md:rounded-[32px] md:shadow-2xl md:flex md:flex-row md:overflow-hidden md:border md:border-slate-200">
         
         {/* Close Button on Desktop */}
         <button onClick={() => window.history.back()} className="hidden lg:flex absolute top-6 left-6 z-50 p-2 rounded-full bg-black/5 hover:bg-black/10 text-gray-500 hover:text-gray-800 transition-colors">

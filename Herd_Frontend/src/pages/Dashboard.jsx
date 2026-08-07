@@ -669,18 +669,11 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
       return;
     }
     
-    // Navigate to /ternak with the corresponding filter
-    if (slotType === 'estrus') {
-      navigate('/estrus-prediction');
-      return;
+    if (activePopover === slotId) {
+      setActivePopover(null);
+    } else {
+      setActivePopover(slotId);
     }
-    
-    let filterVal = 'all';
-    if (slotType === 'sehat') filterVal = 'Sehat';
-    if (slotType === 'tindakan') filterVal = 'action';
-    if (slotType === 'pantau') filterVal = 'pantau';
-    
-    navigate(`/ternak?filter=${filterVal}`);
   };
 
   return (
@@ -1243,8 +1236,8 @@ export default function Dashboard() {
               <div className="flex w-full items-center gap-4">
                 <div className="relative w-24 h-24 flex-shrink-0">
                   <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="12" />
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 1) / Math.max(herd.length, 1))} strokeLinecap="round" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#93c5fd" strokeWidth="12" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 0) / Math.max(herd.length, 1))} strokeLinecap="round" className="transition-all duration-1000" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
@@ -1282,11 +1275,11 @@ export default function Dashboard() {
                   <div 
                     key={i} 
                     onClick={() => navigate('/ternak', { state: { selectedCowId: pred.cow_id || pred.id, fromDashboard: true } })}
-                    className="flex justify-between items-center border-b border-gray-100 pb-2.5 last:border-0 last:pb-0 cursor-pointer hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
+                    className="grid grid-cols-3 items-center border-b border-gray-100 pb-2.5 last:border-0 last:pb-0 cursor-pointer hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
                   >
-                    <span className="text-[13px] font-bold text-gray-900 hover:text-[var(--accent)] transition-colors">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
-                    <span className="text-[12px] text-gray-600">Hari ke-{i + 1}</span>
-                    <span className="text-[12px] font-medium text-gray-900">{Math.round((pred.confidence_final || 0.8) * 100)}%</span>
+                    <span className="text-[13px] font-bold text-gray-900 hover:text-[var(--accent)] transition-colors text-left truncate pr-2">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
+                    <span className="text-[12px] text-gray-600 text-center">Hari ke-{i + 1}</span>
+                    <span className="text-[12px] font-medium text-gray-900 text-right">{Math.round((pred.confidence_final || 0.8) * 100)}%</span>
                   </div>
                 )) : (
                   <div className="text-[12px] text-gray-500 text-center py-2">{lang === 'id' ? 'Tidak ada prediksi terdekat.' : 'No upcoming predictions.'}</div>
@@ -1347,11 +1340,7 @@ export default function Dashboard() {
             </div>
 
             {/* Grafik Tren Aktivitas Kawanan */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col overflow-hidden">
-              <div className="relative overflow-hidden -my-4 sm:-mx-5 sm:-my-5" style={{ minHeight: '220px' }}>
-                <TrenAktivitasChart lang={lang} />
-              </div>
-            </div>
+            <TrenAktivitasChart lang={lang} />
           </div>
 
         </div> {/* Close the px-4 wrapper */}

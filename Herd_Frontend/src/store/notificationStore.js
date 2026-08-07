@@ -90,9 +90,20 @@ export const useNotificationStore = create((set, get) => ({
         };
       });
 
+      // Deduplicate: Keep only the latest notification per cow per type
+      const uniqueNotifications = [];
+      const seen = new Set();
+      for (const n of mapped) {
+        const key = n.cow_id ? `${n.cow_id}-${n.type}` : n.id;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueNotifications.push(n);
+        }
+      }
+
       set({
-        notifications: mapped,
-        unreadCount: mapped.filter(n => !n.read).length,
+        notifications: uniqueNotifications,
+        unreadCount: uniqueNotifications.filter(n => !n.read).length,
         loading: false
       });
     } catch (err) {
