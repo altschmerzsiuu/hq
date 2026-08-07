@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, Search, Loader2, AlertCircle, PlusCircle, Wifi, WifiOff, Smartphone, CheckCircle2, HeartPulse, FileText, Calendar, Syringe, Baby, Heart, Activity } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
@@ -64,6 +65,7 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
   const [wsStatus,     setWsStatus]     = useState('disconnected'); // 'connected' | 'disconnected'
   const [nfcScanning,  setNfcScanning]  = useState(false);  // State untuk scanning NFC HP
   const [activeTab,    setActiveTab]    = useState('scan'); // 'scan' | 'manual'
+  const [previewImage, setPreviewImage] = useState(null);   // State untuk preview gambar fullscreen
 
   const wsRef    = useRef(null);
   const inputRef = useRef(null);
@@ -71,12 +73,19 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
 
   const streamRef = useRef(null);
 
+  const shouldCameraRun = isOpen && !result && !notFound && !loading;
+
   // ── Camera lifecycle ────────────────────────
   useEffect(() => {
-    if (!isOpen) {
+    let isMounted = true;
+
+    if (!shouldCameraRun) {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
       }
       return;
     }
@@ -85,8 +94,13 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
       if (!streamRef.current) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          if (!isMounted) {
+             stream.getTracks().forEach(track => track.stop());
+             return;
+          }
           streamRef.current = stream;
         } catch (err) {
+          if (!isMounted) return;
           if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
             toast.error('Akses kamera ditolak. Izinkan akses kamera di pengaturan browser Anda.');
           } else {
@@ -95,15 +109,21 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
         }
       }
       
-      // If video ref is available (meaning scanner view is active)
-      if (videoRef.current && streamRef.current && !result && !notFound && !loading) {
+      if (videoRef.current && streamRef.current) {
         videoRef.current.srcObject = streamRef.current;
       }
     };
 
     startCamera();
 
-  }, [isOpen, result, notFound, loading]);
+    return () => {
+      isMounted = false;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [shouldCameraRun]);
 
   // ── WebSocket lifecycle ──────────────────────
   useEffect(() => {
@@ -310,14 +330,16 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
             box-shadow: 0 0 0 30px rgba(16, 185, 129, 0);
           }
         }
+        @keyframes scan-line {
+          0% { transform: translateY(0); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateY(240px); opacity: 0; }
+        }
       `}</style>
       
       {/* ── Header ── */}
-      <header style={{ 
-        display: 'flex', alignItems: 'center', justifyContent: 'center', 
-        padding: '20px 24px', background: 'var(--bg-base)',
-        position: 'relative'
-      }}>
+      <header className="pt-safe-16 pb-4 px-6 flex items-center justify-center relative bg-[var(--bg-base)]" style={{ zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '28px', height: '28px', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src={herdLogo} alt="HERD Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -340,235 +362,346 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
         </button>
       </header>
 
-        {loading ? (
-          <div style={{
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--bg-base)', animation: 'fade-in 0.3s forwards'
-          }}>
-            <div style={{ 
-              width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px'
-            }}>
-              <Loader2 size={40} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
-            </div>
-            <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-1)', marginBottom: '8px' }}>Menganalisa Data...</h3>
-            <p style={{ color: 'var(--text-2)', fontSize: '14px' }}>Sinkronisasi dengan database HERD</p>
-          </div>
-        ) : hewan ? (
-          /* JIKA DATA DITEMUKAN (TAMPILAN PROFIL MIRIP LIVIN) */
-          <div style={{
-            flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column'
-          }}>
-            <div style={{
-              background: 'var(--bg-surface)', borderRadius: '20px',
-              padding: '24px 20px', border: '1px solid var(--accent-border)',
-              boxShadow: '0 8px 32px rgba(16,185,129,0.08)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              animation: 'toast-in 0.3s cubic-bezier(0.16,1,0.3,1) forwards'
-            }}>
-              <div style={{ 
-                width: '56px', height: '56px', borderRadius: '50%',
-                background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: '16px', boxShadow: '0 4px 16px rgba(16,185,129,0.3)'
-              }}>
-                <CheckCircle2 size={28} color="#fff" />
-              </div>
-              
-              <h2 style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '22px', fontWeight: 800, color: 'var(--text-1)', margin: '0 0 8px 0', textAlign: 'center' }}>
-                {hewan.nama ?? '-'}
-              </h2>
-              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px', marginBottom: '20px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--accent)', background: 'var(--bg-hover)', padding: '4px 10px', borderRadius: '100px', fontWeight: 700, border: '1px solid var(--accent-border)' }}>
-                  {hewan.id ?? hewan.rfid ?? '-'}
-                </span>
-                <span style={{ fontSize: '13px', color: 'var(--text-2)', background: 'var(--bg-hover)', padding: '4px 10px', borderRadius: '100px', fontWeight: 600, border: '1px solid var(--border)' }}>
-                  {hewan.jenis ?? '-'}
-                </span>
-              </div>
-
-              <div style={{ width: '100%', borderTop: '2px dashed var(--border)', margin: '8px 0 20px 0' }} />
-
-              {/* List Details */}
-              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <HeartPulse size={14} /> Status Kesehatan
-                  </span>
-                  <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {hewan.status_kesehatan === 'Sehat' ? <><CheckCircle2 size={14} color="var(--accent)"/> Sehat</> : (hewan.status_kesehatan ?? '-')}
-                  </span>
-                </div>
-
-                {reproduksi && (
-                  <>
-                    <div style={{ width: '100%', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-                    <p style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <FileText size={12} /> Data Reproduksi Terbaru
-                    </p>
-                    
-                    {reproduksi.tanggal_ib && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={14} /> Tanggal IB</span>
-                        <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.tanggal_ib)}</span>
-                      </div>
-                    )}
-                    {reproduksi.pemberi_ib && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Syringe size={14} /> Pemberi IB</span>
-                        <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{reproduksi.pemberi_ib}</span>
-                      </div>
-                    )}
-                    {reproduksi.jumlah_ib && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={14} /> Jumlah IB</span>
-                        <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>Ke-{reproduksi.jumlah_ib}</span>
-                      </div>
-                    )}
-                    {reproduksi.birahi && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Heart size={14} /> Tanggal Birahi</span>
-                        <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.birahi)}</span>
-                      </div>
-                    )}
-                    {reproduksi.bunting && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Activity size={14} /> Tanggal Bunting</span>
-                        <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.bunting)}</span>
-                      </div>
-                    )}
-                    {reproduksi.hpl && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Baby size={14} /> Perkiraan Lahir</span>
-                        <span style={{ fontSize: '14px', color: 'var(--accent)', fontWeight: 800 }}>{formatDate(reproduksi.hpl)}</span>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '24px' }}>
-                <button
-                  onClick={() => { setResult(null); setRfid(''); setActiveTab('scan'); }}
-                  style={{
-                    flex: 1, padding: '12px',
-                    background: 'var(--bg-hover)', color: 'var(--text-1)',
-                    border: '1px solid var(--border)', borderRadius: '12px', fontWeight: 700,
-                    fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s'
-                  }}
-                >
-                  Scan Lagi
-                </button>
-                <button
-                  onClick={handleLanjutDetail}
-                  style={{
-                    flex: 1, padding: '12px',
-                    background: 'var(--accent)', color: '#fff',
-                    border: 'none', borderRadius: '12px', fontWeight: 700,
-                    fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s',
-                    boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
-                  }}
-                >
-                  Lihat Form
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : notFound ? (
-          /* JIKA TIDAK DITEMUKAN */
-          <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{
-              background: 'var(--bg-surface)', borderRadius: '24px',
-              padding: '32px 24px', border: '1px solid var(--border)',
-              boxShadow: 'var(--shadow-sm)', textAlign: 'center'
-            }}>
-              <div style={{ display: 'inline-flex', padding: '16px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', marginBottom: '16px' }}>
-                <AlertCircle size={32} color="var(--error, #ef4444)" />
-              </div>
-              <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-1)', marginBottom: '8px' }}>Hewan Tidak Ditemukan</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-2)', marginBottom: '24px', lineHeight: 1.5 }}>
-                RFID <span style={{ background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>{rfid}</span> belum terdaftar di sistem.
-              </p>
-              
-              <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
-                <button
-                  onClick={handleDaftarBaru}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                    padding: '16px', borderRadius: '16px',
-                    background: 'var(--accent)', color: '#fff',
-                    border: 'none', cursor: 'pointer',
-                    fontSize: '15px', fontWeight: 700,
-                    boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
-                  }}
-                >
-                  <PlusCircle size={18} />
-                  Daftarkan Hewan Baru
-                </button>
-                <button
-                  onClick={() => { setNotFound(false); setRfid(''); setActiveTab('scan'); }}
-                  style={{
-                    padding: '16px', borderRadius: '16px',
-                    background: 'var(--bg-hover)', color: 'var(--text-1)',
-                    border: 'none', cursor: 'pointer',
-                    fontSize: '15px', fontWeight: 700,
-                  }}
-                >
-                  Scan Ulang
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* SCAN MODE (CAMERA VIEW) */
-          <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
+      {/* ── BACKGROUND LAYER: CAMERA VIEW ── */}
+      <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
+        <div style={{
+          flex: 1, position: 'relative', overflow: 'hidden', 
+          borderRadius: '24px', background: '#000',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+        }}>
+          <video 
+            ref={videoRef}
+            autoPlay 
+            playsInline 
+            muted 
+            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} 
+          />
+          
+          <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} />
             
-            {/* White rounded container for the scanner */}
-            <div style={{
-              flex: 1, position: 'relative', overflow: 'hidden', 
-              borderRadius: '24px', background: '#000',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-            }}>
-              <video 
-                ref={videoRef}
-                autoPlay 
-                playsInline 
-                muted 
-                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} 
-              />
-              
-              {/* Overlay UI inside the camera feed */}
-              <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} />
-                
-                <div style={{ position: 'absolute', top: '32px', background: 'rgba(255,255,255,0.95)', padding: '10px 24px', borderRadius: '100px', fontWeight: 700, color: '#111', fontSize: '14px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 20 }}>
-                  Arahkan tag RFID ke kamera
-                </div>
-
-                <div style={{ position: 'relative', width: '240px', height: '240px', zIndex: 20 }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, width: '40px', height: '40px', borderTop: '4px solid #fff', borderLeft: '4px solid #fff', borderRadius: '16px 0 0 0' }} />
-                  <div style={{ position: 'absolute', top: 0, right: 0, width: '40px', height: '40px', borderTop: '4px solid #fff', borderRight: '4px solid #fff', borderRadius: '0 16px 0 0' }} />
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, width: '40px', height: '40px', borderBottom: '4px solid #fff', borderLeft: '4px solid #fff', borderRadius: '0 0 0 16px' }} />
-                  <div style={{ position: 'absolute', bottom: 0, right: 0, width: '40px', height: '40px', borderBottom: '4px solid #fff', borderRight: '4px solid #fff', borderRadius: '0 0 16px 0' }} />
-                  
-                  <div style={{ width: '100%', height: '3px', background: 'var(--accent)', boxShadow: '0 0 12px 2px var(--accent)', position: 'absolute', top: 0, animation: 'scan-line 2.5s infinite ease-in-out' }} />
-                </div>
-              </div>
+            <div style={{ position: 'absolute', top: '32px', background: 'rgba(255,255,255,0.95)', padding: '10px 24px', borderRadius: '100px', fontWeight: 700, color: '#111', fontSize: '14px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 20 }}>
+              Arahkan tag RFID ke kamera
             </div>
 
-            {/* Text and Status below camera container */}
-            <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent)', animation: 'pulse-ring 2s infinite' }} />
-                <span style={{ color: 'var(--text-1)', fontSize: '14px', fontWeight: 700 }}>
-                  {nfcScanning ? 'Membaca tag NFC...' : wsStatus === 'connected' ? 'Mencari Data Sapi...' : 'Menunggu koneksi scanner...'}
-                </span>
-              </div>
-              <p style={{ color: 'var(--text-2)', fontSize: '13px', textAlign: 'center', maxWidth: '250px' }}>
-                Pastikan tag RFID sapi berada di dalam kotak area scan.
-              </p>
+            <div style={{ position: 'relative', width: '240px', height: '240px', zIndex: 20 }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '40px', height: '40px', borderTop: '4px solid #fff', borderLeft: '4px solid #fff', borderRadius: '16px 0 0 0' }} />
+              <div style={{ position: 'absolute', top: 0, right: 0, width: '40px', height: '40px', borderTop: '4px solid #fff', borderRight: '4px solid #fff', borderRadius: '0 16px 0 0' }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, width: '40px', height: '40px', borderBottom: '4px solid #fff', borderLeft: '4px solid #fff', borderRadius: '0 0 0 16px' }} />
+              <div style={{ position: 'absolute', bottom: 0, right: 0, width: '40px', height: '40px', borderBottom: '4px solid #fff', borderRight: '4px solid #fff', borderRadius: '0 0 16px 0' }} />
+              <div style={{ width: '100%', height: '3px', background: 'var(--accent)', boxShadow: '0 0 12px 2px var(--accent)', position: 'absolute', top: 0, animation: 'scan-line 2.5s infinite ease-in-out' }} />
             </div>
           </div>
+        </div>
+
+        <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent)', animation: 'pulse-ring 2s infinite' }} />
+            <span style={{ color: 'var(--text-1)', fontSize: '14px', fontWeight: 700 }}>
+              {nfcScanning ? 'Membaca tag NFC...' : wsStatus === 'connected' ? 'Mencari Data Sapi...' : 'Menunggu koneksi scanner...'}
+            </span>
+          </div>
+          <p style={{ color: 'var(--text-2)', fontSize: '13px', textAlign: 'center', maxWidth: '250px' }}>
+            Pastikan tag RFID sapi berada di dalam kotak area scan.
+          </p>
+
+          {/* TOMBOL SIMULASI HANYA MUNCUL DI MODE DEVELOPMENT */}
+          {import.meta.env.DEV && (
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+              <button
+                onClick={() => {
+                  setResult({
+                    hewan: {
+                      id: "849-201-B",
+                      nama: "Sapi Limosin 04",
+                      jenis: "Sapi Limosin - Betina",
+                      status_kesehatan: "Sehat",
+                      foto: "https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=2940&auto=format&fit=crop"
+                    },
+                    reproduksi: {
+                      tanggal_ib: "2026-08-12T00:00:00.000Z",
+                      pemberi_ib: "Dr. Budi",
+                      jumlah_ib: 2,
+                      birahi: "2026-08-10T00:00:00.000Z",
+                      bunting: "2026-09-01T00:00:00.000Z",
+                      hpl: "2027-05-20T00:00:00.000Z"
+                    }
+                  });
+                  setNotFound(false);
+                }}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(16,185,129,0.1)',
+                  color: 'var(--accent)',
+                  border: '1px solid var(--accent)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                [DEV] Berhasil
+              </button>
+              <button
+                onClick={() => {
+                  setResult(null);
+                  setRfid('1234567890');
+                  setNotFound(true);
+                }}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(239,68,68,0.1)',
+                  color: '#ef4444',
+                  border: '1px solid #ef4444',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                [DEV] Tidak Terdaftar
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── OVERLAY BOTTOM SHEETS ── */}
+      <AnimatePresence>
+        {(loading || hewan || notFound) && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => { if (!loading) { setResult(null); setNotFound(false); setRfid(''); } }}
+            style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column' }}
+          >
+            {loading ? (
+              <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+                  <Loader2 size={40} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
+                </div>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>Menganalisa Data...</h3>
+                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Sinkronisasi dengan database HERD</p>
+              </motion.div>
+            ) : hewan ? (
+              <motion.div
+                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+                drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.2}
+                onDragEnd={(e, info) => {
+                  if (info.offset.y > 80 || info.velocity.y > 500) { setResult(null); setNotFound(false); setRfid(''); }
+                  else if (info.offset.y < -80 || info.velocity.y < -500) { handleLanjutDetail(); }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  marginTop: 'auto', background: 'var(--bg-surface)', borderRadius: '32px 32px 0 0',
+                  boxShadow: '0 -8px 40px rgba(0,0,0,0.15)', width: '100%',
+                  paddingBottom: '50vh', marginBottom: '-50vh', // Prevent floating bottom edge
+                  display: 'flex', flexDirection: 'column'
+                }}
+              >
+                <div style={{ padding: '0 20px 32px', display: 'flex', flexDirection: 'column' }}>
+                  {/* Handle */}
+                  <div style={{ touchAction: 'none', display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '24px' }}>
+                    <div style={{ width: '44px', height: '5px', background: 'var(--border-2)', borderRadius: '99px' }} />
+                  </div>
+                  
+                  {/* Content */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    {hewan.foto ? (
+                      <div 
+                        onClick={() => setPreviewImage(hewan.foto)}
+                        style={{ width: '120px', height: '120px', borderRadius: '24px', overflow: 'hidden', marginBottom: '16px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', border: '4px solid var(--bg-surface)', cursor: 'pointer' }}
+                      >
+                        <img src={hewan.foto} alt={hewan.nama} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ) : (
+                      <div style={{ width: '120px', height: '120px', borderRadius: '24px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', boxShadow: '0 8px 24px rgba(16,185,129,0.3)', border: '4px solid var(--bg-surface)' }}>
+                        <CheckCircle2 size={48} color="#fff" />
+                      </div>
+                    )}
+                    
+                    <h2 style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '24px', fontWeight: 800, color: 'var(--text-1)', margin: '0 0 4px 0', textAlign: 'center' }}>
+                      {hewan.nama ?? '-'}
+                    </h2>
+                    
+                    <p style={{ margin: '0 0 16px 0', fontSize: '15px', color: 'var(--text-2)', fontWeight: 600 }}>
+                      {hewan.id || hewan.rfid ? (hewan.id ?? hewan.rfid) : 'Belum ada RFID nih'}
+                    </p>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
+                      <span style={{ fontSize: '13px', color: 'var(--text-2)', background: 'var(--bg-hover)', padding: '6px 14px', borderRadius: '100px', fontWeight: 700, border: '1px solid var(--border)' }}>
+                        {hewan.jenis ?? '-'}
+                      </span>
+                    </div>
+
+                    <div style={{ width: '100%', borderTop: '2px dashed var(--border)', margin: '8px 0 20px 0' }} />
+
+                    {/* Details */}
+                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <HeartPulse size={14} /> Status Kesehatan
+                        </span>
+                        <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {hewan.status_kesehatan === 'Sehat' ? <><CheckCircle2 size={14} color="var(--accent)"/> Sehat</> : (hewan.status_kesehatan ?? '-')}
+                        </span>
+                      </div>
+
+                      {reproduksi && (
+                        <>
+                          <div style={{ width: '100%', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                          <p style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <FileText size={12} /> Data Reproduksi Terbaru
+                          </p>
+                          
+                          {reproduksi.tanggal_ib && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={14} /> Tanggal IB</span>
+                              <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.tanggal_ib)}</span>
+                            </div>
+                          )}
+                          {reproduksi.pemberi_ib && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Syringe size={14} /> Pemberi IB</span>
+                              <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{reproduksi.pemberi_ib}</span>
+                            </div>
+                          )}
+                          {reproduksi.jumlah_ib && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={14} /> Jumlah IB</span>
+                              <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>Ke-{reproduksi.jumlah_ib}</span>
+                            </div>
+                          )}
+                          {reproduksi.birahi && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Heart size={14} /> Tanggal Birahi</span>
+                              <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.birahi)}</span>
+                            </div>
+                          )}
+                          {reproduksi.bunting && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Activity size={14} /> Tanggal Bunting</span>
+                              <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.bunting)}</span>
+                            </div>
+                          )}
+                          {reproduksi.hpl && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Baby size={14} /> Perkiraan Lahir</span>
+                              <span style={{ fontSize: '14px', color: 'var(--accent)', fontWeight: 800 }}>{formatDate(reproduksi.hpl)}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', width: '100%', marginTop: '24px' }}>
+                      <button
+                        onClick={() => { setResult(null); setNotFound(false); setRfid(''); setActiveTab('scan'); }}
+                        style={{
+                          flex: 1, padding: '14px', background: 'var(--bg-hover)', color: 'var(--text-1)',
+                          border: 'none', borderRadius: '16px', fontWeight: 700, fontSize: '15px'
+                        }}
+                      >
+                        Scan Lagi
+                      </button>
+                      <button
+                        onClick={handleLanjutDetail}
+                        style={{
+                          flex: 1, padding: '14px', background: 'var(--accent)', color: '#fff',
+                          border: 'none', borderRadius: '16px', fontWeight: 700, fontSize: '15px',
+                          boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
+                        }}
+                      >
+                        Lihat Form
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ) : notFound ? (
+              <motion.div
+                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+                drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.2}
+                onDragEnd={(e, info) => { if (info.offset.y > 80 || info.velocity.y > 500) { setResult(null); setNotFound(false); setRfid(''); } }}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  marginTop: 'auto', background: 'var(--bg-surface)', borderRadius: '32px 32px 0 0',
+                  boxShadow: '0 -8px 40px rgba(0,0,0,0.15)', width: '100%',
+                  paddingBottom: '50vh', marginBottom: '-50vh', display: 'flex', flexDirection: 'column'
+                }}
+              >
+                <div style={{ padding: '0 24px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                  <div style={{ touchAction: 'none', display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '24px', width: '100%' }}>
+                    <div style={{ width: '44px', height: '5px', background: 'var(--border-2)', borderRadius: '99px' }} />
+                  </div>
+
+                  <div style={{ display: 'inline-flex', padding: '16px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', marginBottom: '16px' }}>
+                    <AlertCircle size={32} color="var(--error, #ef4444)" />
+                  </div>
+                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-1)', marginBottom: '8px' }}>Hewan Tidak Ditemukan</h3>
+                  <p style={{ fontSize: '14px', color: 'var(--text-2)', marginBottom: '24px', lineHeight: 1.5 }}>
+                    RFID <span style={{ background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>{rfid}</span> belum terdaftar di sistem.
+                  </p>
+                  
+                  <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', width: '100%' }}>
+                    <button
+                      onClick={handleDaftarBaru}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                        padding: '16px', borderRadius: '16px', background: 'var(--accent)', color: '#fff',
+                        border: 'none', fontWeight: 700, fontSize: '15px', boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
+                      }}
+                    >
+                      <PlusCircle size={18} /> Daftarkan Hewan Baru
+                    </button>
+                    <button
+                      onClick={() => { setNotFound(false); setRfid(''); setActiveTab('scan'); }}
+                      style={{ padding: '16px', borderRadius: '16px', background: 'var(--bg-hover)', color: 'var(--text-1)', border: 'none', fontWeight: 700, fontSize: '15px' }}
+                    >
+                      Scan Ulang
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ) : null}
+          </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* ── IMAGE PREVIEW MODAL ── */}
+      <AnimatePresence>
+        {previewImage && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setPreviewImage(null)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', padding: '24px'
+            }}
+          >
+            <div style={{ position: 'relative', display: 'inline-flex', maxWidth: '100%', maxHeight: '80vh' }}>
+              <motion.img
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                src={previewImage} alt="Preview"
+                style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: '24px', boxShadow: '0 24px 48px rgba(0,0,0,0.4)', objectFit: 'contain' }}
+                onClick={(e) => e.stopPropagation()} // Prevent closing when clicking the image itself
+              />
+              <button
+                onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
+                style={{
+                  position: 'absolute', top: '16px', right: '16px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
+                  border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', cursor: 'pointer', zIndex: 10
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

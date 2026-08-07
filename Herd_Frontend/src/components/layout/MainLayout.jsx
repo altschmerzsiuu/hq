@@ -121,8 +121,8 @@ export default function MainLayout() {
   return (
     <div style={{
       display: 'flex',
-      height: '100dvh',
-      background: '#F8F9FA', // Clean grayish background to contrast floating cards
+      height: '100%',
+      background: 'var(--bg-base)',
       overflow: 'hidden',
     }}>
       {/* Sidebar */}
@@ -155,7 +155,8 @@ export default function MainLayout() {
             overflowX: 'hidden',
             maxWidth: '100%',
             WebkitOverflowScrolling: 'touch',
-            scrollBehavior: 'smooth'
+            scrollBehavior: 'smooth',
+            overscrollBehavior: 'contain', // prevent iOS rubber-band from bleeding
           }}
           className={cn(
             "pb-4 md:px-4",
@@ -179,12 +180,16 @@ export default function MainLayout() {
             <Outlet />
           </div>
 
-          {/* Mobile bottom spacer */}
-          {!isResearchLab && <div className="md:hidden flex-shrink-0" style={{ height: '180px' }} />}
+          {/* Mobile bottom spacer — matches navbar height 64px + safe-area */}
+          {!isResearchLab && <div className="md:hidden flex-shrink-0" style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0px))' }} />}
         </main>
 
         {/* Mobile Nav */}
-        {!isResearchLab && <MobileBottomNav />}
+        {!isResearchLab && (
+          <div className="md:hidden">
+            <MobileBottomNav />
+          </div>
+        )}
       </div>
 
       {/* Gendhis Floating Widget (Mobile & Desktop) */}

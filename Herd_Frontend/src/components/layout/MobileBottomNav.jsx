@@ -40,7 +40,7 @@ export default function MobileBottomNav() {
         boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
         zIndex: 40,
       }} className="md:hidden" id="mobile-bottom-nav">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '72px', padding: '0 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', padding: '0 16px' }}>
           {items.map((item, i) => {
             if (item.isScan) {
               return (
@@ -120,6 +120,7 @@ export default function MobileBottomNav() {
           }
         }}
       />
+
     </>
   );
 }
