@@ -159,7 +159,7 @@ export default function MainLayout() {
             overscrollBehavior: 'contain', // prevent iOS rubber-band from bleeding
           }}
           className={cn(
-            "pb-4 lg:px-4",
+            "pb-4 md:px-4",
             (location.pathname === '/dashboard' || location.pathname === '/sensor-data') 
               ? "pt-0 px-0" 
               : ((location.pathname === '/ternak') ? "pt-0 px-4" : "pt-4 px-4")
@@ -168,7 +168,7 @@ export default function MainLayout() {
           <div 
             className={location.pathname.startsWith('/ternak/') && location.pathname !== '/ternak' 
               ? "w-full" 
-              : "lg:bg-white lg:border lg:border-[#E5E7EB] lg:shadow-[0_8px_30px_rgb(0,0,0,0.04)] lg:rounded-[24px] lg:p-6 lg:min-h-[calc(100dvh-100px)]"} 
+              : "md:bg-white md:border md:border-[#E5E7EB] md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:rounded-[24px] md:p-5 lg:p-6 lg:min-h-[calc(100dvh-100px)]"} 
             style={{ 
               width: '100%',
               maxWidth: '100%',
@@ -181,12 +181,12 @@ export default function MainLayout() {
           </div>
 
           {/* Mobile bottom spacer — matches navbar height 64px + safe-area */}
-          {!isResearchLab && <div className="lg:hidden landscape:hidden flex-shrink-0" style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0px))' }} />}
+          {!isResearchLab && <div className="md:hidden landscape:hidden flex-shrink-0" style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0px))' }} />}
         </main>
 
         {/* Mobile Nav */}
         {!isResearchLab && (
-          <div className="lg:hidden landscape:hidden">
+          <div className="md:hidden landscape:hidden">
             <MobileBottomNav />
           </div>
         )}
