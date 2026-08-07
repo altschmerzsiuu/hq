@@ -377,7 +377,7 @@ export default function Login() {
 
   return (
     <div className="h-full bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans sm:p-4 lg:p-0 overflow-hidden">
-      <div className={`w-full max-w-[420px] lg:max-w-none h-[100dvh] sm:h-[850px] sm:max-h-[90vh] lg:h-[100dvh] lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row ${(!isLoginMode && step === 'auth') ? 'overflow-y-auto' : ''}`}>
+      <div className={`w-full max-w-[420px] lg:max-w-none h-full sm:h-[850px] sm:max-h-[90vh] lg:h-full lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row ${(!isLoginMode && step === 'auth') ? 'overflow-y-auto' : ''}`}>
         
         <AnimatePresence mode="wait">
           
@@ -706,7 +706,7 @@ export default function Login() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 h-[100dvh] bg-white px-6 pb-6 flex flex-col items-center justify-start overflow-hidden"
+              className="fixed inset-0 h-full bg-white px-6 pb-6 flex flex-col items-center justify-start overflow-hidden"
               style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}
             >
               <div className="w-full flex flex-col items-center max-w-[320px] pt-[2vh] pb-4">
@@ -787,11 +787,12 @@ export default function Login() {
           {step === 'pin_setup' && (
             <motion.div 
               key="pin_setup"
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: '100%' }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 h-[100dvh] bg-white px-6 pb-6 flex flex-col items-center justify-start overflow-hidden"
-              style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-0 h-full bg-white px-6 pb-6 flex flex-col items-center justify-start overflow-hidden"
+              style={{ zIndex: 50, paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}
             >
               <div className="w-full flex flex-col items-center max-w-[320px] pt-[2vh] pb-4">
                 <motion.img 

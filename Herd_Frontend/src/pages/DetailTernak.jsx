@@ -594,17 +594,26 @@ export default function DetailTernak() {
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/40 to-transparent pointer-events-none" />
             
-            {/* Floating Photo Action Buttons REMOVED per user request */}
-            {!selectedSapi.foto && (
-               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
-                  <div className="flex flex-col items-center mb-6">
-                     <div className="bg-white/10 backdrop-blur-md p-4 rounded-full mb-3 border border-white/20 shadow-lg">
-                        <Beef size={40} className="text-white/80" />
-                     </div>
-                     <p className="text-[13px] font-medium text-white/90 tracking-wide" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>Belum ada foto</p>
+            {/* Clickable Overlay for Photo Upload */}
+            <label className="absolute inset-0 z-20 cursor-pointer flex flex-col items-center justify-center group">
+              <input type="file" accept="image/*" className="hidden" disabled={isUploadingFoto} onChange={handleFileSelect} />
+              
+              {!selectedSapi.foto ? (
+                <div className="flex flex-col items-center mb-6">
+                   <div className="bg-white/20 backdrop-blur-md p-4 rounded-full mb-3 border border-white/30 shadow-lg group-active:scale-95 transition-transform flex items-center justify-center">
+                      <Camera size={36} className="text-white/90" />
+                   </div>
+                   <p className="text-[13px] font-medium text-white/90 tracking-wide" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>Ketuk untuk tambah foto</p>
+                </div>
+              ) : (
+                <div className="opacity-0 group-active:opacity-100 transition-opacity bg-black/40 w-full h-full flex items-center justify-center">
+                  <div className="flex flex-col items-center">
+                    <Camera size={48} className="text-white/90 mb-2" />
+                    <p className="text-sm font-bold text-white">Ubah Foto</p>
                   </div>
-               </div>
-            )}
+                </div>
+              )}
+            </label>
             
             {/* Top Bar / Back Button */}
             <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start z-30" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}>
@@ -1042,6 +1051,12 @@ export default function DetailTernak() {
                     <Beef size={36} className="text-gray-300" />
                   </div>
                 )}
+                
+                {/* Upload Overlay */}
+                <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <Camera size={24} className="text-white" />
+                  <input type="file" accept="image/*" className="hidden" disabled={isUploadingFoto} onChange={handleFileSelect} />
+                </label>
               </div>
 
               {/* Name & ID */}

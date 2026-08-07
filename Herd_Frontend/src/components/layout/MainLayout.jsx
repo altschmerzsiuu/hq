@@ -181,12 +181,12 @@ export default function MainLayout() {
           </div>
 
           {/* Mobile bottom spacer — matches navbar height 64px + safe-area */}
-          {!isResearchLab && <div className="md:hidden flex-shrink-0" style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0px))' }} />}
+          {!isResearchLab && <div className="md:hidden landscape:hidden flex-shrink-0" style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0px))' }} />}
         </main>
 
         {/* Mobile Nav */}
         {!isResearchLab && (
-          <div className="md:hidden">
+          <div className="md:hidden landscape:hidden">
             <MobileBottomNav />
           </div>
         )}

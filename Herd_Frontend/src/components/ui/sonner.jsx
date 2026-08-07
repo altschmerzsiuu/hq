@@ -14,7 +14,7 @@ const Toaster = ({ ...props }) => {
       <style>{`
 
         [data-sonner-toaster] {
-          top: max(env(safe-area-inset-top), 48px) !important;
+          top: calc(env(safe-area-inset-top) + 8px) !important;
           pointer-events: none; /* Let clicks pass through empty space */
         }
         

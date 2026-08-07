@@ -19,8 +19,8 @@ const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Loading spinner component
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[100dvh]">
-    <div className="w-8 h-8 border-4 border-[#2f7d31] border-t-transparent rounded-full animate-spin"></div>
+  <div className="flex items-center justify-center h-full">
+    <div className="w-8 h-8 rounded-full border-4 border-[#FF7B1C] border-t-transparent animate-spin" />
   </div>
 );
 

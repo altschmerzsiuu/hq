@@ -633,13 +633,16 @@ export default function GendhisWidget() {
         {/* SIDEBAR (Responsive Collapsible matching system theme!) */}
         <aside 
           className={cn(
-            "h-full bg-[var(--bg-surface)] border-r border-[var(--border)] shrink-0 transition-all duration-300 absolute md:relative z-20 overflow-hidden",
-            isSidebarCollapsed ? "w-0 border-r-0" : "w-[280px]"
+            "h-full bg-[var(--bg-surface)] border-r border-[var(--border)] shrink-0 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] absolute md:relative z-20 w-[280px]",
+            isSidebarCollapsed ? "-translate-x-full md:-ml-[280px] shadow-none opacity-0 md:opacity-100" : "translate-x-0 md:ml-0 shadow-2xl md:shadow-none opacity-100"
           )}
         >
           <div className="w-[280px] h-full flex flex-col p-4">
               {/* Logo & Elegant Minimize Button inside the Sidebar Header next to Logo */}
-              <div className="flex items-center justify-between px-2 py-3 mb-6 shrink-0">
+              <div 
+                className="flex items-center justify-between px-2 pb-3 mb-6 shrink-0"
+                style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+              >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0 shadow-sm">
                     <img src="/herd.jpeg" alt="Herd Logo" className="w-full h-full object-cover" />
@@ -752,7 +755,10 @@ export default function GendhisWidget() {
         <main className="flex-1 h-full flex flex-col bg-[var(--bg-base)] relative">
           
           {/* Header (Dynamic system theme colors, NO Ugly line!) */}
-          <header className="px-6 py-4 flex items-center justify-between shrink-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-10">
+          <header 
+            className="px-6 pb-4 flex items-center justify-between shrink-0 bg-[var(--bg-surface)]/80 backdrop-blur-md z-10"
+            style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}
+          >
             <div className="flex items-center gap-2">
               {isSidebarCollapsed && (
                 <button 
