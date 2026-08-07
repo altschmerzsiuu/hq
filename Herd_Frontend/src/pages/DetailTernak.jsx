@@ -572,7 +572,7 @@ export default function DetailTernak() {
 
       {/* ── MOBILE VIEW ── */}
         {/* ── MOBILE FULLSCREEN DETAIL MODAL ── */}
-        <div className="md:hidden fixed inset-0 z-[35] bg-[#F3F4F6] overflow-y-auto animate-in slide-in-from-bottom duration-300 no-scrollbar pb-[100px]">
+        <div className="lg:hidden fixed inset-0 z-[35] bg-[#F3F4F6] overflow-y-auto animate-in slide-in-from-bottom duration-300 no-scrollbar pb-[100px]">
           {/* Header Photo */}
           <div className="sticky top-0 w-full h-[60vh] min-h-[450px] z-0">
             {selectedSapi.foto ? (
@@ -1011,7 +1011,7 @@ export default function DetailTernak() {
         </div>
 
       {/* ── DESKTOP VIEW ── */}
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         {/* ── MAIN CONTENT (Profile Sidebar Layout) ── */}
         <div className="flex flex-col lg:flex-row gap-6 pt-2 lg:items-stretch">
 

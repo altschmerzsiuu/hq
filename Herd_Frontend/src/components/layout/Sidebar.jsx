@@ -123,7 +123,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
       {/* =========================================================================
           MOBILE VIEW SECTION - PRESERVED 100% UNTOUCHED
           ========================================================================= */}
-      <div className="md:hidden">
+      <div className="lg:hidden">
         {/* Mobile Overlay */}
         {isOpen && (
           <div
@@ -440,7 +440,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
         onMouseEnter={() => setIsCollapsed(false)}
         onMouseLeave={() => setIsCollapsed(true)}
         className={cn(
-          "hidden md:flex flex-shrink-0 bg-white border border-[#E5E7EB] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-col relative transition-all duration-300 ml-4 my-4 rounded-[24px] overflow-hidden",
+          "hidden lg:flex flex-shrink-0 bg-white border border-[#E5E7EB] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex-col relative transition-all duration-300 ml-4 my-4 rounded-[24px] overflow-hidden",
           isCollapsed ? "w-[88px]" : "w-[240px] xl:w-[260px]"
         )}>
 

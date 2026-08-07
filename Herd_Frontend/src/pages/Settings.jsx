@@ -412,7 +412,7 @@ export default function Settings() {
       <div className="relative w-full md:max-w-5xl md:h-[85vh] bg-[#f8f9fa] md:bg-white md:rounded-[32px] md:shadow-2xl md:flex md:flex-row md:overflow-hidden md:border md:border-slate-200">
         
         {/* Close Button on Desktop */}
-        <button onClick={() => window.history.back()} className="hidden md:flex absolute top-6 left-6 z-50 p-2 rounded-full bg-black/5 hover:bg-black/10 text-gray-500 hover:text-gray-800 transition-colors">
+        <button onClick={() => window.history.back()} className="hidden lg:flex absolute top-6 left-6 z-50 p-2 rounded-full bg-black/5 hover:bg-black/10 text-gray-500 hover:text-gray-800 transition-colors">
           <X className="w-5 h-5" />
         </button>
 
@@ -556,7 +556,7 @@ export default function Settings() {
           <div className={`md:flex-1 md:overflow-y-auto bg-transparent md:bg-white md:p-8 ${activeTab !== 'main' ? 'block' : 'hidden md:flex md:flex-col md:items-center md:justify-center'}`}>
             
             {activeTab === 'main' && (
-              <div className="hidden md:flex flex-col items-center justify-center text-gray-400">
+              <div className="hidden lg:flex flex-col items-center justify-center text-gray-400">
                 <SettingsIcon className="w-16 h-16 mb-4 opacity-20" />
                 <p className="text-sm font-bold">{lang === 'id' ? 'Pilih menu pengaturan di samping' : 'Select a settings menu from the sidebar'}</p>
               </div>
@@ -570,7 +570,7 @@ export default function Settings() {
               
               {/* Header: Back Button & Title & Save Button */}
               <div className="relative flex items-center justify-center mb-6 h-10 w-full">
-                <button type="button" onClick={() => handleBackNavigation('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={() => handleBackNavigation('main')} className="lg:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_general || 'Profile'}</h2>
@@ -703,7 +703,7 @@ export default function Settings() {
           {activeTab === 'notifications' && (
             <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
               <div className="flex items-center relative mb-4">
-                <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={() => setActiveTab('main')} className="lg:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="w-full text-center text-lg font-bold text-gray-900">{lang === 'id' ? 'Notifikasi' : 'Notifications'}</h2>
@@ -792,7 +792,7 @@ export default function Settings() {
           {activeTab === 'security' && (
             <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
               <div className="relative flex items-center justify-center mb-6 h-10 w-full md:max-w-lg">
-                <button type="button" onClick={() => handleBackNavigation('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={() => handleBackNavigation('main')} className="lg:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_security || 'Security'}</h2>
@@ -859,7 +859,7 @@ export default function Settings() {
               </div>
 
               {/* ── Section heading (desktop only, no duplicate on mobile) ── */}
-              <div className="hidden md:block">
+              <div className="hidden lg:block">
                 <h2 className="text-xl font-bold text-[var(--text-1)] font-display">{t.settings_team_title}</h2>
                 <p className="text-sm text-[var(--text-2)] mt-1">{t.settings_team_desc}</p>
               </div>
@@ -928,7 +928,7 @@ export default function Settings() {
               ) : (
                 <>
                   {/* Desktop table */}
-                  <div className="hidden md:block overflow-x-auto border border-[var(--border)] rounded-2xl bg-[var(--bg-card)]">
+                  <div className="hidden lg:block overflow-x-auto border border-[var(--border)] rounded-2xl bg-[var(--bg-card)]">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-[var(--border)] bg-slate-50 dark:bg-slate-900/60 text-[9px] font-black uppercase text-[var(--text-3)] tracking-wider">
@@ -958,7 +958,7 @@ export default function Settings() {
                   </div>
 
                   {/* Mobile card list — no nested containers, clean & readable */}
-                  <div className="md:hidden space-y-2">
+                  <div className="lg:hidden space-y-2">
                     <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-3)] px-1">
                       {lang === 'id' ? 'Anggota Tim' : 'Team Members'} · {teamMembers.length}
                     </p>
@@ -994,7 +994,7 @@ export default function Settings() {
           {activeTab === 'appearance' && (
             <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
               <div className="w-full md:max-w-lg mb-4 relative flex items-center">
-                <button type="button" onClick={() => setActiveTab('main')} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button type="button" onClick={() => setActiveTab('main')} className="lg:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="w-full text-center text-lg font-bold text-gray-900">{lang === 'id' ? 'Tampilan' : 'Appearance'}</h2>
@@ -1067,7 +1067,7 @@ export default function Settings() {
                 <button type="button" onClick={() => {
                   if (helpView !== 'menu') setHelpView('menu');
                   else setActiveTab('main');
-                }} className="md:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors z-10">
+                }} className="lg:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors z-10">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="w-full text-center text-lg font-bold text-gray-900">

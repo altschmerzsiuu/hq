@@ -639,7 +639,7 @@ export default function SensorData() {
         </div>
 
         {/* List Perangkat Table */}
-        <div className="hidden md:block overflow-visible">
+        <div className="hidden lg:block overflow-visible">
           {filteredTableData.length === 0 ? (
             <div className="text-center p-8 text-[var(--color-text-secondary)]">
               {t.sensor_empty}

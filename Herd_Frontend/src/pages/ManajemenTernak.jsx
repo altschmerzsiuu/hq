@@ -599,7 +599,7 @@ export default function ManajemenTernak() {
                   {lang === 'id' ? 'Ternak Anda' : 'Your Cattle'}
                 </h1>
               </div>
-              <div className="hidden md:flex items-center gap-3">
+              <div className="hidden lg:flex items-center gap-3">
                  <AnimatedHeroButton 
                     icon={Link} 
                     label={t.qa_pair_collar} 
@@ -649,7 +649,7 @@ export default function ManajemenTernak() {
       </div>
 
       {/* ── DESKTOP CONTENT ── */}
-      <div className="hidden md:flex flex-col gap-6 animate-in fade-in duration-300">
+      <div className="hidden lg:flex flex-col gap-6 animate-in fade-in duration-300">
         
         {/* Floating Search & Filter Bar */}
         <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '8px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid var(--border)' }} className="-mt-[28px] relative z-20 w-full max-w-4xl mx-auto flex flex-col">
@@ -791,7 +791,7 @@ export default function ManajemenTernak() {
       </div>
 
       {/* ── MOBILE CONTENT ── */}
-      <div className="md:hidden flex flex-col gap-4 -mt-[32px] relative z-20 px-4">
+      <div className="lg:hidden flex flex-col gap-4 -mt-[32px] relative z-20 px-4">
         {/* Search and Filter Row (Floating) */}
         <div className="flex items-center gap-2 w-full">
           <div style={{ flex: 1, position: 'relative', background: 'var(--bg-surface)', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>

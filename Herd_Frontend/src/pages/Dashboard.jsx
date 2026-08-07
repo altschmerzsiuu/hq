@@ -1075,7 +1075,7 @@ export default function Dashboard() {
       <div onClick={() => setActivePopover(null)} className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
         {/* ─── MOBILE VIEW (OLD DESIGN) ─── */}
-        <div className="flex md:hidden flex-col gap-4">
+        <div className="flex lg:hidden flex-col gap-4">
           {/* ─── 0. GREETING (GRADIENT DESIGN) ─── */}
           <div
             className="rounded-t-none rounded-b-[40px] p-6 shadow-lg relative text-white flex flex-col justify-between mb-2"
@@ -1358,7 +1358,7 @@ export default function Dashboard() {
         </div> {/* Close the mobile view wrapper */}
 
         {/* ─── DESKTOP BENTO GRID DASHBOARD ─── */}
-        <div className="hidden md:flex md:flex-col md:gap-0">
+        <div className="hidden lg:flex md:flex-col md:gap-0">
 
           {/* HEADER */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 mt-2 md:mt-4">
