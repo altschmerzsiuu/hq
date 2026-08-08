@@ -981,20 +981,22 @@ export default function DetailTernak() {
                            }
                            
                            return (
-                              <StepperItem key={evt.id} step={idx + 1} completed={isCompleted} className="relative flex items-start gap-4">
-                                <div className={`relative z-10 flex size-9 items-center justify-center rounded-full border-2 shadow-sm shrink-0 ${circleClass}`}>
-                                  {iconEl}
-                                </div>
-                                <div className={`flex-1 min-w-0 pb-2 ${opacityClass}`}>
-                                  <div className={`${cardClass} rounded-[16px] p-4 w-full relative overflow-hidden`}>
-                                    {badge}
-                                    <StepperTitle className="text-[14px] font-bold text-[#111] mb-1">{evt.title}</StepperTitle>
-                                    <StepperDescription className="text-[12px] text-gray-500 leading-relaxed">
-                                      <span className="font-semibold text-gray-700">{evt.dateFmt}</span> - {evt.desc}
-                                    </StepperDescription>
-                                  </div>
-                                </div>
-                              </StepperItem>
+                               <StepperItem key={evt.id} step={idx + 1} completed={isCompleted} asChild>
+                                 <div className="relative flex items-start gap-4 outline-none w-full text-left cursor-default">
+                                   <div className={`relative z-10 flex size-9 items-center justify-center rounded-full border-2 shadow-sm shrink-0 ${circleClass}`}>
+                                     {iconEl}
+                                   </div>
+                                   <div className={`flex-1 min-w-0 pb-2 ${opacityClass}`}>
+                                     <div className={`${cardClass} rounded-[16px] p-4 w-full relative overflow-hidden`}>
+                                       {badge}
+                                       <StepperTitle className="text-[14px] font-bold text-[#111] mb-1">{evt.title}</StepperTitle>
+                                       <StepperDescription className="text-[12px] text-gray-500 leading-relaxed">
+                                         <span className="font-semibold text-gray-700">{evt.dateFmt}</span> - {evt.desc}
+                                       </StepperDescription>
+                                     </div>
+                                   </div>
+                                 </div>
+                               </StepperItem>
                            );
                       });
                   })()}

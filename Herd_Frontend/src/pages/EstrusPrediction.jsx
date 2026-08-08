@@ -102,7 +102,10 @@ export default function EstrusPrediction() {
     }
   }, [lang]);
 
-  useEffect(() => { fetchPredictions(); }, [fetchPredictions]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetchPredictions();
+  }, [fetchPredictions]);
 
   // ─ Run prediction engine ──────────────────────────────────────────────────
   const handleRunPredict = async () => {

@@ -182,7 +182,7 @@ export default function Login() {
       setIsLoading(true);
       const userObj = await login(email, password);
       setIsLoading(false);
-      
+
       if (!userObj) {
         toast.error('Gagal masuk. Periksa email dan password Anda.');
         return;
@@ -261,13 +261,13 @@ export default function Login() {
     if (isLoading) return;
     const currentDigits = isSetup ? setupPinDigits : pinDigits;
     const setDigits = isSetup ? setSetupPinDigits : setPinDigits;
-    
+
     const emptyIndex = currentDigits.findIndex(d => d === '');
     if (emptyIndex !== -1) {
       const newDigits = [...currentDigits];
       newDigits[emptyIndex] = numStr;
       setDigits(newDigits);
-      
+
       if (emptyIndex === 5) {
         const pinStr = newDigits.join('');
         if (isSetup) handleSetupPinSubmit(pinStr);
@@ -280,7 +280,7 @@ export default function Login() {
     if (isLoading) return;
     const currentDigits = isSetup ? setupPinDigits : pinDigits;
     const setDigits = isSetup ? setSetupPinDigits : setPinDigits;
-    
+
     for (let i = 5; i >= 0; i--) {
       if (currentDigits[i] !== '') {
         const newDigits = [...currentDigits];
@@ -373,14 +373,14 @@ export default function Login() {
   // Removed isCheckingUser flash screen
 
   return (
-    <div className="min-h-[100dvh] bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans sm:p-4 lg:p-0 overflow-hidden">
+    <div className="h-full bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans sm:p-4 lg:p-0 overflow-hidden">
       <div className="w-full max-w-[420px] lg:max-w-none h-full sm:h-[850px] sm:max-h-[90vh] lg:h-full lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row">
-        
+
         <AnimatePresence initial={false}>
-          
+
           {/* STEP 1: FEATURE PROPOSITION (Mobile Only) */}
           {step === 'feature' && (
-            <motion.div 
+            <motion.div
               key="feature"
               initial={{ x: 0 }}
               animate={{ x: 0 }}
@@ -389,13 +389,13 @@ export default function Login() {
               className="absolute inset-0 bg-white flex flex-col overflow-hidden lg:hidden"
             >
               {/* Top Orange Header Section */}
-              <div 
+              <div
                 className="w-full flex-[1.4] bg-[#FF7B1C] rounded-b-[40px] flex flex-col items-center justify-center pb-4 relative overflow-hidden"
                 style={{ paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}
               >
-                <motion.img 
-                  src={cowFeatureImg} 
-                  alt="HERD Feature" 
+                <motion.img
+                  src={cowFeatureImg}
+                  alt="HERD Feature"
                   className="w-[240px] h-[240px] sm:w-[280px] sm:h-[280px] object-contain mt-8 z-10 drop-shadow-none"
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -413,7 +413,7 @@ export default function Login() {
                 </p>
 
                 <div className="w-full flex flex-col gap-2.5 mt-auto">
-                  <button 
+                  <button
                     onClick={() => {
                       setIsLoginMode(false);
                       setStep('auth');
@@ -422,7 +422,7 @@ export default function Login() {
                   >
                     Sign up
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       setIsLoginMode(true);
                       setStep('auth');
@@ -438,7 +438,7 @@ export default function Login() {
 
           {/* STEP 2: AUTH FORM (Mobile & Desktop) */}
           {step === 'auth' && (
-            <motion.div 
+            <motion.div
               key="auth"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -451,17 +451,17 @@ export default function Login() {
                 {/* Z-10: DECORATIVE CIRCLES (Tengah layer) */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-white/30 pointer-events-none z-10"></div>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full border border-white/40 pointer-events-none z-10"></div>
-                
+
                 {/* Z-20: TEXT (Paling atas layernya, posisinya di atas foto) */}
                 <h1 className="text-white text-5xl font-extrabold mb-8 text-center leading-[1.1] relative z-20 drop-shadow-md">
-                  Manage your<br/>farm smarter
+                  Manage your<br />farm smarter
                 </h1>
-                
+
                 {/* Z-0: PHOTO (Paling bawah layernya, tapi di bawah teks secara visual) */}
-                <motion.img 
-                  src={cowFeatureImg} 
-                  alt="HERD Feature Desktop" 
-                  className="w-full max-w-[400px] h-auto max-h-[400px] object-contain relative z-0" 
+                <motion.img
+                  src={cowFeatureImg}
+                  alt="HERD Feature Desktop"
+                  className="w-full max-w-[400px] h-auto max-h-[400px] object-contain relative z-0"
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
@@ -470,10 +470,10 @@ export default function Login() {
 
               {/* RIGHT PANEL (Form) - Styled as a rounded modal card overlapping on Desktop */}
               <div className="w-full lg:w-1/2 flex flex-col h-full relative bg-[#F8F8F9] lg:bg-white lg:rounded-l-[40px] lg:shadow-[-20px_0_40px_rgba(0,0,0,0.15)] z-20 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                
+
                 {/* Mobile back button */}
                 <div className="p-4 flex items-center sticky top-0 bg-[#F8F8F9]/80 lg:hidden backdrop-blur-md z-30" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
-                  <button 
+                  <button
                     onClick={() => {
                       setIsLoginMode(true);
                       setStep('feature');
@@ -486,20 +486,20 @@ export default function Login() {
 
                 {/* Desktop top Header (Logo + Toggle) */}
                 <div className="hidden lg:flex justify-between items-center px-12 py-8 w-full absolute top-0 left-0 z-30">
-                   <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 bg-white rounded-xl shadow-sm p-1 border border-gray-100 flex items-center justify-center">
-                       <img src="/herd.jpeg" alt="HERD" className="w-full h-full object-contain rounded-lg" />
-                     </div>
-                     <span className="text-[#111118] font-extrabold text-xl tracking-wider">HERD</span>
-                   </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm p-1 border border-gray-100 flex items-center justify-center">
+                      <img src="/herd.jpeg" alt="HERD" className="w-full h-full object-contain rounded-lg" />
+                    </div>
+                    <span className="text-[#111118] font-extrabold text-xl tracking-wider">HERD</span>
+                  </div>
 
-                   <button 
-                     onClick={() => setIsLoginMode(!isLoginMode)}
-                     className="flex items-center gap-2 text-[#62627A] hover:text-[#111118] font-semibold transition-colors"
-                   >
-                     <User size={18} />
-                     {isLoginMode ? 'Sign Up' : 'Log In'}
-                   </button>
+                  <button
+                    onClick={() => setIsLoginMode(!isLoginMode)}
+                    className="flex items-center gap-2 text-[#62627A] hover:text-[#111118] font-semibold transition-colors"
+                  >
+                    <User size={18} />
+                    {isLoginMode ? 'Sign Up' : 'Log In'}
+                  </button>
                 </div>
 
                 {/* Form Content - Made more compact */}
@@ -514,7 +514,7 @@ export default function Login() {
                       <div className="flex gap-3">
                         <div className="flex-1">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">First Name</label>
-                          <input 
+                          <input
                             type="text" required value={firstName} onChange={e => setFirstName(e.target.value)}
                             className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                             placeholder="John"
@@ -522,7 +522,7 @@ export default function Login() {
                         </div>
                         <div className="flex-1">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Last Name</label>
-                          <input 
+                          <input
                             type="text" required value={lastName} onChange={e => setLastName(e.target.value)}
                             className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                             placeholder="Doe"
@@ -535,7 +535,7 @@ export default function Login() {
                       <div className="flex gap-3">
                         <div className="flex-1">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Email</label>
-                          <input 
+                          <input
                             type="email" required value={email} onChange={e => setEmail(e.target.value)}
                             className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                             placeholder="your.email@example.com"
@@ -543,7 +543,7 @@ export default function Login() {
                         </div>
                         <div className="flex-1">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Phone Number</label>
-                          <input 
+                          <input
                             type="text" inputMode="numeric" pattern="[0-9]*" required value={phone} onChange={handlePhoneChange}
                             className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                             placeholder="08..."
@@ -553,7 +553,7 @@ export default function Login() {
                     ) : (
                       <div>
                         <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Email</label>
-                        <input 
+                        <input
                           type="email" required value={email} onChange={e => setEmail(e.target.value)}
                           className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                           placeholder="your.email@example.com"
@@ -565,7 +565,7 @@ export default function Login() {
                       <>
                         <div className="w-full">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Farm Name</label>
-                          <input 
+                          <input
                             type="text" required value={farmName} onChange={e => setFarmName(e.target.value)}
                             className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                             placeholder="Suka Maju Farm"
@@ -574,9 +574,9 @@ export default function Login() {
                         <div className="flex gap-3">
                           <div className="flex-1">
                             <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Province</label>
-                            <select 
-                              required value={province} onChange={e => { 
-                                setProvince(e.target.value); 
+                            <select
+                              required value={province} onChange={e => {
+                                setProvince(e.target.value);
                                 // If the currently selected city doesn't belong to the new province, reset it
                                 if (e.target.value && city && getProvinceByCity(city) !== e.target.value) {
                                   setCity('');
@@ -592,7 +592,7 @@ export default function Login() {
                           </div>
                           <div className="flex-1">
                             <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">City / Regency</label>
-                            <select 
+                            <select
                               required value={city} onChange={e => {
                                 const selectedCity = e.target.value;
                                 setCity(selectedCity);
@@ -617,7 +617,7 @@ export default function Login() {
                       <div className="flex gap-3">
                         <div className="flex-1 relative">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Password</label>
-                          <input 
+                          <input
                             type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)}
                             className="w-full h-[46px] bg-white rounded-[14px] pl-4 pr-12 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                             placeholder="••••••••"
@@ -628,7 +628,7 @@ export default function Login() {
                         </div>
                         <div className="flex-1 relative">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Confirm Password</label>
-                          <input 
+                          <input
                             type={showPassword ? "text" : "password"} required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
                             className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                             placeholder="••••••••"
@@ -638,7 +638,7 @@ export default function Login() {
                     ) : (
                       <div className="relative">
                         <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Password</label>
-                        <input 
+                        <input
                           type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)}
                           className="w-full h-[46px] bg-white rounded-[14px] pl-4 pr-12 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                           placeholder="••••••••"
@@ -653,7 +653,7 @@ export default function Login() {
                       {isLoginMode ? 'We will send you an email with a login link if you forgot your password.' : 'Make sure to use a strong password.'}
                     </p>
 
-                    <button 
+                    <button
                       type="submit" disabled={isLoading}
                       className="w-full h-[48px] mt-1 bg-[#FF7B1C] hover:bg-[#E66A12] text-white rounded-[14px] font-bold text-[15px] transition-colors active:scale-[0.98] disabled:opacity-70 flex items-center justify-center shadow-md shadow-[#FF7B1C]/20"
                     >
@@ -679,7 +679,7 @@ export default function Login() {
                     </div>
 
                     <div className="mt-auto text-center lg:hidden">
-                      <button 
+                      <button
                         type="button"
                         onClick={() => {
                           setIsLoginMode(!isLoginMode);
@@ -698,7 +698,7 @@ export default function Login() {
 
           {/* STEP 3: PIN LOGIN (Returning user) */}
           {step === 'pin_login' && (
-            <motion.div 
+            <motion.div
               key="pin_login"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -708,9 +708,9 @@ export default function Login() {
               style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}
             >
               <div className="w-full flex flex-col items-center max-w-[320px] pt-[2vh] pb-4">
-                <motion.img 
-                  src={farmerPinImg} 
-                  alt="Unlock HERD" 
+                <motion.img
+                  src={farmerPinImg}
+                  alt="Unlock HERD"
                   className="w-[200px] h-[200px] shrink-0 object-contain mb-2"
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -722,14 +722,14 @@ export default function Login() {
                 </p>
 
                 {/* PIN Indicator Dots */}
-                <motion.div 
+                <motion.div
                   className="flex gap-4 mb-8 shrink-0"
                   animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
                   transition={{ duration: 0.4 }}
                 >
                   {pinDigits.map((digit, i) => (
-                    <div 
-                      key={i} 
+                    <div
+                      key={i}
                       className={`w-4 h-4 rounded-full transition-all duration-300 ${digit !== '' ? 'bg-[#FF7B1C] scale-110 shadow-[0_2px_8px_rgba(255,123,28,0.4)]' : 'bg-[#E5E5EA]'}`}
                     ></div>
                   ))}
@@ -783,7 +783,7 @@ export default function Login() {
 
           {/* STEP 4: PIN SETUP (After successful login/registration if no PIN) */}
           {step === 'pin_setup' && (
-            <motion.div 
+            <motion.div
               key="pin_setup"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -793,9 +793,9 @@ export default function Login() {
               style={{ zIndex: 50, paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}
             >
               <div className="w-full flex flex-col items-center max-w-[320px] pt-[2vh] pb-4">
-                <motion.img 
-                  src={farmerPinImg} 
-                  alt="Setup PIN" 
+                <motion.img
+                  src={farmerPinImg}
+                  alt="Setup PIN"
                   className="w-[200px] h-[200px] shrink-0 object-contain mb-2"
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -807,11 +807,11 @@ export default function Login() {
                 </p>
 
                 {/* PIN Indicator Dots */}
-                <motion.div 
+                <motion.div
                   className="flex gap-4 mb-4 shrink-0">
                   {setupPinDigits.map((digit, i) => (
-                    <div 
-                      key={i} 
+                    <div
+                      key={i}
                       className={`w-4 h-4 rounded-full transition-all duration-300 ${digit !== '' ? 'bg-[#FF7B1C] scale-110 shadow-[0_2px_8px_rgba(255,123,28,0.4)]' : 'bg-[#E5E5EA]'}`}
                     ></div>
                   ))}
@@ -850,7 +850,7 @@ export default function Login() {
               </div>
 
               <div className="flex w-full justify-center mt-auto px-2 pb-6 shrink-0">
-                <button 
+                <button
                   onClick={handleSkipPinSetup}
                   className="w-full max-w-[280px] h-[52px] bg-[#F8F8F9] hover:bg-gray-100 text-[#62627A] hover:text-[#111118] rounded-[16px] font-bold text-[15px] transition-colors"
                 >

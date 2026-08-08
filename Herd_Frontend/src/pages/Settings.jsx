@@ -408,7 +408,7 @@ export default function Settings() {
     <>
     <div 
       className="bg-[#f8f9fa] md:bg-transparent md:fixed md:inset-0 md:z-[100] md:flex md:items-center md:justify-center md:bg-black/50 md:backdrop-blur-sm animate-in fade-in duration-500 pb-24 md:pb-0 px-0 md:p-4 min-h-screen"
-      style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       
       {/* Content Area */}

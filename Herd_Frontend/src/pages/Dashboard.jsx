@@ -1240,7 +1240,8 @@ export default function Dashboard() {
                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 0) / Math.max(herd.length, 1))} strokeLinecap="round" className="transition-all duration-1000" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
+                    <span className="text-xl font-black leading-none text-gray-900">{herd.length || 0}</span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase mt-0.5">Total</span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 w-full">
@@ -1268,7 +1269,7 @@ export default function Dashboard() {
                   Lihat semua <ChevronRight size={12} />
                 </button>
               </div>
-              <p className="text-[11px] text-gray-500 mb-4">{lang === 'id' ? '(3 Hari ke Depan)' : '(Next 3 Days)'}</p>
+              <p className="text-[11px] text-gray-500 mb-4">{lang === 'id' ? '(Dalam 3 Hari Ke Depan)' : '(Next 3 Days)'}</p>
               
               <div className="flex flex-col gap-3">
                 {activeEstrusPredictions.length > 0 ? activeEstrusPredictions.slice(0, 3).map((pred, i) => (
