@@ -125,6 +125,22 @@ export default function MainLayout() {
       background: 'var(--bg-base)',
       overflow: 'hidden',
     }}>
+      {/* iOS Safe Area Cover */}
+      {(location.pathname === '/dashboard' || location.pathname === '/sensor-data' || location.pathname === '/ternak') && (
+        <div 
+          className="lg:hidden landscape:hidden fixed top-0 left-0 right-0 z-30" 
+          style={{ 
+            height: 'env(safe-area-inset-top)', 
+            backgroundColor: isScrolled ? 'var(--bg-surface)' : (
+              location.pathname === '/dashboard' ? '#2f7d31' : 
+              location.pathname === '/sensor-data' ? '#115e59' : 
+              '#FF7B1C'
+            ),
+            transition: 'background-color 0.3s'
+          }} 
+        />
+      )}
+
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
