@@ -727,7 +727,7 @@ export default function GendhisWidget() {
                               }
                             }
                           }}
-                          className="p-2 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all text-[var(--text-3)] mr-1 shrink-0"
+                          className="p-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:text-red-500 transition-all text-[var(--text-3)] mr-1 shrink-0"
                           title="Hapus Percakapan"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

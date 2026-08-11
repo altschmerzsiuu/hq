@@ -93,7 +93,7 @@ export default function EstrusPrediction() {
     try {
       const res = await axiosInstance.get('/estrus-predictions?status=all&limit=100');
       const data = Array.isArray(res.data) ? res.data : [];
-
+      setPredictions(data);
     } catch (err) {
       console.error('Gagal fetch prediksi:', err);
       toast.error(lang === 'id' ? 'Gagal memuat data prediksi estrus.' : 'Failed to load estrus prediction data.');

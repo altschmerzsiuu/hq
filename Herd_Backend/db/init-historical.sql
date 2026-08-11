@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS hewan (
     usia INTEGER,                         -- Usia dalam bulan
     status_kesehatan VARCHAR(100),
     foto VARCHAR(255),
-    foto VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

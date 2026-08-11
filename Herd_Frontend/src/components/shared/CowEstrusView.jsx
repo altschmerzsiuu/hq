@@ -88,16 +88,6 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
         
         const now = new Date();
         now.setHours(0,0,0,0);
-        
-        let cycleDays = 21; // Default to 21
-        // Optional: you could extract specific cycle days if needed, but 21 is safe for rolling forward predictions in the UI
-        
-        while (predDate < now) {
-           predDate.setDate(predDate.getDate() + cycleDays);
-           if (winAwal) winAwal.setDate(winAwal.getDate() + cycleDays);
-           if (winAkhir) winAkhir.setDate(winAkhir.getDate() + cycleDays);
-        }
-        
         const diffTime = predDate.getTime() - now.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         const inWindow = winAwal && winAkhir ? (now >= winAwal && now <= winAkhir) : false;
@@ -254,16 +244,20 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
                 {/* Dynamic Progress Ring */}
                 <circle 
                   cx="100" cy="100" r="80" fill="none" 
-                  stroke={prediction?.days_until <= 3 ? "url(#greenGradient)" : "url(#blueGradient)"} 
+                  stroke={prediction?.days_until < 0 ? "url(#redGradient)" : prediction?.days_until <= 3 ? "url(#greenGradient)" : "url(#blueGradient)"} 
                   strokeWidth="14" 
                   strokeLinecap="round"
                   strokeDasharray="502.65" 
-                  strokeDashoffset={502.65 - ((Math.max(0, 21 - (prediction?.days_until || 0)) / 21) * 502.65)}
+                  strokeDashoffset={502.65 - ((prediction?.days_until < 0 ? 1 : (Math.max(0, 21 - (prediction?.days_until || 0)) / 21)) * 502.65)}
                   style={{ transition: 'stroke-dashoffset 1s ease-out, stroke 0.5s ease' }}
                 />
 
                 {/* Definitions for gradients */}
                 <defs>
+                  <linearGradient id="redGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#F87171" />
+                    <stop offset="100%" stopColor="#EF4444" />
+                  </linearGradient>
                   <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#4ADE80" />
                     <stop offset="100%" stopColor="#22C55E" />
@@ -277,12 +271,16 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
 
               {/* Center Text content */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-4xl font-black text-gray-900 tracking-tighter">
-                  {prediction.days_until}
+                <span className={`text-4xl font-black tracking-tighter ${prediction?.days_until < 0 ? 'text-red-500' : 'text-gray-900'}`}>
+                  {prediction.days_until < 0 ? Math.abs(prediction.days_until) : prediction.days_until}
                 </span>
-                <span className="text-xs font-bold text-gray-800 tracking-tight uppercase mt-1">Hari Lagi</span>
-                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1.5 mb-1.5">Masa Subur Berikutnya</span>
-                <span className={`text-sm font-black px-2.5 py-1 rounded-full ${prediction.days_until <= 3 ? 'text-green-700 bg-green-50' : 'text-blue-700 bg-blue-50'}`}>
+                <span className="text-xs font-bold text-gray-800 tracking-tight uppercase mt-1">
+                  {prediction.days_until < 0 ? 'Hari Terlewat' : 'Hari Lagi'}
+                </span>
+                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1.5 mb-1.5">
+                  {prediction.days_until < 0 ? 'Butuh Konfirmasi' : 'Masa Subur Berikutnya'}
+                </span>
+                <span className={`text-sm font-black px-2.5 py-1 rounded-full ${prediction.days_until < 0 ? 'text-red-700 bg-red-50' : prediction.days_until <= 3 ? 'text-green-700 bg-green-50' : 'text-blue-700 bg-blue-50'}`}>
                   {fmtDate(prediction.prediksi_ib_optimal, lang)}
                 </span>
               </div>

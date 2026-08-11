@@ -11,8 +11,8 @@ import farmerPinImg from '@/assets/onboarding/farmer_pin.png';
 
 import indonesiaRegionsData from '@/data/indonesia-region.json';
 
-const PROVINCES = ["", ...indonesiaRegionsData.map(r => r.nama)];
-const ALL_CITIES = ["", ...indonesiaRegionsData.flatMap(r => r.cities.map(c => c.nama))];
+const PROVINCES = ["", ...new Set(indonesiaRegionsData.map(r => r.nama))].sort();
+const ALL_CITIES = ["", ...new Set(indonesiaRegionsData.flatMap(r => r.cities.map(c => c.nama)))].sort();
 
 const getProvinceByCity = (cityName) => {
   for (const region of indonesiaRegionsData) {
@@ -26,7 +26,19 @@ const getProvinceByCity = (cityName) => {
 const getCitiesByProvince = (provinceName) => {
   if (!provinceName) return ALL_CITIES;
   const region = indonesiaRegionsData.find(r => r.nama === provinceName);
-  return region ? ["", ...region.cities.map(c => c.nama)] : ALL_CITIES;
+  return region ? ["", ...new Set(region.cities.map(c => c.nama))].sort() : ALL_CITIES;
+};
+
+const toTitleCase = (str) => {
+  if (!str) return '';
+  try {
+    return str.replace(
+      /\w\S*/g,
+      (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
+    );
+  } catch(e) {
+    return str;
+  }
 };
 
 
@@ -118,6 +130,18 @@ export default function Login() {
       }
     };
   }, []);
+
+  const clearForm = () => {
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setPhone('');
+    setFarmName('');
+    setProvince('');
+    setCity('');
+    setPassword('');
+    setConfirmPassword('');
+  };
 
   const handleGoogleCredentialResponse = async (response) => {
     try {
@@ -236,11 +260,13 @@ export default function Login() {
 
         toast.success('Pendaftaran berhasil! Mengalihkan...');
 
-        const userObj = await login(email, password);
-        if (userObj) {
-          const { registerDevice } = useAuthStore.getState();
+        const { access_token, user } = data;
+        if (access_token && user) {
+          localStorage.setItem('access_token', access_token);
+          const { registerDevice, setToken } = useAuthStore.getState();
+          setToken(access_token, user);
           await registerDevice();
-          setTempUserId(userObj.id);
+          setTempUserId(user.id);
           setStep('pin_setup');
         }
       } catch (err) {
@@ -415,6 +441,7 @@ export default function Login() {
                 <div className="w-full flex flex-col gap-2.5 mt-auto">
                   <button
                     onClick={() => {
+                      clearForm();
                       setIsLoginMode(false);
                       setStep('auth');
                     }}
@@ -424,6 +451,7 @@ export default function Login() {
                   </button>
                   <button
                     onClick={() => {
+                      clearForm();
                       setIsLoginMode(true);
                       setStep('auth');
                     }}
@@ -494,7 +522,10 @@ export default function Login() {
                   </div>
 
                   <button
-                    onClick={() => setIsLoginMode(!isLoginMode)}
+                    onClick={() => {
+                      clearForm();
+                      setIsLoginMode(!isLoginMode);
+                    }}
                     className="flex items-center gap-2 text-[#62627A] hover:text-[#111118] font-semibold transition-colors"
                   >
                     <User size={18} />
@@ -515,7 +546,7 @@ export default function Login() {
                         <div className="flex-1">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">First Name</label>
                           <input
-                            type="text" required value={firstName} onChange={e => setFirstName(e.target.value)}
+                            type="text" required value={firstName} onChange={e => setFirstName(toTitleCase(e.target.value))}
                             className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                             placeholder="John"
                           />
@@ -523,7 +554,7 @@ export default function Login() {
                         <div className="flex-1">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Last Name</label>
                           <input
-                            type="text" required value={lastName} onChange={e => setLastName(e.target.value)}
+                            type="text" required value={lastName} onChange={e => setLastName(toTitleCase(e.target.value))}
                             className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                             placeholder="Doe"
                           />
@@ -566,7 +597,7 @@ export default function Login() {
                         <div className="w-full">
                           <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Farm Name</label>
                           <input
-                            type="text" required value={farmName} onChange={e => setFarmName(e.target.value)}
+                            type="text" required value={farmName} onChange={e => setFarmName(toTitleCase(e.target.value))}
                             className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
                             placeholder="Suka Maju Farm"
                           />
@@ -682,6 +713,7 @@ export default function Login() {
                       <button
                         type="button"
                         onClick={() => {
+                          clearForm();
                           setIsLoginMode(!isLoginMode);
                           window.scrollTo(0, 0);
                         }}
