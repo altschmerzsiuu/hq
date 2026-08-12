@@ -717,29 +717,35 @@ export default function Settings() {
                 {/* Mock Notification Trigger Button */}
                 <button
                     onClick={() => {
-                      const title = 'Peringatan: Deteksi Birahi AI';
-                      const body = 'Sapi C01 terdeteksi menunjukkan tanda-tanda estrus aktif (Confidence: 94%). Waktu IB optimal dalam 12 jam ke depan.';
+                      const title = 'Alert: AI Estrus Detection';
+                      const body = 'Cow Gendhis has been detected showing active estrus signs (Confidence: 94%). Optimal AI time within the next 12 hours.';
+                      const iconUrl = '/gendhis_notif.jpg';
+                      
                       if ('Notification' in window) {
                         if (Notification.permission === 'granted') {
-                          new Notification(title, { body, icon: '/vite.svg' });
+                          new Notification(title, { body, icon: iconUrl, image: iconUrl });
                         } else if (Notification.permission !== 'denied') {
                           Notification.requestPermission().then(permission => {
                             if (permission === 'granted') {
-                              new Notification(title, { body, icon: '/vite.svg' });
+                              new Notification(title, { body, icon: iconUrl, image: iconUrl });
                             }
                           });
                         }
                       }
+                      
                       import('@/store/toastStore').then(({ toast }) => {
                         import('lucide-react').then(({ Flame }) => {
                           toast.custom((t) => (
                             <div className="bg-rose-50 dark:bg-rose-500/10 border-l-4 border-rose-500 p-4 rounded-xl shadow-xl flex items-start gap-3 w-[350px] relative pointer-events-auto">
                               <Flame className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5 animate-pulse" />
-                              <div className="flex flex-col gap-1 pr-6">
+                              <div className="flex flex-col gap-2 pr-6">
                                 <span className="font-bold text-rose-800 dark:text-rose-300 text-sm">{title}</span>
-                                <span className="text-[13px] text-rose-600 dark:text-rose-400/90 leading-relaxed">{body}</span>
+                                <span className="text-[13px] text-rose-600 dark:text-rose-400/90 leading-relaxed">
+                                  Cow <b className="font-bold">Gendhis</b> has been detected showing active estrus signs (Confidence: 94%). Optimal AI time within the next 12 hours.
+                                </span>
+                                <img src={iconUrl} alt="Cow Gendhis" className="w-full h-32 object-cover rounded-lg border border-rose-200 mt-1 shadow-sm" />
                               </div>
-                              <button onClick={() => toast.dismiss(t)} className="absolute top-3 right-3 text-rose-400 hover:text-rose-600 p-1">✕</button>
+                              <button onClick={() => toast.dismiss(t)} className="absolute top-3 right-3 text-rose-400 hover:text-rose-600 p-1 bg-rose-100 rounded-full">✕</button>
                             </div>
                           ), { duration: 10000 });
                         });
@@ -747,7 +753,7 @@ export default function Settings() {
                     }}
                     className="w-full flex items-center justify-center gap-2 p-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl shadow-lg shadow-rose-500/30 transition-all active:scale-95"
                 >
-                  <Bell className="w-5 h-5" /> Trigger Notifikasi Demo (Hapus Setelah Presentasi)
+                  <Bell className="w-5 h-5" /> Trigger Demo Notification (Remove After Presentation)
                 </button>
 
                 <div className="h-px bg-gray-100" />
