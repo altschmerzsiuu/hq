@@ -1180,10 +1180,26 @@ async def lifespan(app: FastAPI):
         pool = await get_db_pool()
         print("🛠️ Ensuring database tables and columns are up to date...")
         async with pool.acquire() as conn:
+            # Users table migrations
+            await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES users(id);")
+            
+            # Collar registry migrations
             await conn.execute("ALTER TABLE collar_registry ADD COLUMN IF NOT EXISTS device_secret VARCHAR(100);")
+            
+            # Hewan & Reproduksi migrations
             await conn.execute("ALTER TABLE reproduksi_ternak ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
             await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")
             await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS foto VARCHAR(255);")
+            await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS kelamin VARCHAR(20) DEFAULT 'betina';")
+            await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS berat_badan FLOAT;")
+            await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS estrus_probability FLOAT DEFAULT 0.0;")
+            
+            # Fix owner_id for multi-tenant (if not exists)
+            try:
+                await conn.execute("ALTER TABLE hewan ADD COLUMN IF NOT EXISTS owner_id INTEGER REFERENCES users(id);")
+            except Exception as e:
+                print(f"⚠️ [DB INIT] Could not add owner_id to hewan: {e}")
+
             # Ensure observation_logs table exists
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS observation_logs (

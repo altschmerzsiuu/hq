@@ -480,7 +480,8 @@ export default function Topbar({ onMenuClick, isScrolled }) {
                           onClick={() => { navigate('/settings?tab=profile'); setProfileMenuOpen(false); }}
                           className="flex items-center gap-3 w-full px-3 py-2.5 text-left text-[14px] font-['Inter'] font-medium text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-all"
                       >
-                        <User size={18} className="text-gray-400" />{lang === 'id' ? 'Akun' : 'Account'}</button>
+                        <User size={18} className="text-gray-400" />{lang === 'id' ? 'Profil' : 'Profile'}
+                      </button>
                       <div className="h-px bg-gray-100 my-1 mx-2" />
                       <button
                           onClick={handleLogout}

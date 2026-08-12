@@ -713,7 +713,45 @@ export default function Settings() {
               </div>
 
               {/* Master toggle */}
-              <div className="p-4 bg-white border border-gray-200 rounded-3xl shadow-sm">
+              <div className="p-4 bg-white border border-gray-200 rounded-3xl shadow-sm space-y-4">
+                {/* Mock Notification Trigger Button */}
+                <button
+                    onClick={() => {
+                      const title = 'Peringatan: Deteksi Birahi AI';
+                      const body = 'Sapi C01 terdeteksi menunjukkan tanda-tanda estrus aktif (Confidence: 94%). Waktu IB optimal dalam 12 jam ke depan.';
+                      if ('Notification' in window) {
+                        if (Notification.permission === 'granted') {
+                          new Notification(title, { body, icon: '/vite.svg' });
+                        } else if (Notification.permission !== 'denied') {
+                          Notification.requestPermission().then(permission => {
+                            if (permission === 'granted') {
+                              new Notification(title, { body, icon: '/vite.svg' });
+                            }
+                          });
+                        }
+                      }
+                      import('@/store/toastStore').then(({ toast }) => {
+                        import('lucide-react').then(({ Flame }) => {
+                          toast.custom((t) => (
+                            <div className="bg-rose-50 dark:bg-rose-500/10 border-l-4 border-rose-500 p-4 rounded-xl shadow-xl flex items-start gap-3 w-[350px] relative pointer-events-auto">
+                              <Flame className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5 animate-pulse" />
+                              <div className="flex flex-col gap-1 pr-6">
+                                <span className="font-bold text-rose-800 dark:text-rose-300 text-sm">{title}</span>
+                                <span className="text-[13px] text-rose-600 dark:text-rose-400/90 leading-relaxed">{body}</span>
+                              </div>
+                              <button onClick={() => toast.dismiss(t)} className="absolute top-3 right-3 text-rose-400 hover:text-rose-600 p-1">✕</button>
+                            </div>
+                          ), { duration: 10000 });
+                        });
+                      });
+                    }}
+                    className="w-full flex items-center justify-center gap-2 p-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl shadow-lg shadow-rose-500/30 transition-all active:scale-95"
+                >
+                  <Bell className="w-5 h-5" /> Trigger Notifikasi Demo (Hapus Setelah Presentasi)
+                </button>
+
+                <div className="h-px bg-gray-100" />
+
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className={`p-2.5 rounded-2xl shrink-0 ${notifEnabled ? 'bg-[#2f7d31]/10 text-[#2f7d31]' : 'bg-gray-100 text-gray-400'}`}>

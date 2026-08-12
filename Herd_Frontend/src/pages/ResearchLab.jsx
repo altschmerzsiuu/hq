@@ -377,13 +377,15 @@ export default function ResearchLab() {
     <div className="space-y-10 animate-in fade-in duration-500 pb-16">
 
       {/* HEADER */}
-      <div className="flex items-center gap-4">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-          <Beaker className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)]">Research Lab</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">Manual Observation Log for FYP Validation & System Maintenance</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <Beaker className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-display font-bold text-[var(--color-text-primary)]">Research Lab</h1>
+            <p className="text-[var(--color-text-secondary)] mt-1">Manual Observation Log for FYP Validation & System Maintenance</p>
+          </div>
         </div>
       </div>
 
