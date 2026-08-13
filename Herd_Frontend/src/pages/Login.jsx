@@ -82,6 +82,18 @@ export default function Login() {
       return;
     }
 
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setStep(prev => {
+          if (prev === 'feature') {
+            setIsLoginMode(true);
+            return 'auth';
+          }
+          return prev;
+        });
+      }
+    };
+
     if (savedUserId) {
       // Returning user, show PIN login
       setStep('pin_login');
@@ -95,6 +107,8 @@ export default function Login() {
       }
     }
 
+    window.addEventListener('resize', handleResize);
+
     // Set Android status bar theme color
     let metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (!metaThemeColor) {
@@ -104,6 +118,7 @@ export default function Login() {
     }
     metaThemeColor.content = '#2f7d31'; // Login background color
 
+    return () => window.removeEventListener('resize', handleResize);
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
@@ -399,8 +414,8 @@ export default function Login() {
   // Removed isCheckingUser flash screen
 
   return (
-    <div className="h-full bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans sm:p-4 lg:p-0 overflow-hidden">
-      <div className="w-full max-w-[420px] lg:max-w-none h-full sm:h-[850px] sm:max-h-[90vh] lg:h-full lg:max-h-none bg-white lg:bg-[#FF7B1C] sm:rounded-[40px] lg:rounded-none sm:shadow-2xl lg:shadow-none sm:border border-gray-100 lg:border-none relative overflow-hidden flex flex-col lg:flex-row">
+    <div className="h-full bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans  overflow-hidden">
+      <div className="w-full h-full bg-white lg:bg-[#FF7B1C] relative overflow-hidden flex flex-col lg:flex-row">
 
         <AnimatePresence initial={false}>
 

@@ -374,7 +374,7 @@ export default function GendhisWidget() {
           border: '1px solid var(--border)'
         }}
         className={cn(
-          "fixed bottom-[190px] md:bottom-[84px] right-4 md:right-6 w-[360px] h-[440px] max-w-[calc(100vw-32px)] z-[200] flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-1)] transition-all duration-300 ease-out origin-bottom-right",
+          "fixed bottom-[190px] lg:bottom-[84px] right-4 lg:right-6 w-[360px] h-[440px] max-w-[calc(100vw-32px)] z-[200] flex flex-col overflow-hidden bg-[var(--bg-surface)] text-[var(--text-1)] transition-all duration-300 ease-out origin-bottom-right",
           isChatOpen ? "opacity-100 scale-100 translate-y-0 pointer-events-auto" : "opacity-0 scale-95 translate-y-10 pointer-events-none"
         )}
       >
@@ -524,7 +524,7 @@ export default function GendhisWidget() {
             onClick={() => setIsFabOpen(false)}
           />
         )}
-        <div className="fixed bottom-[130px] md:bottom-6 right-4 md:right-6 z-[60] flex flex-col items-center gap-3">
+        <div className="fixed bottom-[130px] lg:bottom-6 right-4 lg:right-6 z-[60] flex flex-col items-center gap-3">
           {/* Dropdown Options */}
           <div 
             className={cn(

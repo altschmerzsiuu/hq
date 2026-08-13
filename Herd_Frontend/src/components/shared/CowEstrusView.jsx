@@ -11,7 +11,9 @@ import {
   Target,
   Info,
   RefreshCw,
-  Activity
+  Activity,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
@@ -63,6 +65,7 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
   const [loading, setLoading]       = useState(true);
   const [isPredicting, setIsPredicting] = useState(false);
   const [prediction, setPrediction] = useState(null);
+  const [submittingType, setSubmittingType] = useState(null);
 
   // Locked if cow is currently pregnant
   const latestRepro = reproHistory[0] ?? null;
@@ -122,6 +125,22 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
       handleError(err, 'jalankan prediksi estrus per sapi');
     } finally {
       setIsPredicting(false);
+    }
+  };
+
+  const handleFeedback = async (isTrue) => {
+    if (!prediction) return;
+    try {
+      setSubmittingType(isTrue ? 'true' : 'false');
+      const res = await axiosInstance.post(`/estrus-predictions/${prediction.id}/feedback`, { verified: isTrue });
+      if (res.status === 200) {
+        await fetchPrediction();
+        toast.success(lang === 'id' ? 'Tindakan berhasil dikonfirmasi!' : 'Action confirmed!');
+      }
+    } catch (err) {
+      handleError(err, 'konfirmasi tindakan');
+    } finally {
+      setSubmittingType(null);
     }
   };
 
@@ -221,8 +240,8 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
                   <Activity className="text-blue-600 w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-gray-900 text-base md:text-lg tracking-tight">Pantau Siklus Birahi</h3>
-                  <p className="text-xs md:text-sm text-gray-500 font-medium">ID Sapi: {selectedCow?.id || selectedCow?.cow_id} - {selectedCow?.nama}</p>
+                  <h3 className="font-extrabold text-gray-900 text-base md:text-lg tracking-tight">{lang === 'id' ? 'Pantau Siklus Birahi' : 'Estrus Cycle Monitor'}</h3>
+                  <p className="text-xs md:text-sm text-gray-500 font-medium">{lang === 'id' ? 'ID Sapi:' : 'Cow ID:'} {selectedCow?.id || selectedCow?.cow_id} - {selectedCow?.nama}</p>
                 </div>
               </div>
               <button
@@ -275,10 +294,10 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
                   {prediction.days_until < 0 ? Math.abs(prediction.days_until) : prediction.days_until}
                 </span>
                 <span className="text-xs font-bold text-gray-800 tracking-tight uppercase mt-1">
-                  {prediction.days_until < 0 ? 'Hari Terlewat' : 'Hari Lagi'}
+                  {prediction.days_until < 0 ? (lang === 'id' ? 'Hari Terlewat' : 'Days Overdue') : (lang === 'id' ? 'Hari Lagi' : 'Days Left')}
                 </span>
                 <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1.5 mb-1.5">
-                  {prediction.days_until < 0 ? 'Butuh Konfirmasi' : 'Masa Subur Berikutnya'}
+                  {prediction.days_until < 0 ? (lang === 'id' ? 'Butuh Konfirmasi' : 'Needs Confirmation') : (lang === 'id' ? 'Masa Subur Berikutnya' : 'Next Fertile Window')}
                 </span>
                 <span className={`text-sm font-black px-2.5 py-1 rounded-full ${prediction.days_until < 0 ? 'text-red-700 bg-red-50' : prediction.days_until <= 3 ? 'text-green-700 bg-green-50' : 'text-blue-700 bg-blue-50'}`}>
                   {fmtDate(prediction.prediksi_ib_optimal, lang)}
@@ -288,6 +307,35 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
 
             {/* Optional badge based on status */}
             
+            {/* Action Confirmation for Mobile/Tablet Portrait (hidden on Desktop) */}
+            {prediction && prediction.verified === null && prediction.prediksi_ib_optimal && (new Date(prediction.prediksi_ib_optimal).getTime() <= Date.now() - 24 * 3600000) && (
+              <div className="w-full mt-8 bg-red-50 rounded-2xl border border-red-100 p-5 relative overflow-hidden group lg:hidden">
+                <h4 className="text-base font-bold text-red-900 mb-2">
+                  {lang === 'id' ? 'Konfirmasi Tindakan' : 'Action Confirmation'}
+                </h4>
+                <p className="text-sm text-red-700 mb-5 leading-relaxed">
+                  {lang === 'id' ? 'Masa optimal IB untuk sapi ini telah lewat. Apakah prediksi ini benar terjadi dan sudah dilakukan tindakan?' : 'The optimal AI window for this cow has passed. Was this prediction accurate and has the action been taken?'}
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => handleFeedback(true)}
+                    disabled={submittingType !== null}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all disabled:opacity-50"
+                  >
+                    {submittingType === 'true' ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                    {lang === 'id' ? 'Benar, Sudah' : 'Yes, Confirmed'}
+                  </button>
+                  <button
+                    onClick={() => handleFeedback(false)}
+                    disabled={submittingType !== null}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-gray-50 text-red-600 font-bold rounded-xl border border-red-200 transition-all disabled:opacity-50"
+                  >
+                    {submittingType === 'false' ? <Loader2 className="w-5 h-5 animate-spin" /> : <XCircle className="w-5 h-5" />}
+                    {lang === 'id' ? 'Salah, Belum' : 'No, Incorrect'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* RIGHT COLUMN: Info Cards */}
@@ -298,14 +346,14 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
               <div className="absolute right-0 top-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-10 -mt-10 opacity-50"></div>
               <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
                 <CalendarClock className="w-5 h-5 text-blue-500" />
-                Masa Optimal
+                {lang === 'id' ? 'Masa Optimal' : 'Optimal Window'}
               </h4>
               <div className="flex gap-4">
                 <div className="w-1.5 h-auto bg-blue-500 rounded-full"></div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Masa Subur Berikutnya:</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{lang === 'id' ? 'Masa Subur Berikutnya:' : 'Next Fertile Window:'}</p>
                   <p className="text-sm font-bold text-gray-900">{fmtDate(prediction.window_awal, lang)}</p>
-                  <p className="text-xs font-semibold text-gray-400 my-0.5">sampai dengan</p>
+                  <p className="text-xs font-semibold text-gray-400 my-0.5">{lang === 'id' ? 'sampai dengan' : 'until'}</p>
                   <p className="text-sm font-bold text-gray-900">{fmtDate(prediction.window_akhir, lang)}</p>
                 </div>
               </div>
@@ -320,7 +368,7 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
                 </h4>
                 <div className="bg-green-50 border border-green-200 px-3 py-1 rounded-full flex items-center gap-1.5 cursor-help" title="Tingkat akurasi prediksi AI">
                   <BrainCircuit className="w-3.5 h-3.5 text-green-600" />
-                  <span className="text-xs font-bold text-green-700">{conf}% Akurasi</span>
+                  <span className="text-xs font-bold text-green-700">{conf}% {lang === 'id' ? 'Akurasi' : 'Accuracy'}</span>
                 </div>
               </div>
               
@@ -330,8 +378,8 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
                     <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900">Siklus Berjalan (Aktif)</p>
-                    <p className="text-xs text-gray-500 font-medium mt-0.5">Sapi dalam fase {prediction.in_window_now ? 'Birahi (Subur)' : 'Diestrus (Tidak Subur)'}.</p>
+                    <p className="text-sm font-bold text-gray-900">{lang === 'id' ? 'Siklus Berjalan (Aktif)' : 'Current Cycle (Active)'}</p>
+                    <p className="text-xs text-gray-500 font-medium mt-0.5">{lang === 'id' ? 'Sapi dalam fase' : 'Cow in phase'} {prediction.in_window_now ? (lang === 'id' ? 'Birahi (Subur)' : 'Estrus (Fertile)') : (lang === 'id' ? 'Diestrus (Tidak Subur)' : 'Diestrus (Infertile)')}.</p>
                   </div>
                 </div>
 
@@ -340,8 +388,8 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
                     <Target className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900">AI / Inseminasi</p>
-                    <p className="text-xs text-gray-500 font-medium mt-0.5">Rekomendasi IB pada tanggal <strong className="text-blue-600">{fmtDate(prediction.prediksi_ib_optimal, lang)}</strong>.</p>
+                    <p className="text-sm font-bold text-gray-900">{lang === 'id' ? 'AI / Inseminasi' : 'AI / Insemination'}</p>
+                    <p className="text-xs text-gray-500 font-medium mt-0.5">{lang === 'id' ? 'Rekomendasi IB pada tanggal' : 'AI recommended on'} <strong className="text-blue-600">{fmtDate(prediction.prediksi_ib_optimal, lang)}</strong>.</p>
                   </div>
                 </div>
 
@@ -349,13 +397,43 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
                 <div className="mt-4 pt-4 border-t border-gray-100 flex items-start gap-2">
                   <Info className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
                   <p className="text-xs text-gray-400 font-medium leading-relaxed">
-                    Akurasi akan terus meningkat secara otomatis setiap kali data aktivitas atau kawin sapi terbaru ditambahkan ke sistem.
+                    {lang === 'id' ? 'Akurasi akan terus meningkat secara otomatis setiap kali data aktivitas atau kawin sapi terbaru ditambahkan ke sistem.' : 'Accuracy will automatically increase every time new cattle activity or mating data is added to the system.'}
                   </p>
                 </div>
               </div>
             </div>
 
           </div>
+
+          {/* Konfirmasi Card (Muncul kalau lewat masa optimal dan belum dikonfirmasi) - Desktop Only */}
+          {prediction && prediction.verified === null && prediction.prediksi_ib_optimal && (new Date(prediction.prediksi_ib_optimal).getTime() <= Date.now() - 24 * 3600000) && (
+            <div className="hidden lg:block lg:col-span-12 bg-red-50 rounded-3xl border border-red-100 shadow-sm p-6 relative overflow-hidden group">
+              <h4 className="text-lg font-bold text-red-900 mb-2">
+                {lang === 'id' ? 'Konfirmasi Tindakan' : 'Action Confirmation'}
+              </h4>
+              <p className="text-sm text-red-700 mb-5">
+                {lang === 'id' ? 'Masa optimal IB (Inseminasi Buatan) untuk sapi ini telah lewat. Apakah prediksi ini benar terjadi dan sudah dilakukan tindakan?' : 'The optimal AI (Artificial Insemination) window for this cow has passed. Was this prediction accurate and has the action been taken?'}
+              </p>
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <button
+                  onClick={() => handleFeedback(true)}
+                  disabled={submittingType !== null}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all disabled:opacity-50"
+                >
+                  {submittingType === 'true' ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                  {lang === 'id' ? 'Benar, Sudah' : 'Yes, Confirmed'}
+                </button>
+                <button
+                  onClick={() => handleFeedback(false)}
+                  disabled={submittingType !== null}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-gray-50 text-red-600 font-bold rounded-xl border border-red-200 transition-all disabled:opacity-50"
+                >
+                  {submittingType === 'false' ? <Loader2 className="w-5 h-5 animate-spin" /> : <XCircle className="w-5 h-5" />}
+                  {lang === 'id' ? 'Salah, Belum' : 'No, Incorrect'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

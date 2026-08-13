@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Search, 
   Filter, 
@@ -109,13 +110,7 @@ export default function SensorData() {
   useEffect(() => {
     if (deviceModalData) {
       setLiveBattery(deviceModalData.battery);
-      setLiveSignal('Bagus');
-      const interval = setInterval(() => {
-        const signals = ['Bagus', 'Sedang', 'Bagus', 'Kuat', 'Bagus', 'Lemah'];
-        setLiveSignal(signals[Math.floor(Math.random() * signals.length)]);
-        setLiveBattery(prev => Math.max(0, Math.min(100, prev + (Math.random() > 0.5 ? 1 : -1))));
-      }, 1500);
-      return () => clearInterval(interval);
+      setLiveSignal(deviceModalData.signal || 'Bagus');
     }
   }, [deviceModalData]);
 
@@ -348,67 +343,67 @@ export default function SensorData() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-24 lg:pb-8">
+    <div className="page-enter overflow-x-hidden" style={{ paddingBottom: '100px' }}>
       
       {/* ── 0. HEADER (PINE GREEN CYBER DESIGN) ── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 md:pt-8 md:pb-8 shadow-lg relative overflow-hidden text-white flex flex-col justify-between md:mx-0 mb-4" 
+        className="rounded-t-none rounded-b-[40px] px-6 lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4" 
         style={{ 
-          paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
-          background: 'linear-gradient(180deg, #115e59 0%, #022c22 100%)'
+          paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
+          background: 'linear-gradient(180deg, #115e59 0%, #022c22 100%)',
+          minHeight: 'calc(env(safe-area-inset-top) + 280px)'
         }}
       >
         {/* Subtle Cyber/Pulse Accent */}
         <Activity 
-          size={180} 
-          strokeWidth={1.5} 
-          className="absolute -top-10 -right-10 text-[#34d399] opacity-[0.08] pointer-events-none" 
+          size={320} 
+          strokeWidth={0.8} 
+          className="absolute -right-12 text-[#34d399] opacity-[0.08] pointer-events-none" 
+          style={{ top: 'calc(env(safe-area-inset-top) - 2rem)' }}
         />
 
-        <div className="flex justify-between items-start relative z-10">
-          <div className="w-full">
-            <div className="flex justify-between items-start mb-1">
-              <p className="text-[10px] md:text-[11px] font-extrabold text-white uppercase tracking-wider">
-                {t.sensor_sub || 'PANTAU SUHU, AKTIVITAS, DAN STATUS BATERAI IOT COLLAR'}
-              </p>
-              <button 
-                onClick={() => setShowWidgetModal(true)}
-                className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-              >
-                <Settings2 size={16} />
-              </button>
-            </div>
-            <h1 className="text-[32px] md:text-[38px] font-black tracking-tight leading-none mb-6">
+        {/* Title area */}
+        <div className="flex justify-between items-start relative z-10 mb-6">
+          <div>
+            <p className="text-[10px] font-black opacity-90 mb-1 uppercase tracking-widest text-teal-200">
+              {t.sensor_sub || 'PANTAU SUHU, AKTIVITAS, DAN STATUS BATERAI IOT COLLAR.'}
+            </p>
+            <h1 className="text-[32px] font-black tracking-tight leading-none">
               {t.sensor_title || 'Data Sensor'}
             </h1>
-            
-            {/* Quick Stats (Customizable Grid) */}
-            <div className="grid grid-cols-3 gap-2 w-full">
-              {selectedWidgets.map(widgetId => {
-                const w = widgetOptions[widgetId];
-                if (!w) return null;
-                const Icon = w.icon;
-                return (
-                  <div key={widgetId} className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 md:p-3 flex flex-col gap-1.5 md:gap-2">
-                    <div className="flex items-center gap-1.5 md:gap-2 text-white/80 overflow-hidden">
-                      <Icon size={14} className="flex-shrink-0" />
-                      <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider truncate">{w.label}</span>
-                    </div>
-                    <div className="flex items-baseline gap-0.5 md:gap-1">
-                      <span className="text-lg md:text-xl font-black">{w.value}</span>
-                      {w.subValue && <span className="text-[10px] md:text-xs font-medium text-white/60">{w.subValue}</span>}
-                      {w.unit && <span className="text-[10px] md:text-xs font-medium text-white/60">{w.unit}</span>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
+          <button 
+            onClick={() => setShowWidgetModal(true)}
+            className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors flex-shrink-0 ml-3 mt-1"
+          >
+            <Settings2 size={16} />
+          </button>
+        </div>
+
+        {/* Quick Stats (Customizable Grid) */}
+        <div className={`grid gap-3 w-full relative z-10 ${selectedWidgets.length === 1 ? 'grid-cols-1' : selectedWidgets.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+          {selectedWidgets.map(widgetId => {
+            const w = widgetOptions[widgetId];
+            if (!w) return null;
+            const Icon = w.icon;
+            return (
+              <div key={widgetId} className="bg-white/20 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-2xl p-4 flex flex-col items-center justify-center border border-white/30">
+                <Icon size={24} className="text-white mb-2 opacity-90" strokeWidth={1.5} />
+                <div className="flex items-baseline justify-center gap-1 mb-1">
+                  <span className="text-xl font-black leading-none text-white">{w.value}</span>
+                  {w.subValue && <span className="text-[10px] font-medium text-white/80">{w.subValue}</span>}
+                  {w.unit && <span className="text-[10px] font-medium text-white/80">{w.unit}</span>}
+                </div>
+                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide text-white">{w.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
+
       {/* ── NEW CONTAINERS ── */}
-      <div className="px-4 flex flex-col gap-4">
+      <div className="px-4 flex flex-col gap-4 -mt-[32px] relative z-20">
         {/* Container 2: Ringkasan Populasi & Sapi Bunting (Merged) */}
         <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm mb-4">
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-6">
@@ -648,16 +643,16 @@ export default function SensorData() {
             <table className="min-w-full divide-y divide-[var(--color-sage-light)]/30">
               <thead style={{ background: 'var(--bg-card)' }}>
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-gray-900 uppercase tracking-wider">
                     {t.sensor_table_cow_collar}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-gray-900 uppercase tracking-wider">
                     {t.sensor_table_activity}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-gray-900 uppercase tracking-wider">
                     {t.sensor_table_battery_signal}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-gray-900 uppercase tracking-wider">
                     {t.sensor_table_last_sync}
                   </th>
                   <th scope="col" className="relative px-6 py-3">
@@ -768,7 +763,7 @@ export default function SensorData() {
         </div>
 
         {/* Mobile Card List */}
-        <div className="block md:hidden space-y-3 p-4">
+        <div className="block lg:hidden space-y-3 p-4">
           {filteredTableData.length === 0 ? (
             <div className="text-center py-4 text-[var(--color-text-secondary)]">
               {t.sensor_empty}
@@ -910,11 +905,11 @@ export default function SensorData() {
       </div>
 
       {/* Widget Settings Modal */}
-      {showWidgetModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+      {showWidgetModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={(e) => e.stopPropagation()}>
           <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl animate-in zoom-in-95 duration-200">
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="font-bold text-gray-900">Atur Widget Data</h3>
+              <h3 className="font-bold text-gray-900">{lang === 'id' ? 'Atur Widget Data' : 'Configure Data Widgets'}</h3>
               <button 
                 onClick={() => setShowWidgetModal(false)}
                 className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
@@ -924,7 +919,12 @@ export default function SensorData() {
             </div>
             
             <div className="p-4 max-h-[60vh] overflow-y-auto">
-              <p className="text-xs text-gray-500 mb-4">Pilih 3 metrik utama untuk ditampilkan di bagian atas (Data Sensor). Anda telah memilih <span className="font-bold text-[var(--accent)]">{selectedWidgets.length}/3</span>.</p>
+              <p className="text-xs text-gray-500 mb-4">
+                {lang === 'id'
+                  ? 'Pilih hingga 3 metrik utama untuk ditampilkan di bagian atas (Data Sensor). Anda telah memilih '
+                  : 'Select up to 3 main metrics to display at the top. You have selected '}
+                <span className="font-bold text-[var(--accent)]">{selectedWidgets.length}/3</span>.
+              </p>
               
               <div className="space-y-2">
                 {Object.values(widgetOptions).map(w => {
@@ -942,13 +942,13 @@ export default function SensorData() {
                         onChange={(e) => {
                           if (e.target.checked) {
                             if (selectedWidgets.length >= 3) {
-                              toast.error('Maksimal 3 widget yang dapat dipilih');
+                              toast.error(lang === 'id' ? 'Maksimal 3 widget yang dapat dipilih' : 'Maximum of 3 widgets can be selected');
                               return;
                             }
                             setSelectedWidgets([...selectedWidgets, w.id]);
                           } else {
                             if (selectedWidgets.length <= 1) {
-                              toast.error('Minimal 1 widget harus dipilih');
+                              toast.error(lang === 'id' ? 'Minimal 1 widget harus dipilih' : 'At least 1 widget must be selected');
                               return;
                             }
                             setSelectedWidgets(selectedWidgets.filter(id => id !== w.id));
@@ -973,11 +973,12 @@ export default function SensorData() {
                 onClick={() => setShowWidgetModal(false)}
                 className="w-full py-3 bg-[var(--accent)] text-white rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all"
               >
-                Simpan Pengaturan
+                {lang === 'id' ? 'Simpan Pengaturan' : 'Save Settings'}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Unduh Laporan */}

@@ -93,7 +93,7 @@ export const useTernakStore = create((set, get) => ({
       
       // Fetch full reproduksi history if possible
       try {
-        const reproRes = await axiosInstance.get(`/scanner/reproduksi/${rfid}`);
+        const reproRes = await axiosInstance.get(`/reproduction/history/${rfid}`);
         data.reproduksi = reproRes.data.data || reproRes.data || [];
       } catch (e) {
         // Silently fail if history endpoint not found

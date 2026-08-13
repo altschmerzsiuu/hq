@@ -18,9 +18,18 @@ import SeeAllLink from '@/components/ui/SeeAllLink';
 import PairCollarModal from '@/components/shared/PairCollarModal';
 import AddCowModal from '@/components/shared/AddCowModal';
 import ReproModal from '@/components/shared/ReproModal';
+import ScanModal from '@/components/scan/ScanModal';
 import { useTernakStore } from '@/store/useTernakStore';
 import { useAuthStore } from '@/store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const getProbColor = (prob) => {
+  if (prob < 40) return "text-green-700 bg-green-100";
+  if (prob < 60) return "text-blue-700 bg-blue-100";
+  if (prob < 80) return "text-yellow-700 bg-yellow-100";
+  if (prob < 90) return "text-orange-700 bg-orange-100";
+  return "text-red-700 bg-red-100";
+};
 
 // ── CONFIDENCE RING SVG ──────────────────────────────────────
 function ConfidenceRing({ value = null, label }) {
@@ -253,7 +262,7 @@ function TrenAktivitasChart({ lang }) {
 
 
 // ── INTELLIGENCE CARD ────────────────────────────────────────
-function IntelCard({ urgency, icon: Icon, title, sub, conf, time, recommendation, t }) {
+function IntelCard({ urgency, icon: Icon, title, sub, conf, time, recommendation, cow_photo, t }) {
   const colorMap = {
     critical: { color: 'var(--red)', bg: 'var(--red-dim)', bar: 'intel-bar-red', badge: t.intel_critical_badge },
     monitor: { color: 'var(--amber)', bg: 'var(--amber-dim)', bar: 'intel-bar-amber', badge: t.intel_monitor_badge },
@@ -268,17 +277,26 @@ function IntelCard({ urgency, icon: Icon, title, sub, conf, time, recommendation
       background: 'var(--bg-surface)', border: '0.5px solid var(--border)',
       borderRadius: '10px', position: 'relative', overflow: 'hidden',
       transition: 'border-color 0.15s',
-    }}>
+      flexShrink: 0,
+      cursor: 'pointer'
+    }}
+    onClick={() => window.location.href = cow_id ? '/ternak/' + cow_id : '/estrus-prediction'}
+    className="hover:bg-gray-50 hover:border-gray-300"
+    >
       {/* Left accent bar */}
       <div className={bar} style={{ position: 'absolute', left: 0, top: '12px', bottom: '12px', width: '3px', borderRadius: '0 2px 2px 0' }} />
 
-      {/* Icon */}
+      {/* Icon or Photo */}
       <div style={{
         width: '34px', height: '34px', borderRadius: '8px',
         background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        marginLeft: '6px',
+        marginLeft: '6px', overflow: 'hidden'
       }}>
-        <Icon size={16} style={{ color }} />
+        {cow_photo ? (
+          <img src={cow_photo} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <Icon size={16} style={{ color }} />
+        )}
       </div>
 
       {/* Content */}
@@ -356,7 +374,7 @@ function StatusBadge({ status, t }) {
   );
 }
 // ── RECOMMENDATION CARD ──────────────────────────────────────
-function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, message, cow_id }) {
+function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, message, cow_id, cow_photo }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const actionName = title.split('—')[1]?.trim() || title;
@@ -382,14 +400,18 @@ function RecommendationCard({ title, badgeText, id, name, daysLeft, icon: Icon, 
   return (
     <div
       onClick={() => setIsExpanded(!isExpanded)}
-      className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col shadow-sm hover:border-[#2f7d31]/30 transition-all cursor-pointer relative overflow-hidden"
+      className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col shadow-sm hover:border-[#2f7d31]/30 transition-all cursor-pointer relative overflow-hidden flex-shrink-0"
     >
       <span className="absolute top-4 right-4 text-[10px] font-bold text-blue-600 border border-blue-200 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
         {badgeText}
       </span>
       <div className="flex items-start gap-3">
-        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-          <Icon size={20} className="text-blue-500" />
+        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {cow_photo ? (
+            <img src={cow_photo} alt={name} className="w-full h-full object-cover" />
+          ) : (
+            <Icon size={20} className="text-blue-500" />
+          )}
         </div>
         <div className="flex flex-col flex-1 min-w-0 pr-16">
           <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -680,65 +702,121 @@ function DashSlotCard({ slotType, activePopover, setActivePopover, slotId, stats
     <div className="flex-1 relative">
       <div
         onClick={handleClick}
-        className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-2.5 md:p-3 flex flex-col gap-1.5 md:gap-2 relative cursor-pointer hover:bg-white/20 transition-colors shadow-sm"
+        className="bg-white/20 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden group transition-all duration-300 border border-white/30 hover:bg-white/25 active:scale-95 cursor-pointer h-full"
       >
-        <div className="flex items-center gap-1.5 md:gap-2 text-white/80 overflow-hidden">
-          <Icon size={14} className="flex-shrink-0" />
-          <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider truncate">{label}</span>
-        </div>
-        <div className="flex items-baseline gap-0.5 md:gap-1">
-          <span className="text-lg md:text-xl font-black">{count}</span>
-        </div>
+        <Icon size={24} className="text-white mb-2 opacity-90" strokeWidth={1.5} />
+        <span className="text-xl font-black leading-none mb-1 text-white">{count}</span>
+        <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide text-white">{label}</span>
       </div>
 
-      {activePopover === slotId && (
-        <div
-          className="absolute top-full left-0 mt-2 w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-xl z-50 overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="max-h-64 overflow-y-auto p-3 flex flex-col gap-2">
-            {popoverData.map((c, i) => {
-              let statusText = 'Sehat';
-              let colorClass = 'text-[var(--accent)]';
+      {activePopover === slotId && createPortal(
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={(e) => { e.stopPropagation(); setActivePopover(null); }}>
+          <div className="bg-[var(--bg-surface)] rounded-2xl w-full max-w-sm overflow-hidden shadow-xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-[var(--border)] flex justify-between items-center bg-gray-50/50">
+              <h3 className="font-bold text-[var(--text-1)]">{label}</h3>
+              <button
+                onClick={() => setActivePopover(null)}
+                className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-3 flex flex-col gap-2">
+              {popoverData.map((c, i) => {
+                let statusText = 'Sehat';
+                let colorClass = 'text-[var(--accent)]';
 
-              const cowId = c.cow_id || c.id || c.rfid;
-              const cowName = c.cow_name || c.name || c.nama || (cowId ? `Sapi #${cowId.slice(0, 5)}` : (c.title ? c.title.split('—')[0].trim() : 'Unknown'));
+                const cowId = c.cow_id || c.id || c.rfid;
+                const cowName = c.cow_name || c.name || c.nama || (cowId ? `Sapi #${cowId.slice(0, 5)}` : (c.title ? c.title.split('—')[0].trim() : 'Unknown'));
 
-              if (c.status === 'estrus' || c.urgency === 'critical') {
-                statusText = c.status === 'estrus' ? 'Birahi' : 'Kritis';
-                colorClass = 'text-[var(--red)]';
-              } else if (c.status === 'monitor' || c.urgency === 'monitor') {
-                statusText = c.rawStatus ? c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase() : 'Butuh Perawatan';
-                colorClass = 'text-[var(--amber)]';
-              } else if (c.rawStatus && c.rawStatus.toLowerCase() !== 'sehat' && c.rawStatus.toLowerCase() !== 'normal') {
-                statusText = c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase();
-              }
+                if (c.status === 'estrus' || c.urgency === 'critical') {
+                  statusText = c.status === 'estrus' ? 'Birahi' : 'Kritis';
+                  colorClass = 'text-[var(--red)]';
+                } else if (c.status === 'monitor' || c.urgency === 'monitor') {
+                  statusText = c.rawStatus ? c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase() : 'Butuh Perawatan';
+                  colorClass = 'text-[var(--amber)]';
+                } else if (c.rawStatus && c.rawStatus.toLowerCase() !== 'sehat' && c.rawStatus.toLowerCase() !== 'normal') {
+                  statusText = c.rawStatus.charAt(0).toUpperCase() + c.rawStatus.slice(1).toLowerCase();
+                }
 
-              const shortId = cowId ? (cowId.length > 5 ? cowId.slice(0, 5).toUpperCase() + '...' : cowId.toUpperCase()) : 'N/A';
+                const shortId = cowId ? (cowId.length > 5 ? cowId.slice(0, 5).toUpperCase() + '...' : cowId.toUpperCase()) : 'N/A';
 
-              return (
-                <div key={i} onClick={() => navigate('/ternak', { state: { selectedCowId: cowId, fromDashboard: true } })} className="flex items-center justify-between p-2 rounded-xl hover:bg-[var(--bg-card)] cursor-pointer text-left">
-                  <div>
-                    <p className="text-sm font-bold text-[var(--text-1)] m-0">{cowName}</p>
-                    <p className={`text-[12px] font-semibold m-0 mt-0.5 ${colorClass}`}>
-                      {shortId} <span className="text-[var(--text-3)] font-normal mx-1">|</span> {statusText}
-                    </p>
+                return (
+                  <div key={i} onClick={() => navigate('/ternak', { state: { selectedCowId: cowId, fromDashboard: true } })} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-green-200 hover:bg-green-50/50 cursor-pointer text-left transition-colors group">
+                    <div>
+                      <p className="text-sm font-bold text-[var(--text-1)] m-0">{cowName}</p>
+                      <p className={`text-[12px] font-semibold m-0 mt-0.5 ${colorClass}`}>
+                        {shortId} <span className="text-[var(--text-3)] font-normal mx-1">|</span> {statusText}
+                      </p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-400 group-hover:text-green-600 group-hover:border-green-200 transition-colors">
+                      <ChevronRight size={16} />
+                    </div>
                   </div>
-                  <ChevronRight size={16} className="text-[var(--text-3)]" />
+                );
+              })}
+              {popoverData.length === 0 && (
+                <div className="py-8 text-center flex flex-col items-center gap-2">
+                  <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300">
+                    <Database size={24} />
+                  </div>
+                  <p className="text-sm font-medium text-gray-400">{lang === 'id' ? 'Belum ada data sapi' : 'No cattle data yet'}</p>
                 </div>
-              );
-            })}
+              )}
+            </div>
+            <div className="border-t border-[var(--border)] p-4 bg-gray-50/50">
+              <button
+                onClick={() => navigate('/ternak')}
+                className="w-full py-3.5 text-[14px] font-bold text-white bg-[var(--color-primary)] rounded-[14px] hover:bg-[var(--color-primary-hover)] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                {lang === 'id' ? 'Lihat Lebih Lanjut' : 'View Details'} <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
-          <div className="border-t border-[var(--border)] p-2">
-            <button
-              onClick={() => navigate('/ternak')}
-              className="w-full py-2.5 text-[13px] font-bold text-[var(--text-1)] bg-[var(--bg-card)] rounded-[14px] hover:bg-[var(--border)] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-            >
-              Lihat Lebih Lanjut <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
+        </div>,
+        document.body
       )}
+    </div>
+  );
+}
+
+// ── AUTO SCROLL CAROUSEL ────────────────────────────────────────
+function AutoScrollCarousel({ children, maxHeight = '280px' }) {
+  const scrollRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let intervalId;
+    if (!isHovered) {
+      intervalId = setInterval(() => {
+        if (el.scrollTop >= el.scrollHeight - el.clientHeight - 1) {
+          el.scrollTop = 0;
+        } else {
+          el.scrollTop += 1;
+        }
+      }, 40); // Slightly slower for vertical readability
+    }
+    return () => clearInterval(intervalId);
+  }, [isHovered]);
+
+  return (
+    <div 
+      ref={scrollRef}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={() => setIsHovered(true)}
+      onTouchEnd={() => setIsHovered(false)}
+      className="custom-scrollbar"
+      style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', paddingRight: '4px', maxHeight, width: '100%' }}
+    >
+      {React.Children.map(children, child => {
+        if (!child) return child;
+        return React.cloneElement(child, {
+          style: { ...(child.props?.style || {}), flexShrink: 0 }
+        });
+      })}
     </div>
   );
 }
@@ -771,6 +849,7 @@ export default function Dashboard() {
   const [isReproModalOpen, setIsReproModalOpen] = useState(false);
   const [isEstrusModalOpen, setIsEstrusModalOpen] = useState(false);
   const [isAddCowModalOpen, setIsAddCowModalOpen] = useState(false);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
 
   const [selectedWidgets, setSelectedWidgets] = useState(() => {
@@ -907,9 +986,9 @@ export default function Dashboard() {
         if (intelData && intelData.length > 0) {
           const mappedIntel = intelData.map(item => {
             let urgency = 'info';
-            if (item.severity?.toUpperCase() === 'HIGH' || item.type?.toLowerCase() === 'estrus' || item.severity?.toLowerCase() === 'critical') {
+            if (item.severity?.toUpperCase() === 'HIGH' || item.type?.toLowerCase() === 'estrus' || item.type?.toLowerCase() === 'estrus_alert' || item.severity?.toLowerCase() === 'critical') {
               urgency = 'critical';
-            } else if (item.severity?.toUpperCase() === 'WARNING' || item.type?.toLowerCase() === 'anomaly' || item.severity?.toLowerCase() === 'battery') {
+            } else if (item.severity?.toUpperCase() === 'WARNING' || item.severity?.toUpperCase() === 'MEDIUM' || item.type?.toLowerCase() === 'anomaly' || item.type?.toLowerCase() === 'health_warning' || item.severity?.toLowerCase() === 'battery') {
               urgency = 'monitor';
             } else {
               urgency = 'scheduled';
@@ -917,10 +996,10 @@ export default function Dashboard() {
 
             // Determine Icon
             let cardIcon = Zap;
-            if (item.type?.toLowerCase() === 'estrus') cardIcon = Zap;
+            if (item.type?.toLowerCase() === 'estrus' || item.type?.toLowerCase() === 'estrus_alert') cardIcon = Zap;
             else if (item.type?.toLowerCase() === 'insemination') cardIcon = Calendar;
             else if (item.type?.toLowerCase() === 'pregnancy') cardIcon = CheckCircle2;
-            else if (item.type?.toLowerCase() === 'anomaly' || item.type?.toLowerCase() === 'anomal') cardIcon = Thermometer;
+            else if (item.type?.toLowerCase() === 'anomaly' || item.type?.toLowerCase() === 'anomal' || item.type?.toLowerCase() === 'health_warning') cardIcon = Thermometer;
             else if (item.type?.toLowerCase() === 'battery') cardIcon = BatteryWarning;
 
             // Title
@@ -928,6 +1007,7 @@ export default function Dashboard() {
             let title = prefix;
             switch (item.type?.toLowerCase()) {
               case 'estrus':
+              case 'estrus_alert':
                 title += lang === 'id' ? 'Deteksi Birahi' : 'Estrus Detected';
                 break;
               case 'insemination':
@@ -938,7 +1018,8 @@ export default function Dashboard() {
                 break;
               case 'anomaly':
               case 'anomal':
-                title += lang === 'id' ? 'Anomali Suhu Tubuh' : 'Temperature Anomaly';
+              case 'health_warning':
+                title += lang === 'id' ? 'Peringatan Kesehatan' : 'Health Warning';
                 break;
               case 'battery':
                 title += lang === 'id' ? 'Baterai Kalung Lemah' : 'Collar Battery Low';
@@ -951,12 +1032,14 @@ export default function Dashboard() {
             let recommendation = '';
             switch (item.type?.toLowerCase()) {
               case 'estrus':
+              case 'estrus_alert':
                 recommendation = lang === 'id'
                   ? 'Segera lakukan Inseminasi Buatan (IB) dalam jendela optimal 12-18 jam.'
                   : 'Schedule Artificial Insemination (AI) within the optimal 12-18 hour window.';
                 break;
               case 'anomaly':
               case 'anomal':
+              case 'health_warning':
                 recommendation = lang === 'id'
                   ? 'Isolasi sapi dan hubungi dokter hewan untuk check-up kesehatan.'
                   : 'Isolate the cow and contact the veterinarian for a health check-up.';
@@ -992,6 +1075,7 @@ export default function Dashboard() {
               time: formatRelativeTime(item.timestamp, lang),
               cow_id: item.cow_id,
               cow_name: item.cow_name || item.title?.split('—')[0]?.trim() || '',
+              cow_photo: item.cow_photo || item.foto,
             };
           });
           setIntel(mappedIntel);
@@ -1065,99 +1149,105 @@ export default function Dashboard() {
 
   return (
     <>
-      <div onClick={() => setActivePopover(null)} className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div onClick={() => setActivePopover(null)} className="page-enter overflow-x-hidden" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
         {/* ─── MOBILE VIEW (OLD DESIGN) ─── */}
         <div className="flex lg:hidden flex-col gap-4">
           {/* ─── 0. GREETING (GRADIENT DESIGN) ─── */}
           <div
-            className="rounded-t-none rounded-b-[40px] p-6 shadow-lg relative text-white flex flex-col justify-between mb-2"
+            className="rounded-t-none rounded-b-[40px] px-6 lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4"
             style={{
-              paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
-              minHeight: '180px',
-              background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)'
+              paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
+              background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)',
+              minHeight: 'calc(env(safe-area-inset-top) + 280px)'
             }}
           >
             {/* Subtle Sun Accent */}
-            <div className="absolute inset-0 overflow-hidden rounded-b-[40px] pointer-events-none">
-              <Sun
-                size={180}
-                strokeWidth={1}
-                className="absolute -top-10 -right-10 text-white opacity-5 rotate-12"
-              />
-            </div>
+            <Sun
+              size={320}
+              strokeWidth={0.8}
+              className="absolute -right-12 text-white opacity-[0.12] rotate-12 pointer-events-none"
+              style={{ top: 'calc(env(safe-area-inset-top) - 2rem)' }}
+            />
 
-            <div className="flex justify-between items-start relative z-10">
-              <div className="w-full">
-                <div className="flex justify-between items-start w-full">
-                  <div>
-                    <p className="text-[14px] font-medium opacity-90 mb-0.5">{greetingText}</p>
-                    <h1 className="text-[26px] font-black tracking-tight leading-none mb-2">{userName}</h1>
-                    <p className="text-[13px] font-medium opacity-80 max-w-[80%]">
-                      {lang === 'id' ? 'Ini ringkasan kondisi peternakanmu hari ini' : 'Here is your herd condition summary today'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowWidgetModal(true); }}
-                    className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-                  >
-                    <Settings2 size={16} />
-                  </button>
-                </div>
+            {/* Title area */}
+            <div className="flex justify-between items-start relative z-10 mb-6">
+              <div>
+                <p className="text-[10px] font-black opacity-90 mb-1 uppercase tracking-widest text-green-200">
+                  {lang === 'id' ? 'RINGKASAN KONDISI PETERNAKAN ANDA.' : 'YOUR HERD CONDITION SUMMARY.'}
+                </p>
+                <h1 className="text-[32px] font-black tracking-tight leading-none">{greetingText}, {userName}!</h1>
               </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowWidgetModal(true); }}
+                className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors flex-shrink-0 ml-3 mt-1"
+              >
+                <Settings2 size={16} />
+              </button>
             </div>
 
-            <div className="flex items-center gap-3 mt-8 relative z-20">
-              <DashSlotCard
-                slotType={selectedWidgets[0] || 'total'}
-                activePopover={activePopover} setActivePopover={setActivePopover}
-                slotId="slot1" stats={stats} herd={herd} intel={intel}
-                sapiList={herd} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
-              />
-              <DashSlotCard
-                slotType={selectedWidgets[1] || 'sehat'}
-                activePopover={activePopover} setActivePopover={setActivePopover}
-                slotId="slot2" stats={stats} herd={herd} intel={intel}
-                sapiList={herd} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
-              />
+            {/* Stat cards — dynamic columns to match selected widgets */}
+            <div className={`grid gap-3 w-full relative z-10 ${selectedWidgets.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {selectedWidgets.map((widgetId, index) => (
+                <DashSlotCard
+                  key={widgetId}
+                  slotType={widgetId}
+                  activePopover={activePopover} setActivePopover={setActivePopover}
+                  slotId={`slot${index+1}`} stats={stats} herd={herd} intel={intel}
+                  sapiList={herd} navigate={navigate} lang={lang} t={t} ChevronRight={ChevronRight}
+                />
+              ))}
             </div>
           </div>
 
           {/* ─── 2. URGENT ACTIONS CONTAINER ─── */}
-          <div className="px-4 flex flex-col gap-4">
-            <div style={{
-              background: 'var(--bg-surface)',
-              border: '0.5px solid var(--border)',
-              borderRadius: '12px',
-              padding: '20px 22px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-            }}>
-              {/* Subheader */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
-                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-1)', fontFamily: 'DM Sans, sans-serif' }}>
-                  {lang === 'id' ? 'Ada hal yang perlu kamu perhatikan hari ini' : 'Things to pay attention to today'}
-                </span>
-              </div>
-
-              {/* Urgent Cards */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').length > 0 ? (
-                  intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').map((card, i) => (
-                    <IntelCard key={i} {...card} t={t} />
-                  ))
-                ) : (
-                  <div style={{
-                    padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
-                    borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
-                  }}>
-                    {lang === 'id' ? 'Kondisi semua ternak terpantau aman. Tidak ada tindakan mendesak yang perlu dilakukan sekarang.' : 'All cattle conditions are monitored safe. No urgent action needed now.'}
+          <div className="px-4 flex flex-col gap-4 -mt-[48px] relative z-20">
+            {(() => {
+              const urgentItems = intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor');
+              const hasUrgent = urgentItems.length > 0;
+              
+              return (
+                <div style={{
+                  background: hasUrgent ? '#FEF2F2' : '#F0FDF4',
+                  border: hasUrgent ? '0.5px solid #FECACA' : '0.5px solid #BBF7D0',
+                  borderRadius: '12px',
+                  padding: '20px 22px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}>
+                  {/* Subheader */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    {hasUrgent ? (
+                      <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
+                    ) : (
+                      <CheckCircle2 size={18} className="text-green-600" />
+                    )}
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-1)', fontFamily: 'DM Sans, sans-serif' }}>
+                      {hasUrgent 
+                        ? (lang === 'id' ? 'Ada yang perlu kamu perhatikan' : 'Needs your attention')
+                        : (lang === 'id' ? 'Peternakanmu aman hari ini' : 'Your farm is safe today')}
+                    </span>
                   </div>
-                )}
-              </div>
-            </div>
+
+                  {/* Urgent Cards */}
+                  {hasUrgent ? (
+                    <AutoScrollCarousel>
+                      {urgentItems.map((card, i) => (
+                        <IntelCard key={i} {...card} t={t} />
+                      ))}
+                    </AutoScrollCarousel>
+                  ) : (
+                    <div style={{
+                      padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
+                      borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
+                    }}>
+                      {lang === 'id' ? 'Semua ternak terpantau dalam kondisi baik.' : 'All cattle are monitored in good condition.'}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* ─── 3. QUICK ACTIONS ─── */}
             <div>
@@ -1182,10 +1272,10 @@ export default function Dashboard() {
             marginBottom: '24px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-              <p className="eyebrow" style={{ marginBottom: 0 }}>REKOMENDASI LAINNYA</p>
+              <p className="eyebrow" style={{ marginBottom: 0 }}>{lang === 'id' ? 'UNTUK HARI INI' : 'FOR TODAY'}</p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <AutoScrollCarousel>
               {intel.filter(card => card.urgency === 'scheduled').length > 0 ? (
                 <>
                   {intel.filter(card => card.urgency === 'scheduled')
@@ -1224,7 +1314,7 @@ export default function Dashboard() {
                   {lang === 'id' ? 'Semua kondisi ternak hari ini dalam keadaan baik. Tidak ada rekomendasi tambahan untuk saat ini.' : 'All cattle conditions today are good. No additional recommendations at this time.'}
                 </div>
               )}
-            </div>
+            </AutoScrollCarousel>
           </div>
 
           {/* ─── 6. MOBILE WIDGETS ─── */}
@@ -1266,21 +1356,22 @@ export default function Dashboard() {
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-[var(--text-1)] text-[15px]">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
                 <button onClick={() => navigate('/estrus-prediction')} className="text-[11px] font-bold text-gray-500 hover:text-[var(--accent)] flex items-center gap-1">
-                  Lihat semua <ChevronRight size={12} />
+                  {lang === 'id' ? 'Lihat semua' : 'View all'} <ChevronRight size={12} />
                 </button>
               </div>
-              <p className="text-[11px] text-gray-500 mb-4">{lang === 'id' ? '(Dalam 3 Hari Ke Depan)' : '(Next 3 Days)'}</p>
+              {/* Empty placeholder for margin if needed, or just remove */}
               
               <div className="flex flex-col gap-3">
-                {activeEstrusPredictions.length > 0 ? activeEstrusPredictions.slice(0, 3).map((pred, i) => (
+                {[...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).length > 0 ? [...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).slice(0, 3).map((pred, i) => (
                   <div 
                     key={i} 
-                    onClick={() => navigate('/ternak', { state: { selectedCowId: pred.cow_id || pred.id, fromDashboard: true } })}
-                    className="grid grid-cols-3 items-center border-b border-gray-100 pb-2.5 last:border-0 last:pb-0 cursor-pointer hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
+                    onClick={() => navigate('/ternak', { state: { selectedCowId: pred.cow_id || pred.id, fromDashboard: true, activeTab: 'estrus' } })}
+                    className="flex justify-between items-center border-b border-gray-100 pb-2.5 last:border-0 last:pb-0 cursor-pointer hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
                   >
-                    <span className="text-[13px] font-bold text-gray-900 hover:text-[var(--accent)] transition-colors text-left truncate pr-2">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
-                    <span className="text-[12px] text-gray-600 text-center">Hari ke-{i + 1}</span>
-                    <span className="text-[12px] font-medium text-gray-900 text-right">{Math.round((pred.confidence_final || 0.8) * 100)}%</span>
+                    <span className="text-[13px] font-bold text-gray-900 hover:text-[var(--accent)] transition-colors truncate pr-2">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
+                    <span className={`text-[12px] font-medium px-2 py-0.5 rounded-full ${getProbColor(Math.round((pred.confidence_final || 0.8) * 100))}`}>
+                      {Math.round((pred.confidence_final || 0.8) * 100)}% Probabilitas
+                    </span>
                   </div>
                 )) : (
                   <div className="text-[12px] text-gray-500 text-center py-2">{lang === 'id' ? 'Tidak ada prediksi terdekat.' : 'No upcoming predictions.'}</div>
@@ -1303,9 +1394,9 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="flex gap-3 mt-4 w-full justify-center">
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--color-primary)]"></div> Sehat</div>
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--color-primary)]"></div> {lang === 'id' ? 'Sehat' : 'Healthy'}</div>
                 <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--amber)]"></div> Monitor</div>
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--border)]"></div> Sakit</div>
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--border)]"></div> {lang === 'id' ? 'Sakit' : 'Sick'}</div>
               </div>
             </div>
 
@@ -1421,28 +1512,42 @@ export default function Dashboard() {
           {/* ROW 2: PERHATIAN + REKOMENDASI side by side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
             {/* PERHATIAN HARI INI */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
-              <div className="flex items-center gap-2">
-                <AlertTriangle size={16} className="text-red-500 flex-shrink-0" />
-                <span className="font-bold text-[var(--text-1)] text-[14px]">{lang === 'id' ? 'Perhatian yang harus dilakukan hari ini' : 'Attention required today'}</span>
-              </div>
-              <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar" style={{ maxHeight: '200px' }}>
-                {intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').length > 0 ? (
-                  intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor').map((card, i) => (
-                    <IntelCard key={i} {...card} t={t} />
-                  ))
-                ) : (
-                  <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text-2)] text-center">
-                    {lang === 'id' ? 'Kondisi semua ternak terpantau aman.' : 'All cattle conditions are monitored safe.'}
+            {(() => {
+              const urgentItems = intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor');
+              const hasUrgent = urgentItems.length > 0;
+              return (
+                <div className={`border rounded-2xl p-5 flex flex-col gap-3 shadow-sm ${hasUrgent ? 'bg-[#FEF2F2] border-[#FECACA]' : 'bg-[#F0FDF4] border-[#BBF7D0]'}`}>
+                  <div className="flex items-center gap-2">
+                    {hasUrgent ? (
+                      <AlertTriangle size={16} className="text-red-500 flex-shrink-0" />
+                    ) : (
+                      <CheckCircle2 size={16} className="text-green-600 flex-shrink-0" />
+                    )}
+                    <span className="font-bold text-[var(--text-1)] text-[14px]">
+                      {hasUrgent 
+                        ? (lang === 'id' ? 'Ada yang perlu kamu perhatikan' : 'Needs your attention')
+                        : (lang === 'id' ? 'Peternakanmu aman hari ini' : 'Your farm is safe today')}
+                    </span>
                   </div>
-                )}
-              </div>
-            </div>
+                  {hasUrgent ? (
+                    <AutoScrollCarousel maxHeight="220px">
+                      {urgentItems.map((card, i) => (
+                        <IntelCard key={i} {...card} t={t} />
+                      ))}
+                    </AutoScrollCarousel>
+                  ) : (
+                    <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text-2)] text-center">
+                      {lang === 'id' ? 'Semua ternak terpantau dalam kondisi baik.' : 'All cattle are monitored in good condition.'}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* REKOMENDASI LAINNYA */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
-              <span className="font-bold text-[var(--text-1)] text-[14px]">{lang === 'id' ? 'Rekomendasi Lainnya' : 'Other Recommendations'}</span>
-              <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar" style={{ maxHeight: '200px' }}>
+              <span className="font-bold text-[var(--text-1)] text-[14px]">{lang === 'id' ? 'Untuk hari ini' : 'For today'}</span>
+              <AutoScrollCarousel maxHeight="220px">
                 {intel.filter(card => card.urgency === 'scheduled').length > 0 ? (
                   intel.filter(card => card.urgency === 'scheduled').map((card, i) => {
                     let cowName = card.cow_name || "Sapi";
@@ -1468,7 +1573,7 @@ export default function Dashboard() {
                     {lang === 'id' ? 'Tidak ada rekomendasi tambahan untuk saat ini.' : 'No additional recommendations at this time.'}
                   </div>
                 )}
-              </div>
+              </AutoScrollCarousel>
             </div>
           </div>
 
@@ -1507,25 +1612,30 @@ export default function Dashboard() {
             </div>
 
             {/* Prediksi Birahi */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col">
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col h-full">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-[var(--text-1)] text-lg">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
+                <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{lang === 'id' ? '3 Hari Kedepan' : 'Next 3 Days'}</span>
               </div>
-              <p className="text-xs text-gray-500 mb-6">{lang === 'id' ? '(3 Hari ke Depan)' : '(Next 3 Days)'}</p>
               
-              <div className="flex flex-col gap-4 flex-1">
-                {activeEstrusPredictions.length > 0 ? activeEstrusPredictions.slice(0, 3).map((pred, i) => (
-                  <div key={i} className="flex justify-between items-center border-b border-gray-100 pb-3 last:border-0 last:pb-0">
-                    <span className="text-sm font-bold text-gray-900">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
-                    <span className="text-sm text-gray-600">Hari ke-{i + 1}</span>
-                    <span className="text-sm font-medium text-gray-900">{Math.round((pred.confidence_final || 0.8) * 100)}%</span>
+              <div className="flex flex-col gap-3 mt-4 flex-grow">
+                {[...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).length > 0 ? [...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).slice(0, 3).map((pred, i) => (
+                  <div 
+                    key={i} 
+                    onClick={() => navigate('/ternak', { state: { selectedCowId: pred.cow_id || pred.id, fromDashboard: true, activeTab: 'estrus' } })}
+                    className="flex justify-between items-center border-b border-gray-100 pb-3 last:border-0 last:pb-0 cursor-pointer active:bg-gray-50 transition-colors -mx-2 px-2 rounded-lg"
+                  >
+                    <span className="text-sm font-bold text-gray-900 truncate pr-2">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
+                    <span className={`text-[12px] font-medium px-2 py-0.5 rounded-full ${getProbColor(Math.round((pred.confidence_final || 0.8) * 100))}`}>
+                      {Math.round((pred.confidence_final || 0.8) * 100)}% Probabilitas
+                    </span>
                   </div>
                 )) : (
                   <div className="text-sm text-gray-500 text-center py-4">{lang === 'id' ? 'Tidak ada prediksi terdekat.' : 'No upcoming predictions.'}</div>
                 )}
               </div>
               <button onClick={() => navigate('/prediksi-estrus')} className="text-xs font-bold text-gray-500 hover:text-gray-900 text-left mt-auto flex items-center gap-1 transition-colors w-max">
-                Lihat semua <ChevronRight size={14} />
+                {lang === 'id' ? 'Lihat semua' : 'View all'} <ChevronRight size={14} />
               </button>
             </div>
 
@@ -1544,9 +1654,9 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="flex gap-4 mt-6 w-full justify-center pb-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]"></div> Sehat</div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]"></div> {lang === 'id' ? 'Sehat' : 'Healthy'}</div>
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--amber)]"></div> Monitor</div>
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--border)]"></div> Sakit</div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-2)]"><div className="w-2.5 h-2.5 rounded-full bg-[var(--border)]"></div> {lang === 'id' ? 'Sakit' : 'Sick'}</div>
               </div>
             </div>
           </div>
@@ -1694,8 +1804,8 @@ export default function Dashboard() {
                   </div>
 
                   <div className="space-y-3 mb-6">
-                    {activeEstrusPredictions.slice(0, 5).map((pred, idx) => {
-                      const prob = Math.round((pred.confidence_final || 0) * 100);
+                    {[...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).slice(0, 5).map((pred, idx) => {
+                      const prob = Math.round((pred.confidence_final || 0.8) * 100);
                       return (
                         <div
                           key={pred.id}
@@ -1708,8 +1818,10 @@ export default function Dashboard() {
                           <div className="flex items-center gap-3">
                             <div className={`w-2 h-2 rounded-full bg-[var(--color-accent)] ${idx === 0 ? 'animate-pulse' : ''}`} />
                             <div>
-                              <p className="font-bold text-gray-900">{pred.cow_name || 'Sapi'} | {pred.cow_id}</p>
-                              <p className="text-xs text-gray-500">Probabilitas: {prob}%</p>
+                              <p className="font-bold text-gray-900 mb-0.5">{pred.cow_name || 'Sapi'} | {pred.cow_id}</p>
+                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md inline-block ${getProbColor(prob)}`}>
+                                Probabilitas: {prob}%
+                              </span>
                             </div>
                           </div>
                           <ChevronRight size={16} className="text-gray-400" />
@@ -1730,11 +1842,11 @@ export default function Dashboard() {
             </>
           )}
           {/* Widget Settings Modal for Dashboard */}
-          {showWidgetModal && (
+          {showWidgetModal && createPortal(
             <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={(e) => e.stopPropagation()}>
               <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-xl animate-in zoom-in-95 duration-200">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                  <h3 className="font-bold text-gray-900">Atur Widget Beranda</h3>
+                  <h3 className="font-bold text-gray-900">{lang === 'id' ? 'Atur Widget Beranda' : 'Configure Home Widgets'}</h3>
                   <button
                     onClick={() => setShowWidgetModal(false)}
                     className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
@@ -1744,14 +1856,19 @@ export default function Dashboard() {
                 </div>
 
                 <div className="p-4 max-h-[60vh] overflow-y-auto">
-                  <p className="text-xs text-gray-500 mb-4">Pilih 2 metrik utama untuk ditampilkan di beranda. Anda telah memilih <span className="font-bold text-[var(--accent)]">{selectedWidgets.length}/2</span>.</p>
+                  <p className="text-xs text-gray-500 mb-4">
+                    {lang === 'id' 
+                      ? 'Pilih hingga 2 metrik utama untuk ditampilkan di beranda. Anda telah memilih '
+                      : 'Select up to 2 main metrics to display on the dashboard. You have selected '}
+                    <span className="font-bold text-[var(--accent)]">{selectedWidgets.length}/2</span>.
+                  </p>
 
                   <div className="space-y-2">
                     {[
-                      { id: 'total', label: 'Total Ternak', icon: Database, value: herd.length, unit: '' },
-                      { id: 'sehat', label: 'Kondisi Sehat', icon: CheckCircle2, value: herd.length, unit: '' },
-                      { id: 'estrus', label: 'Sedang Estrus', icon: Zap, value: stats.estrus ?? 0, unit: '' },
-                      { id: 'tindakan', label: 'Perlu Tindakan', icon: ShieldAlert, value: intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length, unit: '' }
+                      { id: 'total', label: lang === 'id' ? 'Total Ternak' : 'Total Cows', icon: Database, value: herd.length, unit: '' },
+                      { id: 'sehat', label: lang === 'id' ? 'Kondisi Sehat' : 'Healthy', icon: CheckCircle2, value: herd.length, unit: '' },
+                      { id: 'estrus', label: lang === 'id' ? 'Sedang Estrus' : 'In Estrus', icon: Zap, value: stats.estrus ?? 0, unit: '' },
+                      { id: 'tindakan', label: lang === 'id' ? 'Perlu Tindakan' : 'Action Needed', icon: ShieldAlert, value: intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length, unit: '' }
                     ].map(w => {
                       const isSelected = selectedWidgets.includes(w.id);
                       const Icon = w.icon;
@@ -1773,7 +1890,7 @@ export default function Dashboard() {
                                 }
                               } else {
                                 if (selectedWidgets.length <= 1) {
-                                  toast.error('Minimal 1 widget harus dipilih');
+                                  toast.error(lang === 'id' ? 'Minimal 1 widget harus dipilih' : 'At least 1 widget must be selected');
                                   return;
                                 }
                                 setSelectedWidgets(selectedWidgets.filter(id => id !== w.id));
@@ -1798,11 +1915,12 @@ export default function Dashboard() {
                     onClick={() => setShowWidgetModal(false)}
                     className="w-full py-3 bg-[var(--accent)] text-white rounded-xl font-bold hover:opacity-90 active:scale-[0.98] transition-all"
                   >
-                    Simpan Pengaturan
+                    {lang === 'id' ? 'Simpan Pengaturan' : 'Save Settings'}
                   </button>
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
 
           {/* ── ADD COW MODAL ── */}
@@ -1814,6 +1932,12 @@ export default function Dashboard() {
               // Optional: refresh dashboard data if needed
               fetchDashboardData();
             }}
+          />
+
+          {/* ── SCAN MODAL (DEV) ── */}
+          <ScanModal
+            isOpen={isScanModalOpen}
+            onClose={() => setIsScanModalOpen(false)}
           />
         </>,
         document.body

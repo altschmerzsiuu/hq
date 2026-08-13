@@ -62,7 +62,7 @@ const Toaster = ({ ...props }) => {
         offset={16}
         gap={8}
         icons={{
-          success: <CircleCheck className="h-5 w-5 text-[#FF7B1C]" />,
+          success: <CircleCheck className="h-5 w-5 text-[#2E7D32]" />,
           info: <Info className="h-5 w-5 text-blue-500" />,
           warning: <TriangleAlert className="h-5 w-5 text-amber-500" />,
           error: <OctagonX className="h-5 w-5 text-red-500" />,

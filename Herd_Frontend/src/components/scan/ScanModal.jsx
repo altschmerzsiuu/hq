@@ -406,63 +406,7 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
           </p>
 
           {/* TOMBOL SIMULASI HANYA MUNCUL DI MODE DEVELOPMENT */}
-          {import.meta.env.DEV && (
-            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-              <button
-                onClick={() => {
-                  setResult({
-                    hewan: {
-                      id: "849-201-B",
-                      nama: "Sapi Limosin 04",
-                      jenis: "Sapi Limosin - Betina",
-                      status_kesehatan: "Sehat",
-                      foto: "https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=2940&auto=format&fit=crop"
-                    },
-                    reproduksi: {
-                      tanggal_ib: "2026-08-12T00:00:00.000Z",
-                      pemberi_ib: "Dr. Budi",
-                      jumlah_ib: 2,
-                      birahi: "2026-08-10T00:00:00.000Z",
-                      bunting: "2026-09-01T00:00:00.000Z",
-                      hpl: "2027-05-20T00:00:00.000Z"
-                    }
-                  });
-                  setNotFound(false);
-                }}
-                style={{
-                  padding: '8px 12px',
-                  background: 'rgba(16,185,129,0.1)',
-                  color: 'var(--accent)',
-                  border: '1px solid var(--accent)',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-              >
-                [DEV] Berhasil
-              </button>
-              <button
-                onClick={() => {
-                  setResult(null);
-                  setRfid('1234567890');
-                  setNotFound(true);
-                }}
-                style={{
-                  padding: '8px 12px',
-                  background: 'rgba(239,68,68,0.1)',
-                  color: '#ef4444',
-                  border: '1px solid #ef4444',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-              >
-                [DEV] Tidak Terdaftar
-              </button>
-            </div>
-          )}
+          {/* DEV mockup buttons removed as requested */}
         </div>
       </div>
 
@@ -472,7 +416,7 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => { if (!loading) { setResult(null); setNotFound(false); setRfid(''); } }}
-            style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column' }}
+            style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
           >
             {loading ? (
               <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -484,26 +428,16 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
               </motion.div>
             ) : hewan ? (
               <motion.div
-                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-                drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.2}
-                onDragEnd={(e, info) => {
-                  if (info.offset.y > 80 || info.velocity.y > 500) { setResult(null); setNotFound(false); setRfid(''); }
-                  else if (info.offset.y < -80 || info.velocity.y < -500) { handleLanjutDetail(); }
-                }}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  marginTop: 'auto', background: 'var(--bg-surface)', borderRadius: '32px 32px 0 0',
-                  boxShadow: '0 -8px 40px rgba(0,0,0,0.15)', width: '100%',
-                  paddingBottom: '50vh', marginBottom: '-50vh', // Prevent floating bottom edge
-                  display: 'flex', flexDirection: 'column'
+                  background: 'var(--bg-surface)', borderRadius: '32px',
+                  boxShadow: '0 24px 48px rgba(0,0,0,0.2)', width: '100%', maxWidth: '400px',
+                  display: 'flex', flexDirection: 'column', overflow: 'hidden'
                 }}
               >
-                <div style={{ padding: '0 20px 32px', display: 'flex', flexDirection: 'column' }}>
-                  {/* Handle */}
-                  <div style={{ touchAction: 'none', display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '24px' }}>
-                    <div style={{ width: '44px', height: '5px', background: 'var(--border-2)', borderRadius: '99px' }} />
-                  </div>
+                <div style={{ padding: '32px 24px', display: 'flex', flexDirection: 'column' }}>
                   
                   {/* Content */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -549,47 +483,58 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
 
                       {reproduksi && (
                         <>
-                          <div style={{ width: '100%', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-                          <p style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <FileText size={12} /> Data Reproduksi Terbaru
-                          </p>
-                          
-                          {reproduksi.tanggal_ib && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={14} /> Tanggal IB</span>
-                              <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.tanggal_ib)}</span>
+                          <div style={{ width: '100%', borderTop: '1px solid var(--border)', margin: '8px 0' }} />
+                          <div style={{ width: '100%', background: 'var(--bg-surface)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                            <p style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 800, margin: '0 0 14px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                              <Activity size={16} color="var(--accent)" /> SIKLUS TERAKHIR
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px' }}>
+                              {reproduksi.birahi && (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>Tanggal Birahi</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.birahi)}</span>
+                                </div>
+                              )}
+                              {reproduksi.tanggal_ib && (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>Inseminasi {reproduksi.jumlah_ib ? `(Ke-${reproduksi.jumlah_ib})` : ''}</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.tanggal_ib)}</span>
+                                </div>
+                              )}
+                              {reproduksi.pemberi_ib && (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>Inseminator</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{reproduksi.pemberi_ib}</span>
+                                </div>
+                              )}
+                              {reproduksi.bunting && (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>Bunting</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.bunting)}</span>
+                                </div>
+                              )}
+                              {reproduksi.hpl && (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                                    <Baby size={12} /> HPL
+                                  </span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 800 }}>{formatDate(reproduksi.hpl)}</span>
+                                </div>
+                              )}
+                              {reproduksi.sapih && (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>Tanggal Sapih</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.sapih)}</span>
+                                </div>
+                              )}
+                              {reproduksi.catatan && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gridColumn: '1 / -1', marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed var(--border)' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500, marginBottom: '2px' }}>Catatan</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.4 }}>{reproduksi.catatan}</span>
+                                </div>
+                              )}
                             </div>
-                          )}
-                          {reproduksi.pemberi_ib && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Syringe size={14} /> Pemberi IB</span>
-                              <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{reproduksi.pemberi_ib}</span>
-                            </div>
-                          )}
-                          {reproduksi.jumlah_ib && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={14} /> Jumlah IB</span>
-                              <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>Ke-{reproduksi.jumlah_ib}</span>
-                            </div>
-                          )}
-                          {reproduksi.birahi && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Heart size={14} /> Tanggal Birahi</span>
-                              <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.birahi)}</span>
-                            </div>
-                          )}
-                          {reproduksi.bunting && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Activity size={14} /> Tanggal Bunting</span>
-                              <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.bunting)}</span>
-                            </div>
-                          )}
-                          {reproduksi.hpl && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}><Baby size={14} /> Perkiraan Lahir</span>
-                              <span style={{ fontSize: '14px', color: 'var(--accent)', fontWeight: 800 }}>{formatDate(reproduksi.hpl)}</span>
-                            </div>
-                          )}
+                          </div>
                         </>
                       )}
                     </div>
@@ -620,21 +565,16 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
               </motion.div>
             ) : notFound ? (
               <motion.div
-                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-                drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={0.2}
-                onDragEnd={(e, info) => { if (info.offset.y > 80 || info.velocity.y > 500) { setResult(null); setNotFound(false); setRfid(''); } }}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  marginTop: 'auto', background: 'var(--bg-surface)', borderRadius: '32px 32px 0 0',
-                  boxShadow: '0 -8px 40px rgba(0,0,0,0.15)', width: '100%',
-                  paddingBottom: '50vh', marginBottom: '-50vh', display: 'flex', flexDirection: 'column'
+                  background: 'var(--bg-surface)', borderRadius: '32px',
+                  boxShadow: '0 24px 48px rgba(0,0,0,0.2)', width: '100%', maxWidth: '400px',
+                  display: 'flex', flexDirection: 'column', overflow: 'hidden'
                 }}
               >
-                <div style={{ padding: '0 24px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                  <div style={{ touchAction: 'none', display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '24px', width: '100%' }}>
-                    <div style={{ width: '44px', height: '5px', background: 'var(--border-2)', borderRadius: '99px' }} />
-                  </div>
+                <div style={{ padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
 
                   <div style={{ display: 'inline-flex', padding: '16px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', marginBottom: '16px' }}>
                     <AlertCircle size={32} color="var(--error, #ef4444)" />

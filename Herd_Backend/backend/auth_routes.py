@@ -148,30 +148,35 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
 
 @router.post("/register", response_model=LoginResponse)
 async def register(user_data: UserRegister, response: Response, pool=Depends(get_db_pool_dependency)):
-    """Register new user with email and password"""
+    """Register new user with email and password. First user becomes 'owner' automatically."""
     async with pool.acquire() as conn:
         existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", user_data.email)
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
-        
+
         password_hash = hash_password(user_data.password)
+
+        # First registered user becomes the farm owner automatically
+        user_count = await conn.fetchval("SELECT COUNT(*) FROM users")
+        initial_role = 'owner' if user_count == 0 else 'viewer'
+
         user = await conn.fetchrow("""
             INSERT INTO users (email, full_name, password_hash, oauth_provider, role)
-            VALUES ($1, $2, $3, 'email', 'viewer')
+            VALUES ($1, $2, $3, 'email', $4)
             RETURNING id, email, full_name, role, created_at
-        """, user_data.email, user_data.full_name, password_hash)
-        
+        """, user_data.email, user_data.full_name, password_hash, initial_role)
+
         access_token = create_access_token({"sub": str(user['id']), "email": user['email'], "role": user['role'], "full_name": user['full_name']})
         refresh_token_str = create_refresh_token({"sub": str(user['id'])})
-        
+
         expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         await conn.execute("""
             INSERT INTO refresh_tokens (user_id, token, expires_at)
             VALUES ($1, $2, $3)
         """, user['id'], refresh_token_str, expires_at)
-        
+
         set_auth_cookies(response, access_token, refresh_token_str)
-        
+
         user_dict = dict(user)
         user_dict["has_pin"] = False
         user_dict.pop("password_hash", None)
@@ -192,20 +197,20 @@ async def login(request: Request, credentials: UserLogin, response: Response, po
         user = await conn.fetchrow("SELECT * FROM users WHERE email = $1 AND is_active = true", credentials.email)
         if not user or not user['password_hash'] or not verify_password(credentials.password, user['password_hash']):
             raise HTTPException(status_code=401, detail="Invalid credentials")
-        
+
         await conn.execute("UPDATE users SET last_login_at = NOW() WHERE id = $1", user['id'])
-        
+
         access_token = create_access_token({"sub": str(user['id']), "email": user['email'], "role": user['role'], "full_name": user['full_name']})
         refresh_token_str = create_refresh_token({"sub": str(user['id'])})
-        
+
         expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         await conn.execute("""
             INSERT INTO refresh_tokens (user_id, token, expires_at)
             VALUES ($1, $2, $3)
         """, user['id'], refresh_token_str, expires_at)
-        
+
         set_auth_cookies(response, access_token, refresh_token_str)
-        
+
         has_pin = False
         pin_record = await conn.fetchrow("SELECT 1 FROM user_pins WHERE user_id = $1", user['id'])
         if pin_record:
@@ -233,15 +238,15 @@ async def google_auth(request_data: GoogleAuthRequest, response: Response, pool=
             if resp.status_code != 200:
                 raise HTTPException(status_code=401, detail=f"Invalid Google token info response (status: {resp.status_code})")
             google_data = resp.json()
-            
+
             import os
             expected_client_id = os.getenv("GOOGLE_CLIENT_ID")
-            
+
             # Print debug logs in backend terminal to help diagnose Client ID mismatch
             if google_data.get("aud") != expected_client_id:
                 print(f"🔑 [GOOGLE OAUTH] Token Aud mismatch detected")
                 raise HTTPException(status_code=401, detail="Invalid token audience")
-            
+
             email = google_data.get("email")
             name = google_data.get("name")
             picture = google_data.get("picture")
@@ -254,32 +259,35 @@ async def google_auth(request_data: GoogleAuthRequest, response: Response, pool=
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=401, detail=f"Google authentication failed: {str(e)}")
-    
+
     async with pool.acquire() as conn:
         user = await conn.fetchrow("SELECT * FROM users WHERE email = $1", email)
         if not user:
+            # First registered user becomes the farm owner automatically
+            user_count = await conn.fetchval("SELECT COUNT(*) FROM users")
+            initial_role = 'owner' if user_count == 0 else 'viewer'
             user = await conn.fetchrow("""
                 INSERT INTO users (email, full_name, oauth_provider, oauth_id, profile_picture_url, role)
-                VALUES ($1, $2, 'google', $3, $4, 'viewer')
+                VALUES ($1, $2, 'google', $3, $4, $5)
                 RETURNING id, email, full_name, role, profile_picture_url
-            """, email, name, google_id, picture)
+            """, email, name, google_id, picture, initial_role)
         else:
             await conn.execute("""
                 UPDATE users SET last_login_at = NOW(), profile_picture_url = COALESCE(profile_picture_url, $2)
                 WHERE id = $1
             """, user['id'], picture)
-        
+
         access_token = create_access_token({"sub": str(user['id']), "email": user['email'], "role": user['role'], "full_name": user['full_name']})
         refresh_token_str = create_refresh_token({"sub": str(user['id'])})
-        
+
         expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         await conn.execute("""
             INSERT INTO refresh_tokens (user_id, token, expires_at)
             VALUES ($1, $2, $3)
         """, user['id'], refresh_token_str, expires_at)
-        
+
         set_auth_cookies(response, access_token, refresh_token_str)
-        
+
         has_pin = False
         pin_record = await conn.fetchrow("SELECT 1 FROM user_pins WHERE user_id = $1", user['id'])
         if pin_record:
@@ -425,12 +433,8 @@ async def delete_account(current_user: dict = Depends(get_current_user)):
     try:
         pool = await get_db_pool()
         async with pool.acquire() as conn:
-            # PostgreSQL ON DELETE CASCADE will handle related data if configured
-            # Otherwise, we just delete the user.
             result = await conn.execute("DELETE FROM users WHERE id = $1", user_id)
             
-            # Optional: Delete profile picture from Supabase if exists
-            # We don't block if it fails
             profile_url = current_user.get("profile_picture_url")
             if profile_url and "supabase" in profile_url:
                 try:

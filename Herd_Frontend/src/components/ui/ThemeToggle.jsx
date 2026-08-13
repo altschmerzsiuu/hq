@@ -5,12 +5,12 @@ import useSettingsStore from '@/store/settingsStore';
 import { toast } from '@/store/toastStore';
 
 export default function ThemeToggle() {
-  const { theme, toggleTheme, language } = useSettingsStore();
+  const { theme, toggleTheme, lang } = useSettingsStore();
   const isDark = theme === 'dark';
 
   const handleChange = (e) => {
     e.preventDefault();
-    const msg = language === 'id' ? 'Mode Gelap masih dalam tahap pengembangan 🚧' : 'Dark Mode is still under development 🚧';
+    const msg = lang === 'id' ? 'Mode Gelap masih dalam tahap pengembangan 🚧' : 'Dark Mode is still under development 🚧';
     toast.info(msg);
   };
 

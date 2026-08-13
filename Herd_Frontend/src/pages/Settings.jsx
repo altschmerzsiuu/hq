@@ -159,6 +159,7 @@ export default function Settings() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('worker');
   const [teamLoading, setTeamLoading] = useState(false);
+  const [tempPasswordModal, setTempPasswordModal] = useState(null); // { email, password }
 
   const inputClass = "w-full min-h-[46px] px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2f7d31]/20 focus:border-[#2f7d31] transition-all shadow-sm";
   const labelClass = "block text-[11px] font-black text-gray-500 mb-2 uppercase tracking-wider";
@@ -353,14 +354,20 @@ export default function Settings() {
     if (!inviteName || !inviteEmail) return;
     setTeamLoading(true);
     try {
-      await axiosInstance.post('/admin/users/invite', {
+      const res = await axiosInstance.post('/admin/users/invite', {
         email: inviteEmail, full_name: inviteName, role: inviteRole,
       });
-      toast.success(lang === 'id' ? `Undangan dikirim ke ${inviteEmail}!` : `Invitation sent to ${inviteEmail}!`);
+      // Show temp password to admin so they can share it
+      if (res.data?.temp_password) {
+        setTempPasswordModal({ email: inviteEmail, password: res.data.temp_password });
+      } else {
+        toast.success(lang === 'id' ? `Akun berhasil dibuat untuk ${inviteEmail}!` : `Account created for ${inviteEmail}!`);
+      }
       setInviteName(''); setInviteEmail('');
       loadTeamMembers();
-    } catch {
-      toast.error(lang === 'id' ? 'Gagal mengundang anggota tim.' : 'Failed to invite team member.');
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      toast.error(detail || (lang === 'id' ? 'Gagal mengundang anggota tim.' : 'Failed to invite team member.'));
     } finally {
       setTeamLoading(false);
     }
@@ -375,6 +382,21 @@ export default function Settings() {
     } catch {
       toast.error(lang === 'id' ? 'Gagal memperbarui role.' : 'Failed to update role.');
       setTeamLoading(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberId, memberName) => {
+    const confirmMsg = lang === 'id'
+      ? `Hapus ${memberName} dari tim?`
+      : `Remove ${memberName} from the team?`;
+    if (!window.confirm(confirmMsg)) return;
+    try {
+      await axiosInstance.delete(`/admin/users/${memberId}`);
+      toast.success(lang === 'id' ? 'Anggota berhasil dihapus.' : 'Member removed successfully.');
+      loadTeamMembers();
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      toast.error(detail || (lang === 'id' ? 'Gagal menghapus anggota.' : 'Failed to remove member.'));
     }
   };
 
@@ -407,12 +429,12 @@ export default function Settings() {
   return (
     <>
     <div 
-      className="bg-[#f8f9fa] md:bg-transparent md:fixed md:inset-0 md:z-[100] md:flex md:items-center md:justify-center md:bg-black/50 md:backdrop-blur-sm animate-in fade-in duration-500 pb-24 md:pb-0 px-0 md:p-4 min-h-screen"
+      className="bg-[#f8f9fa] lg:bg-transparent lg:fixed lg:inset-0 lg:z-[100] lg:flex lg:items-center lg:justify-center lg:bg-black/50 lg:backdrop-blur-sm animate-in fade-in duration-500 pb-24 lg:pb-0 px-0 lg:p-4 min-h-screen"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       
       {/* Content Area */}
-      <div className="relative w-full md:max-w-5xl md:h-[85vh] md:bg-white md:rounded-[32px] md:shadow-2xl md:flex md:flex-row md:overflow-hidden md:border md:border-slate-200">
+      <div className="relative w-full lg:max-w-5xl lg:h-[85vh] lg:bg-white lg:rounded-[32px] lg:shadow-2xl lg:flex lg:flex-row lg:overflow-hidden lg:border lg:border-slate-200">
         
         {/* Close Button on Desktop */}
         <button onClick={() => window.history.back()} className="hidden lg:flex absolute top-6 left-6 z-50 p-2 rounded-full bg-black/5 hover:bg-black/10 text-gray-500 hover:text-gray-800 transition-colors">
@@ -420,22 +442,22 @@ export default function Settings() {
         </button>
 
         {loading && (
-          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-30 flex items-center justify-center md:rounded-[32px]">
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-30 flex items-center justify-center lg:rounded-[32px]">
             <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
           </div>
         )}
 
-        <div className="w-full h-full md:flex md:flex-row">
+        <div className="w-full h-full lg:flex lg:flex-row">
 
           {/* ══════════════════════════════════════════════════════════════════
               MAIN MENU
           ══════════════════════════════════════════════════════════════════ */}
-          <div className={`md:w-[350px] md:flex-shrink-0 md:border-r md:border-gray-200 bg-slate-50 md:overflow-y-auto ${activeTab === 'main' ? 'block' : 'hidden md:block'}`}>
-            <div className="space-y-8 animate-in fade-in duration-300 pt-4 px-4 md:p-6 md:pt-16">
+          <div className={`lg:w-[350px] lg:flex-shrink-0 lg:border-r lg:border-gray-200 bg-slate-50 lg:overflow-y-auto ${activeTab === 'main' ? 'block' : 'hidden lg:block'}`}>
+            <div className="space-y-8 animate-in fade-in duration-300 pt-4 px-4 lg:p-6 lg:pt-16">
               
               {/* ── Avatar + Name (CLEAN WHITE DESIGN WITH ACCENT) ── */}
               <div 
-                className="bg-gradient-to-b from-[#2f7d31]/10 to-white border border-gray-200 rounded-3xl p-6 py-8 md:py-10 shadow-sm relative overflow-hidden mb-6 flex flex-col items-center justify-center text-gray-900 md:min-h-[280px] min-h-[200px]" 
+                className="bg-gradient-to-b from-[#2f7d31]/10 to-white border border-gray-200 rounded-3xl p-6 py-8 lg:py-10 shadow-sm relative overflow-hidden mb-6 flex flex-col items-center justify-center text-gray-900 lg:min-h-[280px] min-h-[200px]" 
               >
                   <div className="relative z-10 mb-5 mt-2 cursor-pointer group" onClick={() => setActiveTab('profile')}>
                     <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center bg-gray-100 border-[3px] border-[#2f7d31]/20 shadow-sm group-hover:scale-105 group-active:scale-95 transition-all overflow-hidden">
@@ -556,7 +578,7 @@ export default function Settings() {
           {/* ══════════════════════════════════════════════════════════════════
               RIGHT PANE CONTENT AREA
           ══════════════════════════════════════════════════════════════════ */}
-          <div className={`md:flex-1 md:overflow-y-auto bg-transparent md:bg-white md:p-8 ${activeTab !== 'main' ? 'block' : 'hidden md:flex md:flex-col md:items-center md:justify-center'}`}>
+          <div className={`lg:flex-1 lg:overflow-y-auto bg-transparent lg:bg-white lg:p-8 ${activeTab !== 'main' ? 'block' : 'hidden lg:flex lg:flex-col lg:items-center lg:justify-center'}`}>
             
             {activeTab === 'main' && (
               <div className="hidden lg:flex flex-col items-center justify-center text-gray-400">
@@ -569,7 +591,7 @@ export default function Settings() {
               TAB 1 — GENERAL: Profile + Farm Details
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'profile' && (
-            <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
+            <form onSubmit={handleSaveGeneral} className="space-y-4 animate-in fade-in duration-300 pt-4 lg:pt-6 px-0 lg:px-0">
               
               {/* Header: Back Button & Title & Save Button */}
               <div className="relative flex items-center justify-center mb-6 h-10 w-full">
@@ -601,8 +623,8 @@ export default function Settings() {
               {/* Personal Info Container */}
               <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm relative mt-2">
                 <div className="px-5 pt-5 pb-2 border-b border-gray-100 flex items-center gap-2 relative z-10">
-                  <User className="w-4 h-4 md:w-5 md:h-5 text-[#2f7d31]" />
-                  <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#2f7d31]">
+                  <User className="w-4 h-4 lg:w-5 lg:h-5 text-[#2f7d31]" />
+                  <h3 className="text-xs lg:text-sm font-black uppercase tracking-wider text-[#2f7d31]">
                     {lang === 'id' ? 'INFORMASI PERSONAL' : 'PERSONAL INFORMATION'}
                   </h3>
                 </div>
@@ -643,11 +665,11 @@ export default function Settings() {
 
               {/* ── Section: Farm Details ── */}
               <div className="bg-white border border-gray-200 rounded-3xl shadow-sm relative overflow-hidden mt-6">
-                <Globe className="absolute -right-4 -bottom-4 w-32 h-32 md:w-40 md:h-40 text-[#2f7d31] opacity-5 pointer-events-none" />
+                <Globe className="absolute -right-4 -bottom-4 w-32 h-32 lg:w-40 lg:h-40 text-[#2f7d31] opacity-5 pointer-events-none" />
                 
                 <div className="px-5 pt-5 pb-2 border-b border-gray-100 flex items-center gap-2 relative z-10">
-                  <Globe className="w-4 h-4 md:w-5 md:h-5 text-[#2f7d31]" />
-                  <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#2f7d31]">
+                  <Globe className="w-4 h-4 lg:w-5 lg:h-5 text-[#2f7d31]" />
+                  <h3 className="text-xs lg:text-sm font-black uppercase tracking-wider text-[#2f7d31]">
                     {t.settings_farm_details}
                   </h3>
                 </div>
@@ -704,7 +726,7 @@ export default function Settings() {
               TAB 2 — NOTIFICATIONS
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'notifications' && (
-            <div className="space-y-4 animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
+            <div className="space-y-4 animate-in fade-in duration-300 pt-4 lg:pt-6 px-0 lg:px-0">
               <div className="flex items-center relative mb-4">
                 <button type="button" onClick={() => setActiveTab('main')} className="lg:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
@@ -845,8 +867,8 @@ export default function Settings() {
               TAB 3 — SECURITY
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
-              <div className="relative flex items-center justify-center mb-6 h-10 w-full md:max-w-lg">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 lg:pt-6 px-0 lg:px-0">
+              <div className="relative flex items-center justify-center mb-6 h-10 w-full lg:max-w-lg">
                 <button type="button" onClick={() => handleBackNavigation('main')} className="lg:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
@@ -857,7 +879,7 @@ export default function Settings() {
                   </button>
                 </div>
               </div>
-              <div className="w-full md:max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm">
+              <div className="w-full lg:max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
                   <h2 className="text-lg font-bold text-gray-900 font-display flex items-center gap-2">
                     <Key className="w-5 h-5 text-[#2f7d31]" />
@@ -903,10 +925,10 @@ export default function Settings() {
               TAB 4 — TEAM MANAGEMENT
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'team' && (
-            <div className="space-y-5 animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
+            <div className="space-y-5 animate-in fade-in duration-300 pt-4 lg:pt-6 px-0 lg:px-0">
 
               {/* ── Mobile back header (hidden on md+) ── */}
-              <div className="flex items-center relative md:hidden mb-4">
+              <div className="flex items-center relative lg:hidden mb-4">
                 <button type="button" onClick={() => setActiveTab('main')} className="absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors">
                   <ChevronLeft className="w-5 h-5 text-gray-700" />
                 </button>
@@ -925,7 +947,7 @@ export default function Settings() {
                   <UserPlus className="w-4 h-4" /> {t.settings_invite_title}
                 </h3>
                 {/* Desktop: 2 inputs side-by-side */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   <input
                     type="text"
                     value={inviteName}
@@ -989,22 +1011,41 @@ export default function Settings() {
                         <tr className="border-b border-[var(--border)] bg-slate-50 dark:bg-slate-900/60 text-[9px] font-black uppercase text-[var(--text-3)] tracking-wider">
                           <th className="px-5 py-3">{t.settings_table_name}</th>
                           <th className="px-5 py-3">{t.settings_table_email}</th>
-                          <th className="px-5 py-3 text-right">{t.settings_table_role}</th>
+                          <th className="px-5 py-3">{t.settings_table_role}</th>
+                          <th className="px-5 py-3"></th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border)]">
                         {teamMembers.map(m => (
-                          <tr key={m.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                            <td className="px-5 py-4 font-bold text-sm text-[var(--text-1)]">{m.full_name || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}</td>
+                      <tr key={m.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                                  {(m.full_name || m.email || '?')[0].toUpperCase()}
+                                </div>
+                                <span className="font-bold text-sm text-[var(--text-1)]">{m.full_name || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}</span>
+                              </div>
+                            </td>
                             <td className="px-5 py-4 text-xs font-mono text-[var(--text-3)]">{m.email}</td>
-                            <td className="px-5 py-4 text-right">
+                            <td className="px-5 py-4">
                               {m.role === 'owner'
                                 ? <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full font-bold text-[9px] uppercase tracking-wider">{t.settings_role_owner}</span>
-                                : <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs text-right cursor-pointer">
+                                : <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs cursor-pointer">
                                     <option value="worker">{t.settings_role_worker}</option>
                                     <option value="admin">{t.settings_role_admin}</option>
                                   </select>
                               }
+                            </td>
+                            <td className="px-5 py-4 text-right">
+                              {m.role !== 'owner' && (
+                                <button
+                                  onClick={() => handleRemoveMember(m.id, m.full_name || m.email)}
+                                  className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                  title={lang === 'id' ? 'Hapus anggota' : 'Remove member'}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -1026,13 +1067,21 @@ export default function Settings() {
                           <p className="text-sm font-bold text-[var(--text-1)] truncate">{m.full_name || (lang === 'id' ? 'Tanpa Nama' : 'Unnamed')}</p>
                           <p className="text-[11px] text-[var(--text-3)] truncate">{m.email}</p>
                         </div>
-                        <div className="shrink-0">
+                        <div className="shrink-0 flex items-center gap-2">
                           {m.role === 'owner'
                             ? <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-bold text-[9px] uppercase">{t.settings_role_owner}</span>
-                            : <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs cursor-pointer text-right">
-                                <option value="worker">{t.settings_role_worker}</option>
-                                <option value="admin">{t.settings_role_admin}</option>
-                              </select>
+                            : <>
+                                <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs cursor-pointer text-right">
+                                  <option value="worker">{t.settings_role_worker}</option>
+                                  <option value="admin">{t.settings_role_admin}</option>
+                                </select>
+                                <button
+                                  onClick={() => handleRemoveMember(m.id, m.full_name || m.email)}
+                                  className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                              </>
                           }
                         </div>
                       </div>
@@ -1047,14 +1096,14 @@ export default function Settings() {
               TAB 5 — APPEARANCE
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'appearance' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
-              <div className="w-full md:max-w-lg mb-4 relative flex items-center">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 lg:pt-6 px-0 lg:px-0">
+              <div className="w-full lg:max-w-lg mb-4 relative flex items-center">
                 <button type="button" onClick={() => setActiveTab('main')} className="lg:hidden absolute left-0 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
                 <h2 className="w-full text-center text-lg font-bold text-gray-900">{lang === 'id' ? 'Tampilan' : 'Appearance'}</h2>
               </div>
-              <div className="w-full md:max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm space-y-6">
+              <div className="w-full lg:max-w-lg bg-white border border-gray-200 p-6 rounded-3xl shadow-sm space-y-6">
                 
                 {/* Theme Setting */}
                 <div>
@@ -1117,8 +1166,8 @@ export default function Settings() {
               TAB 6 — HELP CENTRE
           ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'help' && (
-            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 md:pt-6 px-0 md:px-0">
-              <div className="w-full md:max-w-3xl mb-4 relative flex items-center">
+            <div className="flex flex-col items-center justify-start min-h-[400px] animate-in fade-in duration-300 pt-4 lg:pt-6 px-0 lg:px-0">
+              <div className="w-full lg:max-w-3xl mb-4 relative flex items-center">
                 <button type="button" onClick={() => {
                   if (helpView !== 'menu') setHelpView('menu');
                   else setActiveTab('main');
@@ -1131,7 +1180,7 @@ export default function Settings() {
                   {helpView === 'contact' ? (lang === 'id' ? 'Hubungi Kami' : 'Contact Us') : ''}
                 </h2>
               </div>
-              <div className="w-full md:max-w-3xl">
+              <div className="w-full lg:max-w-3xl">
                 
                 {/* 1. Main Help View */}
                 {helpView === 'menu' && (
@@ -1238,6 +1287,53 @@ export default function Settings() {
               }} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors">
                 {lang === 'id' ? 'Buang' : 'Discard'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TEMP PASSWORD MODAL ── */}
+      {tempPasswordModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+            <div className="p-5 border-b border-gray-100 bg-green-50">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 text-green-700 rounded-xl">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div>
+                  <p className="font-black text-gray-900 text-sm">{lang === 'id' ? 'Akun Berhasil Dibuat!' : 'Account Created!'}</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">{tempPasswordModal.email}</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-gray-600">
+                {lang === 'id'
+                  ? 'Bagikan kata sandi sementara ini kepada anggota baru. Mereka dapat mengubahnya setelah masuk pertama kali.'
+                  : 'Share this temporary password with the new member. They can change it after their first login.'}
+              </p>
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">{lang === 'id' ? 'Kata Sandi Sementara' : 'Temporary Password'}</p>
+                <p className="text-lg font-black text-gray-900 tracking-widest font-mono">{tempPasswordModal.password}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard?.writeText(tempPasswordModal.password);
+                    toast.success(lang === 'id' ? 'Disalin!' : 'Copied!');
+                  }}
+                  className="flex-1 py-3 border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors"
+                >
+                  {lang === 'id' ? 'Salin' : 'Copy'}
+                </button>
+                <button
+                  onClick={() => setTempPasswordModal(null)}
+                  className="flex-1 py-3 bg-[var(--accent)] text-white rounded-xl font-bold text-sm hover:opacity-90 transition-all"
+                >
+                  {lang === 'id' ? 'Mengerti' : 'Got it'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

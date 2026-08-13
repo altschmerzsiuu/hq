@@ -46,10 +46,11 @@ from chat_routes import router as chat_router
 from report_routes import router as report_router
 from routers.estrus_report import router as estrus_report_router
 from routers.scanner import router as scanner_router
+# from team_routes import router as team_router  # Disabled — feature in development
 from telegram_bot.bot import start_telegram_bot, stop_telegram_bot
 
 # Load environment variables
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
 
 # ── Startup Environment Validation ────────────────────────────────────────────
 def _validate_env():
@@ -188,6 +189,7 @@ app.include_router(profile_router)
 app.include_router(chat_router) 
 app.include_router(estrus_report_router, prefix="/api")
 app.include_router(scanner_router)
+# app.include_router(team_router)  # Disabled — feature in development
 
 # ── Global Exception Handlers ─────────────────────────────────────────────────
 
@@ -1582,7 +1584,7 @@ async def get_notifications(
                 count_params = [user_id, type_filter]
  
             logs_q = f"""
-                SELECT n.id, n.cow_id, h.nama AS cow_name,
+                SELECT n.id, n.cow_id, h.nama AS cow_name, h.foto AS cow_photo,
                        n.type, n.message, n.severity, n.timestamp
                 FROM notifications n
                 LEFT JOIN hewan h ON h.id = n.cow_id

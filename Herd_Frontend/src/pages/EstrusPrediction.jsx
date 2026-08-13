@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Wand2,
   BrainCircuit,
@@ -86,6 +86,16 @@ export default function EstrusPrediction() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab,    setActiveTab]    = useState('aktif'); // 'aktif' | 'konfirmasi'
   const [calDate,      setCalDate]      = useState(new Date());
+  const [selectedCalDate, setSelectedCalDate] = useState(null);
+  const [hoveredCalDate, setHoveredCalDate] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = () => {
+       if (selectedCalDate) setSelectedCalDate(null);
+    };
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, [selectedCalDate]);
 
   // ─ Fetch predictions ──────────────────────────────────────────────────────
   const fetchPredictions = useCallback(async (showLoader = true) => {
@@ -93,6 +103,10 @@ export default function EstrusPrediction() {
     try {
       const res = await axiosInstance.get('/estrus-predictions?status=all&limit=100');
       const data = Array.isArray(res.data) ? res.data : [];
+      // Sort data by highest probability
+      data.sort((a, b) => {
+        return (b.confidence_final || 0.8) - (a.confidence_final || 0.8);
+      });
       setPredictions(data);
     } catch (err) {
       console.error('Gagal fetch prediksi:', err);
@@ -106,11 +120,20 @@ export default function EstrusPrediction() {
     window.scrollTo(0, 0);
     fetchPredictions();
   }, [fetchPredictions]);
+  const [predictStage, setPredictStage] = useState('');
 
   // ─ Run prediction engine ──────────────────────────────────────────────────
   const handleRunPredict = async () => {
     setIsPredicting(true);
+    setPredictStage(lang === 'id' ? 'Menghubungkan ke Model AI...' : 'Connecting to AI Model...');
     try {
+      await new Promise(r => setTimeout(r, 1500));
+      setPredictStage(lang === 'id' ? 'Menganalisis Sensor Akselerometer...' : 'Analyzing Accelerometer Sensor...');
+      await new Promise(r => setTimeout(r, 2000));
+      setPredictStage(lang === 'id' ? 'Menghitung Probabilitas Estrus...' : 'Calculating Estrus Probability...');
+      await new Promise(r => setTimeout(r, 1500));
+      setPredictStage(lang === 'id' ? 'Menyinkronkan Hasil...' : 'Syncing Results...');
+
       const res = await axiosInstance.post('/estrus-predictions/run');
       const { processed, errors } = res.data || {};
       if (errors > 0) {
@@ -127,6 +150,7 @@ export default function EstrusPrediction() {
       handleError(err, 'jalankan prediksi estrus');
     } finally {
       setIsPredicting(false);
+      setPredictStage('');
     }
   };
 
@@ -191,18 +215,22 @@ export default function EstrusPrediction() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-24 lg:pb-8">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-24 lg:pb-8 overflow-x-hidden">
 
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 p-6 pt-[86px] md:pt-8 shadow-lg relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
-        style={{ background: 'linear-gradient(135deg, #be123c 0%, #881337 100%)' }}
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 px-6 md:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
+        style={{ 
+          paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
+          background: 'linear-gradient(135deg, #be123c 0%, #881337 100%)' 
+        }}
       >
         {/* Subtle Background Accent */}
         <Target 
-          size={240} 
-          strokeWidth={1} 
-          className="absolute -top-10 -right-10 text-white opacity-[0.08] rotate-12 pointer-events-none" 
+          size={320} 
+          strokeWidth={0.8} 
+          className="absolute -right-12 text-white opacity-[0.08] rotate-12 pointer-events-none" 
+          style={{ top: 'calc(env(safe-area-inset-top) - 2rem)' }}
         />
 
         <div className="flex flex-col sm:flex-row sm:items-stretch justify-between gap-4 relative z-10 min-h-[80px]">
@@ -222,7 +250,7 @@ export default function EstrusPrediction() {
           >
             <RefreshCw size={20} className={isPredicting ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} />
             <div className="text-left flex flex-col">
-              <span className="text-[14px] leading-tight">{isPredicting ? t.prediction_run_analyzing : t.prediction_run_btn}</span>
+              <span className="text-[14px] leading-tight">{isPredicting ? (predictStage || t.prediction_run_analyzing) : t.prediction_run_btn}</span>
               <span className="text-[10px] font-normal opacity-80 leading-tight tracking-wide mt-1">
                 {lang === 'id' ? 'Terakhir: Baru saja' : 'Last sync: Just now'}
               </span>
@@ -236,7 +264,7 @@ export default function EstrusPrediction() {
         {/* Card 1: Sapi Dalam Pemantauan */}
         <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
           <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">{lang === 'id' ? 'Sapi Dalam Pemantauan' : 'Cows Monitored'}</p>
-          <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">{predictions.length}</p>
+          <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">{new Set(predictions.map(p => p.cow_id)).size}</p>
           <p className="text-[10px] font-medium text-[var(--text-3)]">{lang === 'id' ? 'Terhubung sensor' : 'Sensors Connected'}</p>
         </div>
 
@@ -342,13 +370,80 @@ export default function EstrusPrediction() {
                         text = '#fff';
                      }
 
+                     const dateObj = new Date(calDate.getFullYear(), calDate.getMonth(), dateNum);
+                     const isHovered = hoveredCalDate?.getTime() === dateObj.getTime();
+                     const isSelected = selectedCalDate?.getTime() === dateObj.getTime();
+                     const showTooltip = (isHovered || isSelected) && (hasEstrus || isApproaching);
+
                      return (
                         <div 
                            key={i} 
-                           className="text-xs font-semibold w-8 h-8 flex items-center justify-center mx-auto rounded-full cursor-pointer hover:bg-[var(--bg-hover)]"
-                           style={{ background: bg, color: text, border: ring }}
+                           className="relative flex justify-center"
+                           onMouseEnter={() => setHoveredCalDate(dateObj)}
+                           onMouseLeave={() => setHoveredCalDate(null)}
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             if (isSelected) setSelectedCalDate(null);
+                             else setSelectedCalDate(dateObj);
+                           }}
                         >
-                           {i + 1}
+                           <div 
+                              className={`text-xs font-semibold w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-[var(--bg-hover)] ${isSelected ? 'ring-2 ring-offset-1 ring-blue-500' : ''}`}
+                              style={{ background: bg, color: text, border: ring }}
+                           >
+                              {i + 1}
+                           </div>
+
+                           {/* Popover / Tooltip */}
+                           {showTooltip && (
+                              <div 
+                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-max min-w-[140px] max-w-[220px] bg-white/95 backdrop-blur-md border border-gray-100 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] rounded-2xl p-3.5 z-50 animate-in fade-in zoom-in-95 slide-in-from-bottom-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {isSelected && (
+                                   <button onClick={() => setSelectedCalDate(null)} className="absolute top-1.5 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">×</button>
+                                )}
+                                {(() => {
+                                   const todayEvents = activeListRaw.filter(p => {
+                                      if (!p.prediksi_ib_optimal) return false;
+                                      const d = new Date(p.prediksi_ib_optimal);
+                                      return d.getDate() === dateObj.getDate() && d.getMonth() === dateObj.getMonth() && d.getFullYear() === dateObj.getFullYear();
+                                   });
+                                   if (todayEvents.length === 0) return null;
+                                   
+                                   const grouped = {};
+                                   todayEvents.forEach(p => {
+                                      const c = classifyPrediction(p, t);
+                                      const name = p.cow_name || p.cow_id;
+                                      if (!grouped[c.label]) {
+                                        grouped[c.label] = { type: c.type, names: [] };
+                                      }
+                                      grouped[c.label].names.push(name);
+                                   });
+
+                                   const groupEntries = Object.entries(grouped);
+                                   return (
+                                      <div className="flex flex-col gap-3">
+                                        {groupEntries.map(([label, data], idx) => (
+                                           <div key={idx} className="flex flex-col items-center text-center w-full px-2">
+                                              <span className="font-extrabold text-slate-800 text-[15px] tracking-tight leading-tight mb-1.5">
+                                                {data.names.join(', ')}
+                                              </span>
+                                              <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${data.type === 'estrus' ? 'bg-red-50 text-red-600 border border-red-100/50' : 'bg-amber-50 text-amber-600 border border-amber-100/50'}`}>
+                                                {label}
+                                              </div>
+                                              {idx < groupEntries.length - 1 && (
+                                                <hr className="w-full mt-3 border-gray-100" />
+                                              )}
+                                           </div>
+                                        ))}
+                                      </div>
+                                   )
+                                })()}
+                                {/* Triangle arrow pointing down */}
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-white drop-shadow-sm"></div>
+                              </div>
+                           )}
                         </div>
                      )
                   })}
@@ -364,6 +459,8 @@ export default function EstrusPrediction() {
                      <span className="text-[11px] text-[var(--text-2)]">{lang === 'id' ? 'Mendekati' : 'Approaching'}</span>
                   </div>
                </div>
+               
+
             </div>
 
             {/* Info note */}
@@ -402,60 +499,54 @@ export default function EstrusPrediction() {
              </button>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-xl font-bold font-display text-[var(--text-1)] tracking-tight">
-                {activeTab === 'aktif' ? t.prediction_list_title : (lang === 'id' ? 'Konfirmasi Lapangan' : 'Field Confirmation')}
-              </h2>
-              <p className="text-sm text-[var(--text-3)]">
-                {lang === 'id' ? `Menampilkan ${currentDisplayList.length} dari ${activeTab === 'aktif' ? activeListRaw.length : konfirmasiListRaw.length} sapi` : `Showing ${currentDisplayList.length} of ${activeTab === 'aktif' ? activeListRaw.length : konfirmasiListRaw.length} cattle`}
-              </p>
-            </div>
+          <div className="flex flex-col gap-4 mb-6 w-full">
+            {/* Status Filters - Only show in Active Tab */}
+            {activeTab === 'aktif' && (
+              <div className="flex flex-wrap items-center gap-3 w-full">
+                {[
+                  { value: 'all',        label: t.prediction_filter_all },
+                  { value: 'estrus',     label: lang === 'id' ? 'Birahi' : 'Estrus', dot: 'var(--red)' },
+                  { value: 'pre-estrus', label: lang === 'id' ? 'Dekat' : 'Near',  dot: 'var(--amber)' },
+                  { value: 'normal',     label: lang === 'id' ? 'Normal' : 'Normal', dot: 'var(--green)' },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setStatusFilter(opt.value)}
+                    className="flex-1 sm:flex-none justify-center"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '5px',
+                      padding: '8px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 600,
+                      fontFamily: 'Inter, sans-serif', cursor: 'pointer',
+                      border: `0.5px solid ${statusFilter === opt.value ? 'var(--accent)' : 'var(--border)'}`,
+                      background: statusFilter === opt.value ? 'var(--accent-dim)' : 'var(--bg-card)',
+                      color: statusFilter === opt.value ? 'var(--accent)' : 'var(--text-2)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {opt.dot && (
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: opt.dot, flexShrink: 0, display: 'inline-block' }} />
+                    )}
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Status Filters - Only show in Active Tab */}
-              {activeTab === 'aktif' && [
-                { value: 'all',        label: t.prediction_filter_all },
-                { value: 'estrus',     label: lang === 'id' ? 'Birahi' : 'Estrus', dot: 'var(--red)' },
-                { value: 'pre-estrus', label: lang === 'id' ? 'Dekat' : 'Near',  dot: 'var(--amber)' },
-                { value: 'normal',     label: lang === 'id' ? 'Normal' : 'Normal', dot: 'var(--green)' },
-              ].map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setStatusFilter(opt.value)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '5px',
-                    padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
-                    fontFamily: 'Inter, sans-serif', cursor: 'pointer',
-                    border: `0.5px solid ${statusFilter === opt.value ? 'var(--accent)' : 'var(--border)'}`,
-                    background: statusFilter === opt.value ? 'var(--accent-dim)' : 'var(--bg-card)',
-                    color: statusFilter === opt.value ? 'var(--accent)' : 'var(--text-2)',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {opt.dot && (
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: opt.dot, flexShrink: 0, display: 'inline-block' }} />
-                  )}
-                  {opt.label}
-                </button>
-              ))}
-
-              {/* Search */}
-              <div className="w-full sm:w-auto relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-[var(--text-3)]" />
+            {/* Search */}
+            <div className="w-full relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-[var(--text-3)]" />
                 <input
                   type="text"
                   placeholder={t.prediction_search_placeholder}
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full sm:w-[220px] md:w-[260px] pl-10 pr-4 py-2.5 md:py-3 text-sm border border-[var(--border)] rounded-full outline-none transition-all focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
+                  className="w-full pl-10 pr-4 py-2.5 md:py-3 text-sm border border-[var(--border)] rounded-full outline-none transition-all focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
                   style={{
                     background: 'var(--bg-card)', color: 'var(--text-1)',
                     fontFamily: 'Inter, sans-serif',
                   }}
                 />
               </div>
-            </div>
           </div>
 
           {/* Result List */}
@@ -499,6 +590,7 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
   const classification = classifyPrediction(pred, t);
   const cs  = colorSchemeFor(classification.type);
   const conf = Math.round((pred.confidence_final ?? 0) * 100);
+  const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
 
   const handleFeedback = async (isCorrect) => {
@@ -518,7 +610,10 @@ function PredictionCard({ pred, onFeedbackSubmitted }) {
 
   return (
     <div
-      onClick={() => toast(lang === 'id' ? `Membuka profil detail ${pred.cow_name || pred.cow_id}...` : `Opening ${pred.cow_name || pred.cow_id} profile...`, { icon: '🐄' })}
+      onClick={() => {
+        toast(lang === 'id' ? `Membuka profil detail ${pred.cow_name || pred.cow_id}...` : `Opening ${pred.cow_name || pred.cow_id} profile...`, { icon: '🐄' });
+        navigate('/ternak', { state: { selectedCowId: pred.cow_id || pred.id, activeTab: 'estrus' } });
+      }}
       style={{
         background: 'var(--bg-surface)',
         border: '0.5px solid var(--border)',
@@ -582,10 +677,14 @@ function FeedbackCard({ pred, onFeedbackSubmitted }) {
   const { lang } = useSettingsStore();
   const t = translations[lang];
   const conf = Math.round((pred.confidence_final ?? 0) * 100);
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingType, setSubmittingType] = useState(null);
 
   const handleFeedback = async (isCorrect) => {
-    setSubmitting(true);
+    setSubmittingType(isCorrect ? 'true' : 'false');
+    
+    // Dramatic delay for UX
+    await new Promise(r => setTimeout(r, 1200));
+
     try {
       await axiosInstance.post(`/estrus-predictions/${pred.id}/feedback`, { verified: isCorrect });
       toast.success(lang === 'id' ? 'Konfirmasi berhasil disimpan!' : 'Confirmation successfully saved!');
@@ -595,7 +694,7 @@ function FeedbackCard({ pred, onFeedbackSubmitted }) {
     } catch (err) {
       handleError(err, 'kirim konfirmasi estrus');
     } finally {
-      setSubmitting(false);
+      setSubmittingType(null);
     }
   };
 
@@ -641,18 +740,25 @@ function FeedbackCard({ pred, onFeedbackSubmitted }) {
       <div className="flex items-center gap-3 mt-2">
          <button
             onClick={() => handleFeedback(true)}
-            disabled={submitting}
-            className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2 shadow-sm"
+            disabled={submittingType !== null}
+            className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 transition-colors flex justify-center items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <CheckCircle2 size={18} />
-            {lang === 'id' ? 'Benar, Sudah Birahi / Di-IB' : 'Yes, Estrus / Inseminated'}
+            {submittingType === 'true' ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <CheckCircle2 size={18} />
+            )}
+            {lang === 'id' ? 'Benar, Sudah' : 'Yes, Done'}
           </button>
           <button
             onClick={() => handleFeedback(false)}
-            disabled={submitting}
-            className="flex-1 py-3 rounded-xl text-sm font-bold bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 transition-colors flex justify-center items-center gap-2 shadow-sm"
+            disabled={submittingType !== null}
+            className="flex-1 py-3 rounded-xl text-sm font-bold bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:bg-rose-100 transition-colors flex justify-center items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {lang === 'id' ? 'Salah, Belum Birahi' : 'No, Not Estrus'}
+             {submittingType === 'false' ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : null}
+            {lang === 'id' ? 'Salah, Belum' : 'No, Not Yet'}
           </button>
       </div>
     </div>

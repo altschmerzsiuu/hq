@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment & secrets — NEVER commit these
+.env
+.env.*
+!.env.example
+
+# Google OAuth / Gmail credentials & tokens
+backend/credentials.json
+backend/gmail_credentials.json
+backend/gmail_token.json
+credentials.json
+gmail_credentials.json
+gmail_token.json
+*_token.json
+*_credentials.json
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# Docker volumes / data
+postgres_data/
+redis_data/
+
+# ML Models (too large for git, use separate storage)
+backend/models/*.joblib
+
+# Misc
+.DS_Store
+*.pyc

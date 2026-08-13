@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Camera, Activity, Edit2, Trash2, Link, Unlink, ActivityIcon, Plus, Beef, ThermometerSun, Weight, Stethoscope, Pencil, X, Save, Loader2, CheckCircle, XCircle, ChevronRight, ChevronDown, LineChart, ClipboardList, Sparkles, Check, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Camera, Activity, Edit2, Trash2, Link, Unlink, ActivityIcon, Plus, Beef, ThermometerSun, Weight, Stethoscope, Pencil, X, Save, Loader2, CheckCircle, XCircle, ChevronRight, ChevronDown, LineChart, ClipboardList, Sparkles, Check, AlertCircle, Baby, Heart } from 'lucide-react';
 import { useTernakStore } from '../store/useTernakStore';
 import useSettingsStore from '@/store/settingsStore';
 import { motion } from 'framer-motion';
@@ -50,8 +51,8 @@ export default function DetailTernak() {
   const navigate = useNavigate();
   const location = useLocation();
   const { fetchSapiDetail, selectedSapi, loading, hapusSapi, editSapi, tambahReproduksi } = useTernakStore();
-  const { language } = useSettingsStore();
-  const lang = language || 'id';
+  const { lang: storeLang } = useSettingsStore();
+  const lang = storeLang || 'id';
   const t = translations[lang];
 
   const handleBack = () => navigate(-1);
@@ -326,11 +327,21 @@ export default function DetailTernak() {
 
 
   const [activeTab, setActiveTab] = useState('riwayat');
-  const [reproFilter, setReproFilter] = useState('siklus_saat_ini');
-  const [activityFilter, setActivityFilter] = useState('hari_ini');
+  const [reproFilter, setReproFilter] = useState('0');
+  const [activityFilter, setActivityFilter] = useState(0);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [pairSelectedSapi, setPairSelectedSapi] = useState(null);
   const [pairSelectedCollar, setPairSelectedCollar] = useState(null);
+  const [showBirthModal, setShowBirthModal] = useState(false);
+  const [birthReproItem, setBirthReproItem] = useState(null);
+  const [birthLoading, setBirthLoading] = useState(false);
+  const [birthForm, setBirthForm] = useState({
+    tanggal_lahir_aktual: new Date().toISOString().split('T')[0],
+    jenis_kelamin_pedet: 'Betina',
+    nama_pedet: '',
+    rfid_pedet: '',
+    berat_pedet: '',
+  });
 
   useEffect(() => {
     if (id) {
@@ -347,6 +358,77 @@ export default function DetailTernak() {
     });
   }, [selectedSapi]);
 
+  // Detect overdue pregnancy: results=true AND hpl has passed today
+  const overduePregnancy = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return sortedReproHistory.find(item => {
+      const isPreg = item.results === true || item.results === 'true' || item.is_pregnant === true;
+      if (!isPreg || !item.hpl) return false;
+      const hplDate = new Date(item.hpl);
+      hplDate.setHours(0, 0, 0, 0);
+      return hplDate < today;
+    }) || null;
+  }, [sortedReproHistory]);
+
+  const openBirthModal = (reproItem) => {
+    setBirthReproItem(reproItem);
+    setBirthForm({
+      tanggal_lahir_aktual: new Date().toISOString().split('T')[0],
+      jenis_kelamin_pedet: 'Betina',
+      nama_pedet: '',
+      rfid_pedet: '',
+      berat_pedet: '',
+    });
+    setShowBirthModal(true);
+  };
+
+  const confirmBirth = async () => {
+    if (!birthReproItem || !selectedSapi) return;
+    setBirthLoading(true);
+    try {
+      // 1. Update the repro record to mark as confirmed birth (add actual date)
+      await axiosInstance.put(`/api/reproduction/${birthReproItem.id}`, {
+        results: true,
+        catatan: `${birthReproItem.catatan ? birthReproItem.catatan + ' | ' : ''}Melahirkan: ${birthForm.tanggal_lahir_aktual}`,
+      });
+
+      // 2. Update mother's health status back to Sehat
+      await axiosInstance.put(`/api/hewan/${selectedSapi.id}`, {
+        nama: selectedSapi.nama,
+        tanggal_lahir: selectedSapi.bulan_tahun_lahir,
+        jenis: selectedSapi.jenis,
+        kelamin: selectedSapi.kelamin,
+        berat_badan: selectedSapi.berat_badan,
+        status_kesehatan: 'Sehat',
+      });
+
+      // 3. If user provided pedet info, create new cattle entry
+      if (birthForm.rfid_pedet && birthForm.rfid_pedet.trim() !== '') {
+        const pedetId = birthForm.rfid_pedet.trim();
+        await axiosInstance.post('/api/hewan', {
+          id: pedetId,
+          nama: birthForm.nama_pedet.trim() || `Pedet ${selectedSapi.nama}`,
+          tanggal_lahir: birthForm.tanggal_lahir_aktual,
+          jenis: selectedSapi.jenis,
+          kelamin: birthForm.jenis_kelamin_pedet,
+          berat_badan: birthForm.berat_pedet ? parseFloat(birthForm.berat_pedet) : null,
+          status_kesehatan: 'Sehat',
+        });
+        toast.success(`Pedet berhasil didaftarkan sebagai ternak baru (RFID: ${pedetId})`);
+      }
+
+      toast.success('Kelahiran dikonfirmasi! Data diperbarui.');
+      setShowBirthModal(false);
+      fetchSapiDetail(id);
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal menyimpan konfirmasi kelahiran.');
+    } finally {
+      setBirthLoading(false);
+    }
+  };
+
   if (loading || !selectedSapi) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-screen bg-[#F3F4F6]">
@@ -359,38 +441,18 @@ export default function DetailTernak() {
   const usiaText = hitungUsia(selectedSapi.bulan_tahun_lahir, lang);
   const isPregnant = selectedSapi.status_kebuntingan === 'Bunting' || selectedSapi.status_kebuntingan?.toLowerCase().includes('pregnant');
 
-  // ── Mobile Animated Button (AnimatedQAButton style for mobile) ─────────
-  const MobileAnimatedBtn = ({ icon: Icon, label, onClick, danger = false, className = '' }) => {
-    const baseColor = danger ? '#DC2626' : '#2E7D32';
-    const dimBg = danger ? 'rgba(220,38,38,0.08)' : 'rgba(46,125,50,0.08)';
+  // ── Mobile Animated Button (Static version for mobile to avoid hover conflict) ─────────
+  const MobileAnimatedBtn = ({ icon: Icon, onClick, danger = false, className = '' }) => {
+    const iconColor = danger ? '#DC2626' : '#2E7D32';
+    const bgColor = danger ? '#FDF6F6' : '#F5F8F6';
+    const borderColor = danger ? '#FCE8E8' : '#E8F0EA';
     return (
       <button
         onClick={onClick}
-        className={`group inline-flex items-center rounded-full border shadow-sm cursor-pointer transition-all duration-300 active:scale-95 ${className}`}
-        style={{ padding: '10px', gap: 0, background: dimBg, borderColor: `${baseColor}30`, color: baseColor }}
-        onMouseEnter={e => {
-          e.currentTarget.style.paddingLeft = '16px';
-          e.currentTarget.style.paddingRight = '16px';
-          e.currentTarget.style.gap = '6px';
-          e.currentTarget.style.background = baseColor;
-          e.currentTarget.style.borderColor = baseColor;
-          e.currentTarget.style.color = '#fff';
-          const span = e.currentTarget.querySelector('span');
-          if (span) { span.style.maxWidth = '80px'; span.style.opacity = '1'; }
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.paddingLeft = '10px';
-          e.currentTarget.style.paddingRight = '10px';
-          e.currentTarget.style.gap = '0';
-          e.currentTarget.style.background = dimBg;
-          e.currentTarget.style.borderColor = `${baseColor}30`;
-          e.currentTarget.style.color = baseColor;
-          const span = e.currentTarget.querySelector('span');
-          if (span) { span.style.maxWidth = '0'; span.style.opacity = '0'; }
-        }}
+        className={`flex items-center justify-center rounded-full cursor-pointer transition-transform active:scale-95 backdrop-blur-md shadow-[0_2px_10px_rgba(0,0,0,0.05)] ${className}`}
+        style={{ width: '42px', height: '42px', background: bgColor, border: `1px solid ${borderColor}`, color: iconColor }}
       >
-        <Icon size={18} />
-        <span style={{ maxWidth: 0, opacity: 0, overflow: 'hidden', whiteSpace: 'nowrap', fontSize: '12px', fontWeight: 700, transition: 'max-width 0.25s ease, opacity 0.2s ease' }}>{label}</span>
+        <Icon size={20} />
       </button>
     );
   };
@@ -403,7 +465,7 @@ export default function DetailTernak() {
           <div className="bg-white rounded-[20px] p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-gray-900">{lang === 'id' ? 'Edit Profil Ternak' : 'Edit Cattle Profile'}</h3>
-              <button onClick={() => setIsEditProfileOpen(false)} className="p-2 rounded-full hover:bg-gray-100"><X size={18} /></button>
+              <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-2 rounded-full active:bg-gray-100"><X size={18} /></button>
             </div>
             <form onSubmit={submitEditProfile} className="flex flex-col gap-4">
               {/* Photo Upload in Edit Modal */}
@@ -423,9 +485,22 @@ export default function DetailTernak() {
                 </div>
                 <span className="text-[11px] font-semibold text-gray-400 mt-2">{lang === 'id' ? 'Ketuk untuk ubah foto' : 'Tap to change photo'}</span>
               </div>
+              <div className="flex gap-3">
+                {[
+                  { key: 'nama', label: 'Nama', type: 'text', placeholder: lang === 'id' ? 'Nama ternak' : 'Cattle name' },
+                  { key: 'jenis', label: 'Ras / Jenis', type: 'text', placeholder: 'mis. Brahman, PO, Limousin' },
+                ].map(({ key, label, type, placeholder }) => (
+                  <div key={key} className="flex-1">
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
+                    <input
+                      type={type} value={editProfileForm[key] || ''} placeholder={placeholder}
+                      onChange={e => setEditProfileForm(f => ({ ...f, [key]: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]"
+                    />
+                  </div>
+                ))}
+              </div>
               {[
-                { key: 'nama', label: 'Nama', type: 'text', placeholder: lang === 'id' ? 'Nama ternak' : 'Cattle name' },
-                { key: 'jenis', label: 'Ras / Jenis', type: 'text', placeholder: 'mis. Brahman, PO, Limousin' },
                 { key: 'bulan_tahun_lahir', label: 'Tanggal Lahir', type: 'date', placeholder: '' },
               ].map(({ key, label, type, placeholder }) => (
                 <div key={key}>
@@ -469,26 +544,28 @@ export default function DetailTernak() {
           <div className="bg-white rounded-[20px] p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-gray-900">{editingIB ? 'Edit Data IB' : 'Catat Inseminasi Buatan'}</h3>
-              <button onClick={() => setIsIBModalOpen(false)} className="p-2 rounded-full hover:bg-gray-100"><X size={18} /></button>
+              <button type="button" onClick={() => setIsIBModalOpen(false)} className="p-2 rounded-full active:bg-gray-100"><X size={18} /></button>
             </div>
             <form onSubmit={submitIB} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Tanggal IB</label>
-                <input type="date" value={ibForm.tanggal_ib} required
-                  onChange={e => setIBForm(f => ({ ...f, tanggal_ib: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
-              </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">Inseminator / Pemberi IB</label>
                 <input type="text" value={ibForm.pemberi_ib} placeholder="Nama inseminator" required
                   onChange={e => setIBForm(f => ({ ...f, pemberi_ib: e.target.value }))}
                   className="w-full border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Ke-IB Berapa</label>
-                <input type="number" value={ibForm.jumlah_ib} placeholder="mis. 1, 2, 3..." min={1}
-                  onChange={e => setIBForm(f => ({ ...f, jumlah_ib: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Tanggal IB</label>
+                  <input type="date" value={ibForm.tanggal_ib} required
+                    onChange={e => setIBForm(f => ({ ...f, tanggal_ib: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
+                </div>
+                <div className="w-[120px]">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Ke-IB Berapa</label>
+                  <input type="number" value={ibForm.jumlah_ib} placeholder="mis. 1" min={1}
+                    onChange={e => setIBForm(f => ({ ...f, jumlah_ib: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-0 h-[46px] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/30 focus:border-[#2E7D32]" />
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">Catatan (opsional)</label>
@@ -522,9 +599,9 @@ export default function DetailTernak() {
             <h3 className="text-lg font-bold text-gray-900 text-center mb-2">{lang === 'id' ? 'Hapus Ternak?' : 'Delete Cattle?'}</h3>
             <p className="text-sm text-gray-500 text-center mb-6">{lang === 'id' ? <>Data ternak <strong>{selectedSapi.nama}</strong> akan dihapus permanen dan tidak dapat dikembalikan.</> : <>Cattle data <strong>{selectedSapi.nama}</strong> will be permanently deleted and cannot be undone.</>}</p>
             <div className="flex gap-3">
-              <button onClick={() => setIsDeleteConfirmOpen(false)} className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">Batal</button>
-              <button onClick={handleHapusSapi} disabled={hapusLoading}
-                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
+              <button type="button" onClick={() => setIsDeleteConfirmOpen(false)} className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl active:bg-gray-50 transition-colors">Batal</button>
+              <button type="button" onClick={handleHapusSapi} disabled={hapusLoading}
+                className="flex-1 py-3 bg-red-500 active:bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
                 {hapusLoading ? <Loader2 size={16} className="animate-spin" /> : null}
                 {hapusLoading ? 'Menghapus...' : 'Ya, Hapus'}
               </button>
@@ -543,9 +620,9 @@ export default function DetailTernak() {
             <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Hapus Catatan IB?</h3>
             <p className="text-sm text-gray-500 text-center mb-6">Catatan IB ini akan dihapus permanen dan tidak dapat dikembalikan.</p>
             <div className="flex gap-3">
-              <button onClick={() => setIsDeleteIBConfirmOpen(false)} className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors">Batal</button>
-              <button onClick={handleConfirmDeleteIB}
-                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl flex items-center justify-center transition-colors">
+              <button type="button" onClick={() => setIsDeleteIBConfirmOpen(false)} className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl active:bg-gray-50 transition-colors">Batal</button>
+              <button type="button" onClick={handleConfirmDeleteIB}
+                className="flex-1 py-3 bg-red-500 active:bg-red-600 text-white font-bold rounded-xl flex items-center justify-center transition-colors">
                 Ya, Hapus
               </button>
             </div>
@@ -624,23 +701,14 @@ export default function DetailTernak() {
               <div className="flex gap-2">
                 <MobileAnimatedBtn
                   icon={Edit2}
-                  label="Edit Profil"
                   onClick={openEditProfile}
-                  className="shadow-[0_2px_10px_rgba(0,0,0,0.1)] bg-white/80 backdrop-blur-md"
-                />
-                <MobileAnimatedBtn
-                  icon={AlertCircle}
-                  label="Lapor"
-                  danger
-                  onClick={() => setIsReportSickOpen(true)}
-                  className="shadow-[0_2px_10px_rgba(0,0,0,0.1)] bg-white/80 backdrop-blur-md"
+                  className="shadow-[0_2px_10px_rgba(0,0,0,0.1)]"
                 />
                 <MobileAnimatedBtn
                   icon={Trash2}
-                  label="Hapus"
                   danger
                   onClick={() => setIsDeleteConfirmOpen(true)}
-                  className="shadow-[0_2px_10px_rgba(0,0,0,0.1)] bg-white/80 backdrop-blur-md"
+                  className="shadow-[0_2px_10px_rgba(0,0,0,0.1)]"
                 />
               </div>
             </div>
@@ -675,7 +743,7 @@ export default function DetailTernak() {
               }`}
             >
                <ClipboardList size={20} strokeWidth={2.5} />
-               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Riwayat</span>
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">{lang === 'id' ? 'Riwayat' : 'History'}</span>
             </button>
             {/* Tab 2: Prediksi Estrus */}
             <button 
@@ -687,7 +755,7 @@ export default function DetailTernak() {
               }`}
             >
                <Sparkles size={20} strokeWidth={2.5} />
-               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Prediksi</span>
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">{lang === 'id' ? 'Prediksi' : 'Predict'}</span>
             </button>
             {/* Tab 3: Linimasa */}
             <button 
@@ -711,7 +779,7 @@ export default function DetailTernak() {
               }`}
             >
                <LineChart size={20} strokeWidth={2.5} />
-               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">Grafik Sensor</span>
+               <span className="font-bold text-[10px] tracking-wide text-center leading-tight">{lang === 'id' ? 'Grafik Sensor' : 'Sensor Graph'}</span>
             </button>
           </div>
 
@@ -720,14 +788,17 @@ export default function DetailTernak() {
             <>
               {/* Riwayat Ternak - Card Style */}
               <div className="px-5 pb-6 bg-white">
-                <div className="flex justify-between items-center mb-4">
-                   <h3 className="text-[17px] font-extrabold text-[#111]">{lang === 'id' ? 'Riwayat Ternak' : 'Cattle History'}</h3>
+                <div className="flex justify-between items-center mb-4 gap-4">
+                   <h3 className="text-[17px] font-extrabold text-[#111] whitespace-nowrap">{lang === 'id' ? 'Riwayat Ternak' : 'Cattle History'}</h3>
                    {(!sortedReproHistory.some(item => item.results === true || item.results === 'true' || item.is_pregnant === true)) && (
-                     <MobileAnimatedBtn
-                       icon={Plus}
-                       label="Catat IB"
+                     <button
                        onClick={openCatatIB}
-                     />
+                       className="flex-1 flex items-center justify-center gap-1.5 rounded-full transition-transform active:scale-95 shadow-sm border border-[#E8F0EA] bg-[#F5F8F6] text-[#2E7D32]"
+                       style={{ padding: '8px 16px' }}
+                     >
+                       <Plus size={16} />
+                       <span className="font-bold text-[13px]">Catat IB</span>
+                     </button>
                    )}
                 </div>
 
@@ -854,21 +925,24 @@ export default function DetailTernak() {
               <div className="mb-8 flex items-start justify-between gap-2">
                 <div>
                   <h3 className="text-[20px] font-extrabold text-[#111]">{lang === 'id' ? 'Catatan Aktivitas Ternak' : 'Cattle Activity Notes'}</h3>
-                  <p className="text-[13px] text-gray-500 mt-1">Rekaman aktivitas untuk <strong className="text-[#2E7D32]">{selectedSapi.nama}</strong></p>
+                  <p className="text-[13px] text-gray-500 mt-1">{lang === 'id' ? 'Rekaman aktivitas untuk' : 'Activity records for'} <strong className="text-[#2E7D32]">{selectedSapi.nama}</strong></p>
                 </div>
-                <div className="relative shrink-0">
-                  <select
-                    value={activityFilter}
-                    onChange={(e) => setActivityFilter(e.target.value)}
-                    className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
-                  >
-                    <option value="hari_ini">{lang === 'id' ? 'Hari Ini' : 'Today'}</option>
-                    <option value="minggu_ini">Minggu Ini</option>
-                    <option value="bulan_ini">Bulan Ini</option>
-                    <option value="semua">Semua</option>
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
-                </div>
+                {sortedReproHistory.length > 0 && (
+                  <div className="relative shrink-0">
+                    <select
+                      value={activityFilter}
+                      onChange={(e) => setActivityFilter(Number(e.target.value))}
+                      className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
+                    >
+                      {Array.from({ length: Math.min(5, sortedReproHistory.length) }).map((_, i) => (
+                        <option key={i} value={i}>
+                          {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${sortedReproHistory.length - i}` : `Cycle ${sortedReproHistory.length - i}`)}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                  </div>
+                )}
               </div>
               
               <Stepper orientation="vertical" defaultValue={2} className="w-full">
@@ -886,32 +960,35 @@ export default function DetailTernak() {
                       const formatTglStr = (ts) => new Date(ts).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {day: 'numeric', month: 'short', year: 'numeric'});
                       const timelineEvents = [];
                       
-                      sortedReproHistory.forEach(item => {
+                      const activeIndex = Math.min(Number(activityFilter) || 0, Math.max(0, sortedReproHistory.length - 1));
+                      const item = sortedReproHistory[activeIndex];
+                      
+                      if (item) {
                           const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
                           const isFailed      = item.results === false || item.results === 'failed' || item.is_pregnant === false;
                           const rawDate       = item.tanggal_ib || item.service_date;
-                          if (!rawDate) return;
                           
-                          const baseTime = new Date(rawDate).getTime();
-                          const eventId = item.id || Math.random().toString();
-                          
-                          // Add Inseminasi Buatan event
-                          timelineEvents.push({
-                              id: eventId + '-ib',
-                              title: `Inseminasi Buatan (Ke-${item.jumlah_ib || 1})`,
-                              dateRaw: baseTime,
-                              dateFmt: formatTglStr(baseTime),
-                              desc: `Metode: ${(item.metode || 'IB').toUpperCase()}${item.pemberi_ib ? `. Inseminator: ${item.pemberi_ib}` : ''}`,
-                              status: isPregnant ? 'completed' : (isFailed ? 'failed' : 'active')
-                          });
-                          
-                          // If pregnant, extrapolate future events
-                          if (isPregnant) {
-                              const pkbTime = baseTime + 60 * 24 * 60 * 60 * 1000;
-                              const isPkbPast = pkbTime < Date.now();
+                          if (rawDate) {
+                              const baseTime = new Date(rawDate).getTime();
+                              const eventId = item.id || Math.random().toString();
+                              
+                              // Add Inseminasi Buatan event
                               timelineEvents.push({
-                                  id: eventId + '-pkb',
-                                  title: `Pemeriksaan Kebuntingan`,
+                                  id: eventId + '-ib',
+                                  title: `Inseminasi Buatan (Ke-${item.jumlah_ib || 1})`,
+                                  dateRaw: baseTime,
+                                  dateFmt: formatTglStr(baseTime),
+                                  desc: `Metode: ${(item.metode || 'IB').toUpperCase()}${item.pemberi_ib ? `. Inseminator: ${item.pemberi_ib}` : ''}`,
+                                  status: isPregnant ? 'completed' : (isFailed ? 'failed' : 'active')
+                              });
+                              
+                              // If pregnant, extrapolate future events
+                              if (isPregnant) {
+                                  const pkbTime = baseTime + 60 * 24 * 60 * 60 * 1000;
+                                  const isPkbPast = pkbTime < Date.now();
+                                  timelineEvents.push({
+                                      id: eventId + '-pkb',
+                                      title: `Pemeriksaan Kebuntingan`,
                                   dateRaw: pkbTime,
                                   dateFmt: formatTglStr(pkbTime),
                                   desc: `Dinyatakan Bunting (PKB positif).`,
@@ -939,8 +1016,9 @@ export default function DetailTernak() {
                                   desc: `Pindahkan ke kandang isolasi.`,
                                   status: isCalvingPast ? 'completed' : 'future'
                               });
+                              }
                           }
-                      });
+                      }
                       
                       // Sort descending by default for timelines (newest at top) or ascending (oldest at top). 
                       // For this vertical stepper, oldest at top makes sense chronologically.
@@ -1028,7 +1106,7 @@ export default function DetailTernak() {
                 <DesktopAnimatedBtn icon={ChevronLeft} label={lang === 'id' ? 'Kembali' : 'Back'} onClick={() => navigate('/ternak')} />
                 <div className="flex gap-2">
                   <DesktopAnimatedBtn icon={Edit2} label="Edit" onClick={openEditProfile} />
-                  <DesktopAnimatedBtn icon={AlertCircle} label={lang === 'id' ? 'Lapor Sakit' : 'Report Sick'} danger onClick={() => setIsReportSickOpen(true)} />
+                  {/* <DesktopAnimatedBtn icon={AlertCircle} label={lang === 'id' ? 'Lapor Sakit' : 'Report Sick'} danger onClick={() => setIsReportSickOpen(true)} /> */}
                   <DesktopAnimatedBtn icon={Trash2} label="Hapus" danger onClick={() => setIsDeleteConfirmOpen(true)} />
                 </div>
               </div>
@@ -1070,13 +1148,13 @@ export default function DetailTernak() {
               {/* Badges */}
               <div className="flex flex-col gap-2 w-full z-10 mb-5">
                 <div className="px-4 py-2 bg-[#E8F5E9] text-[#2E7D32] rounded-full text-[12px] font-bold border border-[#C8E6C9] flex items-center justify-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#4CAF50]" /> {selectedSapi.status_kesehatan || 'Sehat / Aktif'}
+                  <div className="w-2 h-2 rounded-full bg-[#4CAF50]" /> {selectedSapi.status_kesehatan === 'Sakit' ? (lang === 'id' ? 'Sakit' : 'Sick') : (lang === 'id' ? 'Sehat / Aktif' : 'Healthy / Active')}
                 </div>
                 <div className={`px-4 py-2 rounded-full text-[12px] font-bold border flex items-center justify-center gap-2 ${isPregnant ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                  {isPregnant ? 'Bunting' : 'Tidak Bunting'}
+                  {isPregnant ? (lang === 'id' ? 'Bunting' : 'Pregnant') : (lang === 'id' ? 'Tidak Bunting' : 'Not Pregnant')}
                 </div>
                 <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-[12px] font-bold border border-blue-100 flex items-center justify-center gap-2">
-                  Fase: {selectedSapi.fase_produksi || 'Laktasi'}
+                  {lang === 'id' ? 'Fase:' : 'Phase:'} {selectedSapi.fase_produksi === 'Kering' ? (lang === 'id' ? 'Kering' : 'Dry') : (lang === 'id' ? 'Laktasi' : 'Lactation')}
                 </div>
               </div>
 
@@ -1087,14 +1165,14 @@ export default function DetailTernak() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-gray-500">
                     <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center"><Weight size={14} /></div>
-                    <span className="text-sm font-medium">Berat</span>
+                    <span className="text-sm font-medium">{lang === 'id' ? 'Berat' : 'Weight'}</span>
                   </div>
                   <span className="font-bold text-gray-900 text-sm">{selectedSapi.berat_estimasi || '--'} kg</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-gray-500">
                     <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center"><ThermometerSun size={14} /></div>
-                    <span className="text-sm font-medium">Suhu</span>
+                    <span className="text-sm font-medium">{lang === 'id' ? 'Suhu' : 'Temp'}</span>
                   </div>
                   <span className="font-bold text-gray-900 text-sm">{selectedSapi.suhu || '--'} °C</span>
                 </div>
@@ -1123,10 +1201,10 @@ export default function DetailTernak() {
                       activeTab === tab ? 'text-[#2E7D32]' : 'text-gray-500 hover:text-gray-800'
                     }`}
                   >
-                    {tab === 'riwayat' && 'Riwayat Reproduksi'}
-                    {tab === 'estrus' && 'Pantau Birahi'}
-                    {tab === 'linimasa' && 'Catatan Harian'}
-                    {tab === 'analitik' && 'Grafik Sensor'}
+                    {tab === 'riwayat' && (lang === 'id' ? 'Riwayat Reproduksi' : 'Reproduction History')}
+                    {tab === 'estrus' && (lang === 'id' ? 'Pantau Birahi' : 'Estrus Monitor')}
+                    {tab === 'linimasa' && (lang === 'id' ? 'Catatan Harian' : 'Daily Notes')}
+                    {tab === 'analitik' && (lang === 'id' ? 'Grafik Sensor' : 'Sensor Graph')}
 
                     {activeTab === tab && (
                       <motion.div layoutId="detailTabIndicator" className="absolute bottom-0 left-4 right-4 h-[3px] bg-[#2E7D32] rounded-t-full" />
@@ -1140,19 +1218,45 @@ export default function DetailTernak() {
             <div className="bg-white rounded-b-[20px] shadow-sm p-6 min-h-[400px] flex-1">
               {activeTab === 'riwayat' && (
                 <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-                  
+
+                  {/* ⚠️ Overdue Pregnancy Banner */}
+                  {overduePregnancy && (
+                    <div className="relative overflow-hidden bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 rounded-2xl p-5 flex items-start gap-4 shadow-sm">
+                      <div className="shrink-0 w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center">
+                        <Baby className="w-5 h-5 text-rose-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-rose-800 text-sm">Estimasi Kelahiran Sudah Lewat!</p>
+                        <p className="text-rose-700 text-xs mt-0.5">
+                          HPL <strong>{overduePregnancy.hpl}</strong> sudah terlewat. Apakah <strong>{selectedSapi?.nama}</strong> sudah melahirkan?
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => openBirthModal(overduePregnancy)}
+                        className="shrink-0 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors flex items-center gap-1.5"
+                      >
+                        <Heart className="w-3.5 h-3.5" />
+                        Ya, Sudah Lahir
+                      </button>
+                    </div>
+                  )}
+
                   {/* Top Bar: Title, Filter, Summary Cards, and Actions */}
-                  <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex flex-col gap-3">
-                      <h3 className="text-xl font-black text-gray-900 tracking-tight">Riwayat Reproduksi Sapi</h3>
+                      <h3 className="text-xl font-black text-gray-900 tracking-tight">{lang === 'id' ? 'Riwayat Reproduksi Sapi' : 'Reproduction History'}</h3>
                       <div className="relative inline-flex items-center group w-fit">
                         <select 
                           value={reproFilter}
                           onChange={(e) => setReproFilter(e.target.value)}
                           className="appearance-none outline-none text-sm font-semibold border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-[#2E7D32]/20 focus:border-[#2E7D32] py-2 pl-3 pr-9 bg-white text-gray-800 hover:border-gray-300 transition-colors cursor-pointer"
                         >
-                          <option value="siklus_saat_ini">Siklus Saat Ini</option>
-                          <option value="semua_riwayat">Semua Riwayat</option>
+                          <option value="semua_riwayat">{lang === 'id' ? 'Semua Riwayat' : 'All History'}</option>
+                          {Array.from({ length: Math.min(5, sortedReproHistory.length) }).map((_, i) => (
+                            <option key={i} value={i}>
+                              {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${sortedReproHistory.length - i}` : `Cycle ${sortedReproHistory.length - i}`)}
+                            </option>
+                          ))}
                         </select>
                         <ChevronDown className="absolute right-3 w-4 h-4 text-gray-400 group-hover:text-gray-600 pointer-events-none" />
                       </div>
@@ -1160,20 +1264,20 @@ export default function DetailTernak() {
 
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="bg-white border border-gray-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
-                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Total Siklus</span>
+                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{lang === 'id' ? 'Total Siklus' : 'Total Cycles'}</span>
                         <span className="text-xl font-black text-gray-900">2</span>
                       </div>
                       <div className="bg-green-50/50 border border-green-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
-                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Siklus Berhasil</span>
+                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{lang === 'id' ? 'Siklus Berhasil' : 'Successful Cycles'}</span>
                         <span className="text-xl font-black text-green-700">1</span>
                       </div>
                       <div className="bg-red-50/50 border border-red-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
-                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Siklus Gagal</span>
+                        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{lang === 'id' ? 'Siklus Gagal' : 'Failed Cycles'}</span>
                         <span className="text-xl font-black text-red-700">1</span>
                       </div>
                       
                       <div className="shrink-0 ml-2">
-                        <DesktopAnimatedBtn icon={Plus} label="Catat Inseminasi" onClick={openCatatIB} />
+                        <DesktopAnimatedBtn icon={Plus} label={lang === 'id' ? 'Catat Inseminasi' : 'Record AI'} onClick={openCatatIB} />
                       </div>
                     </div>
                   </div>
@@ -1182,34 +1286,51 @@ export default function DetailTernak() {
                     <table className="w-full text-center border-collapse">
                       <thead className="sticky top-0 z-20">
                         <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">IB Ke-</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">Tanggal Kawin</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">Perkiraan Hamil</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">Inseminator</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">Status</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm w-full min-w-[150px]">Catatan</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-center bg-gray-50 sticky top-0 shadow-sm w-[170px]">Aksi</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">{lang === 'id' ? 'IB Ke-' : 'AI #'}</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">{lang === 'id' ? 'Tanggal Kawin' : 'Mating Date'}</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">{lang === 'id' ? 'Perkiraan Hamil' : 'Est. Pregnancy'}</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">{lang === 'id' ? 'Inseminator' : 'Inseminator'}</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">{lang === 'id' ? 'Status' : 'Status'}</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm w-full min-w-[150px]">{lang === 'id' ? 'Catatan' : 'Notes'}</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-center bg-gray-50 sticky top-0 shadow-sm w-[170px]">{lang === 'id' ? 'Aksi' : 'Action'}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {sortedReproHistory.length === 0 ? (
                           <tr>
                             <td colSpan="7" className="px-2 py-8 text-center text-sm text-gray-500">
-                              Belum ada catatan reproduksi.
+                              {lang === 'id' ? 'Belum ada catatan reproduksi.' : 'No reproduction records yet.'}
                             </td>
                           </tr>
                         ) : (
-                          sortedReproHistory.map((item, idx) => {
-                            const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
-                            const isFailed      = item.results === false || item.results === 'failed' || item.is_pregnant === false;
-                            const isNote        = item.catatan && !item.pemberi_ib;
-                            const isPending     = !isPregnant && !isFailed && !isNote;
+                          (() => {
+                            const displayReproHistory = reproFilter === 'semua_riwayat' 
+                              ? sortedReproHistory 
+                              : (sortedReproHistory[Number(reproFilter)] ? [sortedReproHistory[Number(reproFilter)]] : []);
+                              
+                              if (displayReproHistory.length === 0) {
+                              return (
+                                <tr>
+                                  <td colSpan="7" className="px-2 py-8 text-center text-sm text-gray-500">
+                                    {lang === 'id' ? 'Tidak ada data untuk siklus ini.' : 'No data for this cycle.'}
+                                  </td>
+                                </tr>
+                              );
+                            }
 
-                            return (
-                              <tr key={item.id || idx} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-4 py-4 text-sm font-bold text-gray-900 align-top">
-                                  {item.jumlah_ib || (sortedReproHistory.length - idx)}
-                                </td>
+                            return displayReproHistory.map((item, idx) => {
+                              const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
+                              const isFailed      = item.results === false || item.results === 'failed' || item.is_pregnant === false;
+                              const isNote        = item.catatan && !item.pemberi_ib;
+                              const isPending     = !isPregnant && !isFailed && !isNote;
+                              
+                              const realIndex = reproFilter === 'semua_riwayat' ? idx : Number(reproFilter);
+
+                              return (
+                                <tr key={item.id || idx} className="hover:bg-gray-50 transition-colors">
+                                  <td className="px-4 py-4 text-sm font-bold text-gray-900 align-top">
+                                    {item.jumlah_ib || (sortedReproHistory.length - realIndex)}
+                                  </td>
                                 <td className="px-4 py-4 text-sm text-gray-600 align-top text-center">
                                   {item.tanggal_ib || item.service_date || '-'}
                                 </td>
@@ -1220,7 +1341,18 @@ export default function DetailTernak() {
                                   {item.pemberi_ib || '-'}
                                 </td>
                                 <td className="px-4 py-4 align-top">
-                                  <span className={`inline-flex px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${item.results === true || item.results === 'true' ? 'bg-green-50 text-green-700 border border-green-100' : item.results === false || item.results === 'failed' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+                                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider ${
+                                    item.results === true || item.results === 'true' 
+                                      ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200' 
+                                      : item.results === false || item.results === 'failed' 
+                                        ? 'bg-red-100 text-red-800 ring-1 ring-red-200' 
+                                        : 'bg-amber-100 text-amber-800 ring-1 ring-amber-200'
+                                  }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                      item.results === true || item.results === 'true' ? 'bg-emerald-500' 
+                                      : item.results === false || item.results === 'failed' ? 'bg-red-500' 
+                                      : 'bg-amber-500'
+                                    }`} />
                                     {item.results === true || item.results === 'true' ? 'Bunting' : item.results === false || item.results === 'failed' ? 'Gagal' : 'Menunggu'}
                                   </span>
                                 </td>
@@ -1234,24 +1366,22 @@ export default function DetailTernak() {
                                   )}
                                 </td>
                                 <td className="px-4 py-4 align-top">
-                                  <div className="flex items-center justify-center gap-2 w-[140px] shrink-0 mx-auto">
-                                    {isPending ? (
-                                      <>
-                                        <DesktopAnimatedBtn icon={Check} label="Berhasil" expandedWidth="90px" onClick={() => confirmPregnancy(item, true)} />
-                                        <DesktopAnimatedBtn icon={X} label="Gagal" danger expandedWidth="80px" onClick={() => confirmPregnancy(item, false)} />
-                                      </>
-                                    ) : (
-                                      <>
-                                        <DesktopAnimatedBtn icon={Pencil} label="Edit" type="info" expandedWidth="70px" onClick={() => startEditRepro(item)} />
-                                        <DesktopAnimatedBtn icon={Trash2} label="Hapus" danger expandedWidth="80px" onClick={() => deleteReproRecord(item)} />
-                                      </>
-                                    )}
-                                  </div>
+                                  {isPending ? (
+                                    <div className="flex items-center justify-center gap-2 w-[140px] mx-auto">
+                                      <DesktopAnimatedBtn icon={Check} label="Berhasil" expandedWidth="90px" onClick={() => confirmPregnancy(item, true)} />
+                                      <DesktopAnimatedBtn icon={X} label="Gagal" danger expandedWidth="80px" onClick={() => confirmPregnancy(item, false)} />
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-between w-[100px] mx-auto">
+                                      <DesktopAnimatedBtn icon={Pencil} label="Edit" type="info" expandedWidth="70px" onClick={() => startEditRepro(item)} />
+                                      <DesktopAnimatedBtn icon={Trash2} label="Hapus" danger expandedWidth="80px" onClick={() => deleteReproRecord(item)} />
+                                    </div>
+                                  )}
                                 </td>
                               </tr>
                             );
-                          })
-                        )}
+                          });
+                        })() )}
                       </tbody>
                     </table>
                   </div>
@@ -1269,21 +1399,24 @@ export default function DetailTernak() {
                    <div className="flex items-center justify-between mb-6">
                      <div>
                        <h3 className="text-lg font-bold text-gray-900">{lang === 'id' ? 'Catatan Aktivitas Ternak' : 'Cattle Activity Notes'}</h3>
-                       <p className="text-sm text-gray-500 mt-0.5">Rekaman aktivitas untuk <strong className="text-[#2E7D32]">{selectedSapi?.nama}</strong></p>
+                       <p className="text-sm text-gray-500 mt-0.5">{lang === 'id' ? 'Rekaman aktivitas untuk' : 'Activity records for'} <strong className="text-[#2E7D32]">{selectedSapi?.nama}</strong></p>
                      </div>
-                     <div className="relative">
-                       <select
-                         value={activityFilter}
-                         onChange={(e) => setActivityFilter(e.target.value)}
-                         className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
-                       >
-                         <option value="hari_ini">{lang === 'id' ? 'Hari Ini' : 'Today'}</option>
-                         <option value="minggu_ini">Minggu Ini</option>
-                         <option value="bulan_ini">Bulan Ini</option>
-                         <option value="semua">Semua</option>
-                       </select>
-                       <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
-                     </div>
+                     {sortedReproHistory.length > 0 && (
+                       <div className="relative shrink-0">
+                         <select
+                           value={activityFilter}
+                           onChange={(e) => setActivityFilter(Number(e.target.value))}
+                           className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
+                         >
+                           {Array.from({ length: Math.min(5, sortedReproHistory.length) }).map((_, i) => (
+                             <option key={i} value={i}>
+                               {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${sortedReproHistory.length - i}` : `Cycle ${sortedReproHistory.length - i}`)}
+                             </option>
+                           ))}
+                         </select>
+                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                       </div>
+                     )}
                    </div>
                    <Stepper orientation="vertical" defaultValue={2} className="w-full">
                      <div className="flex flex-col gap-6 relative before:absolute before:inset-0 before:ml-[17px] before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[#2E7D32]/20 before:to-transparent">
@@ -1297,30 +1430,35 @@ export default function DetailTernak() {
                            }
                            const formatTglStr = (ts) => new Date(ts).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {day: 'numeric', month: 'short', year: 'numeric'});
                            const timelineEvents = [];
-                           sortedReproHistory.forEach(item => {
+                           
+                           const activeIndex = Math.min(Number(activityFilter) || 0, Math.max(0, sortedReproHistory.length - 1));
+                           const item = sortedReproHistory[activeIndex];
+                           
+                           if (item) {
                                const isPregnant = item.results === true || item.results === 'true' || item.is_pregnant === true;
                                const isFailed   = item.results === false || item.results === 'failed' || item.is_pregnant === false;
                                const rawDate    = item.tanggal_ib || item.service_date;
-                               if (!rawDate) return;
-                               const baseTime = new Date(rawDate).getTime();
-                               const eventId = item.id || Math.random().toString();
-                               timelineEvents.push({
-                                   id: eventId + '-ib',
-                                   title: `Inseminasi Buatan (Ke-${item.jumlah_ib || 1})`,
-                                   dateRaw: baseTime,
-                                   dateFmt: formatTglStr(baseTime),
-                                   desc: `Metode: ${(item.metode || 'IB').toUpperCase()}${item.pemberi_ib ? `. Inseminator: ${item.pemberi_ib}` : ''}`,
-                                   status: isPregnant ? 'completed' : (isFailed ? 'failed' : 'active')
-                               });
-                               if (isPregnant) {
-                                   const pkbTime = baseTime + 60 * 24 * 60 * 60 * 1000;
-                                   timelineEvents.push({ id: eventId + '-pkb', title: 'Pemeriksaan Kebuntingan', dateRaw: pkbTime, dateFmt: formatTglStr(pkbTime), desc: 'Dinyatakan Bunting (PKB positif).', status: 'completed' });
-                                   const masaKeringTime = baseTime + 223 * 24 * 60 * 60 * 1000;
-                                   timelineEvents.push({ id: eventId + '-kering', title: 'Masa Kering', dateRaw: masaKeringTime, dateFmt: formatTglStr(masaKeringTime), desc: 'Persiapan menjelang kelahiran.', status: masaKeringTime < Date.now() ? 'completed' : 'future_active' });
-                                   const calvingTime = baseTime + 283 * 24 * 60 * 60 * 1000;
-                                   timelineEvents.push({ id: eventId + '-calving', title: 'Perkiraan Kelahiran', dateRaw: calvingTime, dateFmt: 'Est. ' + formatTglStr(calvingTime), desc: 'Pindahkan ke kandang isolasi.', status: calvingTime < Date.now() ? 'completed' : 'future' });
+                               if (rawDate) {
+                                   const baseTime = new Date(rawDate).getTime();
+                                   const eventId = item.id || Math.random().toString();
+                                   timelineEvents.push({
+                                       id: eventId + '-ib',
+                                       title: `Inseminasi Buatan (Ke-${item.jumlah_ib || 1})`,
+                                       dateRaw: baseTime,
+                                       dateFmt: formatTglStr(baseTime),
+                                       desc: `Metode: ${(item.metode || 'IB').toUpperCase()}${item.pemberi_ib ? `. Inseminator: ${item.pemberi_ib}` : ''}`,
+                                       status: isPregnant ? 'completed' : (isFailed ? 'failed' : 'active')
+                                   });
+                                   if (isPregnant) {
+                                       const pkbTime = baseTime + 60 * 24 * 60 * 60 * 1000;
+                                       timelineEvents.push({ id: eventId + '-pkb', title: 'Pemeriksaan Kebuntingan', dateRaw: pkbTime, dateFmt: formatTglStr(pkbTime), desc: 'Dinyatakan Bunting (PKB positif).', status: 'completed' });
+                                       const masaKeringTime = baseTime + 223 * 24 * 60 * 60 * 1000;
+                                       timelineEvents.push({ id: eventId + '-kering', title: 'Masa Kering', dateRaw: masaKeringTime, dateFmt: formatTglStr(masaKeringTime), desc: 'Persiapan menjelang kelahiran.', status: masaKeringTime < Date.now() ? 'completed' : 'future_active' });
+                                       const calvingTime = baseTime + 283 * 24 * 60 * 60 * 1000;
+                                       timelineEvents.push({ id: eventId + '-calving', title: 'Perkiraan Kelahiran', dateRaw: calvingTime, dateFmt: 'Est. ' + formatTglStr(calvingTime), desc: 'Pindahkan ke kandang isolasi.', status: calvingTime < Date.now() ? 'completed' : 'future' });
+                                   }
                                }
-                           });
+                           }
                            timelineEvents.sort((a, b) => b.dateRaw - a.dateRaw);
                            return timelineEvents.map((evt, idx) => {
                                let iconEl = <CheckCircle size={18} className="text-[#2E7D32]" />;
@@ -1385,6 +1523,115 @@ export default function DetailTernak() {
             </div>
           </div>
         </div>
+
+        {/* Birth Confirmation Modal */}
+        {showBirthModal && createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !birthLoading && setShowBirthModal(false)} />
+            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col gap-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-rose-500 to-pink-500 px-6 py-5 flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
+                  <Baby className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-black text-lg">Konfirmasi Kelahiran</h3>
+                  <p className="text-rose-100 text-xs">{selectedSapi?.nama} — {birthReproItem?.hpl}</p>
+                </div>
+                {!birthLoading && (
+                  <button onClick={() => setShowBirthModal(false)} className="ml-auto w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <X size={14} className="text-white" />
+                  </button>
+                )}
+              </div>
+
+              {/* Body */}
+              <div className="p-6 flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tanggal Lahir Aktual *</label>
+                  <input
+                    type="date"
+                    value={birthForm.tanggal_lahir_aktual}
+                    onChange={e => setBirthForm(f => ({ ...f, tanggal_lahir_aktual: e.target.value }))}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400 transition-all"
+                  />
+                </div>
+
+                <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4">
+                  <p className="text-xs font-black text-rose-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <Baby className="w-3.5 h-3.5" />
+                    Data Anak Sapi (Pedet)
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Jenis Kelamin</label>
+                        <select
+                          value={birthForm.jenis_kelamin_pedet}
+                          onChange={e => setBirthForm(f => ({ ...f, jenis_kelamin_pedet: e.target.value }))}
+                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400 transition-all"
+                        >
+                          <option value="Betina">Betina</option>
+                          <option value="Jantan">Jantan</option>
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Berat (kg)</label>
+                        <input
+                          type="number"
+                          placeholder="Opsional"
+                          value={birthForm.berat_pedet}
+                          onChange={e => setBirthForm(f => ({ ...f, berat_pedet: e.target.value }))}
+                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400 transition-all"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Nama Pedet</label>
+                      <input
+                        type="text"
+                        placeholder="Opsional (default: Pedet [nama induk])"
+                        value={birthForm.nama_pedet}
+                        onChange={e => setBirthForm(f => ({ ...f, nama_pedet: e.target.value }))}
+                        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">RFID Pedet <span className="text-rose-500">*wajib untuk daftar ke sistem</span></label>
+                      <input
+                        type="text"
+                        placeholder="Kosongkan jika belum ada RFID"
+                        value={birthForm.rfid_pedet}
+                        onChange={e => setBirthForm(f => ({ ...f, rfid_pedet: e.target.value }))}
+                        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400 transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 pb-6 flex gap-3">
+                <button
+                  onClick={() => setShowBirthModal(false)}
+                  disabled={birthLoading}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm py-3 rounded-2xl transition-colors disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={confirmBirth}
+                  disabled={birthLoading}
+                  className="flex-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-black text-sm py-3 px-6 rounded-2xl transition-all shadow-lg shadow-rose-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {birthLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
+                  {birthLoading ? 'Menyimpan...' : 'Konfirmasi Kelahiran'}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
 
         <PairCollarModal
           isOpen={isPairModalOpen}
