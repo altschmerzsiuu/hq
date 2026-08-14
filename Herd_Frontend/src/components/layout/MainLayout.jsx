@@ -176,7 +176,7 @@ export default function MainLayout() {
           }}
           className={cn(
             "pb-4 lg:px-4",
-            (location.pathname === '/dashboard' || location.pathname === '/sensor-data') 
+            (location.pathname === '/dashboard' || location.pathname === '/sensor-data' || location.pathname === '/estrus-prediction') 
               ? "pt-0 px-0" 
               : ((location.pathname === '/ternak') ? "pt-0 px-4" : "pt-4 px-4")
           )}

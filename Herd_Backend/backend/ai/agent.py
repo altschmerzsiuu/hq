@@ -106,11 +106,10 @@ GROQ_TOOLS = [
         "type": "function",
         "function": {
             "name": "get_cattle_info",
-            "description": "Cari profil sapi berdasarkan nama atau RFID",
+            "description": "Cari profil sapi berdasarkan nama atau RFID. Jika ingin menampilkan semua sapi, panggil tanpa argumen nama_sapi atau berikan nilai 'all'.",
             "parameters": {
                 "type": "object",
                 "properties": {"nama_sapi": {"type": "string"}},
-                "required": ["nama_sapi"],
             },
         },
     },

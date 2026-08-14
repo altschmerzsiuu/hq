@@ -205,8 +205,26 @@ def _html_estrus_alert(cow_name: str, collar_id: str, kandang_id: str,
 </div>
 </body>
 </html>
-"""
-
+    """
+def _html_forgot_password_email(reset_link: str) -> str:
+    return f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        <div style="max-w-md mx-auto border border-gray-200 rounded-lg p-6 mt-8">
+            <h2 style="color: #2E7D32;">Permintaan Reset Kata Sandi</h2>
+            <p>Halo,</p>
+            <p>Kami menerima permintaan untuk mereset kata sandi akun Hectra Herd Anda.</p>
+            <p>Silakan klik tautan di bawah ini untuk membuat kata sandi baru:</p>
+            <div style="margin: 24px 0; text-align: center;">
+                <a href="{reset_link}" style="display: inline-block; padding: 12px 24px; background-color: #2E7D32; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold;">Reset Kata Sandi</a>
+            </div>
+            <p style="font-size: 13px; color: #666;">Tautan ini akan kedaluwarsa dalam 1 jam. Jika Anda tidak merasa meminta reset kata sandi, abaikan email ini.</p>
+            <br>
+            <p>Terima kasih,<br>Tim Hectra</p>
+        </div>
+      </body>
+    </html>
+    """
 
 def _html_invitation_email(full_name: str, temp_password: str, role: str) -> str:
     role_id = "Admin" if role == "admin" else "Peternak/Pekerja"
@@ -383,6 +401,12 @@ def send_monthly_report_email(to: str, pdf_bytes: bytes, month_str: str = None) 
         pdf_bytes=pdf_bytes, 
         pdf_filename=filename
     )
+
+def send_forgot_password_email(to: str, reset_link: str) -> bool:
+    """Mengirim email berisi tautan reset kata sandi ke user."""
+    html_body = _html_forgot_password_email(reset_link)
+    subject = "Reset Kata Sandi Hectra Herd"
+    return _send_email(to, subject, html_body)
 
 def send_invitation_email(to: str, full_name: str, temp_password: str, role: str) -> bool:
     """Mengirim email undangan dengan kata sandi sementara"""
@@ -563,6 +587,59 @@ def send_birth_reminder_email(
         </html>
         """
     return _send_email(to, subject, html, pdf_bytes=ics_bytes, pdf_filename=ics_filename)
+
+
+def send_suspicious_login_email(
+    to: str,
+    user_name: str,
+    device_label: str
+) -> bool:
+    """
+    Kirim email peringatan jika ada login dari perangkat baru (untrusted device).
+    """
+    now = datetime.now(WITA).strftime("%d %b %Y, %H:%M WITA")
+    device_name = device_label if device_label else "Perangkat Tidak Dikenal"
+    subject = f"[Estrus AI] 🚨 Peringatan Keamanan: Login dari Perangkat Baru"
+
+    html = f"""
+        <!DOCTYPE html>
+        <html><head><meta charset="UTF-8">
+        <style>
+        body {{ font-family:'Segoe UI',Arial,sans-serif; background:#f8fafc; margin:0; padding:0; }}
+        .container {{ max-width:520px; margin:32px auto; background:#fff;
+                        border-radius:16px; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,0.08); }}
+        .header {{ background:linear-gradient(135deg,#dc2626,#991b1b); padding:28px 32px; color:#fff; }}
+        .header h1 {{ margin:0; font-size:20px; font-weight:700; }}
+        .body  {{ padding:28px 32px; }}
+        .info-row {{ display:flex; justify-content:space-between; padding:10px 0;
+                    border-bottom:1px solid #f1f5f9; font-size:14px; }}
+        .footer {{ background:#f8fafc; padding:16px 32px; border-top:1px solid #e2e8f0;
+                    font-size:11px; color:#94a3b8; text-align:center; }}
+        </style>
+        </head>
+        <body>
+        <div class="container">
+        <div class="header">
+            <h1>🚨 Login Baru Terdeteksi</h1>
+            <p>Aktivitas login dari perangkat yang belum terdaftar.</p>
+        </div>
+        <div class="body">
+            <p style="color:#475569;font-size:14px;margin:0 0 16px;">
+            Halo {user_name},<br><br>
+            Kami mendeteksi adanya aktivitas login ke akun Anda dari perangkat baru:
+            </p>
+            <div class="info-row"><span style="color:#64748b">Perangkat</span><span style="font-weight:600">{device_name}</span></div>
+            <div class="info-row"><span style="color:#64748b">Waktu</span><span style="font-weight:600">{now}</span></div>
+            <p style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;margin-top:16px;color:#991b1b;font-size:13px;font-weight:500;">
+            Jika ini memang Anda, abaikan email ini. Jika Anda tidak merasa melakukan login ini, segera ubah kata sandi Anda di menu Pengaturan.
+            </p>
+        </div>
+        <div class="footer">Estrus AI &nbsp;·&nbsp; Sistem Keamanan Otomatis.</div>
+        </div>
+        </body>
+        </html>
+        """
+    return _send_email(to, subject, html)
 
 
 # ── Setup CLI (jalankan sekali untuk generate token) ─────────────────────────

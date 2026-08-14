@@ -1594,32 +1594,32 @@ export default function Dashboard() {
           {/* ROW 3: ESTRUS SUMMARY & PREDICTION & POPULATION */}
           <div className="grid grid-cols-1 lg:grid-cols-[4fr_3fr_3fr] gap-4 mt-4">
             {/* Ringkasan Birahi (Donut) */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col items-center">
-              <h3 className="font-bold text-[var(--text-1)] text-lg mb-6 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
-              <p className="text-xs text-gray-500 self-start -mt-5 mb-4">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
-              <div className="flex w-full items-center gap-6">
-                <div className="relative w-32 h-32 flex-shrink-0">
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 lg:p-8 shadow-sm flex flex-col items-center justify-center">
+              <h3 className="font-bold text-[var(--text-1)] text-lg lg:text-xl mb-6 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
+              <p className="text-xs lg:text-sm text-gray-500 self-start -mt-5 mb-6">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
+              <div className="flex w-full items-center gap-8 lg:gap-12">
+                <div className="relative w-32 h-32 lg:w-40 lg:h-40 flex-shrink-0">
                   <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="#93c5fd" strokeWidth="12" />
                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 0) / Math.max(herd.length, 1))} strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
-                    <span className="text-[9px] font-bold text-gray-500 mt-1">{lang === 'id' ? 'Sapi Birahi' : 'Cows in Estrus'}</span>
+                    <span className="text-3xl lg:text-4xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
+                    <span className="text-[10px] lg:text-xs font-bold text-gray-500 mt-2">{lang === 'id' ? 'Sapi Birahi' : 'Cows in Estrus'}</span>
                   </div>
                 </div>
-                <div className="flex flex-col gap-3 w-full">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-[#16A34A] rounded-sm"></div>{lang === 'id' ? ' Birahi' : ' In Estrus'}</div>
-                    <span className="font-medium">{stats.estrus || 0}</span>
+                <div className="flex flex-col gap-4 w-full">
+                  <div className="flex items-center justify-between text-sm lg:text-base">
+                    <div className="flex items-center gap-3"><div className="w-3 h-3 bg-[#16A34A] rounded-sm"></div><span className="font-medium text-gray-700">{lang === 'id' ? ' Birahi' : ' In Estrus'}</span></div>
+                    <span className="font-bold text-gray-900">{stats.estrus || 0}</span>
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Birahi' : ' Not in Estrus'}</div>
-                    <span className="font-medium">{Math.max((herd.length || 0) - (stats.estrus || 0), 0)}</span>
+                  <div className="flex items-center justify-between text-sm lg:text-base">
+                    <div className="flex items-center gap-3"><div className="w-3 h-3 bg-blue-300 rounded-sm"></div><span className="font-medium text-gray-700">{lang === 'id' ? ' Tidak Birahi' : ' Not in Estrus'}</span></div>
+                    <span className="font-bold text-gray-900">{Math.max((herd.length || 0) - (stats.estrus || 0), 0)}</span>
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-gray-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Terdeteksi' : ' Undetected'}</div>
-                    <span className="font-medium">0</span>
+                  <div className="flex items-center justify-between text-sm lg:text-base">
+                    <div className="flex items-center gap-3"><div className="w-3 h-3 bg-gray-300 rounded-sm"></div><span className="font-medium text-gray-700">{lang === 'id' ? ' Tidak Terdeteksi' : ' Undetected'}</span></div>
+                    <span className="font-bold text-gray-900">0</span>
                   </div>
                 </div>
               </div>

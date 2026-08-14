@@ -4,6 +4,7 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import ErrorBoundary from '@/components/layout/ErrorBoundary';
 
 import Login from '@/pages/Login';
+import ResetPassword from '@/pages/ResetPassword';
 import Dashboard from '@/pages/Dashboard';
 import SensorData from '@/pages/SensorData';
 import EstrusPrediction from '@/pages/EstrusPrediction';
@@ -19,6 +20,11 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPassword />,
     errorElement: <ErrorBoundary />,
   },
   {

@@ -3,7 +3,7 @@ Authentication endpoints for Estrus AI Dashboard
 Handles user registration, login, Google OAuth, and JWT token management
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Header, Response, Request
+from fastapi import APIRouter, HTTPException, Depends, Header, Response, Request, BackgroundTasks
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime, timedelta, timezone
@@ -29,6 +29,8 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=50)
+    device_uuid: Optional[str] = None
+    device_label: Optional[str] = None
 
 class GoogleAuthRequest(BaseModel):
     token: str
@@ -55,6 +57,13 @@ class PINLoginRequest(BaseModel):
 class DeviceRegisterRequest(BaseModel):
     device_uuid: str
     device_label: Optional[str] = None
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8, max_length=50)
 
 # Dependency to get DB pool
 async def get_db_pool_dependency():
@@ -191,12 +200,14 @@ from limiter import limiter
 
 @router.post("/login", response_model=LoginResponse)
 @limiter.limit("5/minute")
-async def login(request: Request, credentials: UserLogin, response: Response, pool=Depends(get_db_pool_dependency)):
+async def login(request: Request, credentials: UserLogin, response: Response, background_tasks: BackgroundTasks, pool=Depends(get_db_pool_dependency)):
     """Login with email and password"""
     async with pool.acquire() as conn:
         user = await conn.fetchrow("SELECT * FROM users WHERE email = $1 AND is_active = true", credentials.email)
-        if not user or not user['password_hash'] or not verify_password(credentials.password, user['password_hash']):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+        if not user:
+            raise HTTPException(status_code=404, detail="Akun belum terdaftar atau belum diaktifkan")
+        if not user['password_hash'] or not verify_password(credentials.password, user['password_hash']):
+            raise HTTPException(status_code=401, detail="Kata sandi yang Anda masukkan salah")
 
         await conn.execute("UPDATE users SET last_login_at = NOW() WHERE id = $1", user['id'])
 
@@ -215,6 +226,21 @@ async def login(request: Request, credentials: UserLogin, response: Response, po
         pin_record = await conn.fetchrow("SELECT 1 FROM user_pins WHERE user_id = $1", user['id'])
         if pin_record:
             has_pin = True
+
+        # Suspicious Login Alert Check
+        if credentials.device_uuid:
+            trusted = await conn.fetchrow(
+                "SELECT 1 FROM trusted_devices WHERE user_id = $1 AND device_uuid = $2",
+                user['id'], credentials.device_uuid
+            )
+            if not trusted:
+                from mailer import send_suspicious_login_email
+                background_tasks.add_task(
+                    send_suspicious_login_email,
+                    to=user['email'],
+                    user_name=user['full_name'],
+                    device_label=credentials.device_label
+                )
 
         return {
             "message": "success",
@@ -448,3 +474,77 @@ async def delete_account(current_user: dict = Depends(get_current_user)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Gagal menghapus akun")
+
+@router.post("/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest):
+    """
+    Generate a reset token and send it via email.
+    """
+    from app import get_db_pool
+    from auth_utils import create_reset_token
+    from mailer import send_forgot_password_email
+    import asyncio
+    
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        user = await conn.fetchrow("SELECT id FROM users WHERE email = $1", req.email)
+        if user:
+            token = create_reset_token(req.email)
+            reset_link = f"https://herdhq.my.id/reset-password?token={token}"
+            
+            # Send email asynchronously
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None, 
+                send_forgot_password_email, 
+                req.email, 
+                reset_link
+            )
+            print(f"📧 Forgot Password Email Sent to {req.email}")
+            
+    return {"message": "Jika email terdaftar, tautan reset telah dikirim."}
+
+@router.post("/reset-password")
+async def reset_password(req: ResetPasswordRequest):
+    """
+    Validate the reset token and update the user's password.
+    """
+    from app import get_db_pool
+    from auth_utils import verify_token, hash_password
+    
+    payload = verify_token(req.token, token_type="reset")
+    if not payload:
+        raise HTTPException(status_code=400, detail="Token tidak valid atau sudah kedaluwarsa.")
+        
+    email = payload.get("sub")
+    if not email:
+        raise HTTPException(status_code=400, detail="Token tidak valid.")
+        
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        user = await conn.fetchrow("SELECT id FROM users WHERE email = $1", email)
+        if not user:
+            raise HTTPException(status_code=404, detail="Pengguna tidak ditemukan.")
+            
+        hashed_pw = hash_password(req.new_password)
+        await conn.execute("UPDATE users SET password_hash = $1 WHERE email = $2", hashed_pw, email)
+        
+    return {"message": "Password berhasil diubah. Silakan login kembali."}
+
+@router.delete("/pin")
+async def remove_pin(current_user: dict = Depends(get_current_user)):
+    """Remove PIN for the authenticated user"""
+    from app import get_db_pool
+    user_id = current_user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Tidak ada user aktif")
+
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            await conn.execute("DELETE FROM user_pins WHERE user_id = $1", user_id)
+        return {"message": "PIN berhasil dinonaktifkan."}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Gagal menonaktifkan PIN")

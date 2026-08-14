@@ -386,14 +386,14 @@ export default function SensorData() {
             if (!w) return null;
             const Icon = w.icon;
             return (
-              <div key={widgetId} className="bg-white/20 lg:bg-white backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] lg:shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center border border-white/30 lg:border-gray-100">
-                <Icon size={24} className="text-white lg:text-[var(--color-sage)] mb-2 lg:mb-3 opacity-90 lg:opacity-100" strokeWidth={1.5} />
+              <div key={widgetId} className="bg-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-2xl p-4 flex flex-col items-center justify-center border border-white/20">
+                <Icon size={24} className="text-white mb-2 lg:mb-3 opacity-90" strokeWidth={1.5} />
                 <div className="flex items-baseline justify-center gap-1 mb-1">
-                  <span className="text-xl lg:text-2xl font-black leading-none text-white lg:text-gray-900">{w.value}</span>
-                  {w.subValue && <span className="text-[10px] lg:text-xs font-medium text-white/80 lg:text-gray-500">{w.subValue}</span>}
-                  {w.unit && <span className="text-[10px] lg:text-xs font-medium text-white/80 lg:text-gray-500">{w.unit}</span>}
+                  <span className="text-xl lg:text-2xl font-black leading-none text-white">{w.value}</span>
+                  {w.subValue && <span className="text-[10px] lg:text-xs font-medium text-white/80">{w.subValue}</span>}
+                  {w.unit && <span className="text-[10px] lg:text-xs font-medium text-white/80">{w.unit}</span>}
                 </div>
-                <span className="text-[10px] lg:text-xs font-medium opacity-90 lg:opacity-100 text-center leading-tight tracking-wide text-white lg:text-gray-500">{w.label}</span>
+                <span className="text-[10px] lg:text-xs font-medium opacity-90 text-center leading-tight tracking-wide text-white">{w.label}</span>
               </div>
             );
           })}

@@ -143,6 +143,18 @@ async def chat(
         },
     )
 
+from pydantic import BaseModel
+class SmartSearchRequest(BaseModel):
+    query: str
+
+@router.post("/smart-search")
+async def smart_search(
+    request: SmartSearchRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    from ai.smart_search import extract_filters_from_query
+    return await extract_filters_from_query(request.query)
+
 
 # ─── GET /api/chat/sessions ─────────────────────────────────────────────
 @router.get("/sessions")

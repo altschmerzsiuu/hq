@@ -152,6 +152,8 @@ export default function Settings() {
   const [pinError, setPinError] = useState('');
   const [pinLoading, setPinLoading] = useState(false);
   const [userHasPin, setUserHasPin] = useState(user?.has_pin ?? false);
+  const [pinEnabled, setPinEnabled] = useState(user?.has_pin ?? false);
+  const [showPinInputs, setShowPinInputs] = useState(false);
 
   // Tab 4: Team
   const [teamMembers, setTeamMembers] = useState([]);
@@ -319,33 +321,46 @@ export default function Settings() {
   const handleSavePIN = async (e) => {
     e.preventDefault();
     setPinError('');
-    if (!/^\d{6}$/.test(pinNewDigits)) {
-      setPinError(lang === 'id' ? 'PIN harus tepat 6 digit angka.' : 'PIN must be exactly 6 digits.');
-      return;
-    }
-    if (pinNewDigits !== pinConfirmDigits) {
-      setPinError(lang === 'id' ? 'Konfirmasi PIN tidak cocok.' : 'PIN entries do not match.');
-      return;
-    }
+    
     setPinLoading(true);
     try {
-      await axiosInstance.post('/auth/pin/set', { pin: pinNewDigits });
-      setUserHasPin(true);
-      setPinNewDigits('');
-      setPinConfirmDigits('');
+      if (!pinEnabled) {
+        await axiosInstance.delete('/auth/pin');
+        setUserHasPin(false);
+        localStorage.removeItem('herd_user_id');
+        localStorage.removeItem('herd_user_name');
+        localStorage.setItem('herd_has_pin', 'false');
+        toast.success(lang === 'id' ? 'PIN berhasil dinonaktifkan.' : 'PIN successfully disabled.');
+      } else {
+        if (!/^\d{6}$/.test(pinNewDigits)) {
+          setPinError(lang === 'id' ? 'PIN harus tepat 6 digit angka.' : 'PIN must be exactly 6 digits.');
+          setPinLoading(false);
+          return;
+        }
+        if (pinNewDigits !== pinConfirmDigits) {
+          setPinError(lang === 'id' ? 'Konfirmasi PIN tidak cocok.' : 'PIN entries do not match.');
+          setPinLoading(false);
+          return;
+        }
 
-      // Save user ID + name to localStorage so PIN screen appears on next login
-      const { user: authUser, registerDevice } = useAuthStore.getState();
-      if (authUser?.id) {
-        localStorage.setItem('herd_user_id', String(authUser.id));
-        localStorage.setItem('herd_user_name', authUser.full_name || authUser.name || '');
+        await axiosInstance.post('/auth/pin/set', { pin: pinNewDigits });
+        setUserHasPin(true);
+        setShowPinInputs(false);
+        setPinNewDigits('');
+        setPinConfirmDigits('');
+
+        const { user: authUser, registerDevice } = useAuthStore.getState();
+        if (authUser?.id) {
+          localStorage.setItem('herd_user_id', String(authUser.id));
+          localStorage.setItem('herd_user_name', authUser.full_name || authUser.name || '');
+          localStorage.setItem('herd_has_pin', 'true');
+        }
+        await registerDevice();
+
+        toast.success(lang === 'id' ? 'PIN berhasil diperbarui! Login berikutnya pakai PIN.' : 'PIN updated! Next login will use your PIN.');
       }
-      // Ensure this device is registered as trusted
-      await registerDevice();
-
-      toast.success(lang === 'id' ? 'PIN berhasil diperbarui! Login berikutnya pakai PIN.' : 'PIN updated! Next login will use your PIN.');
     } catch (err) {
-      handleError(err, 'simpan PIN baru');
+      handleError(err, lang === 'id' ? 'simpan pengaturan PIN' : 'save PIN settings');
     } finally {
       setPinLoading(false);
     }
@@ -413,7 +428,7 @@ export default function Settings() {
   };
 
   const isGeneralChanged = selectedProv !== origProv || selectedCity !== origCity || fullName !== origFullName || phoneNumber !== origPhoneNumber || farmName !== origFarmName;
-  const isSecurityChanged = pinNewDigits.length > 0 || pinConfirmDigits.length > 0;
+  const isSecurityChanged = (pinNewDigits.length > 0 || pinConfirmDigits.length > 0) || (pinEnabled !== userHasPin);
   
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const [pendingTab, setPendingTab] = useState(null);
@@ -886,7 +901,7 @@ export default function Settings() {
                 </button>
                 <h2 className="text-lg font-bold text-gray-900">{t.settings_tab_security || 'Security'}</h2>
                 <div className="absolute right-0 flex items-center justify-center">
-                  <button type="submit" form="pin-form" disabled={!isSecurityChanged || pinLoading || pinNewDigits.length !== 6 || pinConfirmDigits.length !== 6} className={`p-2.5 text-white rounded-full shadow-sm transition-all ${isSecurityChanged ? 'bg-[#2f7d31] hover:bg-[#2f7d31]/90 active:scale-95' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+                  <button type="submit" form="pin-form" disabled={!isSecurityChanged || pinLoading || (pinEnabled && (pinNewDigits.length !== 6 || pinConfirmDigits.length !== 6))} className={`p-2.5 text-white rounded-full shadow-sm transition-all ${isSecurityChanged ? 'bg-[#2f7d31] hover:bg-[#2f7d31]/90 active:scale-95' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
                     {pinLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
                   </button>
                 </div>
@@ -895,39 +910,82 @@ export default function Settings() {
                 <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
                   <h2 className="text-lg font-bold text-gray-900 font-display flex items-center gap-2">
                     <Key className="w-5 h-5 text-[#2f7d31]" />
-                    {lang === 'id' ? 'Ubah PIN Login' : 'Change Login PIN'}
+                    {lang === 'id' ? 'Pengaturan PIN Login' : 'Login PIN Settings'}
                   </h2>
                 </div>
                 <form id="pin-form" onSubmit={handleSavePIN} className="space-y-4">
-                  {pinError && (
-                    <div className="px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
-                      {pinError}
+                  
+                  <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl mb-4 border border-gray-100">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-900 text-sm">{lang === 'id' ? 'Gunakan PIN Login' : 'Use Login PIN'}</span>
+                      <span className="text-xs text-gray-500">{lang === 'id' ? 'Aktifkan untuk keamanan ekstra saat login.' : 'Enable for extra security during login.'}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPinEnabled(!pinEnabled);
+                        setPinError('');
+                        setPinNewDigits('');
+                        setPinConfirmDigits('');
+                      }}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${pinEnabled ? 'bg-[#2f7d31]' : 'bg-gray-200'}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${pinEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+
+                  {pinEnabled && userHasPin && !showPinInputs && (
+                    <div className="flex flex-col items-center p-4 bg-green-50 border border-green-100 rounded-xl animate-in fade-in duration-300">
+                      <div className="flex items-center gap-2 text-green-700 font-bold mb-2">
+                        <Check className="w-5 h-5" />
+                        {lang === 'id' ? 'PIN Login Anda Aktif' : 'Your Login PIN is Active'}
+                      </div>
+                      <button type="button" onClick={() => setShowPinInputs(true)} className="text-sm font-semibold text-[#2f7d31] hover:underline">
+                        {lang === 'id' ? 'Ubah PIN' : 'Change PIN'}
+                      </button>
                     </div>
                   )}
-                  <div>
-                      <label className={labelClass}>{lang === 'id' ? 'PIN Baru (6 digit)' : 'New PIN (6 digits)'}</label>
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={pinNewDigits}
-                        onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPinNewDigits(e.target.value); setPinError(''); } }}
-                        placeholder="••••••"
-                        className={`${inputClass} font-mono tracking-[0.5em] text-center`}
-                      />
-                  </div>
-                  <div>
-                      <label className={labelClass}>{lang === 'id' ? 'Konfirmasi PIN Baru' : 'Confirm New PIN'}</label>
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={pinConfirmDigits}
-                        onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPinConfirmDigits(e.target.value); setPinError(''); } }}
-                        placeholder="••••••"
-                        className={`${inputClass} font-mono tracking-[0.5em] text-center`}
-                      />
-                  </div>
+
+                  {pinEnabled && (!userHasPin || showPinInputs) && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                      {pinError && (
+                        <div className="px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+                          {pinError}
+                        </div>
+                      )}
+                      <div>
+                          <label className={labelClass}>{lang === 'id' ? 'PIN Baru (6 digit)' : 'New PIN (6 digits)'}</label>
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={pinNewDigits}
+                            onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPinNewDigits(e.target.value); setPinError(''); } }}
+                            placeholder="••••••"
+                            className={`${inputClass} font-mono tracking-[0.5em] text-center`}
+                          />
+                      </div>
+                      <div>
+                          <label className={labelClass}>{lang === 'id' ? 'Konfirmasi PIN Baru' : 'Confirm New PIN'}</label>
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={pinConfirmDigits}
+                            onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPinConfirmDigits(e.target.value); setPinError(''); } }}
+                            placeholder="••••••"
+                            className={`${inputClass} font-mono tracking-[0.5em] text-center`}
+                          />
+                      </div>
+                      {userHasPin && (
+                        <div className="flex justify-end mt-2">
+                          <button type="button" onClick={() => {setShowPinInputs(false); setPinNewDigits(''); setPinConfirmDigits('');}} className="text-sm font-semibold text-gray-500 hover:text-gray-700">
+                            {lang === 'id' ? 'Batal' : 'Cancel'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </form>
               </div>
             </div>
@@ -1083,13 +1141,13 @@ export default function Settings() {
                           {m.role === 'owner'
                             ? <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-bold text-[9px] uppercase">{t.settings_role_owner}</span>
                             : <>
-                                <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-transparent font-bold text-[var(--accent)] border-none outline-none text-xs cursor-pointer text-right">
+                                <select value={m.role} onChange={e => handleUpdateRole(m.id, e.target.value)} className="bg-orange-50 text-[var(--accent)] border border-orange-100 outline-none text-[12px] font-bold px-3 py-2 rounded-lg cursor-pointer">
                                   <option value="worker">{t.settings_role_worker}</option>
                                   <option value="admin">{t.settings_role_admin}</option>
                                 </select>
                                 <button
                                   onClick={() => handleRemoveMember(m.id, m.full_name || m.email)}
-                                  className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                  className="p-2.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors active:scale-95"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                 </button>
