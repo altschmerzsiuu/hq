@@ -133,7 +133,7 @@ export default function Login() {
       metaThemeColor.name = 'theme-color';
       document.head.appendChild(metaThemeColor);
     }
-    metaThemeColor.content = '#2f7d31'; // Login background color
+    metaThemeColor.content = '#FF7B1C'; // Login background color
 
     return () => window.removeEventListener('resize', handleResize);
   }, [isAuthenticated, navigate]);
