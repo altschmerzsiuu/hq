@@ -54,7 +54,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgre}
       POSTGRES_DB: Collar_to_Gateway
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - herd_postgres_data:/var/lib/postgresql/data
       - ./db/init-historical.sql:/docker-entrypoint-initdb.d/02-init-historical.sql
     ports:
       - "127.0.0.1:5433:5432"  # Internal only — database tidak boleh terbuka ke internet
@@ -184,7 +184,8 @@ services:
       - iot_network
 
 volumes:
-  postgres-data:
+  herd_postgres_data:
+    external: true
   pgadmin-data:
 
 networks:
