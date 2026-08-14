@@ -158,7 +158,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     /* CRITICAL iOS fix: no overflow, no scroll on html itself */
     overflow: hidden;
     /* This background shows during overscroll — match page bg to eliminate bleed */
@@ -175,7 +175,7 @@
     /* CRITICAL iOS fix: prevent body from ever scrolling independently */
     overflow: hidden;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     overscroll-behavior: none;
   }
 
@@ -187,7 +187,7 @@
 
   #root {
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     /* The only scroll happens inside child containers, not here */
     overflow: hidden;
     background-color: var(--bg-base);
