@@ -243,7 +243,7 @@ export default function GendhisWidget() {
         throw new Error(`HTTP ${res.status}`);
       }
 
-      setIsTyping(false);
+      // Keep isTyping=true until first chunk arrives so the bouncing dots show
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -262,6 +262,8 @@ export default function GendhisWidget() {
           try {
             const payload = JSON.parse(line.slice(6));
             if (payload.chunk !== undefined) {
+              // Hide typing indicator as soon as first chunk arrives
+              setIsTyping(false);
               accumulatedReply += payload.chunk;
               setStreamingMessage(accumulatedReply);
             }
@@ -884,7 +886,7 @@ export default function GendhisWidget() {
 
                 {/* Streaming Chunk */}
                 {streamingMessage && (
-                  <div className="flex w-full gap-4 justify-start">
+                  <div className="flex w-full gap-4 justify-start mb-6">
                     <div className="w-8 h-8 rounded-xl bg-[var(--accent)] flex items-center justify-center shrink-0 border border-emerald-400/20 shadow-md">
                       <Bot className="w-4 h-4 text-white" />
                     </div>
@@ -898,16 +900,19 @@ export default function GendhisWidget() {
                   </div>
                 )}
 
-                {/* Thinking Loader */}
-                {isTyping && (
-                  <div className="flex w-full gap-4 justify-start items-center">
+                {/* Thinking Loader — shown while waiting for first chunk */}
+                {isTyping && !streamingMessage && (
+                  <div className="flex w-full gap-4 justify-start items-center mb-6">
                     <div className="w-8 h-8 rounded-xl bg-[var(--accent)] flex items-center justify-center shrink-0 border border-emerald-400/20 shadow-md">
                       <Bot className="w-4 h-4 text-white" />
                     </div>
-                    <div className="bg-[var(--bg-surface)] border border-[var(--border)] px-4 py-3 rounded-2xl flex items-center gap-1 shadow-sm">
-                      <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce"></span>
-                      <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                      <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    <div className="flex flex-col items-start">
+                      <span className="text-[9px] font-bold text-[var(--text-3)] uppercase tracking-widest mb-1.5">Gendhis</span>
+                      <div className="bg-[var(--bg-surface)] border border-[var(--border)] px-4 py-3 rounded-2xl flex items-center gap-1.5 shadow-sm">
+                        <span className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce"></span>
+                        <span className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                        <span className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                      </div>
                     </div>
                   </div>
                 )}
