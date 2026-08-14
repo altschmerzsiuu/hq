@@ -367,7 +367,7 @@ def send_estrus_alert_email(to: str, cow_name: str, collar_id: str,
 
 def send_monthly_report_email(to: str, pdf_bytes: bytes, month_str: str = None) -> bool:
     """
-    Kirim laporan bulanan PDF via email.
+    """
     if not month_str:
         now = datetime.now()
         month_str = f"{now.strftime('%B %Y')}"
