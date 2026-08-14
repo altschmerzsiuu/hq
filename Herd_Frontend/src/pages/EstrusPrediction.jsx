@@ -193,7 +193,9 @@ export default function EstrusPrediction() {
     return matchSearch;
   });
 
-  const currentDisplayList = activeTab === 'aktif' ? filteredActive : filteredKonfirmasi;
+  const currentDisplayList = (activeTab === 'aktif' ? filteredActive : filteredKonfirmasi).sort((a, b) => {
+    return (b.confidence_final || 0) - (a.confidence_final || 0);
+  });
 
   // ─ Calendar Navigation ────────────────────────────────────────────────────
   const prevMonth = () => setCalDate(new Date(calDate.getFullYear(), calDate.getMonth() - 1, 1));
@@ -223,7 +225,7 @@ export default function EstrusPrediction() {
 
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] lg:rounded-[40px] lg:mt-4 px-6 pt-[calc(env(safe-area-inset-top,0px)+56px)] lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4 lg:mx-0" 
+        className="rounded-t-none rounded-b-[40px] lg:rounded-[40px] lg:mt-4 px-6 pt-[calc(env(safe-area-inset-top,0px)+56px)] lg:pt-8 pb-8 shadow-sm relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 lg:mx-0" 
         style={{ 
           background: 'linear-gradient(135deg, #FF3366 0%, #CC0033 100%)'
         }}
@@ -252,13 +254,13 @@ export default function EstrusPrediction() {
           <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto shrink-0 opacity-80">
             <RefreshCw size={16} className="text-white" />
             <span className="text-[12px] font-medium text-white tracking-wide">
-              {lang === 'id' ? `Tersinkronisasi: Hari ini ${new Date().toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', {hour: '2-digit', minute:'2-digit'})}` : `Synced: Today ${new Date().toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', {hour: '2-digit', minute:'2-digit'})}`}
+              <strong className="text-white">{lang === 'id' ? 'Terakhir update:' : 'Last updated:'}</strong> {lang === 'id' ? `jam ${new Date().toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', {hour: '2-digit', minute:'2-digit'})}` : `at ${new Date().toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', {hour: '2-digit', minute:'2-digit'})}`}
             </span>
           </div>
         </div>
       </div>
 
-      <div className="px-4 lg:px-0 space-y-8">
+      <div className="px-4 lg:px-0 space-y-8 mt-2 relative z-20">
         {/* ── STAT SUMMARY CARDS ────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Sapi Dalam Pemantauan */}
@@ -334,27 +336,34 @@ export default function EstrusPrediction() {
                </div>
                
                <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                  {['M','T','W','T','F','S','S'].map(d => (
-                     <div key={d} className="text-[10px] font-bold text-[var(--text-3)]">{d}</div>
+                  {['M','T','W','T','F','S','S'].map((d, idx) => (
+                     <div key={idx} className="text-[10px] font-bold text-[var(--text-3)]">{d}</div>
                   ))}
                </div>
                <div className="grid grid-cols-7 gap-1 text-center">
                   {/* Dynamic calendar matching actual prediction data */}
-                  {[...Array(new Date(calDate.getFullYear(), calDate.getMonth() + 1, 0).getDate())].map((_, i) => {
-                     const dateNum = i + 1;
-                     const isToday = dateNum === new Date().getDate() && calDate.getMonth() === new Date().getMonth() && calDate.getFullYear() === new Date().getFullYear();
+                  {(() => {
+                     const firstDay = new Date(calDate.getFullYear(), calDate.getMonth(), 1).getDay();
+                     const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Monday=0
+                     const daysInMonth = new Date(calDate.getFullYear(), calDate.getMonth() + 1, 0).getDate();
+                     const totalCells = startOffset + daysInMonth;
                      
-                     const hasEstrus = unverified.some(p => {
-                        if (!p.prediksi_ib_optimal) return false;
-                        const d = new Date(p.prediksi_ib_optimal);
-                        return d.getDate() === dateNum && d.getMonth() === calDate.getMonth() && d.getFullYear() === calDate.getFullYear() && classifyPrediction(p, t).type === 'estrus';
-                     });
-                     
-                     const isApproaching = unverified.some(p => {
-                        if (!p.prediksi_ib_optimal) return false;
-                        const d = new Date(p.prediksi_ib_optimal);
-                        return d.getDate() === dateNum && d.getMonth() === calDate.getMonth() && d.getFullYear() === calDate.getFullYear() && classifyPrediction(p, t).type !== 'estrus';
-                     });
+                     return [...Array(totalCells)].map((_, i) => {
+                        if (i < startOffset) return <div key={`empty-${i}`} className="w-8 h-8" />;
+                        const dateNum = i - startOffset + 1;
+                        const isToday = dateNum === new Date().getDate() && calDate.getMonth() === new Date().getMonth() && calDate.getFullYear() === new Date().getFullYear();
+                        
+                        const hasEstrus = unverified.some(p => {
+                           if (!p.prediksi_ib_optimal) return false;
+                           const d = new Date(p.prediksi_ib_optimal);
+                           return d.getDate() === dateNum && d.getMonth() === calDate.getMonth() && d.getFullYear() === calDate.getFullYear() && classifyPrediction(p, t).type === 'estrus';
+                        });
+                        
+                        const isApproaching = unverified.some(p => {
+                           if (!p.prediksi_ib_optimal) return false;
+                           const d = new Date(p.prediksi_ib_optimal);
+                           return d.getDate() === dateNum && d.getMonth() === calDate.getMonth() && d.getFullYear() === calDate.getFullYear() && classifyPrediction(p, t).type !== 'estrus';
+                        });
                      
                      let bg = 'transparent';
                      let text = 'var(--text-2)';
@@ -446,7 +455,8 @@ export default function EstrusPrediction() {
                            )}
                         </div>
                      )
-                  })}
+                  })
+                  })()}
                </div>
                
                <div className="mt-4 flex flex-col gap-2 pt-3 border-t border-[var(--border)]">
@@ -467,7 +477,7 @@ export default function EstrusPrediction() {
             <div style={{ marginTop: '16px', background: 'var(--bg-hover)', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
               <CheckCircle2 style={{ width: 15, height: 15, color: 'var(--text-3)', flexShrink: 0, marginTop: 1 }} />
               <p style={{ fontSize: '11px', color: 'var(--text-2)', lineHeight: 1.5 }}>
-                <strong>{t.prediction_note_auto}</strong> {t.prediction_note_desc}
+                <strong>{lang === 'id' ? 'Terakhir update:' : 'Last updated:'}</strong> {lang === 'id' ? `jam ${new Date().toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', {hour: '2-digit', minute:'2-digit'})}` : `at ${new Date().toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', {hour: '2-digit', minute:'2-digit'})}`}
               </p>
             </div>
           </div>

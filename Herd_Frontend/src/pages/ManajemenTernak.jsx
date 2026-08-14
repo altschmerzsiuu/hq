@@ -315,8 +315,28 @@ export default function ManajemenTernak() {
       if (searchLower.includes('sakit')) impliedKesehatan = 'Sakit';
       if (searchLower.includes('bunting') || searchLower.includes('hamil')) impliedKesehatan = 'Hamil';
       
-      const isStatusMatch = impliedKesehatan ? (s.status_kesehatan === impliedKesehatan) : false;
-      const cleanSearch = searchLower.replace(/(sapi|sehat|sakit|bunting|hamil|yang|lagi)/g, '').trim();
+      let maxAge = null;
+      let minAge = null;
+      const maxMatch = searchLower.match(/dibawah\s+(\d+)\s+tahun/);
+      if (maxMatch) maxAge = parseInt(maxMatch[1], 10);
+      const minMatch = searchLower.match(/diatas\s+(\d+)\s+tahun/);
+      if (minMatch) minAge = parseInt(minMatch[1], 10);
+      
+      let matchAge = true;
+      if (maxAge !== null || minAge !== null) {
+        if (!s.bulan_tahun_lahir) {
+          matchAge = false;
+        } else {
+          const today = new Date();
+          const birth = new Date(s.bulan_tahun_lahir);
+          const ageInYears = (today - birth) / (1000 * 60 * 60 * 24 * 365.25);
+          if (maxAge !== null && ageInYears >= maxAge) matchAge = false;
+          if (minAge !== null && ageInYears <= minAge) matchAge = false;
+        }
+      }
+      
+      const isStatusMatch = impliedKesehatan ? (s.status_kesehatan === impliedKesehatan) : true;
+      const cleanSearch = searchLower.replace(/(sapi|sehat|sakit|bunting|hamil|yang|lagi|umur|dibawah|diatas|\d+|tahun)/g, '').trim();
       
       const isKeywordMatch = cleanSearch === '' ? true : (
         s.nama?.toLowerCase().includes(cleanSearch) ||
@@ -325,9 +345,7 @@ export default function ManajemenTernak() {
         cowAge.includes(cleanSearch)
       );
       
-      const matchSearch = impliedKesehatan 
-        ? (isStatusMatch && isKeywordMatch)
-        : (s.nama?.toLowerCase().includes(searchLower) || s.id?.toLowerCase().includes(searchLower) || s.jenis?.toLowerCase().includes(searchLower) || cowAge.includes(searchLower));
+      const matchSearch = matchAge && isStatusMatch && isKeywordMatch;
         
       const matchKesehatan =
         filters.kesehatan === 'all' ? true :
@@ -691,10 +709,10 @@ export default function ManajemenTernak() {
         {/* ── DESKTOP CONTENT ── */}
         <div className="hidden lg:flex flex-col gap-6 animate-in fade-in duration-300">
 
-          {/* Standard Search & Filter Bar */}
-          <div style={{ background: 'var(--bg-base)', borderRadius: '12px', border: '1px solid var(--border)' }} className="relative z-20 w-full max-w-4xl mx-auto flex flex-col overflow-hidden">
+          {/* Floating Search & Filter Bar */}
+          <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '8px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid var(--border)' }} className="-mt-[28px] relative z-20 w-full max-w-4xl mx-auto flex flex-col">
             <div className="flex gap-4 justify-between items-center">
-              <div className="relative flex-1">
+              <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
@@ -705,13 +723,13 @@ export default function ManajemenTernak() {
                 />
               </div>
 
-              <div className="flex items-center gap-3 border-l border-[var(--border)] pl-4 pr-2 py-1">
+              <div className="flex items-center gap-3 border-l border-[var(--border)] pl-4">
                 <button
                   onClick={() => {
                     if (isSelectMode) setSelectedForDelete([]);
                     setIsSelectMode(!isSelectMode);
                   }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', border: `1px solid ${isSelectMode ? 'var(--accent)' : 'transparent'}`, color: isSelectMode ? 'var(--accent)' : 'var(--text-2)', borderRadius: '8px', background: isSelectMode ? 'var(--accent-dim)' : 'transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', border: `1px solid ${isSelectMode ? 'var(--accent)' : 'transparent'}`, color: isSelectMode ? 'var(--accent)' : 'var(--text-2)', borderRadius: '12px', background: isSelectMode ? 'var(--accent-dim)' : 'transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}
                   className="hover:bg-gray-100"
                 >
                   <ClipboardList size={18} />

@@ -45,7 +45,7 @@ async def upload_image_to_storage(file: UploadFile, folder: str = "general") -> 
     if gemini_api_key:
         try:
             genai.configure(api_key=gemini_api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("gemini-1.5-flash-latest")
             
             prompt = """
             Analyze this image carefully. Determine if it contains any of the following:

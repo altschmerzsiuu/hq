@@ -302,7 +302,7 @@ def _html_monthly_pdf_email(month_str: str, pdf_filename: str) -> str:
 # ── Core send function ────────────────────────────────────────────────────────
 
 def _send_email(to: str, subject: str, html_body: str,
-                pdf_bytes: bytes = None, pdf_filename: str = None) -> bool:
+                pdf_bytes: Optional[bytes] = None, pdf_filename: Optional[str] = None) -> bool:
     """
     Kirim email HTML via Gmail API.
     pdf_bytes: opsional, kalau ada akan dilampirkan sebagai attachment.
@@ -383,7 +383,7 @@ def send_estrus_alert_email(to: str, cow_name: str, collar_id: str,
     return _send_email(to, subject, html)
 
 
-def send_monthly_report_email(to: str, pdf_bytes: bytes, month_str: str = None) -> bool:
+def send_monthly_report_email(to: str, pdf_bytes: bytes, month_str: Optional[str] = None) -> bool:
     """
     """
     if not month_str:
