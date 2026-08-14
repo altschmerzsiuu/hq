@@ -1158,7 +1158,7 @@ export default function Dashboard() {
             className="rounded-t-none rounded-b-[40px] px-6 lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4"
             style={{
               paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
-              background: 'linear-gradient(180deg, #2f7d31 0%, #164018 100%)',
+              background: 'linear-gradient(180deg, #3a9c3d 0%, #2c792e 60%, #1a5220 100%)',
               minHeight: 'calc(env(safe-area-inset-top) + 280px)'
             }}
           >
@@ -1445,7 +1445,7 @@ export default function Dashboard() {
           <div
             className="rounded-[40px] mt-4 px-8 pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between"
             style={{
-              background: 'linear-gradient(135deg, #10B981 0%, #047857 100%)'
+              background: 'linear-gradient(135deg, #3a9c3d 0%, #2c792e 60%, #1a5220 100%)'
             }}
           >
             <div className="absolute -right-12 text-white opacity-[0.12] rotate-12 pointer-events-none" style={{ top: '-2rem' }}>
