@@ -73,6 +73,7 @@ async def list_team_members(current_user: dict = Depends(get_current_user)):
                 created_at
             FROM users
             WHERE (id = $1 OR parent_id = $1)
+              AND is_active = true
             ORDER BY created_at ASC
             """,
             owner_id
@@ -231,11 +232,14 @@ async def remove_team_member(
     pool = await get_db_pool()
     async with pool.acquire() as conn:
         target = await conn.fetchrow(
-            "SELECT id, parent_id FROM users WHERE id = $1",
+            "SELECT id, parent_id, is_active FROM users WHERE id = $1",
             member_id
         )
         if not target:
             raise HTTPException(status_code=404, detail="Anggota tim tidak ditemukan.")
+
+        if not target["is_active"]:
+            raise HTTPException(status_code=409, detail="Anggota tim sudah dinonaktifkan sebelumnya.")
 
         if target["id"] == owner_id:
             raise HTTPException(
