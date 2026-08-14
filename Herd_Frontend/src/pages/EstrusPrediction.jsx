@@ -400,7 +400,7 @@ export default function EstrusPrediction() {
                               className={`text-xs font-semibold w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-[var(--bg-hover)] ${isSelected ? 'ring-2 ring-offset-1 ring-blue-500' : ''}`}
                               style={{ background: bg, color: text, border: ring }}
                            >
-                              {i + 1}
+                              {dateNum}
                            </div>
 
                            {/* Popover / Tooltip */}

@@ -145,6 +145,28 @@ export default function ManajemenTernak() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
 
+  // Hover Tooltip Data
+  const [tooltipData, setTooltipData] = useState({ predictions: [], reproductions: [] });
+  const [hoverInfo, setHoverInfo] = useState({ cowId: null, x: 0, y: 0 });
+
+  useEffect(() => {
+    const fetchTooltipData = async () => {
+      try {
+        const [predRes, reproRes] = await Promise.all([
+          axiosInstance.get('/sensor/estrus-predictions'),
+          axiosInstance.get('/reproduction')
+        ]);
+        setTooltipData({
+          predictions: predRes.data || [],
+          reproductions: reproRes.data || []
+        });
+      } catch (err) {
+        console.error("Failed to fetch tooltip data", err);
+      }
+    };
+    fetchTooltipData();
+  }, []);
+
   // Edit Reproduksi states
   const [editReproItem, setEditReproItem] = useState(null); // which repro record is being edited inline
   const [editReproForm, setEditReproForm] = useState({});
@@ -742,25 +764,24 @@ export default function ManajemenTernak() {
 
 
           {/* Desktop View: Table Container */}
-          <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '16px 24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '0.5px solid var(--border)' }} className="mx-0 overflow-hidden">
-            <div className="overflow-x-auto">
+          <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '16px 24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '0.5px solid var(--border)' }} className="mx-0 overflow-visible">
+            <div className="overflow-visible">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
                     {isSelectMode && <th className="py-3 px-4 font-medium w-10"></th>}
                     <th className="py-4 px-4 font-bold text-sm text-gray-900">{t.livestock_table_name}</th>
-                    <th className="py-4 px-4 font-bold text-sm text-gray-900">{t.livestock_table_rfid}</th>
                     <th className="py-4 px-4 font-bold text-sm text-gray-900">{t.livestock_table_breed}</th>
-                    <th className="py-4 px-4 font-bold text-sm text-gray-900">{t.livestock_table_age}</th>
                     <th className="py-4 px-4 font-bold text-sm text-gray-900">{t.livestock_table_health}</th>
-                    <th className="py-4 px-4 font-bold text-sm text-gray-900">{t.livestock_table_collar}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border)]">
                   {filteredSapi.map((sapi) => (
                     <tr
                       key={sapi.id}
-                      className="hover:bg-[var(--color-bg-surface)] transition-colors cursor-pointer"
+                      className="hover:bg-[var(--color-bg-surface)] transition-colors cursor-pointer relative"
+                      onMouseMove={(e) => setHoverInfo({ cowId: sapi.id, x: e.clientX, y: e.clientY })}
+                      onMouseLeave={() => setHoverInfo({ cowId: null, x: 0, y: 0 })}
                       onClick={() => {
                         if (isSelectMode) {
                           setSelectedForDelete(prev =>
@@ -772,7 +793,7 @@ export default function ManajemenTernak() {
                       }}
                     >
                       {isSelectMode && (
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 w-10">
                           <input
                             type="checkbox"
                             className="w-5 h-5 rounded-md text-[var(--accent)] border-gray-300 focus:ring-[var(--accent)]"
@@ -781,13 +802,33 @@ export default function ManajemenTernak() {
                           />
                         </td>
                       )}
-                      <td className="py-3 px-4 font-bold text-[var(--color-primary)]">{sapi.nama}</td>
-                      <td className="py-3 px-4 text-sm text-[var(--color-text-secondary)]">{sapi.id}</td>
-                      <td className="py-3 px-4 text-sm">{sapi.jenis}</td>
-                      <td className="py-3 px-4 text-sm text-[var(--color-text-muted)]">{hitungUsia(sapi.bulan_tahun_lahir, lang)}</td>
-                      <td className="py-3 px-4">
+                      
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 text-gray-400 overflow-hidden">
+                             {sapi.foto ? (
+                               <img src={sapi.foto} alt={sapi.nama} className="w-full h-full object-cover" />
+                             ) : (
+                               <Beef size={24} strokeWidth={1.5} />
+                             )}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-[var(--color-primary)] text-base">{sapi.nama}</span>
+                            <span className="text-[11px] text-gray-400 font-mono tracking-widest mt-0.5">{sapi.id}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-4">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm text-gray-800">{sapi.jenis}</span>
+                          <span className="text-xs text-gray-500 mt-0.5">{hitungUsia(sapi.bulan_tahun_lahir, lang)}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-4">
                         <span className={cn(
-                          "px-2.5 py-1 rounded-full text-xs font-bold",
+                          "px-3 py-1.5 rounded-full text-xs font-bold shadow-sm",
                           sapi.status_kesehatan === 'Sehat' ? "bg-[var(--color-success-bg)] text-[var(--color-success)]" :
                             sapi.status_kesehatan === 'Hamil' ? "bg-[var(--color-info-bg)] text-[var(--color-info)]" :
                               "bg-[var(--color-warning-bg)] text-[var(--color-warning)]"
@@ -798,12 +839,11 @@ export default function ManajemenTernak() {
                                 t.livestock_filter_care}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-sm text-[var(--color-text-muted)]">{sapi.collar_id || '-'}</td>
                     </tr>
                   ))}
                   {filteredSapi.length === 0 && (
                     <tr>
-                      <td colSpan="7" style={{ padding: '48px 0', textAlign: 'center', color: 'var(--text-3)', fontStyle: 'italic', fontSize: '13px' }}>{t.livestock_no_data}</td>
+                      <td colSpan="4" style={{ padding: '48px 0', textAlign: 'center', color: 'var(--text-3)', fontStyle: 'italic', fontSize: '13px' }}>{t.livestock_no_data}</td>
                     </tr>
                   )}
                 </tbody>
@@ -1090,6 +1130,61 @@ export default function ManajemenTernak() {
         }}
       />
 
+      {/* FLOATING HOVER TOOLTIP (DESKTOP) */}
+      {hoverInfo.cowId && (
+        <div 
+          style={{
+            position: 'fixed',
+            left: hoverInfo.x + 15,
+            top: hoverInfo.y + 15,
+            zIndex: 9999,
+            pointerEvents: 'none'
+          }}
+          className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-100 p-4 w-[260px] animate-in fade-in zoom-in-95"
+        >
+          {(() => {
+            const cow = sapiList.find(s => s.id === hoverInfo.cowId);
+            if (!cow) return null;
+            const pred = tooltipData.predictions.find(p => String(p.cow_id) === String(cow.id) && p.prediksi_ib_optimal);
+            const repro = tooltipData.reproductions.find(r => String(r.rfid) === String(cow.id));
+            
+            return (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 mb-1">
+                   <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-100">
+                      {cow.foto ? <img src={cow.foto} className="w-full h-full object-cover" /> : <Beef size={16} className="text-gray-400" />}
+                   </div>
+                   <div>
+                     <p className="text-sm font-bold text-gray-800 leading-tight">{cow.nama}</p>
+                     <p className="text-[10px] text-gray-400 font-mono tracking-widest">{cow.id}</p>
+                   </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-500 font-medium">Prediksi Birahi</span>
+                    <span className="font-semibold text-[var(--color-primary)]">
+                      {pred ? new Date(pred.prediksi_ib_optimal).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' }) : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-500 font-medium">Last IB</span>
+                    <span className="font-semibold text-gray-700">
+                      {repro && repro.tanggal_ib ? new Date(repro.tanggal_ib).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' }) : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-500 font-medium">Collar</span>
+                    <span className="font-mono text-gray-700">
+                      {cow.collar_id || '-'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
     </>
   );
