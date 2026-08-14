@@ -74,12 +74,16 @@ export default function Login() {
     e.preventDefault();
     if (!forgotEmail) return;
     setIsForgotLoading(true);
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 1500));
-    setIsForgotLoading(false);
-    setShowForgotModal(false);
-    toast.success('Link reset password telah dikirim ke email Anda.');
-    setForgotEmail('');
+    try {
+      await axiosInstance.post('/auth/forgot-password', { email: forgotEmail });
+      toast.success(lang === 'id' ? 'Link reset password telah dikirim ke email Anda.' : 'Password reset link sent to your email.');
+      setShowForgotModal(false);
+      setForgotEmail('');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'id' ? 'Gagal mengirim link reset.' : 'Failed to send reset link.'));
+    } finally {
+      setIsForgotLoading(false);
+    }
   };
 
   // PIN State
