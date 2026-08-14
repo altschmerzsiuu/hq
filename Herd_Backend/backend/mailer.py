@@ -377,7 +377,7 @@ def send_breeding_reminder_email(
     Dipanggil dari handle_estrus_alert() di app.py (via asyncio.to_thread).
 
     Flow:
-      Estrus detected → email terkirim → peternak klik .ics → masuk Google Calendar
+      Estrus detected -> email terkirim -> peternak klik .ics -> masuk Google Calendar
     """
     from calendar_reminder import generate_ib_reminder_ics
     from datetime import timedelta

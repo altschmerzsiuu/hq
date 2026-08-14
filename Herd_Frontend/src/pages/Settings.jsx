@@ -389,15 +389,37 @@ export default function Settings() {
     const confirmMsg = lang === 'id'
       ? `Hapus ${memberName} dari tim?`
       : `Remove ${memberName} from the team?`;
-    if (!window.confirm(confirmMsg)) return;
-    try {
-      await axiosInstance.delete(`/admin/users/${memberId}`);
-      toast.success(lang === 'id' ? 'Anggota berhasil dihapus.' : 'Member removed successfully.');
-      loadTeamMembers();
-    } catch (err) {
-      const detail = err?.response?.data?.detail;
-      toast.error(detail || (lang === 'id' ? 'Gagal menghapus anggota.' : 'Failed to remove member.'));
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-3 p-1">
+        <p className="font-medium text-sm text-gray-800">{confirmMsg}</p>
+        <div className="flex gap-2 justify-end">
+          <button 
+            onClick={() => toast.dismiss(t.id)} 
+            className="px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            {lang === 'id' ? 'Batal' : 'Cancel'}
+          </button>
+          <button 
+            onClick={async () => {
+              toast.dismiss(t.id);
+              setTeamLoading(true);
+              try {
+                await axiosInstance.delete(`/admin/users/${memberId}`);
+                toast.success(lang === 'id' ? 'Anggota berhasil dihapus.' : 'Member deleted successfully.');
+                loadTeamMembers();
+              } catch (error) {
+                const detail = error.response?.data?.detail;
+                toast.error(detail || (lang === 'id' ? 'Gagal menghapus anggota tim.' : 'Failed to delete team member.'));
+                setTeamLoading(false);
+              }
+            }} 
+            className="px-3 py-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+          >
+            {lang === 'id' ? 'Hapus' : 'Delete'}
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   const isGeneralChanged = selectedProv !== origProv || selectedCity !== origCity || fullName !== origFullName || phoneNumber !== origPhoneNumber || farmName !== origFarmName;

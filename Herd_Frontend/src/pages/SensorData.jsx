@@ -332,18 +332,18 @@ export default function SensorData() {
     perlu_cek: { id: 'perlu_cek', label: 'Perlu Cek', icon: ShieldAlert, value: sickCount, unit: (lang === 'id' ? 'Ekor' : 'Cows') },
   };
 
-  if (loading) {
+  const renderLoadingOverlay = () => {
+    if (!loading) return null;
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-[var(--color-sage-light)]/20 rounded w-1/4 mb-8"></div>
-        <div className="h-[300px] bg-[var(--color-sage-light)]/20 rounded-2xl mb-6"></div>
-        <div className="h-[400px] bg-[var(--color-sage-light)]/20 rounded-2xl"></div>
+      <div className="absolute top-4 right-4 z-50">
+        <div className="w-6 h-6 border-2 border-[#81C784] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
-  }
+  };
 
   return (
-    <div className="page-enter overflow-x-hidden" style={{ paddingBottom: '100px' }}>
+    <div className="page-enter overflow-x-hidden relative" style={{ paddingBottom: '100px' }}>
+      {renderLoadingOverlay()}
       
       {/* ── 0. HEADER (PINE GREEN CYBER DESIGN) ── */}
       <div 
@@ -403,7 +403,7 @@ export default function SensorData() {
 
 
       {/* ── NEW CONTAINERS ── */}
-      <div className="px-4 flex flex-col gap-4 -mt-[32px] relative z-20">
+      <div className="px-4 flex flex-col gap-4 -mt-[32px] md:-mt-0 md:pt-4 relative z-20">
         {/* Container 2: Ringkasan Populasi & Sapi Bunting (Merged) */}
         <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm mb-4">
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-6">
@@ -982,7 +982,7 @@ export default function SensorData() {
       )}
 
       {/* Modal Unduh Laporan */}
-      {downloadModalData && (
+      {downloadModalData && createPortal(
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[440px] overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
             <div className="p-7">
@@ -1054,11 +1054,12 @@ export default function SensorData() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Atur Perangkat */}
-      {deviceModalData && (
+      {deviceModalData && createPortal(
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[400px] overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
             <div className="p-6 border-b border-gray-50 flex items-center justify-between">
@@ -1133,11 +1134,12 @@ export default function SensorData() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Putus Koneksi */}
-      {disconnectModalData && (
+      {disconnectModalData && createPortal(
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[380px] overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
             <div className="p-7 text-center flex flex-col items-center">
@@ -1170,7 +1172,8 @@ export default function SensorData() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}        {/* End of px-4 wrapper */}
       </div>
 
