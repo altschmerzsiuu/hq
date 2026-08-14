@@ -321,12 +321,13 @@ export default function ManajemenTernak() {
       const isKeywordMatch = cleanSearch === '' ? true : (
         s.nama?.toLowerCase().includes(cleanSearch) ||
         s.id?.toLowerCase().includes(cleanSearch) ||
+        s.jenis?.toLowerCase().includes(cleanSearch) ||
         cowAge.includes(cleanSearch)
       );
       
       const matchSearch = impliedKesehatan 
         ? (isStatusMatch && isKeywordMatch)
-        : (s.nama?.toLowerCase().includes(searchLower) || s.id?.toLowerCase().includes(searchLower) || cowAge.includes(searchLower));
+        : (s.nama?.toLowerCase().includes(searchLower) || s.id?.toLowerCase().includes(searchLower) || s.jenis?.toLowerCase().includes(searchLower) || cowAge.includes(searchLower));
         
       const matchKesehatan =
         filters.kesehatan === 'all' ? true :
