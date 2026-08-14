@@ -358,7 +358,6 @@ export default function DetailTernak() {
     });
   }, [selectedSapi]);
 
-  // Detect overdue pregnancy: results=true AND hpl has passed today
   const overduePregnancy = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -370,6 +369,44 @@ export default function DetailTernak() {
       return hplDate < today;
     }) || null;
   }, [sortedReproHistory]);
+
+  const reproCycles = useMemo(() => {
+    if (!sortedReproHistory.length) return [];
+    const cycles = [];
+    let currentCycle = [];
+    
+    for (let i = 0; i < sortedReproHistory.length; i++) {
+      const item = sortedReproHistory[i];
+      currentCycle.push(item);
+      if (item.jumlah_ib === 1 || item.jumlah_ib === "1") {
+        cycles.push(currentCycle);
+        currentCycle = [];
+      }
+    }
+    if (currentCycle.length > 0) {
+      cycles.push(currentCycle);
+    }
+    return cycles;
+  }, [sortedReproHistory]);
+
+  const { totalCycles, successfulCycles, failedCycles } = useMemo(() => {
+    const total = reproCycles.length;
+    let successful = 0;
+    let failed = 0;
+    
+    reproCycles.forEach((cycle, index) => {
+      const isSuccess = cycle.some(ib => ib.results === true || ib.results === 'true' || ib.is_pregnant === true);
+      if (isSuccess) {
+        successful++;
+      } else {
+        if (index > 0 || cycle[0].results === false || cycle[0].results === 'failed' || cycle[0].is_pregnant === false) {
+          failed++;
+        }
+      }
+    });
+    
+    return { totalCycles: total, successfulCycles: successful, failedCycles: failed };
+  }, [reproCycles]);
 
   const openBirthModal = (reproItem) => {
     setBirthReproItem(reproItem);
@@ -927,16 +964,16 @@ export default function DetailTernak() {
                   <h3 className="text-[20px] font-extrabold text-[#111]">{lang === 'id' ? 'Catatan Aktivitas Ternak' : 'Cattle Activity Notes'}</h3>
                   <p className="text-[13px] text-gray-500 mt-1">{lang === 'id' ? 'Rekaman aktivitas untuk' : 'Activity records for'} <strong className="text-[#2E7D32]">{selectedSapi.nama}</strong></p>
                 </div>
-                {sortedReproHistory.length > 0 && (
+                {reproCycles.length > 0 && (
                   <div className="relative shrink-0">
                     <select
                       value={activityFilter}
                       onChange={(e) => setActivityFilter(Number(e.target.value))}
                       className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
                     >
-                      {Array.from({ length: Math.min(5, sortedReproHistory.length) }).map((_, i) => (
+                      {Array.from({ length: reproCycles.length }).map((_, i) => (
                         <option key={i} value={i}>
-                          {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${sortedReproHistory.length - i}` : `Cycle ${sortedReproHistory.length - i}`)}
+                          {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${reproCycles.length - i}` : `Cycle ${reproCycles.length - i}`)}
                         </option>
                       ))}
                     </select>
@@ -949,7 +986,7 @@ export default function DetailTernak() {
                 <div className="flex flex-col gap-6 relative before:absolute before:inset-0 before:ml-[17px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[#2E7D32]/20 before:to-transparent">
                   
                   {(() => {
-                      if (!sortedReproHistory || sortedReproHistory.length === 0) {
+                      if (!reproCycles || reproCycles.length === 0) {
                           return (
                               <div className="w-full text-center py-10 bg-white border border-[#E8F0EA] rounded-[16px] shadow-sm">
                                   <p className="text-[13px] text-gray-500">{lang === 'id' ? 'Belum ada data aktivitas untuk ternak ini.' : 'No activity data for this cattle yet.'}</p>
@@ -960,8 +997,8 @@ export default function DetailTernak() {
                       const formatTglStr = (ts) => new Date(ts).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {day: 'numeric', month: 'short', year: 'numeric'});
                       const timelineEvents = [];
                       
-                      const activeIndex = Math.min(Number(activityFilter) || 0, Math.max(0, sortedReproHistory.length - 1));
-                      const item = sortedReproHistory[activeIndex];
+                      const activeIndex = Math.min(Number(activityFilter) || 0, Math.max(0, reproCycles.length - 1));
+                      const item = reproCycles[activeIndex][0];
                       
                       if (item) {
                           const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
@@ -1252,9 +1289,9 @@ export default function DetailTernak() {
                           className="appearance-none outline-none text-sm font-semibold border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-[#2E7D32]/20 focus:border-[#2E7D32] py-2 pl-3 pr-9 bg-white text-gray-800 hover:border-gray-300 transition-colors cursor-pointer"
                         >
                           <option value="semua_riwayat">{lang === 'id' ? 'Semua Riwayat' : 'All History'}</option>
-                          {Array.from({ length: Math.min(5, sortedReproHistory.length) }).map((_, i) => (
+                          {Array.from({ length: reproCycles.length }).map((_, i) => (
                             <option key={i} value={i}>
-                              {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${sortedReproHistory.length - i}` : `Cycle ${sortedReproHistory.length - i}`)}
+                              {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${reproCycles.length - i}` : `Cycle ${reproCycles.length - i}`)}
                             </option>
                           ))}
                         </select>
@@ -1265,15 +1302,15 @@ export default function DetailTernak() {
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="bg-white border border-gray-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
                         <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{lang === 'id' ? 'Total Siklus' : 'Total Cycles'}</span>
-                        <span className="text-xl font-black text-gray-900">2</span>
+                        <span className="text-xl font-black text-gray-900">{totalCycles}</span>
                       </div>
                       <div className="bg-green-50/50 border border-green-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
                         <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{lang === 'id' ? 'Siklus Berhasil' : 'Successful Cycles'}</span>
-                        <span className="text-xl font-black text-green-700">1</span>
+                        <span className="text-xl font-black text-green-700">{successfulCycles}</span>
                       </div>
                       <div className="bg-red-50/50 border border-red-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
                         <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{lang === 'id' ? 'Siklus Gagal' : 'Failed Cycles'}</span>
-                        <span className="text-xl font-black text-red-700">1</span>
+                        <span className="text-xl font-black text-red-700">{failedCycles}</span>
                       </div>
                       
                       <div className="shrink-0 ml-2">
@@ -1306,7 +1343,7 @@ export default function DetailTernak() {
                           (() => {
                             const displayReproHistory = reproFilter === 'semua_riwayat' 
                               ? sortedReproHistory 
-                              : (sortedReproHistory[Number(reproFilter)] ? [sortedReproHistory[Number(reproFilter)]] : []);
+                              : (reproCycles[Number(reproFilter)] || []);
                               
                               if (displayReproHistory.length === 0) {
                               return (
@@ -1401,16 +1438,16 @@ export default function DetailTernak() {
                        <h3 className="text-lg font-bold text-gray-900">{lang === 'id' ? 'Catatan Aktivitas Ternak' : 'Cattle Activity Notes'}</h3>
                        <p className="text-sm text-gray-500 mt-0.5">{lang === 'id' ? 'Rekaman aktivitas untuk' : 'Activity records for'} <strong className="text-[#2E7D32]">{selectedSapi?.nama}</strong></p>
                      </div>
-                     {sortedReproHistory.length > 0 && (
+                     {reproCycles.length > 0 && (
                        <div className="relative shrink-0">
                          <select
                            value={activityFilter}
                            onChange={(e) => setActivityFilter(Number(e.target.value))}
                            className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
                          >
-                           {Array.from({ length: Math.min(5, sortedReproHistory.length) }).map((_, i) => (
+                           {Array.from({ length: reproCycles.length }).map((_, i) => (
                              <option key={i} value={i}>
-                               {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${sortedReproHistory.length - i}` : `Cycle ${sortedReproHistory.length - i}`)}
+                               {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${reproCycles.length - i}` : `Cycle ${reproCycles.length - i}`)}
                              </option>
                            ))}
                          </select>
@@ -1421,7 +1458,7 @@ export default function DetailTernak() {
                    <Stepper orientation="vertical" defaultValue={2} className="w-full">
                      <div className="flex flex-col gap-6 relative before:absolute before:inset-0 before:ml-[17px] before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[#2E7D32]/20 before:to-transparent">
                        {(() => {
-                           if (!sortedReproHistory || sortedReproHistory.length === 0) {
+                           if (!reproCycles || reproCycles.length === 0) {
                                return (
                                    <div className="w-full text-center py-10 bg-white border border-[#E8F0EA] rounded-[16px] shadow-sm">
                                        <p className="text-[13px] text-gray-500">{lang === 'id' ? 'Belum ada data aktivitas untuk ternak ini.' : 'No activity data for this cattle yet.'}</p>
@@ -1431,8 +1468,8 @@ export default function DetailTernak() {
                            const formatTglStr = (ts) => new Date(ts).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {day: 'numeric', month: 'short', year: 'numeric'});
                            const timelineEvents = [];
                            
-                           const activeIndex = Math.min(Number(activityFilter) || 0, Math.max(0, sortedReproHistory.length - 1));
-                           const item = sortedReproHistory[activeIndex];
+                           const activeIndex = Math.min(Number(activityFilter) || 0, Math.max(0, reproCycles.length - 1));
+                           const item = reproCycles[activeIndex][0];
                            
                            if (item) {
                                const isPregnant = item.results === true || item.results === 'true' || item.is_pregnant === true;
