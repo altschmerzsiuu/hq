@@ -401,7 +401,7 @@ export default function SensorData() {
 
 
       {/* ── NEW CONTAINERS ── */}
-      <div className="px-4 flex flex-col gap-4 -mt-[32px] md:-mt-0 md:pt-4 relative z-20">
+      <div className="px-4 flex flex-col gap-4 -mt-[32px] lg:mt-0 lg:pt-4 relative z-20">
         {/* Container 2: Ringkasan Populasi & Sapi Bunting (Merged) */}
         <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm mb-4">
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)] font-display mb-6">

@@ -534,7 +534,7 @@ export default function Login() {
               <div className="w-full lg:w-1/2 flex flex-col h-full relative bg-[#F8F8F9] lg:bg-white lg:rounded-l-[40px] lg:shadow-[-20px_0_40px_rgba(0,0,0,0.15)] z-20 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
                 {/* Mobile back button */}
-                <div className="p-4 flex items-center sticky top-0 bg-[#F8F8F9]/80 lg:hidden backdrop-blur-md z-30" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
+                <div className="px-4 pb-4 flex items-center sticky top-0 bg-[#F8F8F9]/80 lg:hidden backdrop-blur-md z-30" style={{ paddingTop: 'calc(env(safe-area-inset-top, 40px) + 16px)' }}>
                   <button
                     onClick={() => {
                       setIsLoginMode(true);
@@ -568,7 +568,7 @@ export default function Login() {
                 </div>
 
                 {/* Form Content - Made more compact */}
-                <div className="px-6 lg:px-[12%] pb-6 flex flex-col flex-1 mt-2 lg:mt-24 lg:justify-center">
+                <div className="px-6 lg:px-[12%] pb-6 flex flex-col flex-1 mt-6 lg:mt-24 lg:justify-center">
                   <h1 className="text-[28px] lg:text-[40px] lg:tracking-tight font-bold text-[#111118] mb-1">{isLoginMode ? 'Sign In' : 'Sign up'}</h1>
                   <p className="text-[13px] lg:text-[14px] text-[#62627A] mb-4 lg:mb-6">
                     By continuing, you agree to our <a href="#" className="font-bold text-[#FF7B1C]">Terms of Use</a>.
@@ -731,7 +731,7 @@ export default function Login() {
                       <div className="h-[1px] flex-1 bg-gray-200"></div>
                     </div>
 
-                    <div className="flex flex-col gap-3 mb-4">
+                    <div className="flex flex-col gap-3 mb-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 24px) + 24px)' }}>
                       <button type="button" onClick={handleGoogleLogin} className="w-full h-[48px] bg-white border border-[#E5E5EA] hover:bg-gray-50 rounded-[14px] flex items-center justify-center gap-3 transition-colors active:scale-[0.98] shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
