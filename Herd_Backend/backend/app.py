@@ -3473,5 +3473,27 @@ async def update_user_role(user_id: int, data: RoleUpdate, current_user: dict = 
         await conn.execute("UPDATE users SET role = $1 WHERE id = $2", data.role, user_id)
         return {"message": "Role berhasil diperbarui"}
 
+@app.delete("/api/admin/users/{user_id}")
+async def remove_team_member(user_id: int, current_user: dict = Depends(get_current_user)):
+    if current_user.get('role') not in ['owner', 'admin']:
+        raise HTTPException(status_code=403, detail="Akses ditolak")
+
+    owner_id = current_user.get('id')
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        target = await conn.fetchrow("SELECT id, parent_id, is_active FROM users WHERE id = $1", user_id)
+        if not target:
+            raise HTTPException(status_code=404, detail="Anggota tim tidak ditemukan.")
+        if target["id"] == owner_id:
+            raise HTTPException(status_code=400, detail="Tidak dapat menghapus akun pemilik peternakan.")
+        if target["parent_id"] != owner_id:
+            raise HTTPException(status_code=403, detail="Anda tidak memiliki izin untuk menghapus pengguna ini.")
+
+        # Hard delete or deactivate depending on business logic, here we do hard delete for clean state
+        # But earlier in team_routes.py we did soft-delete. Let's stick to hard delete for now or delete from team by un-linking parent_id?
+        # A soft delete (is_active = false) or hard delete is fine. I'll delete them entirely.
+        await conn.execute("DELETE FROM users WHERE id = $1", user_id)
+        return {"message": "Anggota tim berhasil dihapus."}
+
 # NOTE: validation_exception_handler and general_exception_handler are defined above near line 127-189.
 # Duplicate definitions removed to fix Pyright reportRedeclaration errors.
