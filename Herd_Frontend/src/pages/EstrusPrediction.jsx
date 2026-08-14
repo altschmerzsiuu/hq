@@ -219,89 +219,101 @@ export default function EstrusPrediction() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-24 lg:pb-8 overflow-x-hidden">
 
-      {/* ── HEADER ────────────────────────────────────────────────────────── */}
-      <div 
-        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 px-6 md:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
-        style={{ 
-          paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
-          background: 'linear-gradient(135deg, #be123c 0%, #881337 100%)' 
+      {/* ── HEADER — stat cards embedded inside, seragam dengan halaman lain ── */}
+      <div
+        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 px-6 md:px-8 pt-[calc(env(safe-area-inset-top)+56px)] md:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4 md:mx-0"
+        style={{
+          background: 'linear-gradient(135deg, #3a9c3d 0%, #2c792e 60%, #1a5220 100%)'
         }}
       >
-        {/* Subtle Background Accent */}
-        <Target 
-          size={320} 
-          strokeWidth={0.8} 
-          className="absolute -right-12 text-white opacity-[0.08] rotate-12 pointer-events-none" 
-          style={{ top: 'calc(env(safe-area-inset-top) - 2rem)' }}
+        {/* Background Accent */}
+        <Target
+          size={320}
+          strokeWidth={0.8}
+          className="absolute -right-12 text-white opacity-[0.08] rotate-12 pointer-events-none"
+          style={{ top: '-2rem' }}
         />
 
-        <div className="flex flex-col sm:flex-row sm:items-stretch justify-between gap-4 relative z-10 min-h-[80px]">
-          <div>
-            <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-rose-200">
+        {/* Title + Sync button row */}
+        <div className="flex items-start justify-between gap-3 relative z-10 mb-5">
+          <div className="flex-1">
+            <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-emerald-100">
               {lang === 'id' ? 'PEMANTAUAN MASA SUBUR & REPRODUKSI' : 'FERTILITY & REPRODUCTION MONITORING'}
             </p>
-            <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
+            <h1 className="text-[28px] md:text-[36px] font-black tracking-tight leading-tight">
               {t.prediction_title}
             </h1>
-            <p className="text-rose-100 mt-2 font-medium">{t.prediction_sub}</p>
           </div>
-          <button 
+          <button
             onClick={handleRunPredict}
             disabled={isPredicting}
-            className="flex items-center justify-center gap-3 px-6 py-3 md:py-0 bg-white/20 border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md self-stretch min-w-[200px] group"
+            className="flex-shrink-0 flex flex-col items-center justify-center gap-1 px-4 py-3 bg-white/20 border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md group"
           >
-            <RefreshCw size={20} className={isPredicting ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} />
-            <div className="text-left flex flex-col">
-              <span className="text-[14px] leading-tight">{isPredicting ? (predictStage || t.prediction_run_analyzing) : t.prediction_run_btn}</span>
-              <span className="text-[10px] font-normal opacity-80 leading-tight tracking-wide mt-1">
-                {lang === 'id' ? 'Terakhir: Baru saja' : 'Last sync: Just now'}
-              </span>
-            </div>
+            <RefreshCw size={18} className={isPredicting ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
+            <span className="text-[10px] font-bold leading-tight whitespace-nowrap">
+              {isPredicting ? (predictStage || t.prediction_run_analyzing) : t.prediction_run_btn}
+            </span>
           </button>
         </div>
-      </div>
 
-      {/* ── STAT SUMMARY CARDS ────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Sapi Dalam Pemantauan */}
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">{lang === 'id' ? 'Sapi Dalam Pemantauan' : 'Cows Monitored'}</p>
-          <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">{new Set(predictions.map(p => p.cow_id)).size}</p>
-          <p className="text-[10px] font-medium text-[var(--text-3)]">{lang === 'id' ? 'Terhubung sensor' : 'Sensors Connected'}</p>
-        </div>
-
-        {/* Card 2: Terdeteksi Birahi */}
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">{lang === 'id' ? 'Terdeteksi Birahi' : 'Estrus Detected'}</p>
-          <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">{countByType('estrus')}</p>
-          <p className="text-[10px] font-medium text-[var(--text-3)]">{lang === 'id' ? 'Hari ini' : 'Today'}</p>
-        </div>
-
-        {/* Card 3: Akurasi Sistem */}
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">{lang === 'id' ? 'Akurasi Sistem' : 'System Accuracy'}</p>
-          <p className="text-[28px] font-black text-[var(--text-1)] leading-none mb-2">
-            {predictions.some(p => p.verified !== null && p.verified !== undefined) ? 
-              `${Math.round((predictions.filter(p => p.verified === true).length / predictions.filter(p => p.verified !== null && p.verified !== undefined).length) * 100)}%` 
-              : '-'}
-          </p>
-          <p className="text-[10px] font-medium text-gray-400 flex items-center gap-1">
-            {lang === 'id' ? 'Berdasarkan konfirmasi' : 'Based on confirmation'}
-          </p>
-        </div>
-
-        {/* Card 4: Rata-rata Siklus */}
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-          <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">{lang === 'id' ? 'Rata-rata Siklus' : 'Average Cycle'}</p>
-          <div className="flex items-baseline gap-1 mb-2">
-            <p className="text-[28px] font-black text-[var(--text-1)] leading-none">
-              {predictions.some(p => p.cycle_length) ? 
-                (predictions.filter(p => p.cycle_length).reduce((a, b) => a + b.cycle_length, 0) / predictions.filter(p => p.cycle_length).length).toFixed(1) 
-                : '-'}
+        {/* Stat cards inside gradient header */}
+        <div className="grid grid-cols-2 gap-3 relative z-10">
+          {/* Card 1: Sapi Dalam Pemantauan */}
+          <div className="bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-4 flex flex-col gap-1 shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white/25 transition-all duration-300">
+            <p className="text-[10px] font-bold opacity-80 uppercase tracking-wider">
+              {lang === 'id' ? 'Dalam Pemantauan' : 'Monitored'}
             </p>
-            <span className="text-[14px] font-bold text-[var(--text-1)]">{lang === 'id' ? 'Hari' : 'Days'}</span>
+            <p className="text-[28px] font-black leading-none">{new Set(predictions.map(p => p.cow_id)).size}</p>
+            <p className="text-[10px] opacity-70 flex items-center gap-1">
+              <CheckCircle2 size={10} /> {lang === 'id' ? 'Terhubung sensor' : 'Sensors connected'}
+            </p>
           </div>
-          <p className="text-[10px] font-medium text-[var(--text-3)]">{lang === 'id' ? 'Riwayat data estrus' : 'Estrus data history'}</p>
+
+          {/* Card 2: Terdeteksi Birahi */}
+          <div className="bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-4 flex flex-col gap-1 shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white/25 transition-all duration-300">
+            <p className="text-[10px] font-bold opacity-80 uppercase tracking-wider">
+              {lang === 'id' ? 'Terdeteksi Birahi' : 'Estrus Detected'}
+            </p>
+            <p className="text-[28px] font-black leading-none">{countByType('estrus')}</p>
+            <p className="text-[10px] opacity-70">
+              {lang === 'id' ? 'Hari ini' : 'Today'}
+            </p>
+          </div>
+
+          {/* Card 3: Akurasi Sistem */}
+          <div className="bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-4 flex flex-col gap-1 shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white/25 transition-all duration-300">
+            <p className="text-[10px] font-bold opacity-80 uppercase tracking-wider">
+              {lang === 'id' ? 'Akurasi Sistem' : 'Accuracy'}
+            </p>
+            <p className="text-[28px] font-black leading-none">
+              {predictions.some(p => p.verified !== null && p.verified !== undefined)
+                ? `${Math.round((predictions.filter(p => p.verified === true).length / predictions.filter(p => p.verified !== null && p.verified !== undefined).length) * 100)}%`
+                : '—'}
+            </p>
+            <p className="text-[10px] opacity-70">
+              {lang === 'id' ? 'Berdasarkan konfirmasi' : 'From confirmations'}
+            </p>
+          </div>
+
+          {/* Card 4: Rata-rata Siklus */}
+          <div className="bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-4 flex flex-col gap-1 shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white/25 transition-all duration-300">
+            <p className="text-[10px] font-bold opacity-80 uppercase tracking-wider">
+              {lang === 'id' ? 'Rata-rata Siklus' : 'Avg Cycle'}
+            </p>
+            <div className="flex items-baseline gap-1">
+              <p className="text-[28px] font-black leading-none">
+                {predictions.some(p => p.cycle_length)
+                  ? (predictions.filter(p => p.cycle_length).reduce((a, b) => a + b.cycle_length, 0) / predictions.filter(p => p.cycle_length).length).toFixed(1)
+                  : '—'}
+              </p>
+              {predictions.some(p => p.cycle_length) && (
+                <span className="text-[12px] font-bold opacity-80">{lang === 'id' ? 'Hari' : 'Days'}</span>
+              )}
+            </div>
+            <p className="text-[10px] opacity-70">
+              {lang === 'id' ? 'Riwayat estrus' : 'Estrus history'}
+            </p>
+          </div>
         </div>
       </div>
 
