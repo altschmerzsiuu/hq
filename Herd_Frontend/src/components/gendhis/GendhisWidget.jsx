@@ -943,8 +943,8 @@ export default function GendhisWidget() {
                   <Send className="w-4 h-4 ml-0.5 text-white" />
                 </button>
               </form>
-              <p className="text-[9.5px] text-center text-[var(--text-3)] mt-2.5 font-medium tracking-wide">
-                Gendhis dapat membuat kesalahan. Harap verifikasi info medis.
+              <p className="text-[9px] text-center text-[var(--text-3)] mt-3 font-medium tracking-wide opacity-60 flex items-center justify-center gap-1.5">
+                <Sparkles size={10} className="text-[var(--accent)]" /> Gendhis dapat membuat kesalahan. Harap verifikasi info medis.
               </p>
             </div>
           </div>

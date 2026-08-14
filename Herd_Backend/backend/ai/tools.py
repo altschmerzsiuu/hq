@@ -93,12 +93,15 @@ async def analyze_barn_status(barn_id: str) -> dict:
 # ─────────────────────────────────────────────────────────────────────────
 # TOOL 2 – Cattle Info
 # ─────────────────────────────────────────────────────────────────────────
-async def get_cattle_info(nama_sapi: str) -> list[dict]:
-    """Find cattle profile by name or RFID/ID."""
-    rows = await db_query(
-        "SELECT * FROM hewan WHERE nama ILIKE $1 OR id ILIKE $1",
-        f"%{nama_sapi}%",
-    )
+async def get_cattle_info(nama_sapi: str = "") -> list[dict]:
+    """Find cattle profile by name or RFID/ID. If empty or 'all', returns all cattle."""
+    if not nama_sapi or nama_sapi.lower() == "all":
+        rows = await db_query("SELECT id, nama, jenis, status_kesehatan FROM hewan")
+    else:
+        rows = await db_query(
+            "SELECT * FROM hewan WHERE nama ILIKE $1 OR id ILIKE $1",
+            f"%{nama_sapi}%",
+        )
     return serialize(rows)
 
 
@@ -130,7 +133,7 @@ async def check_cattle_condition(nama_sapi: str) -> dict | None:
 # TOOL 4 – Farm Overview
 # ─────────────────────────────────────────────────────────────────────────
 async def get_farm_overview() -> dict:
-    """Farm-wide aggregate: total cattle, sick count, estrus alerts (24h)."""
+    """Farm-wide aggregate: total cattle, sick count, estrus alerts (24h), and list of cow names."""
     res_total  = await db_query("SELECT COUNT(*) AS c FROM hewan")
     res_sakit  = await db_query(
         "SELECT COUNT(*) AS c FROM hewan WHERE status_kesehatan ILIKE '%sakit%'"
@@ -141,10 +144,13 @@ async def get_farm_overview() -> dict:
         WHERE estrus_detected = 1 AND created_at > NOW() - INTERVAL '24 hours'
         """
     )
+    res_names = await db_query("SELECT nama FROM hewan LIMIT 50")
+    
     return {
         "total_sapi"       : res_total[0]["c"]  if res_total  else 0,
         "sapi_sakit"       : res_sakit[0]["c"]  if res_sakit  else 0,
         "peringatan_estrus": res_estrus[0]["c"] if res_estrus else 0,
+        "daftar_nama_sapi" : [row["nama"] for row in res_names] if res_names else []
     }
 
 

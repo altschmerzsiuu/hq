@@ -101,6 +101,7 @@ export default function ManajemenTernak() {
     }
   };
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSmartSearching, setIsSmartSearching] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [showDesktopFilter, setShowDesktopFilter] = useState(false);
   const [filters, setFilters] = useState({ kesehatan: 'all', jenis: 'all' });
@@ -110,6 +111,37 @@ export default function ManajemenTernak() {
   const [scanOpen, setScanOpen] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState([]);
+
+  // Smart Search Debounce
+  useEffect(() => {
+    const query = searchQuery.trim();
+    // Only trigger smart search if it looks like a natural language sentence (e.g., has spaces and length > 10)
+    if (query.length > 10 && query.includes(' ')) {
+      const timer = setTimeout(async () => {
+        setIsSmartSearching(true);
+        try {
+          const res = await axiosInstance.post('/chat/smart-search', { query });
+          if (res.data) {
+            setFilters(prev => ({
+              ...prev,
+              kesehatan: res.data.kesehatan || 'all',
+              jenis: res.data.jenis || 'all'
+            }));
+            // Update search query to only the keyword, avoiding infinite loops
+            if (res.data.searchQuery !== undefined && res.data.searchQuery !== query) {
+               setSearchQuery(res.data.searchQuery);
+               toast.success(lang === 'id' ? 'Filter cerdas diterapkan!' : 'Smart filter applied!');
+            }
+          }
+        } catch (err) {
+          console.warn("Smart search failed", err);
+        } finally {
+          setIsSmartSearching(false);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchQuery, lang]);
 
   // Hide bottom nav when filter or select mode is open
   useEffect(() => {
@@ -668,10 +700,14 @@ export default function ManajemenTernak() {
           <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '8px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid var(--border)' }} className="-mt-[28px] relative z-20 w-full max-w-4xl mx-auto flex flex-col">
             <div className="flex gap-4 justify-between items-center">
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2" size={18} style={{ color: 'var(--text-3)' }} />
+                {isSmartSearching ? (
+                  <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 animate-spin text-[var(--accent)]" size={18} />
+                ) : (
+                  <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--accent)]" size={18} />
+                )}
                 <input
                   type="text"
-                  placeholder={t.livestock_search_placeholder}
+                  placeholder={lang === 'id' ? "Cari nama sapi atau ketik 'sapi sakit'..." : "Search cow name or type 'sick cow'..."}
                   style={{ width: '100%', paddingLeft: '44px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px', background: 'transparent', border: 'none', color: 'var(--text-1)', fontSize: '14px', outline: 'none', fontFamily: 'Inter, sans-serif' }}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -772,10 +808,14 @@ export default function ManajemenTernak() {
           {/* Search and Filter Row (Floating) */}
           <div className="flex items-center gap-2 w-full">
             <div style={{ flex: 1, position: 'relative', background: 'var(--bg-surface)', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
-              <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
+              {isSmartSearching ? (
+                <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 animate-spin text-[var(--accent)]" size={18} />
+              ) : (
+                <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--accent)]" size={18} />
+              )}
               <input
                 type="text"
-                placeholder="Cari nama sapi..."
+                placeholder={lang === 'id' ? "Cari / ketik 'sapi sakit'..." : "Search / type 'sick cow'..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{ width: '100%', padding: '14px 16px 14px 44px', background: 'transparent', border: 'none', outline: 'none', fontSize: '15px', color: 'var(--text-1)', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}
