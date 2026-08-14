@@ -406,8 +406,63 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
           </p>
 
           {/* TOMBOL SIMULASI HANYA MUNCUL DI MODE DEVELOPMENT */}
-          {/* DEV mockup buttons removed as requested */}
-        </div>
+          {import.meta.env.DEV && (
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+              <button
+                onClick={() => {
+                  setResult({
+                    hewan: {
+                      id: "849-201-B",
+                      nama: "Sapi Limosin 04",
+                      jenis: "Sapi Limosin - Betina",
+                      status_kesehatan: "Sehat",
+                      foto: "https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=2940&auto=format&fit=crop"
+                    },
+                    reproduksi: {
+                      tanggal_ib: "2026-08-12T00:00:00.000Z",
+                      pemberi_ib: "Dr. Budi",
+                      jumlah_ib: 2,
+                      birahi: "2026-08-10T00:00:00.000Z",
+                      bunting: "2026-09-01T00:00:00.000Z",
+                      hpl: "2027-05-20T00:00:00.000Z"
+                    }
+                  });
+                  setNotFound(false);
+                }}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(16,185,129,0.1)',
+                  color: 'var(--accent)',
+                  border: '1px solid var(--accent)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                [DEV] Berhasil
+              </button>
+              <button
+                onClick={() => {
+                  setResult(null);
+                  setRfid('1234567890');
+                  setNotFound(true);
+                }}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(239,68,68,0.1)',
+                  color: 'var(--error, #ef4444)',
+                  border: '1px solid var(--error, #ef4444)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                [DEV] Tidak Terdaftar
+              </button>
+            </div>
+          )}
       </div>
 
       {/* ── OVERLAY BOTTOM SHEETS ── */}

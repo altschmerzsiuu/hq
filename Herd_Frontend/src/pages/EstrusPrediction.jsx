@@ -248,19 +248,12 @@ export default function EstrusPrediction() {
             </p>
           </div>
           
-          <button 
-            onClick={handleRunPredict}
-            disabled={isPredicting}
-            className="flex items-center justify-center gap-3 w-full md:w-auto md:min-w-[280px] py-4 md:px-8 bg-white/20 border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md group shrink-0"
-          >
-            <RefreshCw size={20} className={isPredicting ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} />
-            <div className="text-left flex flex-col">
-              <span className="text-[14px] leading-tight">{isPredicting ? (predictStage || t.prediction_run_analyzing) : (lang === 'id' ? 'Sinkronisasi Data' : 'Sync Data')}</span>
-              <span className="text-[10px] font-normal opacity-80 leading-tight tracking-wide mt-0.5">
-                {lang === 'id' ? 'Terakhir: Baru saja' : 'Last sync: Just now'}
-              </span>
-            </div>
-          </button>
+          <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto shrink-0 opacity-80">
+            <CheckCircle2 size={16} className="text-white" />
+            <span className="text-[12px] font-medium text-white tracking-wide">
+              {lang === 'id' ? 'Tersinkronisasi Baru Saja' : 'Synced Just Now'}
+            </span>
+          </div>
         </div>
       </div>
 

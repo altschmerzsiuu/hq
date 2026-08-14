@@ -331,8 +331,12 @@ export default function ManajemenTernak() {
 
   const filteredSapi = useMemo(() => {
     return sapiList.filter(s => {
-      const matchSearch = s.nama?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.id?.toLowerCase().includes(searchQuery.toLowerCase());
+      const cowAge = hitungUsia(s.bulan_tahun_lahir, lang).toLowerCase();
+      const searchLower = searchQuery.toLowerCase();
+      const matchSearch = s.nama?.toLowerCase().includes(searchLower) ||
+        s.id?.toLowerCase().includes(searchLower) ||
+        cowAge.includes(searchLower);
+        
       const matchKesehatan =
         filters.kesehatan === 'all' ? true :
           filters.kesehatan === 'pantau' ? !!s.collar_id :
@@ -341,7 +345,7 @@ export default function ManajemenTernak() {
       const matchJenis = filters.jenis === 'all' || s.jenis === filters.jenis;
       return matchSearch && matchKesehatan && matchJenis;
     });
-  }, [searchQuery, sapiList, filters]);
+  }, [searchQuery, sapiList, filters, lang]);
 
   const handleTanggalIbChange = (e) => {
     const val = e.target.value;
