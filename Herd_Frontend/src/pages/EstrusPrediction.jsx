@@ -103,9 +103,11 @@ export default function EstrusPrediction() {
     try {
       const res = await axiosInstance.get('/estrus-predictions?status=all&limit=100');
       const data = Array.isArray(res.data) ? res.data : [];
-      // Sort data by highest probability
+      // Sort data by optimal IB date (descending, newest date first)
       data.sort((a, b) => {
-        return (b.confidence_final || 0.8) - (a.confidence_final || 0.8);
+        const dateA = a.prediksi_ib_optimal ? new Date(a.prediksi_ib_optimal).getTime() : 0;
+        const dateB = b.prediksi_ib_optimal ? new Date(b.prediksi_ib_optimal).getTime() : 0;
+        return dateB - dateA;
       });
       setPredictions(data);
     } catch (err) {
@@ -248,9 +250,9 @@ export default function EstrusPrediction() {
           </div>
           
           <div className="flex items-center justify-center md:justify-end gap-2 w-full md:w-auto shrink-0 opacity-80">
-            <CheckCircle2 size={16} className="text-white" />
+            <RefreshCw size={16} className="text-white" />
             <span className="text-[12px] font-medium text-white tracking-wide">
-              {lang === 'id' ? 'Tersinkronisasi Baru Saja' : 'Synced Just Now'}
+              {lang === 'id' ? `Tersinkronisasi: Hari ini ${new Date().toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', {hour: '2-digit', minute:'2-digit'})}` : `Synced: Today ${new Date().toLocaleTimeString(lang === 'id' ? 'id-ID' : 'en-US', {hour: '2-digit', minute:'2-digit'})}`}
             </span>
           </div>
         </div>
@@ -342,16 +344,16 @@ export default function EstrusPrediction() {
                      const dateNum = i + 1;
                      const isToday = dateNum === new Date().getDate() && calDate.getMonth() === new Date().getMonth() && calDate.getFullYear() === new Date().getFullYear();
                      
-                     const hasEstrus = activeListRaw.some(p => {
+                     const hasEstrus = unverified.some(p => {
                         if (!p.prediksi_ib_optimal) return false;
                         const d = new Date(p.prediksi_ib_optimal);
                         return d.getDate() === dateNum && d.getMonth() === calDate.getMonth() && d.getFullYear() === calDate.getFullYear() && classifyPrediction(p, t).type === 'estrus';
                      });
                      
-                     const isApproaching = activeListRaw.some(p => {
+                     const isApproaching = unverified.some(p => {
                         if (!p.prediksi_ib_optimal) return false;
                         const d = new Date(p.prediksi_ib_optimal);
-                        return d.getDate() === dateNum && d.getMonth() === calDate.getMonth() && d.getFullYear() === calDate.getFullYear() && classifyPrediction(p, t).type === 'pre-estrus';
+                        return d.getDate() === dateNum && d.getMonth() === calDate.getMonth() && d.getFullYear() === calDate.getFullYear() && classifyPrediction(p, t).type !== 'estrus';
                      });
                      
                      let bg = 'transparent';
