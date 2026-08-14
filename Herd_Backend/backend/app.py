@@ -3407,22 +3407,58 @@ async def invite_team_member(invite: TeamInvite, current_user: dict = Depends(ge
     owner_id = current_user.get('id')
     pool = await get_db_pool()
     async with pool.acquire() as conn:
-        target_user = await conn.fetchrow("SELECT id FROM users WHERE email = $1", invite.email)
-        if not target_user:
-            raise HTTPException(status_code=404, detail="User tidak ditemukan. Minta mereka mendaftar dulu.")
+        # Check if email already exists
+        existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", invite.email)
+        if existing:
+            # If user exists, we just update their parent_id and role to add them to the team
+            if existing['id'] == owner_id:
+                raise HTTPException(status_code=400, detail="Anda tidak bisa menambahkan diri sendiri")
+            await conn.execute("""
+                UPDATE users SET parent_id = $1, role = $2 WHERE id = $3
+            """, owner_id, invite.role, existing['id'])
+            return {"message": "Anggota tim berhasil ditambahkan dari pengguna yang sudah ada."}
         
-        if target_user['id'] == owner_id:
-            raise HTTPException(status_code=400, detail="Anda tidak bisa menambahkan diri sendiri")
-
-        await conn.execute("""
-            UPDATE users SET parent_id = $1, role = $2 WHERE id = $3
-        """, owner_id, invite.role, target_user['id'])
+        # Create new user
+        from passlib.context import CryptContext
+        import string
+        import random
         
-        # SECURITY: Success message is the same regardless of whether user was newly invited
-        # to avoid confirming existence of email if it failed before this point,
-        # but here the user MUST exist to reach this point.
-        # We sanitize the confirm email and name.
-        return {"message": f"Anggota tim berhasil ditambahkan."}
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        # Generate random 8 char password
+        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        password_hash = pwd_context.hash(temp_password)
+        
+        new_user = await conn.fetchrow(
+            """
+            INSERT INTO users
+                (email, full_name, password_hash, oauth_provider, role, parent_id, is_active)
+            VALUES
+                ($1, $2, $3, 'email', $4, $5, true)
+            RETURNING id, email, full_name, role
+            """,
+            invite.email,
+            invite.full_name,
+            password_hash,
+            invite.role,
+            owner_id
+        )
+        
+        # Send invitation email
+        try:
+            from mailer import send_invitation_email
+            send_invitation_email(
+                to=invite.email, 
+                full_name=invite.full_name, 
+                temp_password=temp_password, 
+                role=invite.role
+            )
+        except Exception as e:
+            print(f"Failed to send invitation email: {e}")
+            
+        return {
+            "message": f"Anggota tim berhasil ditambahkan. Email undangan telah dikirim.",
+            "temp_password": temp_password
+        }
 
 @app.patch("/api/admin/users/{user_id}/role")
 async def update_user_role(user_id: int, data: RoleUpdate, current_user: dict = Depends(get_current_user)):
