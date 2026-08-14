@@ -349,6 +349,49 @@ export default function DetailTernak() {
     }
   }, [id, fetchSapiDetail]);
 
+  const reproCycles = useMemo(() => {
+    if (!selectedSapi || !selectedSapi.reproduksi || selectedSapi.reproduksi.length === 0) return [];
+    
+    // Sort oldest to newest first to chronologically group
+    const sorted = [...selectedSapi.reproduksi].sort((a, b) => {
+      const dateA = new Date(a.tanggal_ib || a.service_date).getTime();
+      const dateB = new Date(b.tanggal_ib || b.service_date).getTime();
+      return dateA - dateB;
+    });
+    
+    const cycles = [];
+    let currentCycle = [];
+    
+    for (const item of sorted) {
+      currentCycle.push(item);
+      const isPreg = item.results === true || item.results === 'true' || item.is_pregnant === true;
+      if (isPreg) {
+        cycles.push([...currentCycle].reverse()); // newest IB first within cycle
+        currentCycle = [];
+      }
+    }
+    
+    if (currentCycle.length > 0) {
+      cycles.push([...currentCycle].reverse());
+    }
+    
+    return cycles.reverse(); // newest cycle first
+  }, [selectedSapi]);
+
+  const cycleStats = useMemo(() => {
+    let success = 0;
+    let failed = 0;
+    reproCycles.forEach(cycle => {
+      if (cycle.length === 0) return;
+      const newestIB = cycle[0];
+      const isPreg = newestIB.results === true || newestIB.results === 'true' || newestIB.is_pregnant === true;
+      const isFail = newestIB.results === false || newestIB.results === 'failed' || newestIB.is_pregnant === false;
+      if (isPreg) success++;
+      else if (isFail) failed++;
+    });
+    return { total: reproCycles.length, success, failed };
+  }, [reproCycles]);
+
   const sortedReproHistory = useMemo(() => {
     if (!selectedSapi || !selectedSapi.reproduksi) return [];
     return [...selectedSapi.reproduksi].sort((a, b) => {
@@ -802,52 +845,61 @@ export default function DetailTernak() {
                    )}
                 </div>
 
-                {sortedReproHistory.length === 0 ? (
+                {reproCycles.length === 0 ? (
                   <div className="text-center text-sm text-[var(--text-3)] py-8">Belum ada riwayat.</div>
                 ) : (
-                  <div className="space-y-3">
-                    {sortedReproHistory.map((item) => {
-                      const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
-                      const isFailed      = item.results === false || item.results === 'failed' || item.is_pregnant === false;
-                      const isNote        = item.catatan && !item.pemberi_ib && !item.metode;
-                      const isPending     = !isPregnant && !isFailed && !isNote;
-                      const rawDate       = item.tanggal_ib || item.service_date;
-                      const estCalving    = rawDate && isPregnant
-                        ? new Date(new Date(rawDate).getTime() + 283 * 24 * 60 * 60 * 1000)
-                            .toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
-                        : '—';
-                      const formattedDate = rawDate
-                        ? new Date(rawDate).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
-                        : '—';
-                      return (
-                        <div key={item.id} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '14px' }}>
-                          {/* Header */}
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <p className="font-extrabold text-[14px]" style={{ color: 'var(--text-1)' }}>
-                                {(item.metode || 'IB').toUpperCase()} {item.jumlah_ib ? <span className="font-bold text-[12px] text-gray-500 ml-1.5">(Ke-{item.jumlah_ib})</span> : ''}
-                              </p>
-                            </div>
-                            {isPregnant && <span className="text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#ECFDF5] text-[#10B981] shrink-0 border border-[#10B981]/20">Bunting</span>}
-                            {isFailed   && <span className="text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#FEF2F2] text-[#EF4444] shrink-0 border border-[#EF4444]/20">Gagal</span>}
-                            {isPending  && <span className="text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#FFF8E1] text-[#F59E0B] shrink-0 border border-[#F59E0B]/20">Menunggu</span>}
-                          </div>
-                          {/* Detail rows */}
-                          <div className="space-y-1.5 text-xs" style={{ color: 'var(--text-2)' }}>
-                            <div className="flex justify-between">
-                              <span>Tanggal Kawin</span>
-                              <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{formattedDate}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Metode</span>
-                              <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{(item.metode || 'IB').toUpperCase()}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Perkiraan Calving</span>
-                              <span style={{ color: isPregnant ? 'var(--color-forest)' : 'var(--text-1)', fontWeight: isPregnant ? 700 : 600 }}>{estCalving}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Inseminator</span>
+                  <div className="space-y-6">
+                    {reproCycles.map((cycle, cycleIndex) => (
+                      <div key={cycleIndex} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                          <h4 className="font-bold text-[13px] text-gray-800">
+                            {cycleIndex === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${reproCycles.length - cycleIndex}` : `Cycle ${reproCycles.length - cycleIndex}`)}
+                          </h4>
+                          <span className="text-[11px] font-semibold text-gray-500">{cycle.length} IB</span>
+                        </div>
+                        <div className="p-3 space-y-3">
+                          {cycle.map((item) => {
+                            const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
+                            const isFailed      = item.results === false || item.results === 'failed' || item.is_pregnant === false;
+                            const isNote        = item.catatan && !item.pemberi_ib && !item.metode;
+                            const isPending     = !isPregnant && !isFailed && !isNote;
+                            const rawDate       = item.tanggal_ib || item.service_date;
+                            const estCalving    = rawDate && isPregnant
+                              ? new Date(new Date(rawDate).getTime() + 283 * 24 * 60 * 60 * 1000)
+                                  .toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+                              : '—';
+                            const formattedDate = rawDate
+                              ? new Date(rawDate).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+                              : '—';
+                            return (
+                              <div key={item.id} style={{ background: 'var(--bg-card)', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '14px' }}>
+                                {/* Header */}
+                                <div className="flex items-start justify-between mb-3">
+                                  <div>
+                                    <p className="font-extrabold text-[14px]" style={{ color: 'var(--text-1)' }}>
+                                      {(item.metode || 'IB').toUpperCase()} {item.jumlah_ib ? <span className="font-bold text-[12px] text-gray-500 ml-1.5">(Ke-{item.jumlah_ib})</span> : ''}
+                                    </p>
+                                  </div>
+                                  {isPregnant && <span className="text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#ECFDF5] text-[#10B981] shrink-0 border border-[#10B981]/20">Bunting</span>}
+                                  {isFailed   && <span className="text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#FEF2F2] text-[#EF4444] shrink-0 border border-[#EF4444]/20">Gagal</span>}
+                                  {isPending  && <span className="text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#FFF8E1] text-[#F59E0B] shrink-0 border border-[#F59E0B]/20">Menunggu</span>}
+                                </div>
+                                {/* Detail rows */}
+                                <div className="space-y-1.5 text-xs" style={{ color: 'var(--text-2)' }}>
+                                  <div className="flex justify-between">
+                                    <span>Tanggal Kawin</span>
+                                    <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{formattedDate}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Metode</span>
+                                    <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{(item.metode || 'IB').toUpperCase()}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Perkiraan Calving</span>
+                                    <span style={{ color: isPregnant ? 'var(--color-forest)' : 'var(--text-1)', fontWeight: isPregnant ? 700 : 600 }}>{estCalving}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Inseminator</span>
                               <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{item.pemberi_ib || item.petugas || item.technician || '—'}</span>
                             </div>
                              {(item.catatan && item.catatan.trim() !== '') && (
@@ -896,6 +948,9 @@ export default function DetailTernak() {
                         </div>
                       );
                     })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -927,16 +982,16 @@ export default function DetailTernak() {
                   <h3 className="text-[20px] font-extrabold text-[#111]">{lang === 'id' ? 'Catatan Aktivitas Ternak' : 'Cattle Activity Notes'}</h3>
                   <p className="text-[13px] text-gray-500 mt-1">{lang === 'id' ? 'Rekaman aktivitas untuk' : 'Activity records for'} <strong className="text-[#2E7D32]">{selectedSapi.nama}</strong></p>
                 </div>
-                {sortedReproHistory.length > 0 && (
+                {reproCycles.length > 0 && (
                   <div className="relative shrink-0">
                     <select
                       value={activityFilter}
                       onChange={(e) => setActivityFilter(Number(e.target.value))}
                       className="appearance-none outline-none text-xs font-semibold border border-gray-200 rounded-lg shadow-sm py-2 pl-3 pr-8 bg-white text-gray-800 cursor-pointer"
                     >
-                      {Array.from({ length: Math.min(5, sortedReproHistory.length) }).map((_, i) => (
+                      {reproCycles.map((_, i) => (
                         <option key={i} value={i}>
-                          {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${sortedReproHistory.length - i}` : `Cycle ${sortedReproHistory.length - i}`)}
+                          {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${reproCycles.length - i}` : `Cycle ${reproCycles.length - i}`)}
                         </option>
                       ))}
                     </select>
@@ -949,7 +1004,7 @@ export default function DetailTernak() {
                 <div className="flex flex-col gap-6 relative before:absolute before:inset-0 before:ml-[17px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[#2E7D32]/20 before:to-transparent">
                   
                   {(() => {
-                      if (!sortedReproHistory || sortedReproHistory.length === 0) {
+                      if (!reproCycles || reproCycles.length === 0) {
                           return (
                               <div className="w-full text-center py-10 bg-white border border-[#E8F0EA] rounded-[16px] shadow-sm">
                                   <p className="text-[13px] text-gray-500">{lang === 'id' ? 'Belum ada data aktivitas untuk ternak ini.' : 'No activity data for this cattle yet.'}</p>
@@ -960,10 +1015,10 @@ export default function DetailTernak() {
                       const formatTglStr = (ts) => new Date(ts).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {day: 'numeric', month: 'short', year: 'numeric'});
                       const timelineEvents = [];
                       
-                      const activeIndex = Math.min(Number(activityFilter) || 0, Math.max(0, sortedReproHistory.length - 1));
-                      const item = sortedReproHistory[activeIndex];
+                      const activeIndex = Math.min(Number(activityFilter) || 0, Math.max(0, reproCycles.length - 1));
+                      const cycle = reproCycles[activeIndex] || [];
                       
-                      if (item) {
+                      cycle.forEach((item) => {
                           const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
                           const isFailed      = item.results === false || item.results === 'failed' || item.is_pregnant === false;
                           const rawDate       = item.tanggal_ib || item.service_date;
@@ -972,7 +1027,6 @@ export default function DetailTernak() {
                               const baseTime = new Date(rawDate).getTime();
                               const eventId = item.id || Math.random().toString();
                               
-                              // Add Inseminasi Buatan event
                               timelineEvents.push({
                                   id: eventId + '-ib',
                                   title: `Inseminasi Buatan (Ke-${item.jumlah_ib || 1})`,
@@ -982,46 +1036,43 @@ export default function DetailTernak() {
                                   status: isPregnant ? 'completed' : (isFailed ? 'failed' : 'active')
                               });
                               
-                              // If pregnant, extrapolate future events
                               if (isPregnant) {
                                   const pkbTime = baseTime + 60 * 24 * 60 * 60 * 1000;
                                   const isPkbPast = pkbTime < Date.now();
                                   timelineEvents.push({
                                       id: eventId + '-pkb',
                                       title: `Pemeriksaan Kebuntingan`,
-                                  dateRaw: pkbTime,
-                                  dateFmt: formatTglStr(pkbTime),
-                                  desc: `Dinyatakan Bunting (PKB positif).`,
-                                  status: 'completed'
-                              });
-                              
-                              const masaKeringTime = baseTime + 223 * 24 * 60 * 60 * 1000;
-                              const isMasaKeringPast = masaKeringTime < Date.now();
-                              timelineEvents.push({
-                                  id: eventId + '-kering',
-                                  title: `Masa Kering`,
-                                  dateRaw: masaKeringTime,
-                                  dateFmt: formatTglStr(masaKeringTime),
-                                  desc: `Persiapan menjelang kelahiran.`,
-                                  status: isMasaKeringPast ? 'completed' : 'future_active'
-                              });
-                              
-                              const calvingTime = baseTime + 283 * 24 * 60 * 60 * 1000;
-                              const isCalvingPast = calvingTime < Date.now();
-                              timelineEvents.push({
-                                  id: eventId + '-calving',
-                                  title: `Perkiraan Kelahiran`,
-                                  dateRaw: calvingTime,
-                                  dateFmt: `Est. ` + formatTglStr(calvingTime),
-                                  desc: `Pindahkan ke kandang isolasi.`,
-                                  status: isCalvingPast ? 'completed' : 'future'
-                              });
+                                      dateRaw: pkbTime,
+                                      dateFmt: formatTglStr(pkbTime),
+                                      desc: `Dinyatakan Bunting (PKB positif).`,
+                                      status: 'completed'
+                                  });
+                                  
+                                  const masaKeringTime = baseTime + 223 * 24 * 60 * 60 * 1000;
+                                  const isMasaKeringPast = masaKeringTime < Date.now();
+                                  timelineEvents.push({
+                                      id: eventId + '-kering',
+                                      title: `Masa Kering`,
+                                      dateRaw: masaKeringTime,
+                                      dateFmt: formatTglStr(masaKeringTime),
+                                      desc: `Persiapan menjelang kelahiran.`,
+                                      status: isMasaKeringPast ? 'completed' : 'future_active'
+                                  });
+                                  
+                                  const calvingTime = baseTime + 283 * 24 * 60 * 60 * 1000;
+                                  const isCalvingPast = calvingTime < Date.now();
+                                  timelineEvents.push({
+                                      id: eventId + '-calving',
+                                      title: `Perkiraan Kelahiran`,
+                                      dateRaw: calvingTime,
+                                      dateFmt: `Est. ` + formatTglStr(calvingTime),
+                                      desc: `Pindahkan ke kandang isolasi.`,
+                                      status: isCalvingPast ? 'completed' : 'future'
+                                  });
                               }
                           }
-                      }
+                      });
                       
-                      // Sort descending by default for timelines (newest at top) or ascending (oldest at top). 
-                      // For this vertical stepper, oldest at top makes sense chronologically.
                       timelineEvents.sort((a, b) => b.dateRaw - a.dateRaw);
                       
                       return timelineEvents.map((evt, idx) => {
@@ -1106,7 +1157,6 @@ export default function DetailTernak() {
                 <DesktopAnimatedBtn icon={ChevronLeft} label={lang === 'id' ? 'Kembali' : 'Back'} onClick={() => navigate('/ternak')} />
                 <div className="flex gap-2">
                   <DesktopAnimatedBtn icon={Edit2} label="Edit" onClick={openEditProfile} />
-                  {/* <DesktopAnimatedBtn icon={AlertCircle} label={lang === 'id' ? 'Lapor Sakit' : 'Report Sick'} danger onClick={() => setIsReportSickOpen(true)} /> */}
                   <DesktopAnimatedBtn icon={Trash2} label="Hapus" danger onClick={() => setIsDeleteConfirmOpen(true)} />
                 </div>
               </div>
@@ -1218,30 +1268,6 @@ export default function DetailTernak() {
             <div className="bg-white rounded-b-[20px] shadow-sm p-6 min-h-[400px] flex-1">
               {activeTab === 'riwayat' && (
                 <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-
-                  {/* ⚠️ Overdue Pregnancy Banner */}
-                  {overduePregnancy && (
-                    <div className="relative overflow-hidden bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 rounded-2xl p-5 flex items-start gap-4 shadow-sm">
-                      <div className="shrink-0 w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center">
-                        <Baby className="w-5 h-5 text-rose-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-black text-rose-800 text-sm">Estimasi Kelahiran Sudah Lewat!</p>
-                        <p className="text-rose-700 text-xs mt-0.5">
-                          HPL <strong>{overduePregnancy.hpl}</strong> sudah terlewat. Apakah <strong>{selectedSapi?.nama}</strong> sudah melahirkan?
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => openBirthModal(overduePregnancy)}
-                        className="shrink-0 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors flex items-center gap-1.5"
-                      >
-                        <Heart className="w-3.5 h-3.5" />
-                        Ya, Sudah Lahir
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Top Bar: Title, Filter, Summary Cards, and Actions */}
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex flex-col gap-3">
                       <h3 className="text-xl font-black text-gray-900 tracking-tight">{lang === 'id' ? 'Riwayat Reproduksi Sapi' : 'Reproduction History'}</h3>
@@ -1252,9 +1278,9 @@ export default function DetailTernak() {
                           className="appearance-none outline-none text-sm font-semibold border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-[#2E7D32]/20 focus:border-[#2E7D32] py-2 pl-3 pr-9 bg-white text-gray-800 hover:border-gray-300 transition-colors cursor-pointer"
                         >
                           <option value="semua_riwayat">{lang === 'id' ? 'Semua Riwayat' : 'All History'}</option>
-                          {Array.from({ length: Math.min(5, sortedReproHistory.length) }).map((_, i) => (
+                          {reproCycles.map((_, i) => (
                             <option key={i} value={i}>
-                              {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${sortedReproHistory.length - i}` : `Cycle ${sortedReproHistory.length - i}`)}
+                              {i === 0 ? (lang === 'id' ? 'Siklus Saat Ini' : 'Current Cycle') : (lang === 'id' ? `Siklus ${reproCycles.length - i}` : `Cycle ${reproCycles.length - i}`)}
                             </option>
                           ))}
                         </select>
@@ -1265,17 +1291,16 @@ export default function DetailTernak() {
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="bg-white border border-gray-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
                         <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{lang === 'id' ? 'Total Siklus' : 'Total Cycles'}</span>
-                        <span className="text-xl font-black text-gray-900">2</span>
+                        <span className="text-xl font-black text-gray-900">{reproCycles.length}</span>
                       </div>
                       <div className="bg-green-50/50 border border-green-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
                         <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{lang === 'id' ? 'Siklus Berhasil' : 'Successful Cycles'}</span>
-                        <span className="text-xl font-black text-green-700">1</span>
+                        <span className="text-xl font-black text-green-700">{reproCycles.filter(c => c.some(i => i.is_pregnant === true || i.results === true)).length}</span>
                       </div>
                       <div className="bg-red-50/50 border border-red-100 shadow-sm rounded-xl px-4 py-2 flex flex-col">
                         <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{lang === 'id' ? 'Siklus Gagal' : 'Failed Cycles'}</span>
-                        <span className="text-xl font-black text-red-700">1</span>
+                        <span className="text-xl font-black text-red-700">{reproCycles.filter(c => c.some(i => i.is_pregnant === false || i.results === false)).length}</span>
                       </div>
-                      
                       <div className="shrink-0 ml-2">
                         <DesktopAnimatedBtn icon={Plus} label={lang === 'id' ? 'Catat Inseminasi' : 'Record AI'} onClick={openCatatIB} />
                       </div>
@@ -1286,102 +1311,38 @@ export default function DetailTernak() {
                     <table className="w-full text-center border-collapse">
                       <thead className="sticky top-0 z-20">
                         <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">{lang === 'id' ? 'IB Ke-' : 'AI #'}</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">{lang === 'id' ? 'Tanggal Kawin' : 'Mating Date'}</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">{lang === 'id' ? 'Perkiraan Hamil' : 'Est. Pregnancy'}</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">{lang === 'id' ? 'Inseminator' : 'Inseminator'}</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm whitespace-nowrap">{lang === 'id' ? 'Status' : 'Status'}</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm w-full min-w-[150px]">{lang === 'id' ? 'Catatan' : 'Notes'}</th>
-                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-center bg-gray-50 sticky top-0 shadow-sm w-[170px]">{lang === 'id' ? 'Aksi' : 'Action'}</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm">IB #</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm">Tanggal</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm">Status</th>
+                          <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 sticky top-0 shadow-sm">Aksi</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {sortedReproHistory.length === 0 ? (
-                          <tr>
-                            <td colSpan="7" className="px-2 py-8 text-center text-sm text-gray-500">
-                              {lang === 'id' ? 'Belum ada catatan reproduksi.' : 'No reproduction records yet.'}
-                            </td>
-                          </tr>
+                        {reproCycles.length === 0 ? (
+                          <tr><td colSpan="4" className="py-8 text-sm text-gray-500">Belum ada data.</td></tr>
                         ) : (
-                          (() => {
-                            const displayReproHistory = reproFilter === 'semua_riwayat' 
-                              ? sortedReproHistory 
-                              : (sortedReproHistory[Number(reproFilter)] ? [sortedReproHistory[Number(reproFilter)]] : []);
-                              
-                              if (displayReproHistory.length === 0) {
-                              return (
-                                <tr>
-                                  <td colSpan="7" className="px-2 py-8 text-center text-sm text-gray-500">
-                                    {lang === 'id' ? 'Tidak ada data untuk siklus ini.' : 'No data for this cycle.'}
+                          (reproFilter === 'semua_riwayat' ? reproCycles : (reproCycles[Number(reproFilter)] ? [reproCycles[Number(reproFilter)]] : [])).map((cycle, cycleIdx) => (
+                            <React.Fragment key={cycleIdx}>
+                              {cycle.map((item) => (
+                                <tr key={item.id}>
+                                  <td className="px-4 py-4 text-sm font-bold text-gray-900">{item.jumlah_ib || '-'}</td>
+                                  <td className="px-4 py-4 text-sm text-gray-600">{new Date(item.tanggal_ib || item.service_date).toLocaleDateString()}</td>
+                                  <td className="px-4 py-4">
+                                    <span className={`px-2 py-1 text-[10px] font-bold rounded-full ${item.is_pregnant ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                      {item.is_pregnant ? 'Bunting' : 'Aktif'}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-4">
+                                    <div className="flex gap-2 justify-center">
+                                      <DesktopAnimatedBtn icon={Pencil} label="Edit" onClick={() => startEditRepro(item)} />
+                                      <DesktopAnimatedBtn icon={Trash2} label="Hapus" danger onClick={() => deleteReproRecord(item)} />
+                                    </div>
                                   </td>
                                 </tr>
-                              );
-                            }
-
-                            return displayReproHistory.map((item, idx) => {
-                              const isPregnant    = item.results === true || item.results === 'true' || item.is_pregnant === true;
-                              const isFailed      = item.results === false || item.results === 'failed' || item.is_pregnant === false;
-                              const isNote        = item.catatan && !item.pemberi_ib;
-                              const isPending     = !isPregnant && !isFailed && !isNote;
-                              
-                              const realIndex = reproFilter === 'semua_riwayat' ? idx : Number(reproFilter);
-
-                              return (
-                                <tr key={item.id || idx} className="hover:bg-gray-50 transition-colors">
-                                  <td className="px-4 py-4 text-sm font-bold text-gray-900 align-top">
-                                    {item.jumlah_ib || (sortedReproHistory.length - realIndex)}
-                                  </td>
-                                <td className="px-4 py-4 text-sm text-gray-600 align-top text-center">
-                                  {item.tanggal_ib || item.service_date || '-'}
-                                </td>
-                                <td className="px-4 py-4 text-sm font-bold text-gray-900 align-top text-center">
-                                  {isPregnant ? (item.hpl || '-') : '-'}
-                                </td>
-                                <td className="px-4 py-4 text-sm font-bold text-gray-900 align-top text-center">
-                                  {item.pemberi_ib || '-'}
-                                </td>
-                                <td className="px-4 py-4 align-top">
-                                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider ${
-                                    item.results === true || item.results === 'true' 
-                                      ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200' 
-                                      : item.results === false || item.results === 'failed' 
-                                        ? 'bg-red-100 text-red-800 ring-1 ring-red-200' 
-                                        : 'bg-amber-100 text-amber-800 ring-1 ring-amber-200'
-                                  }`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                                      item.results === true || item.results === 'true' ? 'bg-emerald-500' 
-                                      : item.results === false || item.results === 'failed' ? 'bg-red-500' 
-                                      : 'bg-amber-500'
-                                    }`} />
-                                    {item.results === true || item.results === 'true' ? 'Bunting' : item.results === false || item.results === 'failed' ? 'Gagal' : 'Menunggu'}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-4 text-sm text-gray-600 align-top text-center">
-                                  {(item.catatan && item.catatan.trim() !== '') ? (
-                                    <div className="break-words line-clamp-3 inline-block" title={item.catatan}>
-                                      {item.catatan}
-                                    </div>
-                                  ) : (
-                                    <span className="text-gray-400 italic">-</span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-4 align-top">
-                                  {isPending ? (
-                                    <div className="flex items-center justify-center gap-2 w-[140px] mx-auto">
-                                      <DesktopAnimatedBtn icon={Check} label="Berhasil" expandedWidth="90px" onClick={() => confirmPregnancy(item, true)} />
-                                      <DesktopAnimatedBtn icon={X} label="Gagal" danger expandedWidth="80px" onClick={() => confirmPregnancy(item, false)} />
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center justify-between w-[100px] mx-auto">
-                                      <DesktopAnimatedBtn icon={Pencil} label="Edit" type="info" expandedWidth="70px" onClick={() => startEditRepro(item)} />
-                                      <DesktopAnimatedBtn icon={Trash2} label="Hapus" danger expandedWidth="80px" onClick={() => deleteReproRecord(item)} />
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          });
-                        })() )}
+                              ))}
+                            </React.Fragment>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -1399,9 +1360,9 @@ export default function DetailTernak() {
                    <div className="flex items-center justify-between mb-6">
                      <div>
                        <h3 className="text-lg font-bold text-gray-900">{lang === 'id' ? 'Catatan Aktivitas Ternak' : 'Cattle Activity Notes'}</h3>
-                       <p className="text-sm text-gray-500 mt-0.5">{lang === 'id' ? 'Rekaman aktivitas untuk' : 'Activity records for'} <strong className="text-[#2E7D32]">{selectedSapi?.nama}</strong></p>
+                       <p className="text-sm text-gray-500 mt-0.5">{lang === 'id' ? 'Rekaman aktivitas untuk' : 'Activity records for'} <strong className="text-[#2E7D32]">{selectedSapi.nama}</strong></p>
                      </div>
-                     {sortedReproHistory.length > 0 && (
+                     {reproCycles.length > 0 && (
                        <div className="relative shrink-0">
                          <select
                            value={activityFilter}
@@ -1431,10 +1392,10 @@ export default function DetailTernak() {
                            const formatTglStr = (ts) => new Date(ts).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {day: 'numeric', month: 'short', year: 'numeric'});
                            const timelineEvents = [];
                            
-                           const activeIndex = Math.min(Number(activityFilter) || 0, Math.max(0, sortedReproHistory.length - 1));
-                           const item = sortedReproHistory[activeIndex];
+                           const activeIndex = Math.min(Number(activityFilter) || 0, Math.max(0, reproCycles.length - 1));
+                           const cycle = reproCycles[activeIndex] || [];
                            
-                           if (item) {
+                           cycle.forEach((item) => {
                                const isPregnant = item.results === true || item.results === 'true' || item.is_pregnant === true;
                                const isFailed   = item.results === false || item.results === 'failed' || item.is_pregnant === false;
                                const rawDate    = item.tanggal_ib || item.service_date;
@@ -1458,7 +1419,7 @@ export default function DetailTernak() {
                                        timelineEvents.push({ id: eventId + '-calving', title: 'Perkiraan Kelahiran', dateRaw: calvingTime, dateFmt: 'Est. ' + formatTglStr(calvingTime), desc: 'Pindahkan ke kandang isolasi.', status: calvingTime < Date.now() ? 'completed' : 'future' });
                                    }
                                }
-                           }
+                           });
                            timelineEvents.sort((a, b) => b.dateRaw - a.dateRaw);
                            return timelineEvents.map((evt, idx) => {
                                let iconEl = <CheckCircle size={18} className="text-[#2E7D32]" />;
