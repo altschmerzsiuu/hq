@@ -772,6 +772,7 @@ export default function ManajemenTernak() {
                     {isSelectMode && <th className="py-3 px-4 font-medium w-10"></th>}
                     <th className="py-4 px-4 font-bold text-sm text-gray-900">{t.livestock_table_name}</th>
                     <th className="py-4 px-4 font-bold text-sm text-gray-900">{t.livestock_table_breed}</th>
+                    <th className="py-4 px-4 font-bold text-sm text-gray-900">{t.livestock_table_age}</th>
                     <th className="py-4 px-4 font-bold text-sm text-gray-900">{t.livestock_table_health}</th>
                   </tr>
                 </thead>
@@ -820,10 +821,11 @@ export default function ManajemenTernak() {
                       </td>
 
                       <td className="py-4 px-4">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-sm text-gray-800">{sapi.jenis}</span>
-                          <span className="text-xs text-gray-500 mt-0.5">{hitungUsia(sapi.bulan_tahun_lahir, lang)}</span>
-                        </div>
+                        <span className="font-medium text-sm text-gray-800">{sapi.jenis}</span>
+                      </td>
+
+                      <td className="py-4 px-4">
+                        <span className="text-sm text-gray-600">{hitungUsia(sapi.bulan_tahun_lahir, lang)}</span>
                       </td>
 
                       <td className="py-4 px-4">
@@ -843,7 +845,7 @@ export default function ManajemenTernak() {
                   ))}
                   {filteredSapi.length === 0 && (
                     <tr>
-                      <td colSpan="4" style={{ padding: '48px 0', textAlign: 'center', color: 'var(--text-3)', fontStyle: 'italic', fontSize: '13px' }}>{t.livestock_no_data}</td>
+                      <td colSpan="5" style={{ padding: '48px 0', textAlign: 'center', color: 'var(--text-3)', fontStyle: 'italic', fontSize: '13px' }}>{t.livestock_no_data}</td>
                     </tr>
                   )}
                 </tbody>
