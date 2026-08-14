@@ -94,12 +94,27 @@ async def analyze_barn_status(barn_id: str) -> dict:
 # TOOL 2 – Cattle Info
 # ─────────────────────────────────────────────────────────────────────────
 async def get_cattle_info(nama_sapi: str = "") -> list[dict]:
-    """Find cattle profile by name or RFID/ID. If empty or 'all', returns all cattle."""
+    """Find cattle profile by name or RFID/ID. If empty or 'all', returns all cattle with their IB counts."""
     if not nama_sapi or nama_sapi.lower() == "all":
-        rows = await db_query("SELECT id, nama, jenis, status_kesehatan FROM hewan")
+        rows = await db_query("""
+            SELECT h.id, h.nama, h.jenis, h.status_kesehatan, 
+                   COUNT(r.record_id) as total_ib,
+                   MAX(r.service_date) as last_ib_date
+            FROM hewan h
+            LEFT JOIN reproduksi_ternak r ON h.id = r.rfid
+            GROUP BY h.id, h.nama, h.jenis, h.status_kesehatan
+        """)
     else:
         rows = await db_query(
-            "SELECT * FROM hewan WHERE nama ILIKE $1 OR id ILIKE $1",
+            """
+            SELECT h.*, 
+                   COUNT(r.record_id) as total_ib,
+                   MAX(r.service_date) as last_ib_date
+            FROM hewan h
+            LEFT JOIN reproduksi_ternak r ON h.id = r.rfid
+            WHERE h.nama ILIKE $1 OR h.id ILIKE $1
+            GROUP BY h.id
+            """,
             f"%{nama_sapi}%",
         )
     return serialize(rows)

@@ -112,35 +112,10 @@ export default function ManajemenTernak() {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState([]);
 
-  // Smart Search Debounce
+  // Lowkey Local Search (No API call needed for basic keyword matching)
   useEffect(() => {
-    const query = searchQuery.trim();
-    // Only trigger smart search if it looks like a natural language sentence (e.g., has spaces and length > 10)
-    if (query.length > 10 && query.includes(' ')) {
-      const timer = setTimeout(async () => {
-        setIsSmartSearching(true);
-        try {
-          const res = await axiosInstance.post('/chat/smart-search', { query });
-          if (res.data) {
-            setFilters(prev => ({
-              ...prev,
-              kesehatan: res.data.kesehatan || 'all',
-              jenis: res.data.jenis || 'all'
-            }));
-            // Update search query to only the keyword, avoiding infinite loops
-            if (res.data.searchQuery !== undefined && res.data.searchQuery !== query) {
-               setSearchQuery(res.data.searchQuery);
-               toast.success(lang === 'id' ? 'Filter cerdas diterapkan!' : 'Smart filter applied!');
-            }
-          }
-        } catch (err) {
-          console.warn("Smart search failed", err);
-        } finally {
-          setIsSmartSearching(false);
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
+    // We no longer call the /chat/smart-search API. 
+    // All filtering is done instantly in the useMemo below.
   }, [searchQuery, lang]);
 
   // Hide bottom nav when filter or select mode is open
@@ -333,9 +308,25 @@ export default function ManajemenTernak() {
     return sapiList.filter(s => {
       const cowAge = hitungUsia(s.bulan_tahun_lahir, lang).toLowerCase();
       const searchLower = searchQuery.toLowerCase();
-      const matchSearch = s.nama?.toLowerCase().includes(searchLower) ||
-        s.id?.toLowerCase().includes(searchLower) ||
-        cowAge.includes(searchLower);
+      
+      // Auto-filter based on keywords for local smart search
+      let impliedKesehatan = null;
+      if (searchLower.includes('sehat')) impliedKesehatan = 'Sehat';
+      if (searchLower.includes('sakit')) impliedKesehatan = 'Sakit';
+      if (searchLower.includes('bunting') || searchLower.includes('hamil')) impliedKesehatan = 'Hamil';
+      
+      const isStatusMatch = impliedKesehatan ? (s.status_kesehatan === impliedKesehatan) : false;
+      const cleanSearch = searchLower.replace(/(sapi|sehat|sakit|bunting|hamil|yang|lagi)/g, '').trim();
+      
+      const isKeywordMatch = cleanSearch === '' ? true : (
+        s.nama?.toLowerCase().includes(cleanSearch) ||
+        s.id?.toLowerCase().includes(cleanSearch) ||
+        cowAge.includes(cleanSearch)
+      );
+      
+      const matchSearch = impliedKesehatan 
+        ? (isStatusMatch && isKeywordMatch)
+        : (s.nama?.toLowerCase().includes(searchLower) || s.id?.toLowerCase().includes(searchLower) || cowAge.includes(searchLower));
         
       const matchKesehatan =
         filters.kesehatan === 'all' ? true :
@@ -623,9 +614,8 @@ export default function ManajemenTernak() {
       <div className="space-y-0 pb-6">
         {/* ── UNIFIED HEADER (Brand Orange with DNA accent) ── */}
         <div
-          className="rounded-t-none rounded-b-[40px] lg:rounded-[40px] lg:mt-4 px-6 lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4 lg:mx-0"
+          className="rounded-t-none rounded-b-[40px] lg:rounded-[40px] lg:mt-4 px-6 pt-[calc(env(safe-area-inset-top,0px)+56px)] lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4 lg:mx-0"
           style={{
-            paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
             background: 'linear-gradient(135deg, #FF7B1C 0%, #E65C00 100%)'
           }}
         >
@@ -700,15 +690,11 @@ export default function ManajemenTernak() {
         {/* ── DESKTOP CONTENT ── */}
         <div className="hidden lg:flex flex-col gap-6 animate-in fade-in duration-300">
 
-          {/* Floating Search & Filter Bar */}
-          <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '8px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid var(--border)' }} className="-mt-[28px] relative z-20 w-full max-w-4xl mx-auto flex flex-col">
+          {/* Standard Search & Filter Bar */}
+          <div style={{ background: 'var(--bg-base)', borderRadius: '12px', border: '1px solid var(--border)' }} className="relative z-20 w-full max-w-4xl mx-auto flex flex-col overflow-hidden">
             <div className="flex gap-4 justify-between items-center">
-              <div className="relative flex-1 max-w-md">
-                {isSmartSearching ? (
-                  <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 animate-spin text-[var(--accent)]" size={18} />
-                ) : (
-                  <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--accent)]" size={18} />
-                )}
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
                   placeholder={lang === 'id' ? "Cari nama sapi atau ketik 'sapi sakit'..." : "Search cow name or type 'sick cow'..."}
@@ -718,13 +704,13 @@ export default function ManajemenTernak() {
                 />
               </div>
 
-              <div className="flex items-center gap-3 border-l border-[var(--border)] pl-4">
+              <div className="flex items-center gap-3 border-l border-[var(--border)] pl-4 pr-2 py-1">
                 <button
                   onClick={() => {
                     if (isSelectMode) setSelectedForDelete([]);
                     setIsSelectMode(!isSelectMode);
                   }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', border: `1px solid ${isSelectMode ? 'var(--accent)' : 'transparent'}`, color: isSelectMode ? 'var(--accent)' : 'var(--text-2)', borderRadius: '12px', background: isSelectMode ? 'var(--accent-dim)' : 'transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', border: `1px solid ${isSelectMode ? 'var(--accent)' : 'transparent'}`, color: isSelectMode ? 'var(--accent)' : 'var(--text-2)', borderRadius: '8px', background: isSelectMode ? 'var(--accent-dim)' : 'transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 600, transition: 'all 0.2s' }}
                   className="hover:bg-gray-100"
                 >
                   <ClipboardList size={18} />
@@ -808,15 +794,11 @@ export default function ManajemenTernak() {
         </div>
 
         {/* ── MOBILE CONTENT ── */}
-        <div className="lg:hidden flex flex-col gap-4 -mt-[32px] relative z-20 px-4">
-          {/* Search and Filter Row (Floating) */}
+        <div className="lg:hidden flex flex-col gap-4 mt-2 relative z-20 px-4">
+          {/* Search and Filter Row (Standard) */}
           <div className="flex items-center gap-2 w-full">
-            <div style={{ flex: 1, position: 'relative', background: 'var(--bg-surface)', borderRadius: '16px', border: '1px solid var(--border)', boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}>
-              {isSmartSearching ? (
-                <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 animate-spin text-[var(--accent)]" size={18} />
-              ) : (
-                <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--accent)]" size={18} />
-              )}
+            <div style={{ flex: 1, position: 'relative', background: 'var(--bg-base)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
                 placeholder={lang === 'id' ? "Cari / ketik 'sapi sakit'..." : "Search / type 'sick cow'..."}
