@@ -16,9 +16,11 @@ async def extract_filters_from_query(query: str) -> dict:
             "- searchQuery (string): name or ID of the cow, or empty string if none.\n"
             "- kesehatan (string): 'all', 'pantau' (needs monitoring/sensor alert), 'action' (sick/needs IB/treatment), 'Sakit', 'Sehat', or 'Perlu IB'. Default is 'all'.\n"
             "- jenis (string): 'all', 'Simmental', 'Limosin', 'Brahman', 'PO', or other breed name. Default is 'all'.\n"
-            "Example 1: 'cari sapi simmental yang sakit' -> {\"searchQuery\": \"\", \"kesehatan\": \"Sakit\", \"jenis\": \"Simmental\"}\n"
-            "Example 2: 'sapi usil' -> {\"searchQuery\": \"usil\", \"kesehatan\": \"all\", \"jenis\": \"all\"}\n"
-            "Example 3: 'tampilkan sapi brahma yang perlu perhatian' -> {\"searchQuery\": \"\", \"kesehatan\": \"action\", \"jenis\": \"Brahman\"}\n"
+            "- usia (string): extract the age mentioned (e.g. '7 bulan', '2 tahun') or empty string if none.\n"
+            "Example 1: 'cari sapi simmental yang sakit' -> {\"searchQuery\": \"\", \"kesehatan\": \"Sakit\", \"jenis\": \"Simmental\", \"usia\": \"\"}\n"
+            "Example 2: 'sapi usil' -> {\"searchQuery\": \"usil\", \"kesehatan\": \"all\", \"jenis\": \"all\", \"usia\": \"\"}\n"
+            "Example 3: 'tampilkan sapi brahma yang usianya 7 bulan' -> {\"searchQuery\": \"\", \"kesehatan\": \"all\", \"jenis\": \"Brahman\", \"usia\": \"7 bulan\"}\n"
+            "Example 4: 'yang usianya 7 bulan' -> {\"searchQuery\": \"\", \"kesehatan\": \"all\", \"jenis\": \"all\", \"usia\": \"7 bulan\"}\n"
             "Do not wrap the JSON in markdown blocks like ```json."
         )
     )
@@ -43,7 +45,8 @@ async def extract_filters_from_query(query: str) -> dict:
         return {
             "searchQuery": data.get("searchQuery", ""),
             "kesehatan": data.get("kesehatan", "all"),
-            "jenis": data.get("jenis", "all")
+            "jenis": data.get("jenis", "all"),
+            "usia": data.get("usia", "")
         }
     except Exception as exc:
         print(f"Smart Search Extraction Error: {exc}")

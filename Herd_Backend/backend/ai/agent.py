@@ -773,4 +773,4 @@ async def stream_agent(
         else:
             print(f"❌ [stream_agent] {e}")
             traceback.print_exc()
-            yield "Maaf ya lyy, Gendhis sedang mengkalibrasi sistem sensor di kandang. Silakan tanyakan kembali beberapa saat lagi! 🐮✨"
+            yield f"Maaf ya lyy, Gendhis sedang mengkalibrasi sistem sensor di kandang. [System Error: {str(e)}] 🐮✨"
