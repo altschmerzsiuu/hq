@@ -332,6 +332,25 @@ export default function Login() {
     }
   };
 
+  // --- Keyboard PIN Input Support ---
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Only process if we are in PIN modes
+      if (step !== 'pin_login' && step !== 'pin_setup') return;
+
+      const isSetup = step === 'pin_setup';
+      
+      if (e.key >= '0' && e.key <= '9') {
+        handleNumpadClick(e.key, isSetup);
+      } else if (e.key === 'Backspace') {
+        handleNumpadDelete(isSetup);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [step, pinDigits, setupPinDigits, isLoading]);
+
   // Long-press delete ref
   const deleteLongPressTimer = useRef(null);
 
@@ -374,7 +393,7 @@ export default function Login() {
       const status = err?.response?.status;
       if (status === 401) setPinError('PIN tidak sesuai.');
       else if (status === 423) setPinError('PIN dikunci. Hubungi admin.');
-      else if (status === 403) setPinError('Perangkat tidak dikenal.');
+      else if (status === 403) setPinError('Perangkat tidak dikenal. Klik Ganti Perangkat.');
       else setPinError('Terjadi kesalahan. Coba lagi.');
     } finally {
       setIsLoading(false);
@@ -823,7 +842,7 @@ export default function Login() {
                   localStorage.removeItem('herd_user_name');
                   setStep('auth');
                   setIsLoginMode(true);
-                }} className="text-[#8E8EA0] font-bold text-[14px] hover:text-[#111118] transition-colors">Not you?</button>
+                }} className="text-[#8E8EA0] font-bold text-[14px] hover:text-[#111118] transition-colors">Ganti Perangkat</button>
               </div>
             </motion.div>
           )}
