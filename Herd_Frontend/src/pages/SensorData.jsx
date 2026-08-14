@@ -347,26 +347,27 @@ export default function SensorData() {
       
       {/* ── 0. HEADER ── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] lg:rounded-none px-6 pb-[56px] lg:pb-2 relative overflow-hidden mb-0 text-white lg:text-gray-900 flex flex-col justify-between -mx-4 lg:mx-0 bg-gradient-to-b from-[#115e59] to-[#022c22] lg:bg-none lg:bg-transparent" 
+        className="rounded-t-none rounded-b-[40px] lg:rounded-[40px] lg:mt-4 px-6 lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4 lg:mx-0" 
         style={{ 
-          paddingTop: 'calc(env(safe-area-inset-top) + 56px)'
+          paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
+          background: 'linear-gradient(180deg, #115e59 0%, #022c22 100%)'
         }}
       >
-        {/* Subtle Cyber/Pulse Accent (Hidden on desktop) */}
+        {/* Subtle Cyber/Pulse Accent */}
         <Activity 
           size={320} 
           strokeWidth={0.8} 
-          className="absolute -right-12 text-[#34d399] opacity-[0.08] pointer-events-none lg:hidden" 
+          className="absolute -right-12 text-[#34d399] opacity-[0.08] pointer-events-none" 
           style={{ top: 'calc(env(safe-area-inset-top) - 2rem)' }}
         />
 
         {/* Title area */}
         <div className="flex justify-between items-start relative z-10 mb-6 lg:mb-8">
           <div>
-            <p className="text-[10px] lg:text-xs font-black opacity-90 lg:opacity-60 mb-1 uppercase tracking-widest text-teal-200 lg:text-gray-500">
+            <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-teal-200">
               {t.sensor_sub || 'PANTAU SUHU, AKTIVITAS, DAN STATUS BATERAI IOT COLLAR.'}
             </p>
-            <h1 className="text-[32px] font-black tracking-tight leading-none lg:text-gray-900">
+            <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
               {t.sensor_title || 'Data Sensor'}
             </h1>
           </div>

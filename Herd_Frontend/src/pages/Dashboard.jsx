@@ -1442,14 +1442,24 @@ export default function Dashboard() {
         <div className="hidden lg:flex md:flex-col md:gap-0">
 
           {/* HEADER */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 mt-2 md:mt-4">
-            <div>
-              <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none text-[var(--text-1)]">
-                Dashboard
-              </h1>
-              <p className="text-[13px] font-medium text-[var(--text-2)] mt-2">
-                {lang === 'id' ? 'Ringkasan kondisi peternakanmu hari ini' : 'Here is your herd condition summary today'}
-              </p>
+          <div
+            className="rounded-[40px] mt-4 px-8 pt-8 pb-10 shadow-sm relative overflow-hidden mb-6 text-white flex flex-col justify-between"
+            style={{
+              background: 'linear-gradient(135deg, #10B981 0%, #047857 100%)'
+            }}
+          >
+            <div className="absolute -right-12 text-white opacity-[0.12] rotate-12 pointer-events-none" style={{ top: '-2rem' }}>
+              <Activity size={320} strokeWidth={0.8} />
+            </div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+              <div>
+                <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-emerald-100">
+                  {lang === 'id' ? 'RINGKASAN KONDISI PETERNAKAN ANDA.' : 'YOUR HERD CONDITION SUMMARY.'}
+                </p>
+                <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
+                  Dashboard
+                </h1>
+              </div>
             </div>
           </div>
 
@@ -1586,8 +1596,8 @@ export default function Dashboard() {
               <div className="flex w-full items-center gap-6">
                 <div className="relative w-32 h-32 flex-shrink-0">
                   <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="12" />
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 1) / Math.max(herd.length, 1))} strokeLinecap="round" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#93c5fd" strokeWidth="12" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 0) / Math.max(herd.length, 1))} strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-2xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
@@ -1615,7 +1625,7 @@ export default function Dashboard() {
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col h-full">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-bold text-[var(--text-1)] text-lg">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
-                <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{lang === 'id' ? '3 Hari Kedepan' : 'Next 3 Days'}</span>
+                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">{lang === 'id' ? '3 Hari Kedepan' : 'Next 3 Days'}</span>
               </div>
               
               <div className="flex flex-col gap-3 mt-4 flex-grow">
@@ -1634,7 +1644,7 @@ export default function Dashboard() {
                   <div className="text-sm text-gray-500 text-center py-4">{lang === 'id' ? 'Tidak ada prediksi terdekat.' : 'No upcoming predictions.'}</div>
                 )}
               </div>
-              <button onClick={() => navigate('/prediksi-estrus')} className="text-xs font-bold text-gray-500 hover:text-gray-900 text-left mt-auto flex items-center gap-1 transition-colors w-max">
+              <button onClick={() => navigate('/estrus-prediction')} className="text-xs font-bold text-gray-500 hover:text-gray-900 text-left mt-auto flex items-center gap-1 transition-colors w-max">
                 {lang === 'id' ? 'Lihat semua' : 'View all'} <ChevronRight size={14} />
               </button>
             </div>

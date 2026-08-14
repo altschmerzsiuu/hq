@@ -57,6 +57,7 @@ export default function GendhisWidget() {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const [currentSessionId, setCurrentSessionId] = useState(`session_widget_${Date.now()}`);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
@@ -185,6 +186,7 @@ export default function GendhisWidget() {
   };
 
   const loadSession = async (sessionId) => {
+    setIsLoadingHistory(true);
     try {
       const res = await fetch(`${API_BASE}/chat/sessions/${sessionId}`, {
         headers: {
@@ -206,6 +208,8 @@ export default function GendhisWidget() {
       }
     } catch (err) {
       handleError(err, 'muat percakapan Gendhis');
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
 
@@ -309,13 +313,15 @@ export default function GendhisWidget() {
     }
   };
 
-  const startNewChat = () => {
+  const startNewChat = (showToast = true) => {
     setCurrentSessionId(`session_widget_${Date.now()}`);
     setMessages([
       { id: Date.now(), sender: 'gendhis', text: 'Halo! Saya Gendhis, asisten peternakanmu. Ada yang bisa saya bantu hari ini terkait kondisi sapi-sapi di kandang?', isInsight: true }
     ]);
     setStreamingMessage('');
-    toast.success('Percakapan baru dimulai!');
+    if (showToast) {
+      toast.success('Percakapan baru dimulai!');
+    }
   };
 
   const isFullscreen = viewState === 'fullscreen';
@@ -718,7 +724,7 @@ export default function GendhisWidget() {
                                 if (res.ok) {
                                   toast.success('Percakapan dihapus!');
                                   if (currentSessionId === item.session_id) {
-                                    startNewChat();
+                                    startNewChat(false);
                                   }
                                   fetchSessions();
                                 }
@@ -829,10 +835,20 @@ export default function GendhisWidget() {
               </div>
             ) : (
               // Active Conversation View
-              <div className="max-w-[700px] mx-auto w-full space-y-8">
-                {messages.map((msg) => (
-                  <div key={msg.id} className={cn("flex w-full gap-4", msg.sender === 'user' ? "justify-end" : "justify-start")}>
-                    
+              <div className="flex-1 overflow-y-auto px-6 py-8 custom-scrollbar">
+                
+                {isLoadingHistory ? (
+                  <div className="flex flex-col items-center justify-center h-full gap-3 text-[var(--text-3)]">
+                    <div className="w-8 h-8 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Memuat Percakapan...</span>
+                  </div>
+                ) : (
+                  <>
+                    {messages.map((msg, i) => (
+                      <div key={msg.id || i} className={cn(
+                        "flex w-full gap-3 md:gap-4 mb-6",
+                        msg.sender === 'user' ? "justify-end" : "justify-start"
+                      )}>  
                     {msg.sender === 'gendhis' && (
                       <div className="w-8 h-8 rounded-xl bg-[var(--accent)] flex items-center justify-center shrink-0 border border-emerald-400/20 shadow-md">
                         <Bot className="w-4 h-4 text-white" />
@@ -894,6 +910,8 @@ export default function GendhisWidget() {
                       <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                     </div>
                   </div>
+                )}
+                </>
                 )}
 
                 <div ref={messagesEndRef} />
