@@ -445,7 +445,7 @@ export default function Login() {
   // Removed isCheckingUser flash screen
 
   return (
-    <div className="h-full bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans  overflow-hidden">
+    <div className="h-screen bg-white lg:bg-[#FDFBF7] flex justify-center items-center font-sans overflow-hidden">
       <div className="w-full h-full bg-white lg:bg-[#FF7B1C] relative overflow-hidden flex flex-col lg:flex-row">
 
         <AnimatePresence initial={false}>
@@ -542,8 +542,8 @@ export default function Login() {
                 />
               </div>
 
-              {/* RIGHT PANEL (Form) - Styled as a rounded modal card overlapping on Desktop */}
-              <div className="w-full lg:w-1/2 flex flex-col h-full relative bg-[#F8F8F9] lg:bg-white lg:rounded-l-[40px] lg:shadow-[-20px_0_40px_rgba(0,0,0,0.15)] z-20 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {/* RIGHT PANEL (Form) - Styled as a flat split screen on Desktop */}
+              <div className="w-full lg:w-1/2 flex flex-col h-full relative bg-[#F8F8F9] lg:bg-white z-20 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
                 {/* Mobile back button */}
                 <div className="px-4 pb-4 flex items-center sticky top-0 bg-[#F8F8F9]/80 lg:hidden backdrop-blur-md z-30" style={{ paddingTop: 'calc(env(safe-area-inset-top, 40px) + 16px)' }}>
