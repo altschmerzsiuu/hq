@@ -464,6 +464,7 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
             </div>
           )}
         </div>
+      </div>
 
       {/* ── OVERLAY BOTTOM SHEETS ── */}
       <AnimatePresence>
