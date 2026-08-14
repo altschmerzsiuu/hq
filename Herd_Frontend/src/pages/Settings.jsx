@@ -243,7 +243,9 @@ export default function Settings() {
     setTeamLoading(true);
     try {
       const response = await axiosInstance.get('/admin/users');
-      setTeamMembers(response.data || []);
+      // Filter out any null/undefined entries to prevent TypeError: n.id
+      const members = (response.data || []).filter(m => m && m.id);
+      setTeamMembers(members);
     } catch {
       setTeamMembers([]);
     } finally {
@@ -385,30 +387,29 @@ export default function Settings() {
     }
   };
 
-  const handleRemoveMember = async (memberId, memberName) => {
-    const isConfirmed = await useConfirmStore.getState().ask({
-      title: lang === 'id' ? 'Hapus Anggota' : 'Remove Member',
+  const handleRemoveMember = (memberId, memberName) => {
+    useConfirmStore.getState().ask({
+      title: lang === 'id' ? 'Hapus Anggota Tim' : 'Remove Team Member',
       message: lang === 'id'
-        ? `Apakah Anda yakin ingin menghapus ${memberName} dari tim?`
-        : `Are you sure you want to remove ${memberName} from the team?`,
-      confirmText: lang === 'id' ? 'Ya, Hapus' : 'Yes, Delete',
+        ? `Apakah Anda yakin ingin menghapus ${memberName} dari tim? Aksi ini tidak dapat dibatalkan.`
+        : `Are you sure you want to remove ${memberName} from the team? This action cannot be undone.`,
+      confirmText: lang === 'id' ? 'Ya, Hapus' : 'Yes, Remove',
       cancelText: lang === 'id' ? 'Batal' : 'Cancel',
       isDanger: true
-    });
-
-    if (isConfirmed) {
+    }).then(async (isConfirmed) => {
+      if (!isConfirmed) return;
       setTeamLoading(true);
       try {
         await axiosInstance.delete(`/admin/users/${memberId}`);
         toast.success(lang === 'id' ? 'Anggota berhasil dihapus.' : 'Member deleted successfully.');
         loadTeamMembers();
       } catch (error) {
-        const detail = error.response?.data?.detail;
+        const detail = error?.response?.data?.detail;
         toast.error(detail || (lang === 'id' ? 'Gagal menghapus anggota tim.' : 'Failed to delete team member.'));
       } finally {
         setTeamLoading(false);
       }
-    }
+    });
   };
 
   const isGeneralChanged = selectedProv !== origProv || selectedCity !== origCity || fullName !== origFullName || phoneNumber !== origPhoneNumber || farmName !== origFarmName;
@@ -1027,7 +1028,7 @@ export default function Settings() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border)]">
-                        {teamMembers.map(m => (
+                        {teamMembers.filter(m => m && m.id).map(m => (
                       <tr key={m.id} className="hover:bg-[var(--bg-hover)] transition-colors">
                             <td className="px-5 py-4">
                               <div className="flex items-center gap-2.5">
