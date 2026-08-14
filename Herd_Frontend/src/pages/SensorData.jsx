@@ -345,56 +345,54 @@ export default function SensorData() {
     <div className="page-enter overflow-x-hidden relative" style={{ paddingBottom: '100px' }}>
       {renderLoadingOverlay()}
       
-      {/* ── 0. HEADER (PINE GREEN CYBER DESIGN) ── */}
+      {/* ── 0. HEADER ── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 px-6 lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4 md:mx-0" 
+        className="rounded-t-none rounded-b-[40px] lg:rounded-none px-6 pb-[56px] lg:pb-2 relative overflow-hidden mb-0 text-white lg:text-gray-900 flex flex-col justify-between -mx-4 lg:mx-0 bg-gradient-to-b from-[#115e59] to-[#022c22] lg:bg-none lg:bg-transparent" 
         style={{ 
-          paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
-          background: 'linear-gradient(180deg, #115e59 0%, #022c22 100%)',
-          minHeight: 'calc(env(safe-area-inset-top) + 280px)'
+          paddingTop: 'calc(env(safe-area-inset-top) + 56px)'
         }}
       >
-        {/* Subtle Cyber/Pulse Accent */}
+        {/* Subtle Cyber/Pulse Accent (Hidden on desktop) */}
         <Activity 
           size={320} 
           strokeWidth={0.8} 
-          className="absolute -right-12 text-[#34d399] opacity-[0.08] pointer-events-none" 
+          className="absolute -right-12 text-[#34d399] opacity-[0.08] pointer-events-none lg:hidden" 
           style={{ top: 'calc(env(safe-area-inset-top) - 2rem)' }}
         />
 
         {/* Title area */}
-        <div className="flex justify-between items-start relative z-10 mb-6">
+        <div className="flex justify-between items-start relative z-10 mb-6 lg:mb-8">
           <div>
-            <p className="text-[10px] font-black opacity-90 mb-1 uppercase tracking-widest text-teal-200">
+            <p className="text-[10px] lg:text-xs font-black opacity-90 lg:opacity-60 mb-1 uppercase tracking-widest text-teal-200 lg:text-gray-500">
               {t.sensor_sub || 'PANTAU SUHU, AKTIVITAS, DAN STATUS BATERAI IOT COLLAR.'}
             </p>
-            <h1 className="text-[32px] font-black tracking-tight leading-none">
+            <h1 className="text-[32px] font-black tracking-tight leading-none lg:text-gray-900">
               {t.sensor_title || 'Data Sensor'}
             </h1>
           </div>
           <button 
             onClick={() => setShowWidgetModal(true)}
-            className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors flex-shrink-0 ml-3 mt-1"
+            className="w-9 h-9 rounded-full bg-white/10 lg:bg-white lg:border lg:border-gray-200 lg:shadow-sm lg:text-gray-600 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 lg:hover:bg-gray-50 transition-colors flex-shrink-0 ml-3 mt-1"
           >
             <Settings2 size={16} />
           </button>
         </div>
 
         {/* Quick Stats (Customizable Grid) */}
-        <div className={`grid gap-3 w-full relative z-10 ${selectedWidgets.length === 1 ? 'grid-cols-1' : selectedWidgets.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        <div className={`grid gap-3 lg:gap-4 w-full relative z-10 ${selectedWidgets.length === 1 ? 'grid-cols-1' : selectedWidgets.length === 2 ? 'grid-cols-2' : 'grid-cols-3 lg:grid-cols-3'}`}>
           {selectedWidgets.map(widgetId => {
             const w = widgetOptions[widgetId];
             if (!w) return null;
             const Icon = w.icon;
             return (
-              <div key={widgetId} className="bg-white/20 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-2xl p-4 flex flex-col items-center justify-center border border-white/30">
-                <Icon size={24} className="text-white mb-2 opacity-90" strokeWidth={1.5} />
+              <div key={widgetId} className="bg-white/20 lg:bg-white backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] lg:shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center border border-white/30 lg:border-gray-100">
+                <Icon size={24} className="text-white lg:text-[var(--color-sage)] mb-2 lg:mb-3 opacity-90 lg:opacity-100" strokeWidth={1.5} />
                 <div className="flex items-baseline justify-center gap-1 mb-1">
-                  <span className="text-xl font-black leading-none text-white">{w.value}</span>
-                  {w.subValue && <span className="text-[10px] font-medium text-white/80">{w.subValue}</span>}
-                  {w.unit && <span className="text-[10px] font-medium text-white/80">{w.unit}</span>}
+                  <span className="text-xl lg:text-2xl font-black leading-none text-white lg:text-gray-900">{w.value}</span>
+                  {w.subValue && <span className="text-[10px] lg:text-xs font-medium text-white/80 lg:text-gray-500">{w.subValue}</span>}
+                  {w.unit && <span className="text-[10px] lg:text-xs font-medium text-white/80 lg:text-gray-500">{w.unit}</span>}
                 </div>
-                <span className="text-[10px] font-medium opacity-90 text-center leading-tight tracking-wide text-white">{w.label}</span>
+                <span className="text-[10px] lg:text-xs font-medium opacity-90 lg:opacity-100 text-center leading-tight tracking-wide text-white lg:text-gray-500">{w.label}</span>
               </div>
             );
           })}
