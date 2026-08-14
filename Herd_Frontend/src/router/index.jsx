@@ -1,40 +1,24 @@
-import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import ErrorBoundary from '@/components/layout/ErrorBoundary';
 
-const Login = lazy(() => import('@/pages/Login'));
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const SensorData = lazy(() => import('@/pages/SensorData'));
-const EstrusPrediction = lazy(() => import('@/pages/EstrusPrediction'));
-const Recommendations = lazy(() => import('@/pages/Recommendations'));
-
-const Notifications = lazy(() => import('@/pages/Notifications'));
-const Settings = lazy(() => import('@/pages/Settings'));
-const ManajemenTernak = lazy(() => import('@/pages/ManajemenTernak'));
-const DetailTernak = lazy(() => import('@/pages/DetailTernak'));
-const ResearchLab = lazy(() => import('@/pages/ResearchLab'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
-
-// Loading spinner component
-const PageLoader = () => (
-  <div className="flex items-center justify-center h-full">
-    <div className="w-8 h-8 rounded-full border-4 border-[#FF7B1C] border-t-transparent animate-spin" />
-  </div>
-);
-
-// Wrapper to simplify suspense usage
-const withSuspense = (Component) => (
-  <Suspense fallback={<PageLoader />}>
-    <Component />
-  </Suspense>
-);
+import Login from '@/pages/Login';
+import Dashboard from '@/pages/Dashboard';
+import SensorData from '@/pages/SensorData';
+import EstrusPrediction from '@/pages/EstrusPrediction';
+import Recommendations from '@/pages/Recommendations';
+import Notifications from '@/pages/Notifications';
+import Settings from '@/pages/Settings';
+import ManajemenTernak from '@/pages/ManajemenTernak';
+import DetailTernak from '@/pages/DetailTernak';
+import ResearchLab from '@/pages/ResearchLab';
+import NotFound from '@/pages/NotFound';
 
 export const router = createBrowserRouter([
   {
     path: '/login',
-    element: withSuspense(Login),
+    element: <Login />,
     errorElement: <ErrorBoundary />,
   },
   {
@@ -52,36 +36,35 @@ export const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-        element: withSuspense(Dashboard),
+        element: <Dashboard />,
       },
       {
         path: 'sensor-data',
-        element: withSuspense(SensorData),
+        element: <SensorData />,
       },
       {
         path: 'estrus-prediction',
-        element: withSuspense(EstrusPrediction),
+        element: <EstrusPrediction />,
       },
       {
         path: 'recommendations',
-        element: withSuspense(Recommendations),
+        element: <Recommendations />,
       },
-
       {
         path: 'notifications',
-        element: withSuspense(Notifications),
+        element: <Notifications />,
       },
       {
         path: 'settings',
-        element: withSuspense(Settings),
+        element: <Settings />,
       },
       {
         path: 'ternak',
-        element: withSuspense(ManajemenTernak),
+        element: <ManajemenTernak />,
       },
       {
         path: 'ternak/:id',
-        element: withSuspense(DetailTernak),
+        element: <DetailTernak />,
       },
       {
         path: 'kandang',
@@ -89,12 +72,12 @@ export const router = createBrowserRouter([
       },
       {
         path: 'research-lab',
-        element: withSuspense(ResearchLab),
+        element: <ResearchLab />,
       },
     ],
   },
   {
     path: '*',
-    element: withSuspense(NotFound),
+    element: <NotFound />,
   },
 ]);

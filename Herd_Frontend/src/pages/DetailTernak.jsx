@@ -363,15 +363,19 @@ export default function DetailTernak() {
     let currentCycle = [];
     
     for (const item of sorted) {
-      currentCycle.push(item);
-      const isPreg = item.results === true || item.results === 'true' || item.is_pregnant === true;
+      // Shallow copy so we can safely mutate jumlah_ib for the UI without breaking other refs if any
+      const itemCopy = { ...item };
+      currentCycle.push(itemCopy);
+      const isPreg = itemCopy.results === true || itemCopy.results === 'true' || itemCopy.is_pregnant === true;
       if (isPreg) {
+        currentCycle.forEach((it, idx) => it.jumlah_ib = idx + 1);
         cycles.push([...currentCycle].reverse()); // newest IB first within cycle
         currentCycle = [];
       }
     }
     
     if (currentCycle.length > 0) {
+      currentCycle.forEach((it, idx) => it.jumlah_ib = idx + 1);
       cycles.push([...currentCycle].reverse());
     }
     
@@ -393,13 +397,8 @@ export default function DetailTernak() {
   }, [reproCycles]);
 
   const sortedReproHistory = useMemo(() => {
-    if (!selectedSapi || !selectedSapi.reproduksi) return [];
-    return [...selectedSapi.reproduksi].sort((a, b) => {
-      const dateA = new Date(a.tanggal_ib || a.service_date).getTime();
-      const dateB = new Date(b.tanggal_ib || b.service_date).getTime();
-      return dateB - dateA;
-    });
-  }, [selectedSapi]);
+    return reproCycles.flat();
+  }, [reproCycles]);
 
   // Detect overdue pregnancy: results=true AND hpl has passed today
   const overduePregnancy = useMemo(() => {
