@@ -221,10 +221,9 @@ export default function EstrusPrediction() {
 
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] lg:rounded-[40px] lg:mt-4 px-6 lg:pt-8 pb-8 lg:pb-[56px] shadow-sm relative overflow-hidden mb-6 text-white flex flex-col justify-between"
+        className="rounded-t-none rounded-b-[40px] lg:rounded-[40px] lg:mt-4 px-6 pt-[calc(env(safe-area-inset-top,0px)+56px)] lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4 lg:mx-0" 
         style={{ 
-          paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
-          background: 'linear-gradient(135deg, #be123c 0%, #881337 100%)' 
+          background: 'linear-gradient(135deg, #FF3366 0%, #CC0033 100%)'
         }}
       >
         {/* Subtle Background Accent */}
