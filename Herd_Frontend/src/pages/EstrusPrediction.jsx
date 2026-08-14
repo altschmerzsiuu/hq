@@ -110,7 +110,9 @@ export default function EstrusPrediction() {
       setPredictions(data);
     } catch (err) {
       console.error('Gagal fetch prediksi:', err);
-      toast.error(lang === 'id' ? 'Gagal memuat data prediksi estrus.' : 'Failed to load estrus prediction data.');
+      if (err.response?.status !== 404 && err.response?.status !== 500) {
+        toast.error(lang === 'id' ? 'Gagal memuat data prediksi estrus.' : 'Failed to load estrus prediction data.');
+      }
     } finally {
       setLoading(false);
     }
