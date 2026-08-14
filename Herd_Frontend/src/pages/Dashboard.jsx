@@ -1441,9 +1441,9 @@ export default function Dashboard() {
         {/* ─── DESKTOP BENTO GRID DASHBOARD ─── */}
         <div className="hidden lg:flex md:flex-col md:gap-0">
 
-          {/* HEADER */}
+          {/* HEADER — stat cards embedded inside, ManajemenTernak-style */}
           <div
-            className="rounded-[40px] mt-4 px-8 pt-8 pb-10 shadow-sm relative overflow-hidden mb-6 text-white flex flex-col justify-between"
+            className="rounded-[40px] mt-4 px-8 pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between"
             style={{
               background: 'linear-gradient(135deg, #10B981 0%, #047857 100%)'
             }}
@@ -1451,7 +1451,9 @@ export default function Dashboard() {
             <div className="absolute -right-12 text-white opacity-[0.12] rotate-12 pointer-events-none" style={{ top: '-2rem' }}>
               <Activity size={320} strokeWidth={0.8} />
             </div>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+
+            {/* Title row */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10 mb-6">
               <div>
                 <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-emerald-100">
                   {lang === 'id' ? 'RINGKASAN KONDISI PETERNAKAN ANDA.' : 'YOUR HERD CONDITION SUMMARY.'}
@@ -1461,59 +1463,61 @@ export default function Dashboard() {
                 </h1>
               </div>
             </div>
-          </div>
 
-          {/* ROW 1: 3 STAT CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Card 1: Total */}
-            <div className="bg-[var(--color-primary)] text-white p-5 rounded-2xl flex flex-col justify-between shadow-lg relative overflow-hidden h-[140px]">
-              <div className="flex justify-between items-start relative z-10">
-                <span className="font-semibold text-sm">{lang === 'id' ? 'Total Ternak' : 'Total Cattle'}</span>
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                  <Database size={16} />
+            {/* Stat cards inside gradient header */}
+            <div className="grid grid-cols-3 gap-4 relative z-10">
+              {/* Card: Total Ternak */}
+              <div className="bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-5 flex flex-col gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white/25 transition-all duration-300">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold opacity-80 uppercase tracking-wider">
+                    {lang === 'id' ? 'Total Ternak' : 'Total Cattle'}
+                  </span>
+                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                    <Database size={14} />
+                  </div>
+                </div>
+                <div className="text-[36px] font-black leading-none">{herd.length}</div>
+                <div className="text-[10px] font-medium opacity-75 flex items-center gap-1">
+                  <CheckCircle2 size={11} /> {lang === 'id' ? 'Kondisi terpantau' : 'Conditions monitored'}
                 </div>
               </div>
-              <div className="relative z-10">
-                <div className="text-[40px] font-black leading-none mb-1">{herd.length}</div>
-                <div className="text-xs text-emerald-100 flex items-center gap-1">
-                  <CheckCircle2 size={12} /> {lang === 'id' ? 'Kondisi terpantau' : 'Conditions monitored'}
-                </div>
-              </div>
-              <Sun size={140} strokeWidth={1} className="absolute -bottom-10 -right-10 text-white opacity-10 rotate-12" />
-            </div>
 
-            {/* Card 3: Estrus */}
-            <div className="bg-white border border-[var(--border)] p-5 rounded-2xl flex flex-col justify-between shadow-sm h-[140px]">
-              <div className="flex justify-between items-start">
-                <span className="font-semibold text-sm text-[var(--text-2)]">{lang === 'id' ? 'Sedang Birahi' : 'In Estrus'}</span>
-                <div className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg-surface)] cursor-pointer" onClick={() => setIsEstrusModalOpen(true)}>
-                  <ChevronRight size={16} />
+              {/* Card: Sedang Birahi */}
+              <div
+                className="bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-5 flex flex-col gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white/25 transition-all duration-300 cursor-pointer active:scale-95"
+                onClick={() => setIsEstrusModalOpen(true)}
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold opacity-80 uppercase tracking-wider">
+                    {lang === 'id' ? 'Sedang Birahi' : 'In Estrus'}
+                  </span>
+                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                    <Zap size={14} />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-[32px] font-black leading-none mb-1 text-[var(--text-1)]">
+                <div className="text-[36px] font-black leading-none">
                   {intel.filter(card => card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')).length}
                 </div>
-                <div className="text-xs text-amber-600 flex items-center gap-1 font-semibold bg-amber-50 w-fit px-2 py-0.5 rounded-md">
-                  <Zap size={12} /> {lang === 'id' ? 'Siap IB' : 'Ready AI'}
+                <div className="text-[10px] font-medium opacity-75 flex items-center gap-1">
+                  <Zap size={11} /> {lang === 'id' ? 'Siap IB' : 'Ready AI'}
                 </div>
               </div>
-            </div>
 
-            {/* Card 4: Butuh Perhatian */}
-            <div className="bg-white border border-[var(--border)] p-5 rounded-2xl flex flex-col justify-between shadow-sm h-[140px]">
-              <div className="flex justify-between items-start">
-                <span className="font-semibold text-sm text-[var(--text-2)]">{lang === 'id' ? 'Perlu Tindakan' : 'Needs Action'}</span>
-                <div className="w-8 h-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg-surface)] cursor-pointer">
-                  <ChevronRight size={16} />
+              {/* Card: Perlu Tindakan */}
+              <div className="bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl p-5 flex flex-col gap-2 shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:bg-white/25 transition-all duration-300">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] font-bold opacity-80 uppercase tracking-wider">
+                    {lang === 'id' ? 'Perlu Tindakan' : 'Needs Action'}
+                  </span>
+                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                    <ShieldAlert size={14} />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-[32px] font-black leading-none mb-1 text-[var(--text-1)]">
+                <div className="text-[36px] font-black leading-none">
                   {intel.filter(i => i.urgency === 'critical' || i.urgency === 'monitor').length}
                 </div>
-                <div className="text-xs text-red-600 flex items-center gap-1 font-semibold bg-red-50 w-fit px-2 py-0.5 rounded-md">
-                  <ShieldAlert size={12} /> {lang === 'id' ? 'Cek Sekarang' : 'Check Now'}
+                <div className="text-[10px] font-medium opacity-75 flex items-center gap-1">
+                  <ShieldAlert size={11} /> {lang === 'id' ? 'Cek Sekarang' : 'Check Now'}
                 </div>
               </div>
             </div>
