@@ -3377,6 +3377,7 @@ async def unpair_iot_device(data: UnpairDevice, current_user: dict = Depends(get
 class TeamInvite(BaseModel):
     email: str
     role: str = "viewer"
+    full_name: str = "Anggota Tim"
 
 class RoleUpdate(BaseModel):
     role: str
@@ -3419,14 +3420,13 @@ async def invite_team_member(invite: TeamInvite, current_user: dict = Depends(ge
             return {"message": "Anggota tim berhasil ditambahkan dari pengguna yang sudah ada."}
         
         # Create new user
-        from passlib.context import CryptContext
         import string
         import random
+        from auth_utils import hash_password
         
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         # Generate random 8 char password
         temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-        password_hash = pwd_context.hash(temp_password)
+        password_hash = hash_password(temp_password)
         
         new_user = await conn.fetchrow(
             """

@@ -119,11 +119,13 @@ export default function MainLayout() {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      height: '100%',
-      background: 'var(--bg-base)',
-      overflow: 'hidden',
+    <div 
+      className="lg:pt-[env(safe-area-inset-top)] lg:pl-[env(safe-area-inset-left)] lg:pr-[env(safe-area-inset-right)] lg:pb-[env(safe-area-inset-bottom)]"
+      style={{
+        display: 'flex',
+        height: '100%',
+        background: 'var(--bg-base)',
+        overflow: 'hidden',
     }}>
       {/* iOS Safe Area Cover */}
       {(location.pathname === '/dashboard' || location.pathname === '/sensor-data' || location.pathname === '/ternak') && (
