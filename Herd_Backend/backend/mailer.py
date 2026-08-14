@@ -208,6 +208,28 @@ def _html_estrus_alert(cow_name: str, collar_id: str, kandang_id: str,
 """
 
 
+def _html_invitation_email(full_name: str, temp_password: str, role: str) -> str:
+    role_id = "Admin" if role == "admin" else "Peternak/Pekerja"
+    return f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        <div style="max-w-md mx-auto border border-gray-200 rounded-lg p-6">
+            <h2 style="color: #2E7D32;">Undangan Bergabung ke Hectra Herd</h2>
+            <p>Halo <b>{full_name}</b>,</p>
+            <p>Anda telah diundang untuk bergabung mengelola peternakan dengan peran sebagai <b>{role_id}</b>.</p>
+            <p>Berikut adalah informasi akun sementara Anda:</p>
+            <ul>
+                <li>Email: <b>(Email ini)</b></li>
+                <li>Kata Sandi Sementara: <b style="font-size: 16px; background: #eee; padding: 2px 6px; border-radius: 4px;">{temp_password}</b></li>
+            </ul>
+            <p>Silakan masuk ke platform dan <b>segera ubah kata sandi Anda</b> di menu pengaturan profil.</p>
+            <br>
+            <p>Terima kasih,<br>Tim Hectra</p>
+        </div>
+      </body>
+    </html>
+    """
+
 def _html_monthly_pdf_email(month_str: str, pdf_filename: str) -> str:
     return f"""
 <!DOCTYPE html>
@@ -345,24 +367,28 @@ def send_estrus_alert_email(to: str, cow_name: str, collar_id: str,
 
 def send_monthly_report_email(to: str, pdf_bytes: bytes, month_str: str = None) -> bool:
     """
-    Kirim laporan bulanan PDF via email.
-    pdf_bytes: hasil generate dari report_routes.py (ReportLab).
-    Dipanggil dari scheduler bulanan di app.py.
-
-    Contoh:
-        pdf = generate_monthly_pdf(...)  # dari report_routes.py
-        send_monthly_report_email(to="peternak@gmail.com", pdf_bytes=pdf)
     """
     if not month_str:
-        month_str = datetime.now(WITA).strftime("%B %Y")
-    filename = f"Laporan_Estrus_AI_{month_str.replace(' ','_')}.pdf"
-    subject  = f"[Estrus AI] 📊 Laporan Bulanan — {month_str}"
-    html     = _html_monthly_pdf_email(month_str, filename)
-    return _send_email(to, subject, html, pdf_bytes=pdf_bytes, pdf_filename=filename)
+        now = datetime.now()
+        month_str = f"{now.strftime('%B %Y')}"
+    
+    subject = f"Laporan Bulanan Peternakan - {month_str}"
+    html_body = _html_monthly_pdf_email(month_str, "Laporan_Bulanan.pdf")
+    
+    # PDF as attachment
+    filename = f"Laporan_Bulanan_{month_str.replace(' ', '_')}.pdf"
+    
+    return _send_email(
+        to, subject, html_body, 
+        pdf_bytes=pdf_bytes, 
+        pdf_filename=filename
+    )
 
-# ==========================
-# STEP 6: Breeding Reminder + .ics Attachment
-# ==========================
+def send_invitation_email(to: str, full_name: str, temp_password: str, role: str) -> bool:
+    """Mengirim email undangan dengan kata sandi sementara"""
+    subject = "Undangan Bergabung ke Hectra Herd"
+    html_body = _html_invitation_email(full_name, temp_password, role)
+    return _send_email(to, subject, html_body)
 
 def send_breeding_reminder_email(
     to: str,
