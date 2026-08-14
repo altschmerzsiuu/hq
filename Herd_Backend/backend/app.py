@@ -176,6 +176,8 @@ app.add_middleware(
         "https://www.herd.my.id",
         "https://herdhq.my.id",
         "https://www.herdhq.my.id",
+        "https://hectrahq.my.id",
+        "https://www.hectrahq.my.id",
         "https://app.hectra.my.id",
         "https://hectra.my.id",
         "https://api.hectra.my.id",
