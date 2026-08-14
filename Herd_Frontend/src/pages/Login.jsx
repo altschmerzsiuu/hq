@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Eye, EyeOff, ChevronLeft, User, Delete } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ChevronLeft, User, Delete, X } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/store/toastStore';
 import { handleError, handlePinError } from '@/lib/errorHandler';
@@ -65,6 +65,23 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Forgot Password State
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail) return;
+    setIsForgotLoading(true);
+    // Simulate API call
+    await new Promise(r => setTimeout(r, 1500));
+    setIsForgotLoading(false);
+    setShowForgotModal(false);
+    toast.success('Link reset password telah dikirim ke email Anda.');
+    setForgotEmail('');
+  };
+
   // PIN State
   const [pinDigits, setPinDigits] = useState(['', '', '', '', '', '']);
   const [setupPinDigits, setSetupPinDigits] = useState(['', '', '', '', '', '']);
@@ -94,7 +111,7 @@ export default function Login() {
       }
     };
 
-    if (savedUserId) {
+    if (savedUserId && localStorage.getItem('herd_has_pin') === 'true') {
       // Returning user, show PIN login
       setStep('pin_login');
     } else {
@@ -184,14 +201,10 @@ export default function Login() {
       setToken(access_token, user);
       await registerDevice();
 
-      if (!user.has_pin) {
-        setTempUserId(user.id);
-        setStep('pin_setup');
-      } else {
-        localStorage.setItem('herd_user_id', user.id);
-        localStorage.setItem('herd_user_name', user.full_name);
-        navigate('/dashboard', { replace: true });
-      }
+      localStorage.setItem('herd_user_id', user.id);
+      localStorage.setItem('herd_user_name', user.full_name);
+      localStorage.setItem('herd_has_pin', user.has_pin ? 'true' : 'false');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       handleError(err, 'Google login');
     }
@@ -223,7 +236,8 @@ export default function Login() {
       setIsLoading(false);
 
       if (!userObj) {
-        toast.error('Gagal masuk. Periksa email dan password Anda.');
+        const authError = useAuthStore.getState().error;
+        toast.error(authError || 'Gagal masuk. Periksa email dan password Anda.');
         return;
       }
 
@@ -231,15 +245,11 @@ export default function Login() {
         const { registerDevice } = useAuthStore.getState();
         await registerDevice();
 
-        if (!userObj.has_pin) {
-          setTempUserId(userObj.id);
-          setStep('pin_setup');
-        } else {
-          localStorage.setItem('herd_user_id', userObj.id);
-          localStorage.setItem('herd_user_name', userObj.full_name);
-          toast.success('Selamat datang kembali!');
-          navigate('/dashboard', { replace: true });
-        }
+        localStorage.setItem('herd_user_id', userObj.id);
+        localStorage.setItem('herd_user_name', userObj.full_name);
+        localStorage.setItem('herd_has_pin', userObj.has_pin ? 'true' : 'false');
+        toast.success('Selamat datang kembali!');
+        navigate('/dashboard', { replace: true });
       }
     } else {
       if (!firstName || !email || !password || !confirmPassword) {
@@ -281,8 +291,10 @@ export default function Login() {
           const { registerDevice, setToken } = useAuthStore.getState();
           setToken(access_token, user);
           await registerDevice();
-          setTempUserId(user.id);
-          setStep('pin_setup');
+          localStorage.setItem('herd_user_id', user.id);
+          localStorage.setItem('herd_user_name', user.full_name);
+          localStorage.setItem('herd_has_pin', user.has_pin ? 'true' : 'false');
+          navigate('/dashboard', { replace: true });
         }
       } catch (err) {
         const detail = err.response?.data?.detail;
@@ -714,9 +726,13 @@ export default function Login() {
                       </div>
                     )}
 
-                    <p className="text-[11px] text-[#8E8EA0] mt-1 mb-1">
-                      {isLoginMode ? 'We will send you an email with a login link if you forgot your password.' : 'Make sure to use a strong password.'}
-                    </p>
+                    {isLoginMode ? (
+                      <div className="flex justify-end mt-1 mb-2">
+                        <button type="button" onClick={() => setShowForgotModal(true)} className="text-[11px] font-bold text-[#FF7B1C] hover:underline transition-all">Lupa Password?</button>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-[#8E8EA0] mt-1 mb-1">Make sure to use a strong password.</p>
+                    )}
 
                     <button
                       type="submit" disabled={isLoading}
@@ -926,6 +942,68 @@ export default function Login() {
             </motion.div>
           )}
 
+        </AnimatePresence>
+
+        {/* FORGOT PASSWORD MODAL */}
+        <AnimatePresence>
+          {showForgotModal && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center px-4">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowForgotModal(false)}
+                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              />
+              
+              {/* Modal Content */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative bg-white w-full max-w-sm rounded-[24px] p-6 shadow-2xl flex flex-col"
+              >
+                <button
+                  onClick={() => setShowForgotModal(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-colors"
+                >
+                  <X size={18} />
+                </button>
+
+                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center mb-4">
+                  <User size={24} className="text-[#FF7B1C]" />
+                </div>
+
+                <h3 className="text-xl font-black text-gray-900 mb-2 tracking-tight">Lupa Password?</h3>
+                <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                  Masukkan email yang terdaftar pada akun Anda. Kami akan mengirimkan tautan untuk mengatur ulang password.
+                </p>
+
+                <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
+                  <div>
+                    <label className="text-[11px] font-bold text-[#8E8EA0] ml-1 mb-1 block">Alamat Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="contoh@email.com"
+                      className="w-full h-[46px] bg-white rounded-[14px] px-4 text-[14px] outline-none border border-[#E5E5EA] focus:border-[#FF7B1C] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.02)] text-[#111118]"
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={isForgotLoading || !forgotEmail}
+                    className="w-full h-[48px] bg-[#FF7B1C] hover:bg-[#E66A12] text-white rounded-[14px] font-bold text-[15px] transition-colors active:scale-[0.98] disabled:opacity-70 flex items-center justify-center shadow-md shadow-[#FF7B1C]/20 mt-2"
+                  >
+                    {isForgotLoading ? <Loader2 className="animate-spin" size={20} /> : 'Kirim Link Reset'}
+                  </button>
+                </form>
+              </motion.div>
+            </div>
+          )}
         </AnimatePresence>
       </div>
     </div>

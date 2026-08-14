@@ -93,9 +93,13 @@ export const useAuthStore = create((set) => ({
     sessionStorage.removeItem('session_expiry');
     set({ token: null, user: null, isAuthenticated: false, isLoading: true, error: null });
     try {
+      const device_uuid = getOrCreateDeviceUUID();
+      const device_label = getDeviceLabel();
       const response = await axiosInstance.post('/auth/login', {
         email: email,
-        password: password
+        password: password,
+        device_uuid: device_uuid,
+        device_label: device_label
       });
 
       const { access_token, user } = response.data;

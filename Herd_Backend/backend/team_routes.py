@@ -144,8 +144,22 @@ async def invite_team_member(
             owner_id
         )
 
-    # TODO (optional): send an invitation email with the temp_password via mailer.py
-    # For now, return the temp password in the response so the admin can share it.
+    try:
+        from mailer import send_invitation_email
+        # Run send email in a thread so we don't block the async loop completely
+        # although `send_invitation_email` is synchronous
+        import asyncio
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None, 
+            send_invitation_email, 
+            body.email, 
+            body.full_name, 
+            temp_password, 
+            body.role
+        )
+    except Exception as e:
+        print(f"Failed to send invitation email to {body.email}: {e}")
     return {
         "message": f"Akun berhasil dibuat untuk {body.email}",
         "user": {

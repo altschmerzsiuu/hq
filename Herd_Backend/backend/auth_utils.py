@@ -62,6 +62,12 @@ def verify_token(token: str, token_type: str = "access"):
         print(f"❌ DEBUG verify_token: JWTError occurred: {type(e).__name__}: {str(e)}")
         return None
 
+def create_reset_token(email: str):
+    """Create JWT reset token (1 hour expiry)"""
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)
+    to_encode = {"sub": email, "exp": expire, "type": "reset"}
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
 def blacklist_token(token: str):
     if not redis_client: return
     try:

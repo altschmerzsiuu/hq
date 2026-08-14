@@ -221,7 +221,7 @@ export default function EstrusPrediction() {
 
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <div 
-        className="rounded-t-none rounded-b-[40px] md:rounded-[40px] md:mt-4 px-6 md:pt-8 pb-8 md:pb-[56px] shadow-sm relative overflow-hidden mb-6 text-white flex flex-col justify-between -mx-4 md:mx-0"
+        className="rounded-t-none rounded-b-[40px] lg:rounded-[40px] lg:mt-4 px-6 lg:pt-8 pb-8 lg:pb-[56px] shadow-sm relative overflow-hidden mb-6 text-white flex flex-col justify-between"
         style={{ 
           paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
           background: 'linear-gradient(135deg, #be123c 0%, #881337 100%)' 
@@ -235,12 +235,12 @@ export default function EstrusPrediction() {
           style={{ top: 'calc(env(safe-area-inset-top) - 2rem)' }}
         />
 
-        <div className="flex flex-col justify-between gap-6 relative z-10">
-          <div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="flex-1">
             <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-rose-200">
               {lang === 'id' ? 'PEMANTAUAN MASA SUBUR & REPRODUKSI' : 'FERTILITY & REPRODUCTION MONITORING'}
             </p>
-            <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none mb-4">
+            <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none mb-4 md:mb-2">
               {t.prediction_title}
             </h1>
             <p className="text-rose-100 text-sm md:text-base font-medium opacity-90">
@@ -251,7 +251,7 @@ export default function EstrusPrediction() {
           <button 
             onClick={handleRunPredict}
             disabled={isPredicting}
-            className="flex items-center justify-center gap-3 w-full py-4 bg-white/20 border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md group"
+            className="flex items-center justify-center gap-3 w-full md:w-auto md:min-w-[280px] py-4 md:px-8 bg-white/20 border border-white/30 text-white font-bold rounded-2xl hover:bg-white/30 transition-all shadow-sm backdrop-blur-md group shrink-0"
           >
             <RefreshCw size={20} className={isPredicting ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} />
             <div className="text-left flex flex-col">
@@ -264,8 +264,9 @@ export default function EstrusPrediction() {
         </div>
       </div>
 
-      {/* ── STAT SUMMARY CARDS ────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="px-4 lg:px-0 space-y-8">
+        {/* ── STAT SUMMARY CARDS ────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Sapi Dalam Pemantauan */}
         <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
           <p className="text-[12px] font-bold text-[var(--text-2)] mb-3">{lang === 'id' ? 'Sapi Dalam Pemantauan' : 'Cows Monitored'}</p>
@@ -584,6 +585,7 @@ export default function EstrusPrediction() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
