@@ -102,6 +102,8 @@ _validate_env()
 try:
     svm_model = joblib.load("models/svm_estrus_sensor.joblib")
     xgb_model = joblib.load("models/xgb_estrus_historical.joblib")
+    svm_activity_model = joblib.load("models/svm_activity_sensor.joblib")
+    le_activity_model = joblib.load("models/label_encoder_activity.joblib")
     THRESHOLD = 0.75
     XGB_WEIGHT = 0.65
     SVM_WEIGHT = 0.35
@@ -110,10 +112,12 @@ except Exception as e:
     print(f"[ML ERROR] Failed to load models: {e}")
     svm_model = None
     xgb_model = None
+    svm_activity_model = None
+    le_activity_model = None
 
-from prediction_engine import ModelRegistry, run_hybrid_prediction
+from prediction_engine import ModelRegistry, run_hybrid_prediction, predict_activity
 if svm_model and xgb_model:
-    ModelRegistry.set_models(xgb_model, svm_model)
+    ModelRegistry.set_models(xgb_model, svm_model, svm_activity_model, le_activity_model)
 
 # Konfigurasi Timezone (WITA = UTC+8 untuk Balikpapan)
 WITA = timezone(timedelta(hours=8))

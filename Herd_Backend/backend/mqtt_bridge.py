@@ -14,7 +14,7 @@ from mailer import (
     send_estrus_alert_email, 
     send_breeding_reminder_email
 )
-from prediction_engine import ModelRegistry, run_hybrid_prediction
+from prediction_engine import ModelRegistry, run_hybrid_prediction, predict_activity
 
 # Load environment variables
 load_dotenv()
@@ -205,6 +205,21 @@ def save_sensor(data, kandang_id):
 
     now = datetime.now(WITA).replace(tzinfo=None)
     
+    # ML Activity Prediction
+    activity_state = data.get('activity_state', 'UNKNOWN')
+    try:
+        # Override if ML model is ready
+        mean_z = float(data.get('mean_z', 0.0))
+        rms_z = float(data.get('rms_z', 0.0))
+        max_z = float(data.get('max_z', 0.0))
+        temp = float(data.get('temperature', 0.0))
+        
+        predicted_activity = predict_activity(mean_z, rms_z, max_z, temp)
+        if predicted_activity != "UNKNOWN":
+            activity_state = predicted_activity
+    except Exception as e:
+        print(f"⚠️ Activity prediction failed: {e}")
+    
     query = """
         INSERT INTO sensor_data 
         (kandang_id, collar_id, mean_z, rms_z, max_z, temperature, 
@@ -218,7 +233,7 @@ def save_sensor(data, kandang_id):
         data.get('rms_z', 0.0),
         data.get('max_z', 0.0),
         data.get('temperature'),
-        data.get('activity_state', 'UNKNOWN'),
+        activity_state,
         data.get('estrus_code', 0),
         data.get('battery_voltage', 0.0),
         data.get('battery_percent', 0),

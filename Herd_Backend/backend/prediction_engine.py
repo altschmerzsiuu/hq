@@ -64,6 +64,8 @@ class ModelRegistry:
     """
     _xgb = None
     _svm = None
+    _svm_activity = None
+    _le_activity = None
 
     @classmethod
     def load_from_disk(cls):
@@ -81,17 +83,28 @@ class ModelRegistry:
         except Exception as e:
             logger.warning(f"⚠️  SVM gagal load: {e}")
 
+        svm_act_path = os.path.join(MODEL_DIR, "svm_activity_sensor.joblib")
+        le_act_path = os.path.join(MODEL_DIR, "label_encoder_activity.joblib")
+        try:
+            cls._svm_activity = joblib.load(svm_act_path)
+            cls._le_activity = joblib.load(le_act_path)
+            logger.info(f"✅ SVM Activity loaded: {svm_act_path}")
+        except Exception as e:
+            logger.warning(f"⚠️  SVM Activity gagal load: {e}")
+
     @classmethod
-    def set_models(cls, xgb_model, svm_model):
+    def set_models(cls, xgb_model, svm_model, svm_activity_model=None, le_activity_model=None):
         """
         Inject model dari app.py yang sudah load duluan.
         Panggil ini di app.py startup setelah load model:
 
             from prediction_engine import ModelRegistry
-            ModelRegistry.set_models(xgb_model, svm_model)
+            ModelRegistry.set_models(xgb_model, svm_model, svm_activity_model, le_activity_model)
         """
         cls._xgb = xgb_model
         cls._svm = svm_model
+        cls._svm_activity = svm_activity_model
+        cls._le_activity = le_activity_model
         logger.info("✅ ModelRegistry: model di-inject dari app.py")
 
     @classmethod
@@ -101,6 +114,14 @@ class ModelRegistry:
     @classmethod
     def svm(cls):
         return cls._svm
+
+    @classmethod
+    def svm_activity(cls):
+        return cls._svm_activity
+
+    @classmethod
+    def le_activity(cls):
+        return cls._le_activity
 
     @classmethod
     def is_ready(cls):
@@ -481,9 +502,18 @@ async def predict_estrus(
     sensor_mean_z_avg = 0.0
     if sensor_window:
         # Hitung feature tambahan untuk XGBoost dari siklus
-        days_since = (today - siklus["last_birahi_date"]).days if siklus and siklus.get("last_birahi_date") else 0
-        cycle_avg  = siklus["rata_siklus_hari"] if siklus else 21.0
-        parity     = siklus["jumlah_siklus_valid"] if siklus else 0
+        days_since = 0
+        if siklus and siklus.get("last_birahi_date"):
+            l_date = siklus["last_birahi_date"]
+            if isinstance(l_date, str):
+                from datetime import datetime
+                l_date = datetime.fromisoformat(l_date[:10]).date()
+            elif hasattr(l_date, "date"):
+                l_date = l_date.date() # type: ignore
+            days_since = (today - l_date).days # type: ignore
+            
+        cycle_avg  = float(siklus.get("rata_siklus_hari", 21.0)) if siklus else 21.0
+        parity     = int(siklus.get("jumlah_siklus_valid", 0)) if siklus else 0
 
         result_l2 = layer2_sensor(
             sensor_window, days_since, cycle_avg, parity, today
@@ -674,3 +704,29 @@ async def update_siklus_setelah_event(
         max([r["bunting"]    for r in riwayat if r["bunting"]],    default=None),
     )
     logger.info(f"✅ siklus_individu updated: {rfid} | siklus={rata:.1f}d | offset={offset_optimal:+.1f}d | status={status}")
+
+# ──────────────────────────────────────────────
+# Activity Prediction
+# ──────────────────────────────────────────────
+
+def predict_activity(mean_z: float, rms_z: float, max_z: float, temp: float) -> str:
+    """
+    Tebak aktivitas sapi (misal: "EATING") berdasarkan sensor telemetry.
+    """
+    _svm_activity = ModelRegistry.svm_activity()
+    _le_activity = ModelRegistry.le_activity()
+
+    if not _svm_activity or not _le_activity:
+        # Fallback kalau model belum diload atau gagal diload
+        return "UNKNOWN"
+
+    try:
+        # Tebak aktivitasnya (keluarnya angka, misal: 1)
+        pred_idx = _svm_activity.predict([[mean_z, rms_z, max_z, temp]])[0]
+        
+        # Ubah angka jadi teks (misal: "EATING")
+        aktivitas = _le_activity.inverse_transform([pred_idx])[0]
+        return aktivitas
+    except Exception as e:
+        logger.error(f"Error predicting activity: {e}")
+        return "UNKNOWN"
