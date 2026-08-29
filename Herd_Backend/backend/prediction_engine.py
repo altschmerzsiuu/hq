@@ -472,8 +472,23 @@ async def predict_estrus(
                 "rata_siklus_hari": 21.0,
                 "std_siklus_hari": 2.5,
                 "offset_ib_optimal": 0.0,
-                "jumlah_siklus_valid": 0
+                "jumlah_siklus_valid": 0,
+                "status_reproduksi": "active"
             }
+
+    # Jika sapi sedang bunting, jangan buat prediksi birahi, expire prediksi aktif yang ada
+    if siklus and siklus.get("status_reproduksi") == "pregnant":
+        await conn.execute("""
+            UPDATE prediksi_birahi
+            SET status = 'expired', updated_at = CURRENT_TIMESTAMP
+            WHERE rfid = $1 AND status = 'active'
+        """, rfid)
+        return {
+            "prediksi_tanggal": None,
+            "prediksi_ib_optimal": None,
+            "confidence_final": 0.0,
+            "metode": "skip_pregnant"
+        }
 
     hewan = await conn.fetchrow("SELECT jenis FROM hewan WHERE id = $1", rfid)
     jenis = hewan["jenis"] if hewan else None

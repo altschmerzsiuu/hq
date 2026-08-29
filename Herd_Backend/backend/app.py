@@ -2943,7 +2943,8 @@ async def get_ai_predictions(current_user: dict = Depends(get_current_user), lim
 async def get_estrus_predictions(
     current_user: dict = Depends(get_current_user),
     limit: int = 50,
-    status: str = "active"
+    status: str = "active",
+    cow_id: Optional[str] = None
 ):
     """
     Ambil prediksi estrus dari tabel prediksi_birahi.
@@ -2979,9 +2980,11 @@ async def get_estrus_predictions(
             LEFT JOIN hewan h ON h.id = pb.rfid
             WHERE pb.owner_id = $1
               AND ($2::text = 'all' OR pb.status = $2)
+              AND ($4::text IS NULL OR pb.rfid = $4)
+
             ORDER BY pb.prediksi_tanggal ASC
             LIMIT $3
-        """, owner_id, status, limit)
+        """, owner_id, status, limit, cow_id)
         return [dict(r) for r in rows]
 
 
