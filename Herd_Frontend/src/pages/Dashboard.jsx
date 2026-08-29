@@ -1496,7 +1496,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="text-[36px] font-black leading-none">
-                  {intel.filter(card => card.title.toLowerCase().includes('estrus') || card.title.toLowerCase().includes('birahi')).length}
+                  {activeEstrusPredictions.length}
                 </div>
                 <div className="text-[10px] font-medium opacity-75 flex items-center gap-1">
                   <Zap size={11} /> {lang === 'id' ? 'Siap IB' : 'Ready AI'}

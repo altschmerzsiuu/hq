@@ -349,9 +349,13 @@ async def tambah_reproduksi(data: ReproduksiCreate, request: Request, current_us
                 data.rfid.upper(), data.tanggal_ib, data.pemberi_ib, data.jumlah_ib, data.birahi, data.bunting, data.hpl, data.sapih, data.catatan
             )
 
-            await update_siklus_setelah_event (
-                conn, data.rfid.upper(), owner_id, "birahi", data.birahi
-            )
+            event_type = "ib" if data.tanggal_ib else ("birahi" if data.birahi else None)
+            event_date = data.tanggal_ib if data.tanggal_ib else data.birahi
+
+            if event_type and event_date:
+                await update_siklus_setelah_event (
+                    conn, data.rfid.upper(), owner_id, event_type, event_date
+                )
 
         return {"success": True, "message": "Data reproduksi berhasil disimpan.", "auto_calculated": {"bunting": data.bunting, "hpl": data.hpl}}
     except HTTPException:

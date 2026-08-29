@@ -36,81 +36,19 @@ const axiosInstance = axios.create({
 })
 
 // ─── Proactive Refresh Scheduler ────────────────────────────────────
-let proactiveRefreshTimer = null;
+// Proactive refresh removed to prevent infinite loops caused by server-client clock drift.
+// Token rotation is now handled robustly via the 401 response interceptor below.
 
-// Export this so authStore can cancel stale timers when a fresh login begins
 export function cancelProactiveRefresh() {
-  if (proactiveRefreshTimer) {
-    clearTimeout(proactiveRefreshTimer);
-    proactiveRefreshTimer = null;
-  }
+  // No-op
 }
 
 export function scheduleProactiveRefresh(token) {
-  if (!token || token.startsWith('mock.')) return;
-
-  const expMs = getTokenExpiry(token);
-  if (!expMs) return;
-
-  const msUntilExpiry = expMs - Date.now();
-  // Refresh 90 seconds before expiry — gives plenty of buffer
-  const refreshIn = msUntilExpiry - 90_000;
-
-  if (proactiveRefreshTimer) clearTimeout(proactiveRefreshTimer);
-
-  if (refreshIn <= 0) {
-    // Token already expired or about to — refresh immediately
-    doSilentRefresh();
-    return;
-  }
-
-  proactiveRefreshTimer = setTimeout(() => {
-    doSilentRefresh();
-  }, refreshIn);
+  // No-op
 }
 
-async function doSilentRefresh() {
-  const tokenBeforeRefresh = localStorage.getItem('access_token');
-  try {
-    const resp = await axios.post(
-      `${getBaseUrl()}/auth/refresh`,
-      {},
-      { withCredentials: true }
-    );
-    // If the token changed during the request (e.g. by a fresh login), ignore the result of this refresh
-    if (localStorage.getItem('access_token') !== tokenBeforeRefresh) {
-      console.warn("Silent refresh completed but token was updated mid-flight. Ignoring.");
-      return;
-    }
-    const newToken = resp.data.access_token;
-    useAuthStore.getState().setToken(newToken);
-    // Reschedule for the new token's expiry
-    scheduleProactiveRefresh(newToken);
-  } catch {
-    // If the token changed during the request, do NOT logout!
-    if (localStorage.getItem('access_token') !== tokenBeforeRefresh) {
-      console.warn("Silent refresh failed but token was updated mid-flight. Ignoring.");
-      return;
-    }
-    // Refresh cookie also expired — graceful logout
-    useAuthStore.getState().logout();
-    // Show brief message then redirect
-    toast.error('Sesi Anda telah berakhir. Silakan masuk kembali.');
-    setTimeout(() => { window.location.href = '/login'; }, 800);
-  }
-}
-
-// ─── Startup: check stored token immediately ────────────────────────
-const storedToken = localStorage.getItem('access_token');
-if (storedToken && storedToken !== 'undefined' && storedToken !== 'null') {
-  if (isTokenExpired(storedToken)) {
-    // Access token expired on load — try silent refresh immediately
-    doSilentRefresh();
-  } else {
-    // Token valid — schedule proactive refresh
-    scheduleProactiveRefresh(storedToken);
-  }
-}
+// ─── Startup ────────────────────────
+// No startup check needed; the first API call will trigger a 401 and refresh if expired.
 
 // ─── Request Interceptor ───────────────────────────────────────────
 axiosInstance.interceptors.request.use(

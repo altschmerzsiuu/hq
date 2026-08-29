@@ -5,6 +5,8 @@ import axiosInstance from '@/lib/axios';
 import { toast } from '@/store/toastStore';
 import { handleError } from '@/lib/errorHandler';
 import herdLogo from '@/assets/logo/herd.jpeg';
+import useSettingsStore from '@/store/settingsStore';
+import translations from '@/lib/i18n';
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -13,11 +15,12 @@ import herdLogo from '@/assets/logo/herd.jpeg';
 /**
  * Format tanggal ke bahasa Indonesia
  */
-const formatDate = (dateString) => {
+const formatDate = (dateString, lang = 'id') => {
   if (!dateString) return '-';
   const d = new Date(dateString);
   if (isNaN(d)) return dateString;
-  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  const locale = lang === 'en' ? 'en-GB' : 'id-ID';
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 };
 
 /**
@@ -58,9 +61,12 @@ function normalizeResponse(data) {
 // ─────────────────────────────────────────────
 
 export default function ScanModal({ isOpen, onClose, onResult }) {
+  const { lang, setLang } = useSettingsStore();
+  const [result,       setResult]       = useState(null);   // { hewan, reproduksi }
+  const t = translations[lang] || translations.id;
+
   const [rfid,         setRfid]         = useState('');
   const [loading,      setLoading]      = useState(false);
-  const [result,       setResult]       = useState(null);   // { hewan, reproduksi }
   const [notFound,     setNotFound]     = useState(false);  // RFID tidak terdaftar
   const [wsStatus,     setWsStatus]     = useState('disconnected'); // 'connected' | 'disconnected'
   const [nfcScanning,  setNfcScanning]  = useState(false);  // State untuk scanning NFC HP
@@ -381,7 +387,7 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} />
             
             <div style={{ position: 'absolute', top: '32px', background: 'rgba(255,255,255,0.95)', padding: '10px 24px', borderRadius: '100px', fontWeight: 700, color: '#111', fontSize: '14px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 20 }}>
-              Arahkan tag RFID ke kamera
+              {t.scan_instruction}
             </div>
 
             <div style={{ position: 'relative', width: '240px', height: '240px', zIndex: 20 }}>
@@ -398,14 +404,13 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent)', animation: 'pulse-ring 2s infinite' }} />
             <span style={{ color: 'var(--text-1)', fontSize: '14px', fontWeight: 700 }}>
-              {nfcScanning ? 'Membaca tag NFC...' : wsStatus === 'connected' ? 'Mencari Data Sapi...' : 'Menunggu koneksi scanner...'}
+              {nfcScanning ? t.scan_reading_nfc : wsStatus === 'connected' ? t.scan_searching_data : t.scan_waiting_connection}
             </span>
           </div>
           <p style={{ color: 'var(--text-2)', fontSize: '13px', textAlign: 'center', maxWidth: '250px' }}>
-            Pastikan tag RFID sapi berada di dalam kotak area scan.
+            {t.scan_helper_text}
           </p>
 
-          {/* DEV mockup buttons removed as requested */}
         </div>
       </div>
 
@@ -422,8 +427,8 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
                 <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
                   <Loader2 size={40} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
                 </div>
-                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>Menganalisa Data...</h3>
-                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Sinkronisasi dengan database HERD</p>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>{t.scan_analyzing}</h3>
+                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>{t.scan_syncing}</p>
               </motion.div>
             ) : hewan ? (
               <motion.div
@@ -458,12 +463,12 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
                     </h2>
                     
                     <p style={{ margin: '0 0 16px 0', fontSize: '15px', color: 'var(--text-2)', fontWeight: 600 }}>
-                      {hewan.id || hewan.rfid ? (hewan.id ?? hewan.rfid) : 'Belum ada RFID nih'}
+                      {hewan.id || hewan.rfid ? (hewan.id ?? hewan.rfid) : t.scan_no_rfid}
                     </p>
 
                     <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
                       <span style={{ fontSize: '13px', color: 'var(--text-2)', background: 'var(--bg-hover)', padding: '6px 14px', borderRadius: '100px', fontWeight: 700, border: '1px solid var(--border)' }}>
-                        {hewan.jenis ?? '-'}
+                        {hewan.jenis ?? '-'} - {hewan.kelamin === 'jantan' ? (lang === 'en' ? 'Male' : 'Jantan') : (lang === 'en' ? 'Female' : 'Betina')}
                       </span>
                     </div>
 
@@ -473,10 +478,10 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
                     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <HeartPulse size={14} /> Status Kesehatan
+                          <HeartPulse size={14} /> {t.scan_health_status}
                         </span>
                         <span style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {hewan.status_kesehatan === 'Sehat' ? <><CheckCircle2 size={14} color="var(--accent)"/> Sehat</> : (hewan.status_kesehatan ?? '-')}
+                          {(hewan.status_kesehatan === 'Sehat' || hewan.status_kesehatan === 'Healthy') ? <><CheckCircle2 size={14} color="var(--accent)"/> {t.scan_healthy}</> : (hewan.status_kesehatan ?? '-')}
                         </span>
                       </div>
 
@@ -485,50 +490,50 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
                           <div style={{ width: '100%', borderTop: '1px solid var(--border)', margin: '8px 0' }} />
                           <div style={{ width: '100%', background: 'var(--bg-surface)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border)' }}>
                             <p style={{ fontSize: '14px', color: 'var(--text-1)', fontWeight: 800, margin: '0 0 14px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                              <Activity size={16} color="var(--accent)" /> SIKLUS TERAKHIR
+                              <Activity size={16} color="var(--accent)" /> {t.scan_last_cycle}
                             </p>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px' }}>
                               {reproduksi.birahi && (
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>Tanggal Birahi</span>
-                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.birahi)}</span>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>{t.scan_estrus_date}</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.birahi, lang)}</span>
                                 </div>
                               )}
                               {reproduksi.tanggal_ib && (
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>Inseminasi {reproduksi.jumlah_ib ? `(Ke-${reproduksi.jumlah_ib})` : ''}</span>
-                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.tanggal_ib)}</span>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>{t.scan_insemination} {reproduksi.jumlah_ib ? `(${lang === 'en' ? '2nd' : 'Ke-2'})` : ''}</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.tanggal_ib, lang)}</span>
                                 </div>
                               )}
                               {reproduksi.pemberi_ib && (
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>Inseminator</span>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>{t.scan_inseminator}</span>
                                   <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{reproduksi.pemberi_ib}</span>
                                 </div>
                               )}
                               {reproduksi.bunting && (
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>Bunting</span>
-                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.bunting)}</span>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>{t.scan_pregnant}</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.bunting, lang)}</span>
                                 </div>
                               )}
                               {reproduksi.hpl && (
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                   <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                                    <Baby size={12} /> HPL
+                                    <Baby size={12} /> {t.scan_due_date}
                                   </span>
-                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 800 }}>{formatDate(reproduksi.hpl)}</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 800 }}>{formatDate(reproduksi.hpl, lang)}</span>
                                 </div>
                               )}
                               {reproduksi.sapih && (
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>Tanggal Sapih</span>
-                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.sapih)}</span>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500 }}>{t.scan_weaning_date}</span>
+                                  <span style={{ fontSize: '13px', color: 'var(--text-1)', fontWeight: 700 }}>{formatDate(reproduksi.sapih, lang)}</span>
                                 </div>
                               )}
                               {reproduksi.catatan && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gridColumn: '1 / -1', marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed var(--border)' }}>
-                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500, marginBottom: '2px' }}>Catatan</span>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-3)', fontWeight: 500, marginBottom: '2px' }}>{t.scan_notes}</span>
                                   <span style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.4 }}>{reproduksi.catatan}</span>
                                 </div>
                               )}
@@ -546,7 +551,7 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
                           border: 'none', borderRadius: '16px', fontWeight: 700, fontSize: '15px'
                         }}
                       >
-                        Scan Lagi
+                        {t.scan_again_btn}
                       </button>
                       <button
                         onClick={handleLanjutDetail}
@@ -556,7 +561,7 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
                           boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
                         }}
                       >
-                        Lihat Form
+                        {t.scan_view_form_btn}
                       </button>
                     </div>
                   </div>
@@ -578,9 +583,9 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
                   <div style={{ display: 'inline-flex', padding: '16px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', marginBottom: '16px' }}>
                     <AlertCircle size={32} color="var(--error, #ef4444)" />
                   </div>
-                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-1)', marginBottom: '8px' }}>Hewan Tidak Ditemukan</h3>
+                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-1)', marginBottom: '8px' }}>{t.scan_not_found_title}</h3>
                   <p style={{ fontSize: '14px', color: 'var(--text-2)', marginBottom: '24px', lineHeight: 1.5 }}>
-                    RFID <span style={{ background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>{rfid}</span> belum terdaftar di sistem.
+                    RFID <span style={{ background: 'var(--bg-hover)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>{rfid}</span> {t.scan_not_registered}
                   </p>
                   
                   <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', width: '100%' }}>
@@ -592,13 +597,13 @@ export default function ScanModal({ isOpen, onClose, onResult }) {
                         border: 'none', fontWeight: 700, fontSize: '15px', boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
                       }}
                     >
-                      <PlusCircle size={18} /> Daftarkan Hewan Baru
+                      <PlusCircle size={18} /> {t.scan_register_new_btn}
                     </button>
                     <button
                       onClick={() => { setNotFound(false); setRfid(''); setActiveTab('scan'); }}
                       style={{ padding: '16px', borderRadius: '16px', background: 'var(--bg-hover)', color: 'var(--text-1)', border: 'none', fontWeight: 700, fontSize: '15px' }}
                     >
-                      Scan Ulang
+                      {t.scan_retry_btn}
                     </button>
                   </div>
                 </div>

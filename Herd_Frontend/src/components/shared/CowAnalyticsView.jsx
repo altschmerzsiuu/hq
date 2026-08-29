@@ -96,11 +96,12 @@ export default function CowAnalyticsView({ selectedCow }) {
         // 2. Pie Chart Data (Dynamic from filtered telemetry)
         const counts = { EATING: 0, RUMINATING: 0, RESTING: 0, ESTRUS: 0, SICK: 0, UNKNOWN: 0 };
         filteredTelemetry.forEach(d => {
-          let state = d.activity_state || 'UNKNOWN';
+          let state = (d.activity_state || 'UNKNOWN').toUpperCase();
           
           // Map ML model labels to UI categories
-          if (state === 'ACTIVE_MOUNT' || state === 'WALKING') state = 'ESTRUS';
-          if (state === 'HEAD_NODDING') state = 'RUMINATING';
+          if (state === 'ACTIVE_MOUNT' || state === 'WALKING' || state === 'STANDING') state = 'ESTRUS';
+          if (state === 'HEAD_NODDING' || state === 'GRAZING') state = 'RUMINATING';
+          if (state === 'LYING' || state === 'SLEEPING') state = 'RESTING';
           
           if (counts[state] !== undefined) counts[state]++;
           else counts.UNKNOWN++;
@@ -127,10 +128,11 @@ export default function CowAnalyticsView({ selectedCow }) {
           const dStr = dt.toLocaleDateString('en-CA'); // YYYY-MM-DD
           if (!dailyStats[dStr]) dailyStats[dStr] = { day: dt.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' }), EATING: 0, RUMINATING: 0, RESTING: 0, ESTRUS: 0, SICK: 0, UNKNOWN: 0, total: 0 };
           
-          let st = d.activity_state || 'UNKNOWN';
+          let st = (d.activity_state || 'UNKNOWN').toUpperCase();
           // Map ML model labels to UI categories
-          if (st === 'ACTIVE_MOUNT' || st === 'WALKING') st = 'ESTRUS';
-          if (st === 'HEAD_NODDING') st = 'RUMINATING';
+          if (st === 'ACTIVE_MOUNT' || st === 'WALKING' || st === 'STANDING') st = 'ESTRUS';
+          if (st === 'HEAD_NODDING' || st === 'GRAZING') st = 'RUMINATING';
+          if (st === 'LYING' || st === 'SLEEPING') st = 'RESTING';
 
           if (dailyStats[dStr][st] !== undefined) dailyStats[dStr][st]++;
           else dailyStats[dStr].UNKNOWN++;

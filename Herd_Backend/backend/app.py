@@ -1787,11 +1787,11 @@ async def add_reproduction_record(data: dict, current_user: dict = Depends(get_c
             now = datetime.now(WITA).replace(tzinfo=None)
             await conn.execute("""
                 INSERT INTO reproduksi_ternak 
-                (rfid, tanggal_ib, pemberi_ib, catatan, jumlah_ib, hpl, results, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                (rfid, tanggal_ib, pemberi_ib, catatan, jumlah_ib, hpl, created_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
             """, 
             data['rfid'], service_date, data['technician'], data['notes'], 
-            next_service_no, None, None, now)
+            next_service_no, None, now)
 
             # Trigger cycle analysis update
             from prediction_engine import update_siklus_setelah_event
@@ -1854,15 +1854,15 @@ async def update_reproduction_record(record_id: int, data: dict, current_user: d
             jumlah_ib = int(data['jumlah_ib']) if data.get('jumlah_ib') is not None else None
             result = await conn.execute("""
                 UPDATE reproduksi_ternak 
-                SET rfid = $1, tanggal_ib = $2, pemberi_ib = $3, catatan = $4, results = $5, hpl = $6, jumlah_ib = COALESCE($9, jumlah_ib)
+                SET rfid = $1, tanggal_ib = $2, pemberi_ib = $3, catatan = $4, hpl = $5, bunting = $6, jumlah_ib = COALESCE($9, jumlah_ib)
                 WHERE id = $7 AND rfid IN (SELECT id FROM hewan WHERE owner_id = $8)
             """, 
             data['rfid'],      # $1
             service_date,      # $2
             data['technician'], # $3
             data['notes'],      # $4
-            results_bool,      # $5
-            hpl_final,         # $6
+            hpl_final,         # $5
+            service_date if results_bool else None, # $6 (bunting becomes service_date if true)
             record_id,         # $7
             owner_id,           # $8
             jumlah_ib          # $9

@@ -732,9 +732,10 @@ export default function ManajemenTernak() {
         <div className="hidden lg:flex flex-col gap-6 animate-in fade-in duration-300">
 
           {/* Floating Search & Filter Bar */}
-          <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '8px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid var(--border)' }} className="-mt-[28px] relative z-20 w-full max-w-4xl mx-auto flex flex-col">
-            <div className="flex gap-4 justify-between items-center">
-              <div className="relative flex-1 max-w-md">
+          <div className="px-4 w-full max-w-4xl mx-auto -mt-[28px] relative z-20">
+            <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '8px 20px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', border: '1px solid var(--border)' }} className="flex flex-col">
+              <div className="flex gap-4 justify-between items-center">
+                <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
@@ -759,6 +760,7 @@ export default function ManajemenTernak() {
                 </button>
               </div>
             </div>
+          </div>
           </div>
 
 
@@ -855,17 +857,17 @@ export default function ManajemenTernak() {
         </div>
 
         {/* ── MOBILE CONTENT ── */}
-        <div className="lg:hidden flex flex-col gap-4 mt-2 relative z-20 px-4">
+        <div className="lg:hidden flex flex-col gap-4 -mt-[28px] relative z-20 px-4">
           {/* Search and Filter Row (Standard) */}
           <div className="flex items-center gap-2 w-full">
-            <div style={{ flex: 1, position: 'relative', background: 'var(--bg-base)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <div style={{ flex: 1, height: '50px', display: 'flex', alignItems: 'center', position: 'relative', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.08)' }}>
+              <Search className="absolute left-4 text-gray-400" size={18} />
               <input
                 type="text"
                 placeholder={lang === 'id' ? "Cari / ketik 'sapi sakit'..." : "Search / type 'sick cow'..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ width: '100%', padding: '14px 16px 14px 44px', background: 'transparent', border: 'none', outline: 'none', fontSize: '15px', color: 'var(--text-1)', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}
+                style={{ width: '100%', height: '100%', padding: '0 16px 0 44px', background: 'transparent', border: 'none', outline: 'none', fontSize: '15px', color: 'var(--text-1)', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}
               />
             </div>
             {/* Filter button removed as requested */}
@@ -875,7 +877,7 @@ export default function ManajemenTernak() {
                 if (isSelectMode) setSelectedForDelete([]);
                 setIsSelectMode(!isSelectMode);
               }}
-              style={{ width: '50px', height: '50px', borderRadius: '16px', background: isSelectMode ? '#FF7B1C' : 'var(--bg-surface)', border: `1px solid ${isSelectMode ? '#FF7B1C' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isSelectMode ? '#fff' : 'var(--text-2)', boxShadow: isSelectMode ? '0 4px 12px rgba(255,123,28,0.35)' : '0 2px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s', position: 'relative', zIndex: 50 }}
+              style={{ width: '50px', height: '50px', flexShrink: 0, borderRadius: '12px', background: isSelectMode ? '#FF7B1C' : 'var(--bg-surface)', border: `1px solid ${isSelectMode ? '#FF7B1C' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isSelectMode ? '#fff' : 'var(--text-2)', boxShadow: isSelectMode ? '0 4px 12px rgba(255,123,28,0.35)' : '0 2px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s', position: 'relative', zIndex: 50 }}
             >
               <ClipboardList size={20} />
             </button>
@@ -1147,7 +1149,7 @@ export default function ManajemenTernak() {
           {(() => {
             const cow = sapiList.find(s => s.id === hoverInfo.cowId);
             if (!cow) return null;
-            const pred = tooltipData.predictions.find(p => String(p.cow_id) === String(cow.id) && p.prediksi_ib_optimal);
+            const pred = tooltipData.predictions.find(p => String(p.cow_id) === String(cow.id));
             const repro = tooltipData.reproductions.find(r => String(r.rfid) === String(cow.id));
             
             return (
@@ -1166,7 +1168,7 @@ export default function ManajemenTernak() {
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-gray-500 font-medium">Prediksi Birahi</span>
                     <span className="font-semibold text-[var(--color-primary)]">
-                      {pred ? new Date(pred.prediksi_ib_optimal).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' }) : '-'}
+                      {pred ? (pred.prediksi_ib_optimal ? new Date(pred.prediksi_ib_optimal).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' }) : `${Math.round((pred.confidence_final || pred.confidence_score || 0)*100)}%`) : '-'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
