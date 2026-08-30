@@ -269,6 +269,7 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
             </div>
           </form>
         </div>
-      </>
+      </div>
+    </>
   );
 }
