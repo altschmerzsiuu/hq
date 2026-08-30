@@ -39,7 +39,7 @@ const hitungUsia = (lahir, lang) => {
   }
 };
 
-export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onBack }) {
+export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onBack, initialRfid = '' }) {
   useBodyScrollLock(isOpen);
   const { lang } = useSettingsStore();
   const t = translations[lang];
@@ -61,6 +61,12 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
       setCowImagePreview(URL.createObjectURL(file));
     }
   };
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setTambahForm(f => ({ ...f, rfid: initialRfid }));
+    }
+  }, [isOpen, initialRfid]);
 
   if (!isOpen) return null;
 
@@ -241,35 +247,15 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
 
             {/* 5. Scan RFID (CTA Block) */}
             <div className="pt-2">
-              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">RFID UID</label>
-              {tambahForm.rfid ? (
-                <div className="relative flex items-center w-full h-[52px] bg-[var(--bg-card)] border-[0.5px] border-[var(--border)] rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[var(--accent)]">
-                  <div className="flex-1 px-4 text-[var(--text-1)] font-medium truncate">
-                    {tambahForm.rfid}
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={() => setScanOpen(true)} 
-                    className="h-full px-4 flex items-center justify-center bg-[var(--bg-surface)] border-l border-[var(--border)] hover:bg-[var(--border)] transition-colors text-[var(--color-primary)] font-bold text-sm gap-2"
-                  >
-                    <ScanLine size={16} />
-                    <span>Ulangi</span>
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  type="button" 
-                  onClick={() => setScanOpen(true)} 
-                  className="w-full flex items-center justify-center gap-2 h-[60px] text-white font-bold rounded-xl transition-all duration-300 hover:scale-[1.02]"
-                  style={{
-                    background: 'linear-gradient(135deg, var(--color-primary) 0%, #10b981 100%)',
-                    boxShadow: '0 8px 20px -6px rgba(16, 185, 129, 0.5)',
-                  }}
-                >
-                  <ScanLine size={24} className="animate-pulse" />
-                  <span style={{ letterSpacing: '0.03em', fontSize: '15px' }}>{t.qa_scan_rfid || 'Scan RFID Kalung'}</span>
-                </button>
-              )}
+              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">RFID UID <span className="text-gray-400 font-normal text-xs ml-1">({lang === 'id' ? 'Opsional' : 'Optional'})</span></label>
+              <input
+                type="text"
+                placeholder={lang === 'id' ? 'Ketik UID RFID (Opsional)...' : 'Type RFID UID (Optional)...'}
+                className="w-full h-[52px] px-4 text-[var(--text-1)] bg-[var(--bg-card)] border-[0.5px] border-[var(--border)] rounded-xl outline-none font-medium placeholder-gray-400 focus:ring-2 focus:ring-[var(--accent)]"
+                value={tambahForm.rfid}
+                onChange={e => setTambahForm({...tambahForm, rfid: e.target.value})}
+              />
+              <p className="text-xs text-gray-500 mt-2">{lang === 'id' ? 'Kosongkan jika ingin sistem membuat ID acak (HRD-XXXX).' : 'Leave empty to auto-generate random ID (HRD-XXXX).'}</p>
             </div>
 
             {/* Bottom Actions */}
@@ -283,18 +269,6 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
             </div>
           </form>
         </div>
-      </div>
-
-      <ScanModal
-        isOpen={scanOpen}
-        onClose={() => setScanOpen(false)}
-        onResult={(data) => {
-          const scannedRfid = data.id || data.rfid || '';
-          setTambahForm(f => ({ ...f, rfid: scannedRfid }));
-          setScanOpen(false);
-          toast.success((lang === 'id' ? 'RFID ditemukan: ' : 'RFID found: ') + scannedRfid);
-        }}
-      />
-    </>
+      </>
   );
 }

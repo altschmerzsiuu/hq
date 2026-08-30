@@ -144,6 +144,7 @@ export default function ManajemenTernak() {
   const [isTambahModalOpen, setIsTambahModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
+  const [registerUid, setRegisterUid] = useState(''); // Store scanned UID for registration
 
   // Hover Tooltip Data
   const [tooltipData, setTooltipData] = useState({ predictions: [], reproductions: [] });
@@ -220,10 +221,7 @@ export default function ManajemenTernak() {
   // Handle redirect from scan bottom sheet
   useEffect(() => {
     if (location.state?.registerUid) {
-      // The state injection is now slightly complicated because AddCowModal manages its own form state.
-      // But we just open it. The AddCowModal handles its own form. 
-      // If we need to pass initial rfid, we could pass it as a prop.
-      // For now we just open it.
+      setRegisterUid(location.state.registerUid);
       setIsTambahModalOpen(true);
       navigate(location.pathname, { replace: true, state: {} });
     } else if (location.state?.selectedCowId) {
@@ -988,7 +986,11 @@ export default function ManajemenTernak() {
         {/* ────────────────────────────────────────────────────────────── */}
         <AddCowModal
           isOpen={isTambahModalOpen}
-          onClose={() => setIsTambahModalOpen(false)}
+          initialRfid={registerUid}
+          onClose={() => {
+            setIsTambahModalOpen(false);
+            setRegisterUid('');
+          }}
         />
 
         {/* ────────────────────────────────────────────────────────────── */}
