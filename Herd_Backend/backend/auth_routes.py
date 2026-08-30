@@ -45,6 +45,7 @@ class LoginResponse(BaseModel):
     message: str
     user: dict
     access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
 
 class PINSetRequest(BaseModel):
     pin: str
@@ -193,6 +194,7 @@ async def register(user_data: UserRegister, response: Response, pool=Depends(get
         return {
             "message": "success",
             "access_token": access_token,
+            "refresh_token": refresh_token_str,
             "user": user_dict
         }
 
@@ -378,7 +380,8 @@ async def refresh_access_token(request_data: RefreshTokenRequest, request: Reque
         
         return {
             "message": "success",
-            "access_token": access_token
+            "access_token": access_token,
+            "refresh_token": new_refresh_token_str
         }
 
 @router.post("/logout")

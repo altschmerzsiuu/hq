@@ -111,9 +111,10 @@ axiosInstance.interceptors.response.use(
       const tokenBeforeInterceptor = localStorage.getItem('access_token');
 
       try {
+        const refreshTokenStr = localStorage.getItem('refresh_token');
         const refreshResponse = await axios.post(
           `${getBaseUrl()}/auth/refresh`,
-          {},
+          { refresh_token: refreshTokenStr },
           { withCredentials: true }
         )
 
@@ -125,7 +126,8 @@ axiosInstance.interceptors.response.use(
         }
 
         const newToken = refreshResponse.data.access_token
-        useAuthStore.getState().setToken(newToken)
+        const newRefreshToken = refreshResponse.data.refresh_token
+        useAuthStore.getState().setToken(newToken, null, newRefreshToken)
         axiosInstance.defaults.headers.common.Authorization = `Bearer ${newToken}`
         originalRequest.headers.Authorization = `Bearer ${newToken}`
 

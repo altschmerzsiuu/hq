@@ -73,11 +73,13 @@ export const useAuthStore = create((set) => ({
   deviceNotTrusted: false,
   pinSetupComplete: false,
 
-  setToken: (newToken, userObj = null) => {
+  setToken: (newToken, userObj = null, refreshToken = null) => {
     if (newToken) {
       localStorage.setItem('access_token', newToken);
+      if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
     } else {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
     }
     const decodedUser = newToken ? parseJwt(newToken) : null;
     const finalUser = (decodedUser && userObj) ? { ...decodedUser, ...userObj } : decodedUser;
@@ -89,6 +91,7 @@ export const useAuthStore = create((set) => ({
     // calling logout() and clearing the new token during a fresh login
     cancelProactiveRefresh();
     localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('session_expiry');
     sessionStorage.removeItem('session_expiry');
     set({ token: null, user: null, isAuthenticated: false, isLoading: true, error: null });
@@ -102,11 +105,12 @@ export const useAuthStore = create((set) => ({
         device_label: device_label
       });
 
-      const { access_token, user } = response.data;
+      const { access_token, refresh_token, user } = response.data;
       const decodedUser = parseJwt(access_token);
       const mergedUser = user ? { ...decodedUser, ...user } : decodedUser;
       
       localStorage.setItem('access_token', access_token);
+      if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
 
       // Start proactive refresh timer so token never expires mid-session
       scheduleProactiveRefresh(access_token);
@@ -139,11 +143,12 @@ export const useAuthStore = create((set) => ({
         pin
       });
 
-      const { access_token, user } = response.data;
+      const { access_token, refresh_token, user } = response.data;
       const decodedUser = parseJwt(access_token);
       const mergedUser = user ? { ...decodedUser, ...user } : decodedUser;
       
       localStorage.setItem('access_token', access_token);
+      if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
       scheduleProactiveRefresh(access_token);
 
       set({ 
@@ -197,9 +202,10 @@ export const useAuthStore = create((set) => ({
 
   logout: () => {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
 
     // Call backend logout asynchronously to clear HttpOnly cookies
-    axiosInstance.post('/auth/logout', {}).catch((err) => {
+    axiosInstance.post('/auth/logout', { refresh_token: localStorage.getItem('refresh_token') }).catch((err) => {
       console.warn('Backend logout failed or was offline', err);
     });
 

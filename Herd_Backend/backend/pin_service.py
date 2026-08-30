@@ -151,6 +151,7 @@ class PINService:
             return {
                 "message": "success",
                 "access_token": access_token,
+                "refresh_token": refresh_token_str,
                 "user": {
                     "id": user['id'],
                     "email": user['email'],
