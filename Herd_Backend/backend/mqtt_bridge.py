@@ -183,15 +183,16 @@ def verify_device(collar_id, device_secret=None, auth_signature=None, raw_payloa
             print(f"❌ [SECURITY] HMAC verification failed for {collar_id}")
             return False, "INVALID_SIGNATURE", None
 
-    # Case 2: Legacy Bcrypt Verification (Backup)
+    # Case 2: Plain Secret Verification (Simplified)
     elif device_secret:
-        pwd_bytes = device_secret.strip().encode('utf-8')
-        hash_bytes = secret_hash.strip().encode('utf-8')
-
-        if bcrypt.checkpw(pwd_bytes, hash_bytes):
+        if not plain_secret:
+            print(f"❌ [AUTH ERROR] Plain device_secret not found in DB for {collar_id}")
+            return False, "MISSING_PLAIN_SECRET", None
+            
+        if device_secret.strip() == plain_secret.strip():
             return True, "OK", kandang_id
         else:
-            print(f"❌ [SECURITY] Bcrypt validation failed for {collar_id}")
+            print(f"❌ [SECURITY] Plain secret validation failed for {collar_id}")
             return False, "INVALID_SECRET", None
     
     return False, "MISSING_CREDENTIALS", None
