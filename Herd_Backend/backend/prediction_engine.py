@@ -463,10 +463,13 @@ async def predict_estrus(
         last_event_date = await conn.fetchval("""
             SELECT COALESCE(birahi, tanggal_ib) 
             FROM reproduksi_ternak 
-            WHERE rfid = $1 
+            WHERE UPPER(rfid) = UPPER($1) 
             ORDER BY COALESCE(birahi, tanggal_ib) DESC LIMIT 1
         """, rfid)
         if last_event_date:
+            if hasattr(last_event_date, "date") and callable(last_event_date.date):
+                last_event_date = last_event_date.date()
+                
             siklus = {
                 "last_birahi_date": last_event_date,
                 "rata_siklus_hari": 21.0,
@@ -527,8 +530,11 @@ async def predict_estrus(
                 l_date = l_date.date() # type: ignore
             days_since = (today - l_date).days # type: ignore
             
-        cycle_avg  = float(siklus.get("rata_siklus_hari", 21.0)) if siklus else 21.0
-        parity     = int(siklus.get("jumlah_siklus_valid", 0)) if siklus else 0
+        cycle_avg_val = siklus.get("rata_siklus_hari") if siklus else 21.0
+        cycle_avg = float(cycle_avg_val) if isinstance(cycle_avg_val, (int, float, str)) else 21.0
+        
+        parity_val = siklus.get("jumlah_siklus_valid") if siklus else 0
+        parity = int(parity_val) if isinstance(parity_val, (int, float, str)) else 0
 
         result_l2 = layer2_sensor(
             sensor_window, days_since, cycle_avg, parity, today
