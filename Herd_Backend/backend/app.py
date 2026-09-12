@@ -957,10 +957,10 @@ def on_mqtt_message(client, userdata, message):
 def setup_mqtt():
     global mqtt_client
     mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
-    mqtt_client.on_connect = on_mqtt_connect
-    mqtt_client.on_message = on_mqtt_message
-    mqtt_client.connect(MQTT_BROKER_URL, MQTT_BROKER_PORT, 60)
-    mqtt_client.loop_forever()
+    mqtt_client.on_connect = on_mqtt_connect  # type: ignore
+    mqtt_client.on_message = on_mqtt_message  # type: ignore
+    mqtt_client.connect(MQTT_BROKER_URL, MQTT_BROKER_PORT, 60)  # type: ignore
+    mqtt_client.loop_forever()  # type: ignore
 
 # ==========================
 # FASTAPI LIFECYCLE EVENTS
@@ -1181,7 +1181,30 @@ async def downsample_sensor_data():
         print(f"❌ [DOWNSAMPLE ERROR] {e}")
 
 
+
+async def _run_estrus_predictions_all_job():
+    print("⏰ [SCHEDULER] Running automated estrus predictions for all cattle...")
+    try:
+        from prediction_engine import predict_estrus
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            cattle = await conn.fetch("SELECT id, nama, owner_id FROM hewan")
+            count = 0
+            for cow in cattle:
+                rfid = cow["id"]
+                owner_id = cow["owner_id"]
+                if owner_id:
+                    try:
+                        await predict_estrus(conn, rfid, owner_id)
+                        count += 1
+                    except Exception as e:
+                        print(f"❌ [ESTRUS PREDICT CRON] Error cow {rfid}: {e}")
+            print(f"✅ [SCHEDULER] Automated estrus predictions completed for {count} cattle.")
+    except Exception as e:
+        print(f"❌ [ESTRUS PREDICT CRON ERROR] {e}")
+
 @asynccontextmanager
+
 async def lifespan(app: FastAPI):
     # Startup logic
     global main_loop
@@ -1244,7 +1267,15 @@ async def lifespan(app: FastAPI):
         hour=2, minute=0,     # 02:00 WITA every night
         id="downsample_sensor"
     )
+    scheduler.add_job(
+        _run_estrus_predictions_all_job,
+        trigger="interval",
+        minutes=30,           # Runs every 30 minutes
+        id="estrus_prediction_all"
+    )
     scheduler.start()
+    print("⏰ [SCHEDULER] Automated Estrus Prediction job registered (every 30 mins)")
+
     print("⏰ [SCHEDULER] Daily summary job registered (07:00 WITA)")
     print("🗜️  [SCHEDULER] Downsampling job registered (02:00 WITA)")
 
@@ -1813,105 +1844,83 @@ async def add_reproduction_record(data: dict, current_user: dict = Depends(get_c
 @app.put("/api/reproduction/{record_id}")
 async def update_reproduction_record(record_id: int, data: dict, current_user: dict = Depends(get_current_user)):
     pool = await get_db_pool()
-    # USE EFFECTIVE OWNER ID (Parent ID if worker)
     owner_id = get_effective_owner_id(current_user)
 
     async with pool.acquire() as conn:
         try:
-            # 1. Parse service_date (Make naive for DB)
-            try:
-                raw_sd = data.get('service_date', '')
-                if 'T' in raw_sd:
-                    # ISO format (might have TZ)
-                    service_date = datetime.fromisoformat(raw_sd.replace('Z', '+00:00'))
-                else:
-                    service_date = datetime.strptime(raw_sd[:10], '%Y-%m-%d')
-                
-                if service_date.tzinfo:
-                    print(f"📡 [DEBUG] Strip TZ from service_date: {service_date.tzinfo}")
-                    service_date = service_date.replace(tzinfo=None)
-            except Exception as pe:
-                print(f"📡 [DEBUG ERROR] Update Date Parse: {pe} | Input: {data.get('service_date')}")
-                service_date = datetime.now(WITA).replace(tzinfo=None)
+            # 1. Fetch existing record to allow partial updates
+            existing = await conn.fetchrow("""
+                SELECT r.* FROM reproduksi_ternak r
+                JOIN hewan h ON r.rfid = h.id
+                WHERE r.id = $1 AND h.owner_id = $2
+            """, record_id, owner_id)
             
-            status_input = str(data.get('is_pregnant', 'pending')).lower()
+            if not existing:
+                raise HTTPException(status_code=404, detail="Data IB tidak ditemukan atau bukan milik farm Anda.")
 
-            # 2. KONVERSI PENTING: String 'true' dari JS harus jadi Boolean True di Python
-            results_bool = None
-            hpl_final = None
+            # 2. Extract data or fallback to existing values
+            rfid = data.get('rfid', existing['rfid'])
+            pemberi_ib = data.get('technician', existing['pemberi_ib'])
+            
+            # Use 'catatan' or fallback to 'notes', else existing
+            catatan = data.get('catatan', data.get('notes', existing['catatan']))
+            
+            jumlah_ib_str = data.get('jumlah_ib')
+            jumlah_ib = int(jumlah_ib_str) if jumlah_ib_str is not None else existing['jumlah_ib']
 
-            if status_input == "true":
+            # Parse service_date if provided, else use existing
+            raw_sd = data.get('service_date')
+            if raw_sd:
+                try:
+                    if 'T' in raw_sd:
+                        from datetime import datetime, timedelta
+                        service_date = datetime.fromisoformat(raw_sd.replace('Z', '+00:00')).replace(tzinfo=None)
+                    else:
+                        from datetime import datetime, timedelta
+                        service_date = datetime.strptime(raw_sd[:10], '%Y-%m-%d')
+                except Exception:
+                    service_date = existing['tanggal_ib']
+            else:
+                service_date = existing['tanggal_ib']
+
+            # Parse results (is_pregnant or results)
+            status_input = str(data.get('is_pregnant', data.get('results', 'pending'))).lower()
+            from datetime import timedelta
+            if status_input in ["true", "bunting"]:
                 results_bool = True
-                hpl_final = service_date + timedelta(days=283)
-            elif status_input == "false" or status_input == "failed":
+                hpl_final = (service_date + timedelta(days=283)) if service_date else None
+            elif status_input in ["false", "failed", "gagal"]:
                 results_bool = False
                 hpl_final = None
             else:
-                results_bool = None
-                hpl_final = None
+                # If not explicitly updated, keep existing
+                results_bool = bool(existing['bunting']) if existing['bunting'] else None
+                hpl_final = existing['hpl']
 
-            # 3. FIX QUERY: Bandingkan rfid dengan cow_id (sesama String)
-            jumlah_ib = int(data['jumlah_ib']) if data.get('jumlah_ib') is not None else None
-            result = await conn.execute("""
+            bunting_val = service_date if results_bool else None
+
+            # 3. Perform update
+            await conn.execute("""
                 UPDATE reproduksi_ternak 
-                SET rfid = $1, tanggal_ib = $2, pemberi_ib = $3, catatan = $4, hpl = $5, bunting = $6, jumlah_ib = COALESCE($9, jumlah_ib)
-                WHERE id = $7 AND rfid IN (SELECT id FROM hewan WHERE owner_id = $8)
+                SET rfid = $1, tanggal_ib = $2, pemberi_ib = $3, catatan = $4, hpl = $5, bunting = $6, jumlah_ib = $7
+                WHERE id = $8
             """, 
-            data['rfid'],      # $1
-            service_date,      # $2
-            data['technician'], # $3
-            data['notes'],      # $4
-            hpl_final,         # $5
-            service_date if results_bool else None, # $6 (bunting becomes service_date if true)
-            record_id,         # $7
-            owner_id,           # $8
-            jumlah_ib          # $9
+            rfid,               # $1
+            service_date,       # $2
+            pemberi_ib,         # $3
+            catatan,            # $4
+            hpl_final,          # $5
+            bunting_val,        # $6
+            jumlah_ib,          # $7
+            record_id           # $8
             )
             
-            if result == "UPDATE 0":
-                raise HTTPException(status_code=404, detail="Data tidak ditemukan")
-            
-            # 4. Add notification for result update (if confirmed)
-            if results_bool is not None:
-                now_naive = datetime.now(WITA).replace(tzinfo=None)
-                msg = f"Hasil IB sapi {data['rfid']} dikonfirmasi: " + ("Bunting 🐮✅" if results_bool else "Gagal (Kembali Birahi) 🐮❌")
-                
-                print(f"📡 [DEBUG] Inserting notification for {data['rfid']} at {now_naive}")
-                await conn.execute("""
-                    INSERT INTO notifications (cow_id, type, message, severity, timestamp)
-                    VALUES ($1, 'pregnancy', $2, 'INFO', $3)
-                """, data['rfid'], msg, now_naive)
-                
-                if results_bool is True and hpl_final:
-                    user_email = await conn.fetchval(
-                        "SELECT email FROM users WHERE id = $1", int(current_user['id'])
-                    )
-                    if user_email:
-                        cow_name_row = await conn.fetchval(
-                            "SELECT nama FROM hewan WHERE id = $1", data['rfid']
-                        )
-                        await asyncio.to_thread(
-                            send_birth_reminder_email,
-                            to         = user_email,
-                            cow_name   = cow_name_row or data['rfid'],
-                            collar_id  = data['rfid'],
-                            hpl        = hpl_final,
-                        )
-                        print(f"[BIRTH REMINDER] .ics sent to {user_email}")
-                
-            # Trigger cycle analysis update
-            from prediction_engine import update_siklus_setelah_event
-            event_type = "bunting" if results_bool is True else "birahi" if results_bool is False else "ib"
-            await update_siklus_setelah_event(
-                conn, data['rfid'], owner_id, event_type, service_date.date() if isinstance(service_date, datetime) else service_date
-            )
-
             return {"status": "success", "message": "Record updated"}
-
+        except HTTPException:
+            raise
         except Exception as e:
-            # PESAN INI PENTING: Cek terminal Docker kamu kalau masih error!
-            print(f"DATABASE ERROR: {str(e)}") 
-            raise HTTPException(status_code=500, detail=f"DB Error: {str(e)}")
+            print(f"ERROR UPDATE: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/reproduction/{record_id}")
 async def delete_reproduction_record(record_id: int, current_user: dict = Depends(get_current_user)):

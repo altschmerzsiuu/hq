@@ -68,18 +68,94 @@ export const useAuthStore = create((set) => ({
   user: initialUser,
   token: token,
   isAuthenticated: !!token,
+  isInitializing: true, // Indicates boot/initialization state
   isLoading: false,
+  isOffline: false,
   error: null,
   deviceNotTrusted: false,
   pinSetupComplete: false,
 
-  setToken: (newToken, userObj = null, refreshToken = null) => {
+  initializeAuth: async () => {
+    const currentToken = localStorage.getItem('access_token');
+    // We NO LONGER check localStorage for refresh_token. It's stored in HttpOnly cookie.
+
+    if (!currentToken) {
+      // No access token, but there might be a valid refresh cookie.
+      // Attempt silent refresh
+      try {
+        const response = await axiosInstance.post('/auth/refresh');
+        const { access_token } = response.data;
+        localStorage.setItem('access_token', access_token);
+        const decodedUser = parseJwt(access_token);
+        set({ token: access_token, user: decodedUser, isAuthenticated: true, isInitializing: false });
+      } catch (err) {
+        // If 401, session is truly invalid
+        if (err.response?.status === 401) {
+          set({ isInitializing: false, isAuthenticated: false, token: null, user: null });
+        } else {
+          // Network error or other temporary issue. 
+          // Preserve the persistent session/token state without treating it as revoked.
+          console.warn("Network error during boot silent refresh.");
+          set({ isInitializing: false, isOffline: true });
+        }
+      }
+      return;
+    }
+
+    // Attempt to parse the access token to check expiry
+    let expired = false;
+    if (currentToken) {
+      try {
+        const payload = JSON.parse(atob(currentToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (payload.exp && Date.now() >= payload.exp * 1000) {
+          expired = true;
+        }
+      } catch (e) {
+        expired = true;
+      }
+    } else {
+      expired = true;
+    }
+
+    // If access token is expired, attempt a silent refresh immediately on boot
+    if (expired) {
+      try {
+        const response = await axiosInstance.post('/auth/refresh');
+        const { access_token } = response.data;
+        localStorage.setItem('access_token', access_token);
+
+        const decodedUser = parseJwt(access_token);
+        set({
+          token: access_token,
+          user: decodedUser,
+          isAuthenticated: true,
+          isInitializing: false
+        });
+        return;
+      } catch (err) {
+        if (err.response?.status === 401) {
+          // Silent refresh failed (session invalid)
+          localStorage.removeItem('access_token');
+          set({ isInitializing: false, isAuthenticated: false, token: null, user: null });
+        } else {
+          // Network error. Do NOT set isAuthenticated: true because the token is expired.
+          // Do NOT set isAuthenticated: false because it would force a login.
+          console.warn("Network error during boot silent refresh.");
+          set({ isInitializing: false, isOffline: true });
+        }
+        return;
+      }
+    }
+
+    // Otherwise, we have a valid unexpired access token.
+    set({ isInitializing: false, isAuthenticated: true });
+  },
+
+  setToken: (newToken, userObj = null) => {
     if (newToken) {
       localStorage.setItem('access_token', newToken);
-      if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
     } else {
       localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
     }
     const decodedUser = newToken ? parseJwt(newToken) : null;
     const finalUser = (decodedUser && userObj) ? { ...decodedUser, ...userObj } : decodedUser;
@@ -91,7 +167,6 @@ export const useAuthStore = create((set) => ({
     // calling logout() and clearing the new token during a fresh login
     cancelProactiveRefresh();
     localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
     localStorage.removeItem('session_expiry');
     sessionStorage.removeItem('session_expiry');
     set({ token: null, user: null, isAuthenticated: false, isLoading: true, error: null });
@@ -105,12 +180,11 @@ export const useAuthStore = create((set) => ({
         device_label: device_label
       });
 
-      const { access_token, refresh_token, user } = response.data;
+      const { access_token, user } = response.data;
       const decodedUser = parseJwt(access_token);
       const mergedUser = user ? { ...decodedUser, ...user } : decodedUser;
       
       localStorage.setItem('access_token', access_token);
-      if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
 
       // Start proactive refresh timer so token never expires mid-session
       scheduleProactiveRefresh(access_token);
@@ -143,12 +217,11 @@ export const useAuthStore = create((set) => ({
         pin
       });
 
-      const { access_token, refresh_token, user } = response.data;
+      const { access_token, user } = response.data;
       const decodedUser = parseJwt(access_token);
       const mergedUser = user ? { ...decodedUser, ...user } : decodedUser;
       
       localStorage.setItem('access_token', access_token);
-      if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
       scheduleProactiveRefresh(access_token);
 
       set({ 
@@ -202,10 +275,9 @@ export const useAuthStore = create((set) => ({
 
   logout: () => {
     localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
 
     // Call backend logout asynchronously to clear HttpOnly cookies
-    axiosInstance.post('/auth/logout', { refresh_token: localStorage.getItem('refresh_token') }).catch((err) => {
+    axiosInstance.post('/auth/logout').catch((err) => {
       console.warn('Backend logout failed or was offline', err);
     });
 

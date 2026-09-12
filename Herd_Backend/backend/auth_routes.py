@@ -35,17 +35,11 @@ class UserLogin(BaseModel):
 class GoogleAuthRequest(BaseModel):
     token: str
 
-class RefreshTokenRequest(BaseModel):
-    refresh_token: Optional[str] = None
-
-class LogoutRequest(BaseModel):
-    refresh_token: Optional[str] = None
 
 class LoginResponse(BaseModel):
     message: str
     user: dict
     access_token: Optional[str] = None
-    refresh_token: Optional[str] = None
 
 class PINSetRequest(BaseModel):
     pin: str
@@ -133,16 +127,19 @@ async def get_current_user(request: Request, authorization: Optional[str] = Head
             raise HTTPException(status_code=401, detail="User not found")
         return dict(user)
 
+import os
+
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
     """Utility to set HttpOnly cookies"""
     # 15 minutes for access token (matches auth_utils)
+    is_prod = os.getenv("ENVIRONMENT") == "production"
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         samesite="lax",
-        secure=False, # Set to True in production with HTTPS
+        secure=is_prod,
         path="/",
     )
     # 7 days for refresh token
@@ -152,7 +149,7 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
         httponly=True,
         max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
         samesite="lax",
-        secure=False,
+        secure=is_prod,
         path="/",
     )
 
@@ -194,7 +191,6 @@ async def register(user_data: UserRegister, response: Response, pool=Depends(get
         return {
             "message": "success",
             "access_token": access_token,
-            "refresh_token": refresh_token_str,
             "user": user_dict
         }
 
@@ -333,12 +329,13 @@ async def google_auth(request_data: GoogleAuthRequest, response: Response, pool=
         }
 
 @router.post("/refresh")
-async def refresh_access_token(request_data: RefreshTokenRequest, request: Request, response: Response, pool=Depends(get_db_pool_dependency)):
-    """Refresh access token using refresh token (from body or cookie)"""
-    refresh_token = request_data.refresh_token or request.cookies.get("refresh_token_cookie")
+async def refresh_access_token(request: Request, response: Response, pool=Depends(get_db_pool_dependency)):
+    """Refresh the access token using the HttpOnly refresh token cookie"""
+    
+    refresh_token = request.cookies.get("refresh_token_cookie")
     
     if not refresh_token:
-        raise HTTPException(status_code=401, detail="No refresh token provided")
+        raise HTTPException(status_code=401, detail="Refresh session missing or invalid")
         
     payload = verify_token(refresh_token, "refresh")
     if not payload:
@@ -380,19 +377,20 @@ async def refresh_access_token(request_data: RefreshTokenRequest, request: Reque
         
         return {
             "message": "success",
-            "access_token": access_token,
-            "refresh_token": new_refresh_token_str
+            "access_token": access_token
         }
 
 @router.post("/logout")
-async def logout(request_data: LogoutRequest, request: Request, response: Response, pool=Depends(get_db_pool_dependency)):
-    """Logout and invalidate refresh token + clear cookies"""
-    refresh_token = request_data.refresh_token or request.cookies.get("refresh_token_cookie")
+async def logout(request: Request, response: Response, pool=Depends(get_db_pool_dependency)):
+    """Logout the user and invalidate the refresh token."""
+    
+    refresh_token = request.cookies.get("refresh_token_cookie")
     
     if refresh_token:
         async with pool.acquire() as conn:
             await conn.execute("DELETE FROM refresh_tokens WHERE token = $1", refresh_token)
     
+    # We proceed with clearing the cookie even if the token isn't in DB/Request
     response.delete_cookie("access_token", path="/")
     response.delete_cookie("refresh_token_cookie", path="/")
     

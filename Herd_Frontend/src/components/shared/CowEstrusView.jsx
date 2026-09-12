@@ -216,34 +216,6 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
             {lang === 'id' ? 'Jalankan AI untuk menganalisis siklus birahi sapi ini berdasarkan data historis dan sensor.' : 'Run AI to analyze this cow\'s estrus cycle based on historical and sensor data.'}
           </p>
           
-          {/* Slide to Predict Component */}
-          <div className="relative w-64 h-14 bg-gray-100 rounded-full overflow-hidden shadow-inner flex items-center justify-center border border-gray-200">
-            {isPredicting ? (
-              <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                {lang === 'id' ? 'Memproses AI...' : 'Processing AI...'}
-              </div>
-            ) : (
-              <>
-                <span className="text-gray-400 font-bold text-sm pl-12 pointer-events-none select-none">
-                  {lang === 'id' ? 'Geser untuk Prediksi' : 'Slide to Predict'}
-                </span>
-                <motion.div
-                  drag="x"
-                  dragConstraints={{ left: 0, right: 200 }}
-                  dragElastic={0.1}
-                  onDragEnd={(e, info) => {
-                    if (info.offset.x > 150) {
-                      handleRunPredict();
-                    }
-                  }}
-                  className="absolute left-1 top-1 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-md cursor-grab active:cursor-grabbing z-10"
-                >
-                  <Wand2 className="w-5 h-5" />
-                </motion.div>
-              </>
-            )}
-          </div>
         </div>
 
       ) : (

@@ -10,7 +10,7 @@ import splashScreenImg from './assets/onboarding/cow_featuree.png';
 import { setupForegroundMessaging } from './firebase-config';
 
 function App() {
-  const { isAuthenticated, logout } = useAuthStore();
+  const { isInitializing, initializeAuth } = useAuthStore();
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
@@ -19,6 +19,11 @@ function App() {
     // Clear any legacy session_expiry keys to avoid interference
     localStorage.removeItem('session_expiry');
     sessionStorage.removeItem('session_expiry');
+    
+    initializeAuth();
+  }, [initializeAuth]);
+
+  useEffect(() => {
 
     // Check if splash has been shown in this session
     const hasSeenSplash = sessionStorage.getItem('herd_splash_shown');
@@ -28,13 +33,17 @@ function App() {
       return;
     }
 
-    // Simulate loading time for splash screen
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-      sessionStorage.setItem('herd_splash_shown', 'true');
-    }, 2500); // 2.5 seconds splash screen
-    
-    // Set initial splash screen theme color
+    if (!isInitializing) {
+      // Simulate min loading time for splash screen for smoothness
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+        sessionStorage.setItem('herd_splash_shown', 'true');
+      }, 1000); 
+      return () => clearTimeout(timer);
+    }
+  }, [isInitializing]);
+
+  useEffect(() => {
     if (showSplash) {
       let metaThemeColor = document.querySelector('meta[name="theme-color"]');
       if (!metaThemeColor) {
@@ -102,7 +111,7 @@ function App() {
         )}
       </AnimatePresence>
 
-      <RouterProvider router={router} />
+      {!isInitializing && <RouterProvider router={router} />}
       <Toaster />
       <ConfirmDialog />
     </>

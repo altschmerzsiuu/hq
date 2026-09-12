@@ -94,9 +94,6 @@ export default function Login() {
   const [tempUserId, setTempUserId] = useState(null);
 
   useLayoutEffect(() => {
-    // Check if returning user
-    const savedUserId = localStorage.getItem('herd_user_id');
-
     // If they are already authenticated without a PIN check required
     if (isAuthenticated) {
       navigate('/dashboard', { replace: true });
@@ -115,23 +112,18 @@ export default function Login() {
       }
     };
 
-    if (savedUserId && localStorage.getItem('herd_has_pin') === 'true') {
-      // Returning user, normally show PIN login, but user requested to remove forced re-logins.
-      // Now, if they somehow get logged out, we just show the normal auth screen.
+    if (window.innerWidth >= 1024) {
       setStep('auth');
       setIsLoginMode(true);
     } else {
-      // New user flow - Skip feature step if on desktop
-      if (window.innerWidth >= 1024) {
-        setStep('auth');
-        setIsLoginMode(true);
-      } else {
-        setStep('feature');
-      }
+      setStep('feature');
     }
 
     window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isAuthenticated, navigate]);
 
+  useLayoutEffect(() => {
     // Set Android status bar theme color
     let metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (!metaThemeColor) {
@@ -141,9 +133,11 @@ export default function Login() {
     }
     metaThemeColor.content = '#FF7B1C'; // Login background color
 
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isAuthenticated, navigate]);
-
+    return () => {
+      // Revert to default or let App handle it
+      metaThemeColor.content = '#F1F5F9'; 
+    };
+  }, []);
   useEffect(() => {
     // Initialize Google Auth
     const script = document.createElement('script');
@@ -190,6 +184,7 @@ export default function Login() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: idToken }),
+        credentials: 'include',
       });
 
       const data = await res.json();

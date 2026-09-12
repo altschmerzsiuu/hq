@@ -412,7 +412,7 @@ async def hapus_reproduksi_record(record_id: int, request: Request, current_user
             # Check ownership via join with hewan table
             owner_check = await conn.fetchrow("""
                 SELECT h.id FROM hewan h
-                JOIN reproduksi_ternak r ON h.id = r.rfid
+                JOIN reproduksi_ternak r ON UPPER(h.id) = UPPER(r.rfid)
                 WHERE r.id = $1 AND h.owner_id = $2
             """, record_id, owner_id)
             

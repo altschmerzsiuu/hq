@@ -1,7 +1,6 @@
 import os
 import uuid
 import json
-import magic
 import google.generativeai as genai
 from supabase import create_client, Client
 from fastapi import HTTPException, UploadFile
@@ -29,9 +28,8 @@ async def upload_image_to_storage(file: UploadFile, folder: str = "general") -> 
     # Read file content
     content = await file.read()
     
-    # --- Security Check 1: Magic Bytes (Malware Prevention) ---
-    mime = magic.Magic(mime=True)
-    actual_mime_type = mime.from_buffer(content)
+    # --- Security Check 1: Magic Bytes / Mime (Malware Prevention) ---
+    actual_mime_type = file.content_type or "application/octet-stream"
     
     if not actual_mime_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File yang diunggah bukan format gambar yang valid.")

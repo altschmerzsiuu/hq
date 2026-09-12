@@ -1171,20 +1171,26 @@ export default function Dashboard() {
             />
 
             {/* Title area */}
-            <div className="flex justify-between items-start relative z-10 mb-6">
-              <div>
-                <p className="text-[10px] font-black opacity-90 mb-1 uppercase tracking-widest text-green-200">
-                  {lang === 'id' ? 'RINGKASAN KONDISI PETERNAKAN ANDA.' : 'YOUR HERD CONDITION SUMMARY.'}
-                </p>
-                <h1 className="text-[32px] font-black tracking-tight leading-none">{greetingText}, {userName}!</h1>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowWidgetModal(true); }}
-                  className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors flex-shrink-0 mt-1"
-                >
+            <div className="flex justify-between items-start relative z-10 mb-6 w-full">
+              <div className="w-full">
+                <div className="flex flex-col md:flex-row md:items-center justify-between w-full gap-4">
+                  <div>
+                    <p className="text-[10px] md:text-[12px] font-black opacity-90 mb-1 uppercase tracking-widest text-green-200">
+                      {lang === 'id' ? 'RINGKASAN KONDISI PETERNAKAN ANDA.' : 'YOUR HERD CONDITION SUMMARY.'}
+                    </p>
+                    <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
+                      {greetingText},<br/>{userName}!
+                    </h1>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowWidgetModal(true); }}
+                      className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors flex-shrink-0 mt-1 lg:hidden"
+                    >
                   <Settings2 size={16} />
-                </button>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1210,25 +1216,15 @@ export default function Dashboard() {
               <div className="flex flex-col items-center flex-1 min-w-0">
                 <h3 className="font-bold text-[var(--text-1)] text-[13px] mb-1 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
                 <p className="text-xs text-gray-500 self-start mb-3">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
-                <div className="flex w-full items-center gap-3">
-                  <div className="relative w-16 h-16 flex-shrink-0">
+                <div className="flex w-full items-center justify-center">
+                  <div className="relative w-32 h-32 flex-shrink-0 cursor-pointer" onClick={() => navigate('/ternak', { state: { activeTab: 'reproduksi' }})}>
                     <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                       <circle cx="50" cy="50" r="40" fill="transparent" stroke="#93c5fd" strokeWidth="12" />
                       <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 0) / Math.max(herd.length, 1))} strokeLinecap="round" className="transition-all duration-1000" />
                     </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-base font-black leading-none text-gray-900">{herd.length || 0}</span>
-                      <span className="text-[8px] font-bold text-gray-400 uppercase mt-0.5">Total</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5 w-full">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <div className="flex items-center gap-1"><div className="w-2 h-2 bg-[#16A34A] rounded-sm"></div>{lang === 'id' ? 'Birahi' : 'Estrus'}</div>
-                      <span className="font-medium">{stats.estrus || 0}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[10px]">
-                      <div className="flex items-center gap-1"><div className="w-2 h-2 bg-blue-300 rounded-sm"></div>{lang === 'id' ? 'Tidak' : 'Normal'}</div>
-                      <span className="font-medium">{Math.max((herd.length || 0) - (stats.estrus || 0), 0)}</span>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center mt-0.5">
+                      <span className="text-3xl font-black leading-none text-gray-900">{herd.length || 0}</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase mt-1">Total</span>
                     </div>
                   </div>
                 </div>
@@ -1264,11 +1260,11 @@ export default function Dashboard() {
               <p className="eyebrow" style={{ marginBottom: '12px' }}>AKSI CEPAT</p>
               <div className="flex flex-row gap-3 overflow-x-auto no-scrollbar pb-2">
                 <SquareQAButton icon={Plus} label={lang === 'id' ? 'Tambah Ternak' : 'Add Cattle'} onClick={() => setIsAddCowModalOpen(true)} />
-                <SquareQAButton icon={Syringe} label={lang === 'id' ? 'Tambah Data IB' : 'Add AI Data'} onClick={() => {
+                <SquareQAButton icon={Zap} label={lang === 'id' ? 'Prediksi' : 'Predict'} onClick={() => setIsEstrusModalOpen(true)} />
+                <SquareQAButton icon={Syringe} label={lang === 'id' ? 'Catat IB' : 'Log AI'} onClick={() => {
                   fetchSapiList();
                   setIsReproModalOpen(true);
                 }} />
-                <SquareQAButton icon={Zap} label={lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'} onClick={() => setIsEstrusModalOpen(true)} />
               </div>
             </div>
 
