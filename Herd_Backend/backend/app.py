@@ -2930,7 +2930,7 @@ async def get_estrus_predictions(
                 pb.verified,
                 pb.created_at,
                 -- Days until next predicted estrus
-                (pb.prediksi_tanggal - CURRENT_DATE)::int AS days_until,
+                EXTRACT(DAY FROM (pb.prediksi_tanggal::timestamp - CURRENT_TIMESTAMP))::int AS days_until,
                 -- Is in window right now?
                 (CURRENT_DATE BETWEEN pb.window_awal AND pb.window_akhir) AS in_window_now
             FROM prediksi_birahi pb
