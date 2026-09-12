@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import Topbar from './Topbar';
+
 import GendhisWidget from '../gendhis/GendhisWidget';
 import GendhistPullUpSheet from '../gendhis/GendhistPullUpSheet';
 import MobileBottomNav from './MobileBottomNav';
@@ -127,21 +127,7 @@ export default function MainLayout() {
         background: 'var(--bg-base)',
         overflow: 'hidden',
     }}>
-      {/* iOS Safe Area Cover */}
-      {(location.pathname === '/dashboard' || location.pathname === '/sensor-data' || location.pathname === '/ternak') && (
-        <div 
-          className="lg:hidden landscape:hidden fixed top-0 left-0 right-0 z-30" 
-          style={{ 
-            height: 'env(safe-area-inset-top)', 
-            backgroundColor: isScrolled ? 'var(--bg-surface)' : (
-              location.pathname === '/dashboard' ? '#2f7d31' : 
-              location.pathname === '/sensor-data' ? '#115e59' : 
-              '#FF7B1C'
-            ),
-            transition: 'background-color 0.3s'
-          }} 
-        />
-      )}
+      {/* iOS Safe Area Cover (Removed because Topbar now handles it) */}
 
       {/* Sidebar */}
       <Sidebar
@@ -160,8 +146,7 @@ export default function MainLayout() {
         overflow: 'hidden',
         position: 'relative',
       }}>
-        {/* Topbar */}
-        <Topbar onMenuClick={() => setSidebarOpen(true)} isScrolled={isScrolled} />
+        {/* Topbar Removed */}
 
         {/* Scrollable Content */}
         <main
@@ -198,8 +183,8 @@ export default function MainLayout() {
             <Outlet />
           </div>
 
-          {/* Mobile bottom spacer — matches navbar height 64px + safe-area */}
-          {!isResearchLab && <div className="lg:hidden landscape:hidden flex-shrink-0" style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0px))' }} />}
+          {/* Mobile bottom spacer — matches navbar height 64px + bottom offset 16px + safe-area */}
+          {!isResearchLab && <div className="lg:hidden landscape:hidden flex-shrink-0" style={{ height: 'calc(64px + 16px + env(safe-area-inset-bottom, 0px))' }} />}
         </main>
 
         {/* Mobile Nav */}

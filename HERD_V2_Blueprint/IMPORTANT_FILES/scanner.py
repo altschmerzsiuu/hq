@@ -403,29 +403,6 @@ async def hapus_reproduksi(rfid: str, request: Request, current_user: dict = Dep
     except Exception as e:
         raise safe_error(e, f"hapus reproduksi {rfid}")
 
-@router.delete("/reproduksi/record/{record_id}")
-async def hapus_reproduksi_record(record_id: int, request: Request, current_user: dict = Depends(get_current_user)):
-    owner_id = get_effective_owner_id(current_user)
-    db = request.app.state.db_pool
-    try:
-        async with db.acquire() as conn:
-            # Check ownership via join with hewan table
-            owner_check = await conn.fetchrow("""
-                SELECT h.id FROM hewan h
-                JOIN reproduksi_ternak r ON h.id = r.rfid
-                WHERE r.id = $1 AND h.owner_id = $2
-            """, record_id, owner_id)
-            
-            if not owner_check:
-                raise HTTPException(status_code=404, detail="Data IB tidak ditemukan atau bukan milik farm Anda.")
-                
-            await conn.execute("DELETE FROM reproduksi_ternak WHERE id = $1", record_id)
-        return {"success": True, "message": "Data IB berhasil dihapus."}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise safe_error(e, f"hapus reproduksi record {record_id}")
-
 
 # === Endpoints: ESP32 & Collar Pairing ============
 

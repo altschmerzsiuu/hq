@@ -25,7 +25,7 @@ if not SECRET_KEY:
     raise RuntimeError("FATAL: JWT_SECRET_KEY is not set in environmental variables! Check your .env file.")
 
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 15))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 43200)) # Changed to 30 days for native app feel
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 30))
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):

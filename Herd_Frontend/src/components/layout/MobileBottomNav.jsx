@@ -19,10 +19,8 @@ export default function MobileBottomNav() {
 
   const items = [
     { icon: Home, label: 'Beranda', path: '/dashboard' },
-    { icon: PawPrint, label: 'Ternak', path: '/ternak' },
     { isScan: true },
-    { icon: LineChart, label: 'Insight', path: '/sensor-data' }, // Or '/insight' if it exists, mapping to sensor-data for now
-    { icon: User, label: 'Profil', path: '/settings' }, // Or '/profile'
+    { icon: PawPrint, label: 'Ternak', path: '/ternak' },
   ];
 
   return (
@@ -40,7 +38,7 @@ export default function MobileBottomNav() {
         boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
         zIndex: 40,
       }} className="lg:hidden" id="mobile-bottom-nav">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', padding: '0 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', height: '64px', padding: '0 8px' }}>
           {items.map((item, i) => {
             if (item.isScan) {
               return (

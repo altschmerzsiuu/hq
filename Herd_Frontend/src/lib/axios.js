@@ -139,15 +139,16 @@ axiosInstance.interceptors.response.use(
 
       } catch (refreshError) {
         processQueue(refreshError, null)
-        // If the token changed during the request, do NOT logout!
-        if (localStorage.getItem('access_token') === tokenBeforeInterceptor) {
+        // Only explicitly logout if we receive a 401 or 403.
+        // If it's a network error (e.g. offline), we should NOT wipe the session!
+        const isAuthFailure = refreshError.response && (refreshError.response.status === 401 || refreshError.response.status === 403);
+        
+        if (isAuthFailure && localStorage.getItem('access_token') === tokenBeforeInterceptor) {
           localStorage.removeItem('access_token')
           useAuthStore.getState().logout()
           toast.error('Sesi Anda telah berakhir. Silakan masuk kembali.');
-          setTimeout(() => { window.location.href = '/login' }, 800);
         }
         return Promise.reject(refreshError)
-
       } finally {
         isRefreshing = false
       }

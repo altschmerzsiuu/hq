@@ -161,8 +161,8 @@
     height: 100dvh;
     /* CRITICAL iOS fix: no overflow, no scroll on html itself */
     overflow: hidden;
-    /* This background shows during overscroll — match page bg to eliminate bleed */
-    background-color: #ffffff;
+    /* Removed background-color: #ffffff to prevent white status bar on iOS PWA */
+    background-color: var(--bg-base);
   }
 
   body {

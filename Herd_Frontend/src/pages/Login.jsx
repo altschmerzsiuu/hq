@@ -116,8 +116,10 @@ export default function Login() {
     };
 
     if (savedUserId && localStorage.getItem('herd_has_pin') === 'true') {
-      // Returning user, show PIN login
-      setStep('pin_login');
+      // Returning user, normally show PIN login, but user requested to remove forced re-logins.
+      // Now, if they somehow get logged out, we just show the normal auth screen.
+      setStep('auth');
+      setIsLoginMode(true);
     } else {
       // New user flow - Skip feature step if on desktop
       if (window.innerWidth >= 1024) {

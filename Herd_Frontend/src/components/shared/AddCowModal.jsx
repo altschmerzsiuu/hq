@@ -245,19 +245,6 @@ export default function AddCowModal({ isOpen, onClose, isWidgetMode = false, onB
               </div>
             </div>
 
-            {/* 5. Scan RFID (CTA Block) */}
-            <div className="pt-2">
-              <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-1.5">RFID UID <span className="text-gray-400 font-normal text-xs ml-1">({lang === 'id' ? 'Opsional' : 'Optional'})</span></label>
-              <input
-                type="text"
-                placeholder={lang === 'id' ? 'Ketik UID RFID (Opsional)...' : 'Type RFID UID (Optional)...'}
-                className="w-full h-[52px] px-4 text-[var(--text-1)] bg-[var(--bg-card)] border-[0.5px] border-[var(--border)] rounded-xl outline-none font-medium placeholder-gray-400 focus:ring-2 focus:ring-[var(--accent)]"
-                value={tambahForm.rfid}
-                onChange={e => setTambahForm({...tambahForm, rfid: e.target.value})}
-              />
-              <p className="text-xs text-gray-500 mt-2">{lang === 'id' ? 'Kosongkan jika ingin sistem membuat ID acak (HRD-XXXX).' : 'Leave empty to auto-generate random ID (HRD-XXXX).'}</p>
-            </div>
-
             {/* Bottom Actions */}
             <div className="pt-6 mt-4 border-t border-[var(--color-border)] flex gap-3 w-full pb-8 md:pb-0">
               <button type="button" onClick={onClose} style={{ border: '0.5px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, borderRadius: '12px', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} className="w-1/2 py-3 text-center">

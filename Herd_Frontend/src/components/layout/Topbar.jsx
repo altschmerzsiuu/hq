@@ -187,7 +187,10 @@ export default function Topbar({ onMenuClick, isScrolled }) {
           MOBILE TOPBAR (UNTOUCHED, EXACTLY AS BEFORE)
           ========================================================================= */}
       <header
-        className="hidden"
+        className={cn(
+          "flex lg:hidden justify-between items-center w-full px-4 z-40 transition-colors duration-300",
+          isMergedHeader ? "fixed top-0 left-0 right-0" : "sticky top-0"
+        )}
         style={{
           height: 'calc(56px + env(safe-area-inset-top))',
           paddingTop: 'env(safe-area-inset-top)',
@@ -267,6 +270,22 @@ export default function Topbar({ onMenuClick, isScrolled }) {
               </div>
             )}
           </div>
+          
+          {/* Mobile Profile Icon */}
+          <button
+            onClick={() => navigate('/settings')}
+            style={{
+              background: 'none', border: 'none',
+              cursor: 'pointer', padding: '6px', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              color: (isMergedHeader && !isScrolled) ? '#fff' : 'var(--text-2)',
+              borderRadius: '8px',
+              transition: 'color 0.3s ease, background 0.15s',
+            }}
+            aria-label="Profil"
+          >
+            <User size={18} />
+          </button>
         </div>
 
         {/* Mobile Portal Target for Selection Header */}

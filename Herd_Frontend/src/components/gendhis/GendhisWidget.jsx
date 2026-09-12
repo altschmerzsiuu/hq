@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
-  MessageCircle, 
+  MessageCircle,
+  User, 
   X, 
   Maximize2, 
   Minimize2, 
@@ -549,19 +550,6 @@ export default function GendhisWidget() {
             </button>
             
             <button 
-              onClick={() => { setIsFabOpen(false); setIsNotifModalOpen(true); }}
-              className="relative flex items-center justify-center w-12 h-12 bg-white text-rose-500 hover:bg-rose-500 hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(244,63,94,0.4)]"
-            >
-              <span className="absolute right-[120%] bg-rose-500 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">{lang === 'id' ? 'Notifikasi' : 'Notifications'}</span>
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white shadow-sm">
-                  {unreadCount}
-                </div>
-              )}
-            </button>
-            
-            <button 
               onClick={() => { setIsFabOpen(false); setIsReproModalOpen(true); }}
               className="relative flex items-center justify-center w-12 h-12 bg-white text-sky-500 hover:bg-sky-500 hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(14,165,233,0.4)]"
             >
@@ -570,27 +558,12 @@ export default function GendhisWidget() {
             </button>
             
             <button 
-              onClick={() => { setIsFabOpen(false); setIsPairModalOpen(true); }}
-              className="relative flex items-center justify-center w-12 h-12 bg-white text-[#f97316] hover:bg-[#f97316] hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(249,115,22,0.4)]"
+              onClick={() => { setIsFabOpen(false); navigate('/settings?tab=profile'); }}
+              className="relative flex items-center justify-center w-12 h-12 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(156,163,175,0.4)]"
             >
-              <span className="absolute right-[120%] bg-[#f97316] text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">{lang === 'id' ? 'Pasang Kalung' : 'Pair Collar'}</span>
-              <Cpu className="w-5 h-5" />
+              <span className="absolute right-[120%] bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">{lang === 'id' ? 'Profil' : 'Profile'}</span>
+              <User className="w-5 h-5" />
             </button>
-
-          <button 
-            onClick={() => {
-              setIsFabOpen(false);
-              if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                setViewState('fullscreen');
-              } else {
-                setViewState('compact');
-              }
-            }}
-            className="relative flex items-center justify-center w-12 h-12 bg-white text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] transition-all duration-300 group hover:shadow-[0_4px_20px_rgba(22,163,74,0.4)]"
-          >
-            <span className="absolute right-[120%] bg-[var(--accent)] text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap pointer-events-none translate-x-4 group-hover:translate-x-0">{lang === 'id' ? 'Tanya Gendhis' : 'Ask Gendhis'}</span>
-            <MessageCircle className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Main FAB Toggle */}

@@ -2500,49 +2500,6 @@ async def trigger_maintenance(collar_id: str, req: MaintenanceRequest):
         print(f" [CMD ERROR] {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/research/observe")
-async def get_observations(current_user: dict = Depends(get_current_user)):
-    """Get recent manual observation records (Hidden Research Feature)"""
-    pool = await get_db_pool()
-    owner_id = get_effective_owner_id(current_user)
-    try:
-        async with pool.acquire() as conn:
-            rows = await conn.fetch("""
-                SELECT o.id, o.cow_id, h.nama as cow_name, o.activity_type, o.notes, o.created_at
-                FROM observation_logs o
-                JOIN hewan h ON o.cow_id = h.id
-                WHERE h.owner_id = $1
-                ORDER BY o.created_at DESC
-                LIMIT 20
-            """, owner_id)
-            return [dict(row) for row in rows]
-    except Exception as e:
-        print(f"[API ERROR] GET /api/research/observe: {str(e)}")
-        raise HTTPException(status_code=500, detail="Terjadi kesalahan saat mengambil data observasi.")
-
-@app.post("/api/research/observe")
-async def add_observation(req: ObservationRequest):
-    """Add manual observation record (Hidden Research Feature)"""
-    pool = await get_db_pool()
-    try:
-        async with pool.acquire() as conn:
-            # check if cow exists
-            hewan_exists = await conn.fetchval("SELECT EXISTS(SELECT 1 FROM hewan WHERE UPPER(id) = UPPER($1))", req.cow_id)
-            if not hewan_exists:
-                raise HTTPException(status_code=404, detail=f"Sapi dengan ID {req.cow_id} tidak ditemukan.")
-            
-            # Insert into observation_logs
-            await conn.execute("""
-                INSERT INTO observation_logs (cow_id, activity_type, notes)
-                VALUES ($1, $2, $3)
-            """, req.cow_id.upper(), req.activity_type.upper(), req.notes)
-
-        return {"status": "success", "message": "Observation logged successfully!"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"[API ERROR] POST /api/research/observe: {str(e)}")
-        raise HTTPException(status_code=500, detail="Terjadi kesalahan saat menyimpan observasi.")
 
 @app.get("/api/breeds")
 async def get_breeds():

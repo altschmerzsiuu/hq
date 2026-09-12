@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Scan, Plus, Cpu, FileText, Bell,
   Thermometer, AlertTriangle, BatteryWarning, CheckCircle2,
-  Sparkles, Wifi, Zap, Calendar, X, Check, ChevronRight, Activity, Syringe, ClipboardList, ThermometerSun, Target, Sun, Settings2, Database, ShieldAlert
+  Sparkles, Wifi, Zap, Calendar, X, Check, ChevronRight, Activity, Syringe, ClipboardList, ThermometerSun, Target, Sun, Settings2, Database, ShieldAlert, User
 } from 'lucide-react';
 import useSettingsStore from '@/store/settingsStore';
 import translations from '@/lib/i18n';
@@ -1157,7 +1157,7 @@ export default function Dashboard() {
           <div
             className="rounded-t-none rounded-b-[40px] px-6 lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4"
             style={{
-              paddingTop: 'calc(env(safe-area-inset-top) + 56px)',
+              paddingTop: 'calc(env(safe-area-inset-top) + 16px)',
               background: 'linear-gradient(180deg, #3a9c3d 0%, #2c792e 60%, #1a5220 100%)',
               minHeight: 'calc(env(safe-area-inset-top) + 280px)'
             }}
@@ -1178,12 +1178,14 @@ export default function Dashboard() {
                 </p>
                 <h1 className="text-[32px] font-black tracking-tight leading-none">{greetingText}, {userName}!</h1>
               </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowWidgetModal(true); }}
-                className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors flex-shrink-0 ml-3 mt-1"
-              >
-                <Settings2 size={16} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowWidgetModal(true); }}
+                  className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors flex-shrink-0 mt-1"
+                >
+                  <Settings2 size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Stat cards — dynamic columns to match selected widgets */}
@@ -1201,53 +1203,62 @@ export default function Dashboard() {
           </div>
 
           {/* ─── 2. URGENT ACTIONS CONTAINER ─── */}
-          <div className="px-4 flex flex-col gap-4 -mt-[48px] relative z-20">
-            {(() => {
-              const urgentItems = intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor');
-              const hasUrgent = urgentItems.length > 0;
-              
-              return (
-                <div style={{
-                  background: hasUrgent ? '#FEF2F2' : '#F0FDF4',
-                  border: hasUrgent ? '0.5px solid #FECACA' : '0.5px solid #BBF7D0',
-                  borderRadius: '12px',
-                  padding: '20px 22px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '16px',
-                }}>
-                  {/* Subheader */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                    {hasUrgent ? (
-                      <AlertTriangle size={18} style={{ color: 'var(--red)' }} />
-                    ) : (
-                      <CheckCircle2 size={18} className="text-green-600" />
-                    )}
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-1)', fontFamily: 'DM Sans, sans-serif' }}>
-                      {hasUrgent 
-                        ? (lang === 'id' ? 'Ada yang perlu kamu perhatikan' : 'Needs your attention')
-                        : (lang === 'id' ? 'Peternakanmu aman hari ini' : 'Your farm is safe today')}
-                    </span>
-                  </div>
-
-                  {/* Urgent Cards */}
-                  {hasUrgent ? (
-                    <AutoScrollCarousel>
-                      {urgentItems.map((card, i) => (
-                        <IntelCard key={i} {...card} t={t} />
-                      ))}
-                    </AutoScrollCarousel>
-                  ) : (
-                    <div style={{
-                      padding: '14px', background: 'var(--bg-card)', border: '0.5px solid var(--border)',
-                      borderRadius: '10px', fontSize: '13px', color: 'var(--text-2)', textAlign: 'center'
-                    }}>
-                      {lang === 'id' ? 'Semua ternak terpantau dalam kondisi baik.' : 'All cattle are monitored in good condition.'}
+          <div className="px-4 flex flex-col gap-4 -mt-[48px] relative z-50">
+            {/* Combined Ringkasan & Prediksi Birahi */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-row gap-5">
+              {/* Ringkasan Birahi (Donut) */}
+              <div className="flex flex-col items-center flex-1 min-w-0">
+                <h3 className="font-bold text-[var(--text-1)] text-[13px] mb-3 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
+                <p className="text-xs text-gray-500 self-start -mt-2 mb-2">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
+                <div className="flex w-full items-center gap-3">
+                  <div className="relative w-16 h-16 flex-shrink-0">
+                    <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                      <circle cx="50" cy="50" r="40" fill="transparent" stroke="#93c5fd" strokeWidth="12" />
+                      <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 0) / Math.max(herd.length, 1))} strokeLinecap="round" className="transition-all duration-1000" />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-base font-black leading-none text-gray-900">{herd.length || 0}</span>
+                      <span className="text-[8px] font-bold text-gray-400 uppercase mt-0.5">Total</span>
                     </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5 w-full">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-1"><div className="w-2 h-2 bg-[#16A34A] rounded-sm"></div>{lang === 'id' ? 'Birahi' : 'Estrus'}</div>
+                      <span className="font-medium">{stats.estrus || 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-1"><div className="w-2 h-2 bg-blue-300 rounded-sm"></div>{lang === 'id' ? 'Tidak' : 'Normal'}</div>
+                      <span className="font-medium">{Math.max((herd.length || 0) - (stats.estrus || 0), 0)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Vertical Divider */}
+              <div className="w-px bg-gray-100 self-stretch"></div>
+
+              {/* Prediksi Birahi */}
+              <div className="flex flex-col flex-1 min-w-0">
+                <h3 className="font-bold text-[var(--text-1)] text-[13px] mb-3">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
+                
+                <div className="flex flex-col gap-2">
+                  {[...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).length > 0 ? [...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).slice(0, 3).map((pred, i) => (
+                    <div 
+                      key={i} 
+                      onClick={() => navigate('/ternak', { state: { selectedCowId: pred.cow_id || pred.id, fromDashboard: true, activeTab: 'estrus' } })}
+                      className="flex justify-between items-center border-b border-gray-100 pb-2 last:border-0 last:pb-0 cursor-pointer"
+                    >
+                      <span className="text-[11px] font-bold text-gray-900 truncate pr-1">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
+                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${getProbColor(Math.round((pred.confidence_final || 0.8) * 100))}`}>
+                        {Math.round((pred.confidence_final || 0.8) * 100)}%
+                      </span>
+                    </div>
+                  )) : (
+                    <div className="text-[11px] text-gray-500 py-2">{lang === 'id' ? 'Tidak ada prediksi.' : 'No predictions.'}</div>
                   )}
                 </div>
-              );
-            })()}
+              </div>
+            </div>
 
             {/* ─── 3. QUICK ACTIONS ─── */}
             <div>
@@ -1258,7 +1269,6 @@ export default function Dashboard() {
                   fetchSapiList();
                   setIsReproModalOpen(true);
                 }} />
-                <SquareQAButton icon={Cpu} label={lang === 'id' ? 'Pasang Kalung' : 'Pair Collar'} onClick={() => setIsPairModalOpen(true)} />
                 <SquareQAButton icon={Zap} label={lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'} onClick={() => setIsEstrusModalOpen(true)} />
               </div>
             </div>
@@ -1319,65 +1329,7 @@ export default function Dashboard() {
 
           {/* ─── 6. MOBILE WIDGETS ─── */}
           <div className="flex flex-col gap-4 mb-4">
-            {/* Ringkasan Birahi (Donut) */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col items-center">
-              <h3 className="font-bold text-[var(--text-1)] text-[15px] mb-4 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
-              <p className="text-xs text-gray-500 self-start -mt-3 mb-3">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
-              <div className="flex w-full items-center gap-4">
-                <div className="relative w-24 h-24 flex-shrink-0">
-                  <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#93c5fd" strokeWidth="12" />
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 0) / Math.max(herd.length, 1))} strokeLinecap="round" className="transition-all duration-1000" />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xl font-black leading-none text-gray-900">{herd.length || 0}</span>
-                    <span className="text-[9px] font-bold text-gray-400 uppercase mt-0.5">Total</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 w-full">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-[#16A34A] rounded-sm"></div>{lang === 'id' ? ' Birahi' : ' In Estrus'}</div>
-                    <span className="font-medium">{stats.estrus || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-blue-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Birahi' : ' Not in Estrus'}</div>
-                    <span className="font-medium">{Math.max((herd.length || 0) - (stats.estrus || 0), 0)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-gray-300 rounded-sm"></div>{lang === 'id' ? ' Tidak Terdeteksi' : ' Undetected'}</div>
-                    <span className="font-medium">0</span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Prediksi Birahi */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-bold text-[var(--text-1)] text-[15px]">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
-                <button onClick={() => navigate('/estrus-prediction')} className="text-[11px] font-bold text-gray-500 hover:text-[var(--accent)] flex items-center gap-1">
-                  {lang === 'id' ? 'Lihat semua' : 'View all'} <ChevronRight size={12} />
-                </button>
-              </div>
-              {/* Empty placeholder for margin if needed, or just remove */}
-              
-              <div className="flex flex-col gap-3">
-                {[...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).length > 0 ? [...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).slice(0, 3).map((pred, i) => (
-                  <div 
-                    key={i} 
-                    onClick={() => navigate('/ternak', { state: { selectedCowId: pred.cow_id || pred.id, fromDashboard: true, activeTab: 'estrus' } })}
-                    className="flex justify-between items-center border-b border-gray-100 pb-2.5 last:border-0 last:pb-0 cursor-pointer hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
-                  >
-                    <span className="text-[13px] font-bold text-gray-900 hover:text-[var(--accent)] transition-colors truncate pr-2">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
-                    <span className={`text-[12px] font-medium px-2 py-0.5 rounded-full ${getProbColor(Math.round((pred.confidence_final || 0.8) * 100))}`}>
-                      {Math.round((pred.confidence_final || 0.8) * 100)}% Probabilitas
-                    </span>
-                  </div>
-                )) : (
-                  <div className="text-[12px] text-gray-500 text-center py-2">{lang === 'id' ? 'Tidak ada prediksi terdekat.' : 'No upcoming predictions.'}</div>
-                )}
-              </div>
-            </div>
 
             {/* Status Populasi */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col items-center">
@@ -1400,39 +1352,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Kondisi Kandang (IoT) */}
-            <div className="rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col min-h-[220px]" style={{ background: 'linear-gradient(145deg, #022C22 0%, #064E3B 100%)' }}>
-              <div className="absolute top-0 right-0 p-4">
-                <ThermometerSun size={24} className="text-emerald-400 opacity-80" />
-              </div>
-              <h3 className="font-semibold text-emerald-100 mb-0.5 text-[13px] z-10 opacity-90">{lang === 'id' ? 'Kondisi Kandang (IoT)' : 'Farm Condition (IoT)'}</h3>
-              <p className="text-[11px] text-emerald-200/70 mb-auto z-10 font-medium">{lang === 'id' ? 'Terakhir diperbarui:' : 'Last updated:'} {stats.lastSync}</p>
 
-              <div className="mt-6 z-10 relative">
-                <div className="text-[40px] font-black text-white leading-none tracking-tight flex items-start gap-1">
-                  {stats.avgTemp || '--'}<span className="text-xl mt-1 text-emerald-200">°C</span>
-                </div>
-              </div>
-
-              <svg className="absolute bottom-0 left-0 right-0 w-full opacity-40 text-emerald-500 pointer-events-none" viewBox="0 0 100 40" preserveAspectRatio="none" style={{ height: '50%' }}>
-                <path fill="currentColor" d="M0 40 C 20 20, 40 40, 60 20 C 80 0, 100 20, 100 40 Z" />
-                <path fill="currentColor" d="M0 40 C 30 10, 60 30, 100 10 L 100 40 Z" className="opacity-50" />
-              </svg>
-            </div>
-
-            {/* Aktivitas Terbaru */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col">
-              <h3 className="font-bold text-[var(--text-1)] text-[15px] mb-4">{lang === 'id' ? 'Aktivitas Terbaru' : 'Recent Activities'}</h3>
-              <div className="flex flex-col gap-4">
-                <div className="text-[12px] text-gray-500 text-center py-2">{lang === 'id' ? 'Belum ada aktivitas hari ini.' : 'No activities today.'}</div>
-              </div>
-              <button onClick={() => navigate('/ternak')} className="text-[11px] font-bold text-gray-500 hover:text-gray-900 text-left mt-4 flex items-center gap-1 w-max">
-                {lang === 'id' ? 'Lihat semua aktivitas' : 'View all activities'} <ChevronRight size={12} />
-              </button>
-            </div>
-
-            {/* Grafik Tren Aktivitas Kawanan */}
-            <TrenAktivitasChart lang={lang} />
           </div>
 
         </div> {/* Close the px-4 wrapper */}
@@ -1461,6 +1381,14 @@ export default function Dashboard() {
                 <h1 className="text-[32px] md:text-[36px] font-black tracking-tight leading-none">
                   Dashboard
                 </h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate('/settings'); }}
+                  className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-colors flex-shrink-0"
+                >
+                  <User size={18} />
+                </button>
               </div>
             </div>
 
@@ -1526,37 +1454,71 @@ export default function Dashboard() {
           {/* ROW 2: PERHATIAN + REKOMENDASI side by side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
             {/* PERHATIAN HARI INI */}
-            {(() => {
-              const urgentItems = intel.filter(card => card.urgency === 'critical' || card.urgency === 'monitor');
-              const hasUrgent = urgentItems.length > 0;
-              return (
-                <div className={`border rounded-2xl p-5 flex flex-col gap-3 shadow-sm ${hasUrgent ? 'bg-[#FEF2F2] border-[#FECACA]' : 'bg-[#F0FDF4] border-[#BBF7D0]'}`}>
-                  <div className="flex items-center gap-2">
-                    {hasUrgent ? (
-                      <AlertTriangle size={16} className="text-red-500 flex-shrink-0" />
-                    ) : (
-                      <CheckCircle2 size={16} className="text-green-600 flex-shrink-0" />
-                    )}
-                    <span className="font-bold text-[var(--text-1)] text-[14px]">
-                      {hasUrgent 
-                        ? (lang === 'id' ? 'Ada yang perlu kamu perhatikan' : 'Needs your attention')
-                        : (lang === 'id' ? 'Peternakanmu aman hari ini' : 'Your farm is safe today')}
-                    </span>
-                  </div>
-                  {hasUrgent ? (
-                    <AutoScrollCarousel maxHeight="220px">
-                      {urgentItems.map((card, i) => (
-                        <IntelCard key={i} {...card} t={t} />
-                      ))}
-                    </AutoScrollCarousel>
-                  ) : (
-                    <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[13px] text-[var(--text-2)] text-center">
-                      {lang === 'id' ? 'Semua ternak terpantau dalam kondisi baik.' : 'All cattle are monitored in good condition.'}
+            {/* Combined Ringkasan & Prediksi Birahi */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col gap-6 h-full">
+              {/* Ringkasan Birahi (Donut) */}
+              <div className="flex flex-col xl:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col gap-1 w-full xl:w-1/2">
+                  <h3 className="font-bold text-[var(--text-1)] text-lg">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
+                  <p className="text-sm text-gray-500 mb-2">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
+                  
+                  <div className="flex flex-col gap-3 w-full mt-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-[#16A34A] rounded-sm"></div><span className="font-medium text-gray-700">{lang === 'id' ? ' Birahi' : ' In Estrus'}</span></div>
+                      <span className="font-bold text-gray-900">{stats.estrus || 0}</span>
                     </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-blue-300 rounded-sm"></div><span className="font-medium text-gray-700">{lang === 'id' ? ' Tidak Birahi' : ' Not in Estrus'}</span></div>
+                      <span className="font-bold text-gray-900">{Math.max((herd.length || 0) - (stats.estrus || 0), 0)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 bg-gray-300 rounded-sm"></div><span className="font-medium text-gray-700">{lang === 'id' ? ' Tidak Terdeteksi' : ' Undetected'}</span></div>
+                      <span className="font-bold text-gray-900">0</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative w-32 h-32 flex-shrink-0">
+                  <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#93c5fd" strokeWidth="12" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 0) / Math.max(herd.length, 1))} strokeLinecap="round" className="transition-all duration-1000" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-black leading-none text-gray-900">{herd.length || 0}</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase mt-1">Total</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-full h-px bg-gray-100 my-2"></div>
+
+              {/* Prediksi Birahi */}
+              <div className="flex flex-col">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold text-[var(--text-1)] text-[15px]">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
+                  <button onClick={() => navigate('/estrus-prediction')} className="text-xs font-bold text-gray-500 hover:text-[var(--accent)] flex items-center gap-1 transition-colors">
+                    {lang === 'id' ? 'Lihat semua' : 'View all'} <ChevronRight size={14} />
+                  </button>
+                </div>
+                
+                <div className="flex flex-col gap-3 mt-2">
+                  {[...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).length > 0 ? [...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).slice(0, 3).map((pred, i) => (
+                    <div 
+                      key={i} 
+                      onClick={() => navigate('/ternak', { state: { selectedCowId: pred.cow_id || pred.id, fromDashboard: true, activeTab: 'estrus' } })}
+                      className="flex justify-between items-center border-b border-gray-100 pb-2.5 last:border-0 last:pb-0 cursor-pointer hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
+                    >
+                      <span className="text-sm font-bold text-gray-900 hover:text-[var(--accent)] transition-colors truncate pr-2">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
+                      <span className={`text-[12px] font-medium px-2.5 py-0.5 rounded-full ${getProbColor(Math.round((pred.confidence_final || 0.8) * 100))}`}>
+                        {Math.round((pred.confidence_final || 0.8) * 100)}% Probabilitas
+                      </span>
+                    </div>
+                  )) : (
+                    <div className="text-[13px] text-gray-500 text-center py-2">{lang === 'id' ? 'Tidak ada prediksi terdekat.' : 'No upcoming predictions.'}</div>
                   )}
                 </div>
-              );
-            })()}
+              </div>
+            </div>
 
             {/* REKOMENDASI LAINNYA */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
@@ -1591,70 +1553,10 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ROW 3: ESTRUS SUMMARY & PREDICTION & POPULATION */}
-          <div className="grid grid-cols-1 lg:grid-cols-[4fr_3fr_3fr] gap-4 mt-4">
-            {/* Ringkasan Birahi (Donut) */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 lg:p-8 shadow-sm flex flex-col items-center justify-center">
-              <h3 className="font-bold text-[var(--text-1)] text-lg lg:text-xl mb-6 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
-              <p className="text-xs lg:text-sm text-gray-500 self-start -mt-5 mb-6">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
-              <div className="flex w-full items-center gap-8 lg:gap-12">
-                <div className="relative w-32 h-32 lg:w-40 lg:h-40 flex-shrink-0">
-                  <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#93c5fd" strokeWidth="12" />
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#16A34A" strokeWidth="12" strokeDasharray="251.2" strokeDashoffset={251.2 * (1 - (stats.estrus || 0) / Math.max(herd.length, 1))} strokeLinecap="round" />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl lg:text-4xl font-black leading-none text-gray-900">{stats.estrus || 0}</span>
-                    <span className="text-[10px] lg:text-xs font-bold text-gray-500 mt-2">{lang === 'id' ? 'Sapi Birahi' : 'Cows in Estrus'}</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-4 w-full">
-                  <div className="flex items-center justify-between text-sm lg:text-base">
-                    <div className="flex items-center gap-3"><div className="w-3 h-3 bg-[#16A34A] rounded-sm"></div><span className="font-medium text-gray-700">{lang === 'id' ? ' Birahi' : ' In Estrus'}</span></div>
-                    <span className="font-bold text-gray-900">{stats.estrus || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm lg:text-base">
-                    <div className="flex items-center gap-3"><div className="w-3 h-3 bg-blue-300 rounded-sm"></div><span className="font-medium text-gray-700">{lang === 'id' ? ' Tidak Birahi' : ' Not in Estrus'}</span></div>
-                    <span className="font-bold text-gray-900">{Math.max((herd.length || 0) - (stats.estrus || 0), 0)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm lg:text-base">
-                    <div className="flex items-center gap-3"><div className="w-3 h-3 bg-gray-300 rounded-sm"></div><span className="font-medium text-gray-700">{lang === 'id' ? ' Tidak Terdeteksi' : ' Undetected'}</span></div>
-                    <span className="font-bold text-gray-900">0</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Prediksi Birahi */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col h-full">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-bold text-[var(--text-1)] text-lg">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
-                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">{lang === 'id' ? '3 Hari Kedepan' : 'Next 3 Days'}</span>
-              </div>
-              
-              <div className="flex flex-col gap-3 mt-4 flex-grow">
-                {[...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).length > 0 ? [...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).slice(0, 3).map((pred, i) => (
-                  <div 
-                    key={i} 
-                    onClick={() => navigate('/ternak', { state: { selectedCowId: pred.cow_id || pred.id, fromDashboard: true, activeTab: 'estrus' } })}
-                    className="flex justify-between items-center border-b border-gray-100 pb-3 last:border-0 last:pb-0 cursor-pointer active:bg-gray-50 transition-colors -mx-2 px-2 rounded-lg"
-                  >
-                    <span className="text-sm font-bold text-gray-900 truncate pr-2">{pred.cow_name || pred.cow_id || 'SAPI-000'}</span>
-                    <span className={`text-[12px] font-medium px-2 py-0.5 rounded-full ${getProbColor(Math.round((pred.confidence_final || 0.8) * 100))}`}>
-                      {Math.round((pred.confidence_final || 0.8) * 100)}% Probabilitas
-                    </span>
-                  </div>
-                )) : (
-                  <div className="text-sm text-gray-500 text-center py-4">{lang === 'id' ? 'Tidak ada prediksi terdekat.' : 'No upcoming predictions.'}</div>
-                )}
-              </div>
-              <button onClick={() => navigate('/estrus-prediction')} className="text-xs font-bold text-gray-500 hover:text-gray-900 text-left mt-auto flex items-center gap-1 transition-colors w-max">
-                {lang === 'id' ? 'Lihat semua' : 'View all'} <ChevronRight size={14} />
-              </button>
-            </div>
-
+          {/* ROW 3: POPULATION */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
             {/* Status Populasi */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col items-center justify-between">
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col items-center justify-between lg:col-span-1">
               <h3 className="font-bold text-[var(--text-1)] text-lg self-start w-full">{lang === 'id' ? 'Status Populasi' : 'Population Status'}</h3>
               <div className="relative w-40 h-40 flex items-center justify-center mt-2">
                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
@@ -1675,48 +1577,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ROW 4: KONDISI KANDANG & AKTIVITAS & GRAFIK */}
-          <div className="grid grid-cols-1 lg:grid-cols-[3fr_3fr_4fr] gap-4 mt-4 mb-8">
-            {/* Kondisi Kandang (IoT) */}
-            <div className="rounded-2xl p-6 shadow-lg relative overflow-hidden flex flex-col min-h-[260px]" style={{ background: 'linear-gradient(145deg, #022C22 0%, #064E3B 100%)' }}>
-              <div className="absolute top-0 right-0 p-5">
-                <ThermometerSun size={28} className="text-emerald-400 opacity-80" />
-              </div>
-              <h3 className="font-semibold text-emerald-100 mb-1 text-sm z-10 opacity-90">{lang === 'id' ? 'Kondisi Kandang (IoT)' : 'Farm Condition (IoT)'}</h3>
-              <p className="text-xs text-emerald-200/70 mb-auto z-10 font-medium">{lang === 'id' ? 'Terakhir diperbarui:' : 'Last updated:'} {stats.lastSync}</p>
 
-              <div className="mt-8 z-10 relative">
-                <div className="text-[48px] font-black text-white leading-none tracking-tight flex items-start gap-1">
-                  {stats.avgTemp || '--'}<span className="text-2xl mt-1 text-emerald-200">°C</span>
-                </div>
-              </div>
-
-              <svg className="absolute bottom-0 left-0 right-0 w-full opacity-40 text-emerald-500 pointer-events-none" viewBox="0 0 100 40" preserveAspectRatio="none" style={{ height: '60%' }}>
-                <path fill="currentColor" d="M0 40 C 20 20, 40 40, 60 20 C 80 0, 100 20, 100 40 Z" />
-                <path fill="currentColor" d="M0 40 C 30 10, 60 30, 100 10 L 100 40 Z" className="opacity-50" />
-              </svg>
-            </div>
-
-            {/* Aktivitas Terbaru */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-[var(--text-1)] text-lg">{lang === 'id' ? 'Aktivitas Terbaru' : 'Recent Activities'}</h3>
-              </div>
-              <div className="flex flex-col gap-5 flex-1">
-                <div className="text-sm text-gray-500 text-center py-4">{lang === 'id' ? 'Belum ada aktivitas hari ini.' : 'No activities today.'}</div>
-              </div>
-              <button onClick={() => navigate('/ternak')} className="text-xs font-bold text-gray-500 hover:text-gray-900 text-left mt-4 flex items-center gap-1 transition-colors w-max">
-                {lang === 'id' ? 'Lihat semua aktivitas' : 'View all activities'} <ChevronRight size={14} />
-              </button>
-            </div>
-
-            {/* Grafik Tren Aktivitas Kawanan */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col overflow-hidden h-full">
-              <div className="h-full relative overflow-hidden -mx-4 -my-4 sm:-mx-6 sm:-my-6" style={{ minHeight: '250px' }}>
-                <TrenAktivitasChart lang={lang} />
-              </div>
-            </div>
-          </div>
 
         </div> {/* End of Desktop Bento Grid */}
 

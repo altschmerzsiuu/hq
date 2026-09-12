@@ -86,7 +86,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
       label: 'MANAJEMEN',
       items: [
         { name: t.nav_livestock, path: '/ternak', icon: Beef },
-        { name: t.iot_title || 'Perangkat IoT', path: '/sensor-data', icon: Cpu },
       ]
     },
     {
@@ -111,7 +110,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
     { name: t.nav_livestock || 'Ternak', path: '/ternak', icon: Beef },
     { name: t.nav_estrus_intel || 'Prediksi', path: '/estrus-prediction', icon: Zap },
     { name: t.nav_recommendations || 'Rekomendasi', path: '/recommendations', icon: Lightbulb },
-    { name: t.iot_title || 'Perangkat IoT', path: '/sensor-data', icon: Cpu },
   ];
 
   const initials = user?.full_name

@@ -214,20 +214,37 @@ export default function CowEstrusView({ selectedCow, reproHistory = [] }) {
           <p className="text-gray-500 max-w-sm mb-8 leading-relaxed">
             {lang === 'id' ? 'Jalankan AI untuk menganalisis siklus birahi sapi ini berdasarkan data historis dan sensor.' : 'Run AI to analyze this cow\'s estrus cycle based on historical and sensor data.'}
           </p>
-          <button
-            onClick={handleRunPredict}
-            disabled={isPredicting}
-            className="group relative flex items-center gap-4 bg-white pr-6 pl-2 py-2 rounded-full border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-500/30 transition-all duration-300 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-md group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500 relative z-10">
-              {isPredicting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
-            </div>
-            <span className="text-[15px] font-bold text-gray-700 group-hover:text-blue-600 transition-colors duration-300 relative z-10">
-              {isPredicting ? (lang === 'id' ? 'Memproses AI...' : 'Processing AI...') : (lang === 'id' ? 'Jalankan Prediksi AI' : 'Run AI Prediction')}
-            </span>
-          </button>
+          
+          {/* Slide to Predict Component */}
+          <div className="relative w-64 h-14 bg-gray-100 rounded-full overflow-hidden shadow-inner flex items-center justify-center border border-gray-200">
+            {isPredicting ? (
+              <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {lang === 'id' ? 'Memproses AI...' : 'Processing AI...'}
+              </div>
+            ) : (
+              <>
+                <span className="text-gray-400 font-bold text-sm pl-12 pointer-events-none select-none">
+                  {lang === 'id' ? 'Geser untuk Prediksi' : 'Slide to Predict'}
+                </span>
+                <motion.div
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 200 }}
+                  dragElastic={0.1}
+                  onDragEnd={(e, info) => {
+                    if (info.offset.x > 150) {
+                      handleRunPredict();
+                    }
+                  }}
+                  className="absolute left-1 top-1 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-md cursor-grab active:cursor-grabbing z-10"
+                >
+                  <Wand2 className="w-5 h-5" />
+                </motion.div>
+              </>
+            )}
+          </div>
         </div>
+
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
