@@ -28,14 +28,14 @@ export default function MobileBottomNav() {
       {/* Floating Bottom Nav Bar */}
       <nav style={{
         position: 'fixed', 
-        bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', 
-        left: '16px', right: '16px',
-        background: 'color-mix(in srgb, var(--bg-surface) 80%, transparent)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderRadius: '24px',
-        border: '1px solid var(--border)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+        bottom: 0, 
+        left: 0, right: 0,
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        background: 'color-mix(in srgb, var(--bg-surface) 90%, transparent)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderTop: '0.5px solid var(--border)',
+        boxShadow: '0 -8px 32px rgba(0,0,0,0.06)',
         zIndex: 40,
       }} className="lg:hidden" id="mobile-bottom-nav">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', height: '64px', padding: '0 8px' }}>

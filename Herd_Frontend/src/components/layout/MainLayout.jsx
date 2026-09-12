@@ -183,8 +183,8 @@ export default function MainLayout() {
             <Outlet />
           </div>
 
-          {/* Mobile bottom spacer — matches navbar height 64px + bottom offset 16px + safe-area */}
-          {!isResearchLab && <div className="lg:hidden landscape:hidden flex-shrink-0" style={{ height: 'calc(64px + 16px + env(safe-area-inset-bottom, 0px))' }} />}
+          {/* Mobile bottom spacer — matches navbar height 64px + safe-area */}
+          {!isResearchLab && <div className="lg:hidden landscape:hidden flex-shrink-0" style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0px))' }} />}
         </main>
 
         {/* Mobile Nav */}

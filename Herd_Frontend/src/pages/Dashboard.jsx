@@ -1157,8 +1157,8 @@ export default function Dashboard() {
           <div
             className="rounded-t-none rounded-b-[40px] px-6 lg:pt-8 pb-[56px] shadow-sm relative overflow-hidden mb-0 text-white flex flex-col justify-between -mx-4"
             style={{
-              paddingTop: 'calc(env(safe-area-inset-top) + 16px)',
-              background: 'linear-gradient(180deg, #3a9c3d 0%, #2c792e 60%, #1a5220 100%)',
+              paddingTop: 'calc(env(safe-area-inset-top) + 32px)',
+              background: 'linear-gradient(180deg, #2E7D32 0%, #1B5E20 60%, #003300 100%)',
               minHeight: 'calc(env(safe-area-inset-top) + 280px)'
             }}
           >
@@ -1205,11 +1205,11 @@ export default function Dashboard() {
           {/* ─── 2. URGENT ACTIONS CONTAINER ─── */}
           <div className="px-4 flex flex-col gap-4 -mt-[48px] relative z-50">
             {/* Combined Ringkasan & Prediksi Birahi */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-row gap-5">
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col gap-4">
               {/* Ringkasan Birahi (Donut) */}
               <div className="flex flex-col items-center flex-1 min-w-0">
-                <h3 className="font-bold text-[var(--text-1)] text-[13px] mb-3 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
-                <p className="text-xs text-gray-500 self-start -mt-2 mb-2">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
+                <h3 className="font-bold text-[var(--text-1)] text-[13px] mb-1 self-start w-full">{lang === 'id' ? 'Ringkasan Birahi' : 'Estrus Summary'}</h3>
+                <p className="text-xs text-gray-500 self-start mb-3">{lang === 'id' ? '7 hari terakhir' : 'Last 7 days'}</p>
                 <div className="flex w-full items-center gap-3">
                   <div className="relative w-16 h-16 flex-shrink-0">
                     <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
@@ -1234,12 +1234,11 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Vertical Divider */}
-              <div className="w-px bg-gray-100 self-stretch"></div>
+              {/* Horizontal Divider */}
+              <div className="h-px bg-gray-100 w-full"></div>
 
-              {/* Prediksi Birahi */}
+              {/* Prediksi Birahi List */}
               <div className="flex flex-col flex-1 min-w-0">
-                <h3 className="font-bold text-[var(--text-1)] text-[13px] mb-3">{lang === 'id' ? 'Prediksi Birahi' : 'Estrus Prediction'}</h3>
                 
                 <div className="flex flex-col gap-2">
                   {[...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).length > 0 ? [...activeEstrusPredictions].sort((a,b) => (b.confidence_final || 0.8) - (a.confidence_final || 0.8)).slice(0, 3).map((pred, i) => (
@@ -1273,7 +1272,34 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* ─── 5. REKOMENDASI LAINNYA ─── */}
+            {/* ─── 6. MOBILE WIDGETS ─── */}
+          <div className="flex flex-col gap-4 mb-4">
+
+
+            {/* Status Populasi */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col items-center">
+              <h3 className="font-bold text-[var(--text-1)] text-[15px] self-start w-full">{lang === 'id' ? 'Status Populasi' : 'Population Status'}</h3>
+              <div className="relative w-32 h-32 flex items-center justify-center mt-2">
+                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="14" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) : 0))} strokeLinecap="round" className="opacity-90 transition-all duration-1000" />
+                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status !== 'normal' && c.status).length / herd.length) : 0))} strokeLinecap="round" className="transition-all duration-1000" style={{ strokeDashoffset: 251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status !== 'normal' && c.status).length / herd.length) : 0)), transformOrigin: 'center', transform: `rotate(${360 * (herd.length > 0 ? (herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) : 0)}deg)` }} />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center mt-1">
+                  <span className="text-2xl font-black leading-none text-[var(--text-1)]">{herd.length > 0 ? Math.round((herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) * 100) + '%' : '0%'}</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">{lang === 'id' ? 'Sehat' : 'Healthy'}</span>
+                </div>
+              </div>
+              <div className="flex gap-3 mt-4 w-full justify-center">
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--color-primary)]"></div> {lang === 'id' ? 'Sehat' : 'Healthy'}</div>
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--amber)]"></div> Monitor</div>
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--border)]"></div> {lang === 'id' ? 'Sakit' : 'Sick'}</div>
+              </div>
+            </div>
+
+
+
+{/* ─── 5. REKOMENDASI LAINNYA ─── */}
             <div style={{
             background: 'var(--bg-surface)',
             border: '0.5px solid var(--border)',
@@ -1327,33 +1353,7 @@ export default function Dashboard() {
             </AutoScrollCarousel>
           </div>
 
-          {/* ─── 6. MOBILE WIDGETS ─── */}
-          <div className="flex flex-col gap-4 mb-4">
-
-
-            {/* Status Populasi */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-col items-center">
-              <h3 className="font-bold text-[var(--text-1)] text-[15px] self-start w-full">{lang === 'id' ? 'Status Populasi' : 'Population Status'}</h3>
-              <div className="relative w-32 h-32 flex items-center justify-center mt-2">
-                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--bg-surface)" strokeWidth="14" />
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--color-primary)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) : 0))} strokeLinecap="round" className="opacity-90 transition-all duration-1000" />
-                  <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--amber)" strokeWidth="14" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status !== 'normal' && c.status).length / herd.length) : 0))} strokeLinecap="round" className="transition-all duration-1000" style={{ strokeDashoffset: 251.2 - (251.2 * (herd.length > 0 ? (herd.filter(c => c.status !== 'normal' && c.status).length / herd.length) : 0)), transformOrigin: 'center', transform: `rotate(${360 * (herd.length > 0 ? (herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) : 0)}deg)` }} />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center mt-1">
-                  <span className="text-2xl font-black leading-none text-[var(--text-1)]">{herd.length > 0 ? Math.round((herd.filter(c => c.status === 'normal' || !c.status).length / herd.length) * 100) + '%' : '0%'}</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-3)] mt-1">{lang === 'id' ? 'Sehat' : 'Healthy'}</span>
-                </div>
-              </div>
-              <div className="flex gap-3 mt-4 w-full justify-center">
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--color-primary)]"></div> {lang === 'id' ? 'Sehat' : 'Healthy'}</div>
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--amber)]"></div> Monitor</div>
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-2)]"><div className="w-2 h-2 rounded-full bg-[var(--border)]"></div> {lang === 'id' ? 'Sakit' : 'Sick'}</div>
-              </div>
-            </div>
-
-
-          </div>
+                    </div>
 
         </div> {/* Close the px-4 wrapper */}
         </div> {/* Close the mobile view wrapper */}
